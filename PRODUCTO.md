@@ -267,6 +267,45 @@ Paso 9 — Publicación y distribución. El plan entra en estado Próximo: apare
 
 Ciclo de vida después de publicar. En estado Próximo el plan muestra cuenta atrás, plazas restantes y quién va; el día del evento se dispara la reconfirmación y la lista de espera con sobreasignación para que el recuento sea honesto. Durante el plan en marcha viven el chat grupal y las herramientas de seguridad presencial (contacto de confianza, check-in de "he llegado bien", botón SOS, reporte desde el propio chat). Al terminar, el plan pasa a estado Pasado: su media se convierte en aftermovie permanente en Vividas, organizado por su hashtag, que vende la siguiente edición; y se abren las reseñas post-plan por estrellas a anfitrión y asistentes, que actualizan la reputación visible y el índice de fiabilidad agregado.
 
+## Capa de mapa y lugares
+
+Hasta aquí la unidad atómica ha sido el Plan, que es perecedero. La capa de mapa introduce una segunda entidad, persistente y complementaria: el Lugar. Un plan ocurre, pasa y se convierte en aftermovie; un lugar permanece. El Café Victoria sigue ahí mañana aunque el himno de esta noche ya sea pasado. Separar las dos entidades es lo que permite acumular historia, prueba social y comunidad alrededor de un sitio físico, y es el puente natural hacia las cuentas de negocio.
+
+### El Lugar como entidad
+
+Un Lugar es un punto geográfico persistente con página propia. Hay dos clases:
+
+- Lugares de negocio: bares, restaurantes, locales, salas —reclamables por su dueño y vinculables a una cuenta de empresa verificada.
+- Lugares públicos o geográficos: una playa, un mirador, un parque, un paseo —no son de nadie, no se reclaman, pero existen como anclas de rituales (el atardecer de Torimbia, la quedada de surf del amanecer).
+
+La página de un lugar agrega todo lo que ya define el producto, anclado a coordenadas: sus planes próximos, sus anclas recurrentes, su feed de aftermovies por hashtag (#himnovictoria), las stories en vivo de quien está ahí ahora mismo, y —en los lugares de negocio— la reputación y las reseñas. El lugar es, en la práctica, el hogar permanente de cada ancla recurrente que ya mencionaba la organización por hashtags, ahora con domicilio en el mapa.
+
+### El mapa como superficie de descubrimiento
+
+El mapa es la tercera forma de descubrir, junto al feed de Vividas y la pestaña Disponibles, y la más potente cuando el usuario está físicamente en un destino. Resuelve la pregunta "qué hay cerca de mí ahora". Sobre él conviven dos capas que se corresponden con las dos entidades: los planes perecederos (pines con cuenta atrás, plazas y quién va) y los lugares permanentes (pines de sitios con sus anclas e historial). Encima, la capa del "ahora mismo": stories en vivo que afloran en el mapa como prueba social inmediata —hay gente en el rooftop ahora—, coherente con el alma de inmediatez de las stories.
+
+El mapa hereda los mismos filtros que Disponibles (tamaño de grupo, tema, fecha, precio, edad) y respeta la densidad dinámica: más útil y más denso cuando estás en un sitio con inventario vivo, más de inspiración cuando navegas desde casa. Los planes de lugar secreto aparecen como zona aproximada, con la ubicación exacta revelada tras el desvelo de pago o poco antes del evento, sin romper el mecanismo de exclusividad ya definido.
+
+Ventaja de confianza en el mapa: un plan anclado a un local conocido y responsable se lee como de menor riesgo que el de un punto privado de un desconocido. El mapa hace visible esa diferencia y funciona como rampa segura para quien se estrena —ve sitios públicos, con negocio que responde, antes de atreverse con planes íntimos.
+
+### Reclamar tu local
+
+Un lugar de negocio puede existir en el mapa antes de que su dueño llegue a la app: sembrado al capturar un ritual recurrente, o generado por la actividad de los usuarios. "Reclamar tu local" es el flujo por el que un negocio toma posesión de esa página y la convierte en su perfil oficial.
+
+Paso 1 — Encontrar o crear el lugar. El negocio busca su local en el mapa. Si ya existe (porque la app capturó su ancla o los usuarios lo referenciaron), lo reclama; si no, lo crea.
+
+Paso 2 — Verificación de negocio. Es distinta de la verificación de identidad personal: comprueba que quien reclama representa al negocio (por ejemplo, datos fiscales, prueba de titularidad o validación del domicilio). Otorga el distintivo de negocio verificado, que evita la suplantación: solo puede haber un perfil oficial por local ("este es el perfil oficial de la Vermutería Victoria").
+
+Paso 3 — Ficha del lugar. La cuenta de empresa rellena los campos propios ya previstos: horario, dirección, categoría, web, enlace de reserva y sus varios planes recurrentes. La ficha queda diferenciada en el feed y en el mapa para que el usuario sepa que es un plan oficial de un local, no una quedada espontánea de un particular.
+
+Paso 4 — Toma de control del histórico. Al reclamar, el negocio hereda lo que el lugar ya había acumulado —su hashtag, sus aftermovies, sus reseñas—, de modo que no parte de cero: recupera la prueba social que su ritual ya generaba en la app.
+
+Una vez reclamado, el lugar vive dentro del modelo en capas de cuentas de negocio que ya está definido: listado gratuito de base (publicar es gratis, no se cobra por publicación, para no penalizar la frecuencia de las anclas), cobro por valor entregado (comisión del 15% en los planes de pago y CPA por asistente confirmado que llega vía la app en los gratuitos), y suscripción de herramientas (analíticas, programación de planes recurrentes, varios locales, integración de reservas y presencia de marca). Las anclas recurrentes hospedadas por el local —el himno de las diez— son el caso de uso central de esta capa: llenan el feed gratis, dan afluencia al negocio, y son lo más ejecutable de monetizar desde el día uno vendiendo cuentas verificadas a hostelería.
+
+### Lugares públicos no reclamables
+
+Los lugares geográficos sin dueño —la playa, el mirador— no se reclaman, pero siguen siendo anclas valiosas: hospedan rituales gratuitos (Nivel 1) y acumulan su propio feed por hashtag. No tienen perfil de negocio ni cobro asociado; su moderación y su mantenimiento recaen en la plataforma y en la comunidad. Son liquidez pura: contenido y quedadas sin coste ni titular, justo el activo que diferencia el producto de un marketplace de entradas.
+
 ## Capa de ligar (en standby)
 
 Aparcada para el lanzamiento, apuntada para más adelante. Diseño cuando se active: opt-in, apagada por defecto, invisible salvo que el usuario la encienda, y con control de visibilidad por usuario (pública, privada, oculta). Cada usuario decide si la quiere accesible o si ni le aparece.
