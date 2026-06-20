@@ -76,9 +76,16 @@ Taxonomía actualizable. Las categorías no se hard-codean. Estructura propuesta
 
 Modelo de cobro tipo Booking (escrow). La plataforma cobra el evento, retiene el pago y lo libera al organizador después de que el evento se celebre. Si no se celebra, se reembolsa a los usuarios. Esto elimina el fraude del organizador que cobra y no aparece, y protege al usuario.
 
+Política de cancelación y reembolso. Sobre el escrow se montan reglas claras, mostradas siempre antes de reservar:
+
+- Cancelación del asistente, por niveles que elige el organizador al publicar (estilo Booking): flexible (reembolso íntegro hasta 24 h antes), moderada (íntegro hasta 48 h antes, 50% entre 48 y 24 h, sin reembolso dentro de 24 h) y estricta, para experiencias con coste de producción (íntegro hasta 7 días antes, después sin reembolso). Los umbrales concretos son ajustables.
+- Cancelación o no-show del anfitrión, o evento no celebrado: reembolso íntegro a todos los asistentes desde el escrow, con independencia de la política del plan, porque el dinero no llega al organizador hasta después del evento. El anfitrión sufre penalización de reputación; la reiteración retira su capacidad de organizar y, si hubo fraude, el pago se retiene y entra en la vía de moderación.
+- Mínimo de grupo no alcanzado: si a la hora de corte el plan no llega a su tamaño mínimo, se cancela automáticamente y se reembolsa íntegro.
+- Desvelo en planes gratuitos saturados o especiales: si el evento no se celebra, el micropago se reembolsa; si el usuario no se presenta, no se reembolsa, que es justo su función de filtro de compromiso.
+
 Comisión sobre experiencias de pago. 15% propio, en el extremo bajo del rango de mercado 15-30% (Fever cobra en ese rango). Se elige el suelo del rango como palanca de captación de oferta: un 15% es más atractivo para organizadores y locales que la comisión de los marketplaces grandes, baja la barrera de entrada de la oferta de pago en el arranque y deja margen para subir más adelante si el producto lo justifica. Es la fuente principal de ingresos, concentrada en el Nivel 3.
 
-Micropago de desvelo (1-2 €), solo plataforma. No es un peaje sobre planes gratis. Se aplica únicamente a planes de la plataforma de dos tipos: saturados o de mucha demanda, y planes muy especiales donde el secreto es parte del producto (lugar secreto, ubicación revelada poco antes). En planes de pago, el desvelo se integra en el flujo de reserva escrow. En planes gratuitos saturados, el micropago funciona además como filtro suave de compromiso: solo paga quien de verdad va a ir.
+Micropago de desvelo (1-2 €), solo plataforma. No es un peaje sobre planes gratis. Se aplica únicamente a eventos exclusivos, especiales o saturados: planes de mucha demanda y planes muy especiales donde el secreto es parte del producto (lugar secreto, ubicación revelada poco antes). Si el plan es de pago, no hay micropago de desvelo: la ubicación forma parte de la reserva y se gestiona dentro del flujo escrow. En planes gratuitos saturados o especiales, el micropago funciona además como filtro suave de compromiso: solo paga quien de verdad va a ir.
 
 Fuentes de ingreso, resumidas: comisión de experiencias de pago (principal), micropago de desvelo en planes especiales/saturados, las capas de cuenta de negocio (CPA por asistente confirmado y suscripción de herramientas, ver sección propia) y, a futuro, la publicidad (espacios destacados o patrocinados de marcas y locales). Los planes gratuitos de usuario no generan ingreso directo: su trabajo es crear la red, el contenido y la retención.
 
@@ -278,7 +285,7 @@ Un Lugar es un punto geográfico persistente con página propia. Hay dos clases:
 - Lugares de negocio: bares, restaurantes, locales, salas —reclamables por su dueño y vinculables a una cuenta de empresa verificada.
 - Lugares públicos o geográficos: una playa, un mirador, un parque, un paseo —no son de nadie, no se reclaman, pero existen como anclas de rituales (el atardecer de Torimbia, la quedada de surf del amanecer).
 
-La página de un lugar agrega todo lo que ya define el producto, anclado a coordenadas: sus planes próximos, sus anclas recurrentes, su feed de aftermovies por hashtag (#himnovictoria), las stories en vivo de quien está ahí ahora mismo, y —en los lugares de negocio— la reputación y las reseñas. El lugar es, en la práctica, el hogar permanente de cada ancla recurrente que ya mencionaba la organización por hashtags, ahora con domicilio en el mapa.
+La página de un lugar agrega todo lo que ya define el producto, anclado a coordenadas: sus planes próximos, sus anclas recurrentes, su feed de aftermovies por hashtag (#himnovictoria), las stories en vivo de quien está ahí ahora mismo, y —en los lugares de negocio— la reputación y las reseñas. Esa reputación del lugar no es un sistema de reseñas aparte: la página agrega las reseñas de sus planes y de sus anfitriones, de modo que la valoración del local emerge de los eventos que realmente hospeda, no de opiniones sueltas sobre el sitio. El lugar es, en la práctica, el hogar permanente de cada ancla recurrente que ya mencionaba la organización por hashtags, ahora con domicilio en el mapa.
 
 ### El mapa como superficie de descubrimiento
 
