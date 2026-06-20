@@ -6,9 +6,13 @@ funcionando*, no es código de producción.
 
 ## Cómo previsualizarlo
 
-**Opción rápida (sin servidor):** abre `index.html` directamente en el navegador
-(doble clic, o `File ▸ Abrir`). Al ser todo estático y sin `fetch`, funciona con
-`file://`.
+**Opción más simple (un solo archivo):** abre `standalone.html` directamente en el
+navegador. Lleva TODO en línea (HTML + CSS + datos + JS), sin archivos externos, así
+que funciona con `file://` sin ninguna dependencia ni servidor.
+
+**Opción multi-archivo:** abre `index.html` (usa `styles.css`, `data.js`, `app.js`).
+También funciona con `file://` porque no usa `fetch`; los datos se exponen además en
+`window` para no depender del scope compartido entre `<script>`.
 
 **Opción recomendada (servidor local):** desde esta carpeta,
 

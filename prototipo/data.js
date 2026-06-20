@@ -122,3 +122,9 @@ const REVIEWS = [
 const getPlace = (id) => PLACES.find((p) => p.id === id);
 const getPlan  = (id) => PLANS.find((p) => p.id === id);
 const getCategory = (id) => CATEGORIES.find((c) => c.id === id);
+
+// Exponer explícitamente en window: garantiza que app.js (otro <script>) y los
+// manejadores inline encuentren los datos, sin depender del scope léxico compartido.
+if (typeof window !== 'undefined') {
+  Object.assign(window, { CATEGORIES, PLACES, PLANS, AFTERMOVIES, REVIEWS, getPlace, getPlan, getCategory });
+}

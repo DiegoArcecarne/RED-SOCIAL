@@ -339,4 +339,7 @@ function init(){
   window.addEventListener('hashchange', router);
   router();
 }
-document.addEventListener('DOMContentLoaded', init);
+// Arranca aunque el DOM ya esté listo (evita perder el evento si el script se
+// evalúa después de DOMContentLoaded).
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
