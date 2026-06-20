@@ -329,6 +329,73 @@ Expansión: Burgos y Llanes después, con el playbook probado. Burgos como ciuda
 
 Fever, en paralelo y por fases. Primero relación vía programa de afiliados (puerta de entrada). Después integración vía API transaccional para nutrir la pestaña de pago con inventario Fever reservable in-app y comisión compartida. El producto debe estar definido y, idealmente, con audiencia demostrable antes de la conversación seria de API. El activo propio que no depende de Fever: el grafo social, la comunidad, el motor de aftermovies y las anclas recurrentes gratuitas.
 
+## Modelo de datos: entidades y relaciones
+
+Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema final de base de datos, sino el mapa de entidades y sus relaciones, para fijar el vocabulario y detectar huecos antes de implementar. Se agrupan por dominio.
+
+### Identidad y cuenta
+
+- Usuario. Entidad raíz. Atributos: id, tipo (particular o empresa), nombre, usuario (handle único), email, teléfono, hash de contraseña, fecha de nacimiento (gate 18+), idioma de la app, foto, biografía, ciudad o ubicación actual (opcional), idiomas hablados, intereses y categorías favoritas, perfil público o privado, modo de recepción de DMs (cerrado / bajo solicitud / abierto, por defecto bajo solicitud), permisos (quién puede seguirte, escribirte, unirse a tus planes), reputación por estrellas (agregada), índice de fiabilidad (nº de no-shows, agregado, sin detalle de eventos), fecha de alta. Derivados: contadores de seguidores/seguidos, historial de planes.
+- Cuenta de empresa. Especialización de Usuario con tipo = empresa. Campos propios: razón/nombre comercial, horario, dirección, categoría de negocio, web, enlace de reserva, distintivo de negocio verificado. Se vincula a uno o varios Lugares.
+- Verificación de identidad. Atributos: usuario_id, proveedor, estado, referencias de documento y selfie, fecha, distintivo resultante. Es la barrera del primer plan; protege a la comunidad.
+- Verificación de negocio. Atributos: cuenta_empresa_id, prueba de titularidad/datos fiscales, estado, distintivo. Distinta de la de identidad personal.
+- Configuración de seguridad. 2FA (método: SMS / TOTP / email), y Sesión/Dispositivo (usuario_id, dispositivo, ubicación, última actividad, cierre remoto).
+- Consentimiento. usuario_id, tipo (términos, privacidad, edad, código de conducta, ubicación, datos de verificación, pagos), versión, fecha. Soporta el cumplimiento RGPD y los consentimientos separados.
+
+### Grafo social
+
+- Seguimiento. seguidor_id, seguido_id, estado (activo o pendiente de aprobación si el perfil seguido es privado), fecha. Es asimétrico: la relación inversa no es obligatoria.
+- Bloqueo. bloqueador_id, bloqueado_id, fecha. Implica no ver, no escribir y no poder unirse a planes del otro.
+
+### Lugar
+
+- Lugar. id, tipo (negocio o público/geográfico), nombre, coordenadas, dirección, categoría, hashtag asociado, estado (reclamado o no), propietario (cuenta_empresa_id, nulo en los públicos), campos de negocio cuando aplica (horario, web, enlace de reserva). Agrega —no almacena aparte— planes próximos, anclas recurrentes, aftermovies por hashtag y reseñas (heredadas de sus planes y anfitriones). Los públicos no reclamables no tienen propietario ni cobro.
+
+### Plan y participación
+
+- Plan. id, tipo (social gratuito o experiencia de pago), nivel (1 ancla recurrente / 2 usuario gratuito / 3 pago curado), anfitrión_id (Usuario o Cuenta de empresa, verificado), lugar_id o ubicación libre, ubicación oculta (bool) con zona aproximada, categoría, título, descripción, media (post foto/vídeo), fecha y hora, recurrencia (puntual o regla de recurrencia), tamaño mínimo y máximo, precio (nulo si gratuito), desvelo (importe, solo eventos especiales/saturados no de pago), requisitos de asistente (edad mínima, idioma, fiabilidad mínima, aprobación manual, presentación requerida), política de cancelación (flexible / moderada / estricta), estado (próximo / en curso / pasado), hashtag, fecha de creación. Derivado: apuntados ahora.
+- Inscripción. Relación Usuario–Plan para la participación. plan_id, usuario_id, estado (solicitada, aprobada, confirmada, en lista de espera, cancelada, asistió, no-show), reconfirmación del día (bool), pago_id (nulo en planes gratuitos), fecha. Es la entidad donde viven la lista de espera con sobreasignación y la reconfirmación.
+- Pago. id, inscripción_id, usuario_id, importe, comisión (15% en planes de pago), tipo (reserva de evento, desvelo, boost de publicidad, suscripción, CPA), estado de escrow (retenido, liberado, reembolsado), método de pago, fecha de liberación, fecha de reembolso. Centraliza el modelo escrow y las reglas de cancelación.
+- Reseña. id, plan_id, autor_id, sujeto_id (anfitrión o asistente reseñado), estrellas, texto, fecha. Post-plan. Alimenta la reputación del usuario y, agregada, la del lugar.
+
+### Contenido
+
+- Aftermovie. Post permanente. id, plan_id de origen, autor_id, media, hashtag(s), visibilidad (según perfil), fecha. Vive en la pestaña Vividas.
+- Story. Efímera (24 h). id, autor_id, plan_id (opcional), media, visibilidad (público / privado / mejores amigos), fecha de expiración. Vive en la pestaña Stories y puede aflorar destacada en Vividas.
+- Mención. id, contenido_id (plan, story o aftermovie), usuario_mencionado_id, estado (pendiente, aceptada, rechazada). No se vincula al perfil hasta aceptarse; alimenta la pestaña Menciones.
+- Hashtag. id, texto, lugar_id o ancla asociada (opcional). Agrupa aftermovies y organiza el histórico.
+
+### Mensajería
+
+- Conversación. id, tipo (chat de plan grupal o DM 1:1), plan_id (si es chat de plan), participantes, estado. El chat de plan se crea al publicar.
+- Mensaje. id, conversación_id, autor_id, texto, media, estado (solicitud o aceptado — soporta el único mensaje de presentación y los modos de recepción), leído, fecha.
+
+### Seguridad presencial y moderación
+
+- Contacto de confianza. usuario_id, datos del contacto, plan compartido (opcional). Soporta "compartir tu plan" y los recordatorios.
+- Evento de seguridad. usuario_id, plan_id, tipo (check-in "he llegado bien" o SOS), ubicación, fecha.
+- Reporte. id, reportante_id (anónimo frente al reportado), objeto (tipo: plan / usuario / mensaje / contenido / comportamiento en evento; objeto_id), categoría, detalle, evidencia, gravedad, estado (en cola, en revisión, resuelto, escalado), fecha.
+- Acción de moderación. id, objeto, tipo (aviso, retirada de contenido, reducción de alcance, suspensión, bloqueo permanente, retirada de capacidad de organizar, retención de escrow), motivo, apelable (bool), fecha.
+
+### Monetización avanzada (fase 2)
+
+- Suscripción de negocio. cuenta_empresa_id, tarifa, estado, periodo. Da acceso al panel de herramientas.
+- Campaña / Boost. anunciante_id, tipo (campaña de marca o boost de un plan), plan_promocionado_id (en boost), segmentación (ubicación, intereses, edad, categoría), presupuesto, puja, estado, métricas. El plan patrocinado reutiliza el hueco de inyección orgánica.
+
+### Soporte transversal
+
+- Categoría. id, nombre, estado (activa, fusionada, jubilada). Taxonomía actualizable; no se hard-codea.
+- Notificación. usuario_id, tipo (planes cerca, recordatorio/reconfirmación, mensaje, nuevo seguidor, actualización de plan seguido), payload, leída, fecha.
+
+### Relaciones clave, de un vistazo
+
+- Un Usuario sigue a muchos Usuarios (Seguimiento, asimétrico) y puede bloquear a muchos (Bloqueo).
+- Una Cuenta de empresa es dueña de uno o varios Lugares; un Lugar tiene como mucho un propietario (o ninguno, si es público).
+- Un Lugar hospeda muchos Planes; un Plan ocurre en un Lugar (o ubicación libre).
+- Un Plan tiene un anfitrión (Usuario o Empresa) y muchas Inscripciones; cada Inscripción enlaza un Usuario con un Plan y, si es de pago, con un Pago.
+- Un Plan pasado genera un Aftermovie y abre Reseñas; las Reseñas alimentan la reputación del Usuario y, agregadas, la del Lugar.
+- Un Reporte apunta a cualquier objeto (Plan, Usuario, Mensaje, Contenido, comportamiento en evento) y puede derivar en Acciones de moderación.
+
 ## Decisiones abiertas
 
 - Taxonomía inicial concreta de categorías (la propuesta de arriba es punto de partida).
