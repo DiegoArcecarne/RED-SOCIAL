@@ -217,6 +217,56 @@ Transparencia y apelación. Al usuario sancionado se le notifica la acción y el
 
 Señales proactivas que reducen la necesidad de moderar a posteriori: identidad verificada, reputación e índice de fiabilidad visibles, valoraciones de anfitriones, reseñas de planes y la reconfirmación del día, que evita recuentos de asistentes falsos.
 
+## Flujo de onboarding
+
+El principio rector es fricción mínima al entrar y verificación donde de verdad importa. Registrarse, navegar y seguir no exigen verificar identidad; esa barrera se levanta justo antes del primer plan. Así no se ahuyenta al curioso en la puerta, pero se mantiene la confianza en el momento en que hay un encuentro real en juego.
+
+Paso 1 — Bienvenida sin pedir nada. La primera pantalla comunica el posicionamiento —planes y gente con quien vivirlos, no una app de ligar— y deja ver valor antes de pedir datos. Cero formularios por delante de la propuesta.
+
+Paso 2 — Registro y seguridad de acceso. Alta por email o teléfono con contraseña, o login social. Verificación de email y teléfono por código (OTP) en el alta. La verificación en dos pasos (2FA) se ofrece aquí pero no se obliga; vive en Seguridad y protege la cuenta, no a la comunidad.
+
+Paso 3 — Edad y aceptación legal. Confirmación de edad (18+, no negociable) y aceptación en bloque de términos, política de privacidad y código de conducta. Los consentimientos sensibles —ubicación, datos de verificación de identidad, pagos— se piden separados y de forma contextual cuando se necesitan, no todos de golpe aquí.
+
+Paso 4 — Creación de perfil. Usuario y nombre, foto, biografía, idiomas y ciudad o ubicación actual (opcional). Es el perfil público sujeto a la configuración de privacidad.
+
+Paso 5 — Intereses y descubrimiento. El usuario elige sus categorías favoritas de la taxonomía y, opcionalmente, rango de edad preferido, radio geográfico e idioma de los planes. Esto alimenta el ranking por afinidad desde el primer scroll, para que el feed no arranque en frío.
+
+Paso 6 — Ubicación (contextual). Se pide permiso de ubicación explicando para qué: planes cerca de ti y densidad dinámica de inyección. Es un consentimiento separado y rechazable; sin él la app funciona, solo pierde la capa "cerca de mí".
+
+Paso 7 — Siembra del grafo asimétrico. Aquí el grafo asimétrico hace un trabajo que un modelo de amistad simétrica no podría: como seguir es unidireccional y no requiere aprobación, el onboarding sugiere a quién seguir —anclas recurrentes de tu ciudad, locales y anfitriones verificados, perfiles destacados— y el usuario sale ya siguiendo cosas, con un toque y sin esperar reciprocidad. El resultado es que la pestaña Vividas aterriza poblada desde el minuto cero. La siembra de anclas recurrentes y el grafo asimétrico se combinan justo aquí para matar la pantalla vacía.
+
+Paso 8 — Aterrizaje. El usuario llega a Vividas, ya con contenido afín y gente a la que sigue. La verificación de identidad todavía no se ha pedido: puede explorar, seguir, ver stories y planes públicos. La barrera aparece en el siguiente gesto con consecuencia presencial.
+
+## Verificación de identidad: la barrera del primer plan
+
+La comprobación de documento y selfie no va en el alta, va como puerta justo cuando el usuario intenta unirse a su primer plan o publicar uno. En ese momento se lanza el flujo de verificación, que otorga el distintivo de verificado y queda ya hecho para siempre. Esto separa con claridad las dos capas: el 2FA protege el acceso a la cuenta; la verificación de identidad protege a la comunidad y condiciona la participación en encuentros reales. La exigencia se gradúa luego por tamaño de grupo: más rigor de verificación y reputación en planes pequeños e íntimos, más holgura en los grandes.
+
+## Flujo de publicación de un plan
+
+Caso base: un particular publica un plan social gratuito (Nivel 2). Se anotan las variaciones para anclas recurrentes (Nivel 1) y experiencias de pago (Nivel 3).
+
+Prerrequisito — Identidad verificada. Publicar exige el distintivo de verificado, porque el anfitrión responde del plan. Si el usuario no está verificado, el botón de crear dispara primero el flujo de verificación.
+
+Paso 1 — Tipo de plan. Social gratuito o experiencia de pago. Las cuentas de empresa ven además la opción de ancla recurrente con programación.
+
+Paso 2 — El media primero. Se sube el post —foto o vídeo— que representa el plan, porque es la unidad de contenido que vivirá en el feed y, más tarde, el germen del aftermovie. El plan se construye alrededor de su imagen, no al revés.
+
+Paso 3 — Título, descripción y categoría. Texto del plan y una categoría de la taxonomía actualizable, que alimenta filtros y ranking.
+
+Paso 4 — Ubicación, fecha y hora. Dirección sobre mapa y franja horaria. Recurrencia: puntual o ancla recurrente. La ubicación es visible por defecto; el plan con ubicación oculta y desvelo de pago (micropago de 1-2 €) es exclusivo de planes de plataforma especiales o saturados, no del publicador particular corriente.
+
+Paso 5 — Tamaño de grupo. Mínimo, máximo y, en vivo, apuntados ahora. Es el eje de primer nivel y, además, regula la confianza: al fijar un grupo pequeño, el sistema sube la exigencia de verificación y reputación y habilita la aprobación manual de asistentes.
+
+Paso 6 — Requisitos de asistentes. Edad (que hereda los límites legales de la jurisdicción si el plan es de ocio nocturno), idioma y, en planes especiales o saturados, umbral de fiabilidad mínimo. En planes pequeños, el anfitrión puede exigir una breve presentación y aprobar quién entra.
+
+Paso 7 — Precio y cobro (solo Nivel 3). Si es de pago, se fija precio y entra el modelo escrow tipo Booking: la plataforma cobra, retiene y libera al organizador tras celebrarse el evento, con reembolso si no se celebra. La comisión propia es del 15%.
+
+Paso 8 — Revisión y moderación en la subida. Antes de publicar, la capa automática analiza media y texto (desnudos, violencia, odio, amenazas, patrones de estafa) y señales de fraude o duplicado. Lo de alta confianza se retiene; el resto se publica.
+
+Paso 9 — Publicación y distribución. El plan entra en estado Próximo: aparece en Disponibles (filtrable) y se inyecta contextualmente en Vividas de usuarios afines y cercanos. Y aquí el grafo asimétrico vuelve a trabajar: los seguidores del anfitrión reciben el plan sin que él tenga que seguirlos de vuelta, así que un buen anfitrión o un local acumula audiencia unidireccional y su alcance crece edición tras edición. Es distribución de creador a audiencia, no de amigos mutuos. Al publicar se crea el chat de plan grupal.
+
+Ciclo de vida después de publicar. En estado Próximo el plan muestra cuenta atrás, plazas restantes y quién va; el día del evento se dispara la reconfirmación y la lista de espera con sobreasignación para que el recuento sea honesto. Durante el plan en marcha viven el chat grupal y las herramientas de seguridad presencial (contacto de confianza, check-in de "he llegado bien", botón SOS, reporte desde el propio chat). Al terminar, el plan pasa a estado Pasado: su media se convierte en aftermovie permanente en Vividas, organizado por su hashtag, que vende la siguiente edición; y se abren las reseñas post-plan por estrellas a anfitrión y asistentes, que actualizan la reputación visible y el índice de fiabilidad agregado.
+
 ## Capa de ligar (en standby)
 
 Aparcada para el lanzamiento, apuntada para más adelante. Diseño cuando se active: opt-in, apagada por defecto, invisible salvo que el usuario la encienda, y con control de visibilidad por usuario (pública, privada, oculta). Cada usuario decide si la quiere accesible o si ni le aparece.
