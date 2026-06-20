@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="color-scheme" content="dark" />
   <title>Prototipo · App de planes</title>
   <meta name="description" content="Prototipo visual navegable de la app de planes (basado en PRODUCTO.md)." />
   <link rel="stylesheet" href="styles.css" />
@@ -12,12 +13,9 @@
     <!-- Cabecera -->
     <header class="appbar">
       <div class="brand">
-        <div class="logo">◆</div>
-        <div>
-          <h1>planes</h1>
-          <div class="tag">Descubre un plan y la gente para hacerlo</div>
-        </div>
-        <span class="placeholder-pill">marca provisional</span>
+        <h1>planes</h1>
+        <span class="spacer"></span>
+        <span class="tag">prototipo</span>
       </div>
       <div id="appbar-tabs">
         <nav class="content-tabs">
@@ -46,8 +44,14 @@
 
     <!-- Navegación inferior -->
     <nav class="tabbar">
-      <button data-nav="feed" class="active"><span class="ic">🧭</span>Descubrir</button>
-      <button data-nav="mapa"><span class="ic">🗺️</span>Mapa</button>
+      <button data-nav="feed" class="active">
+        <i class="ico"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.4"/></svg></i>
+        Descubrir
+      </button>
+      <button data-nav="mapa">
+        <i class="ico"><svg viewBox="0 0 24 24"><path d="M9 4 3.5 6.2v13.6L9 17.6l6 2.2 5.5-2.2V3.9L15 6.1z"/><path d="M9 4v13.6M15 6.1v13.7"/></svg></i>
+        Mapa
+      </button>
     </nav>
 
     <div id="toast" class="toast"></div>
