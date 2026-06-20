@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Prototipo (standalone) · App de planes</title>
+  <meta name="description" content="Prototipo visual navegable de la app de planes (basado en PRODUCTO.md)." />
+  <style>
+/* =========================================================================
+   Prototipo visual — App de planes. Mobile-first, vanilla CSS.
+   ========================================================================= */
+:root{
+  --bg:#0f1020;
+  --surface:#ffffff;
+  --ink:#1a1b2e;
+  --ink-soft:#5b5d72;
+  --line:#ececf1;
+  --brand:#ff5a5f;
+  --brand-2:#7b2ff7;
+  --accent:#13c296;
+  --warn:#f5a623;
+  --radius:18px;
+  --shadow:0 8px 24px rgba(20,18,45,.10);
+  --shadow-soft:0 2px 10px rgba(20,18,45,.06);
+  --maxw:430px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:linear-gradient(160deg,#15162b,#241a3a);
+  color:var(--ink);
+  display:flex;justify-content:center;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* Marco tipo móvil */
+.phone{
+  position:relative;width:100%;max-width:var(--maxw);min-height:100vh;
+  background:#f6f6f9;display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 0 60px rgba(0,0,0,.35);
+}
+@media(min-width:480px){
+  .phone{margin:24px 0;min-height:calc(100vh - 48px);border-radius:34px}
+}
+
+/* Cabecera */
+.appbar{
+  position:sticky;top:0;z-index:20;
+  background:rgba(246,246,249,.92);backdrop-filter:blur(10px);
+  padding:14px 18px 8px;border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:8px}
+.brand .logo{
+  width:30px;height:30px;border-radius:9px;flex:none;
+  background:linear-gradient(135deg,var(--brand),var(--brand-2));
+  display:grid;place-items:center;color:#fff;font-size:16px;
+}
+.brand h1{font-size:19px;letter-spacing:-.4px}
+.brand .tag{font-size:11px;color:var(--ink-soft);margin-top:1px}
+.placeholder-pill{
+  margin-left:auto;font-size:10px;color:var(--ink-soft);
+  border:1px dashed #c9cad6;border-radius:999px;padding:3px 8px;
+}
+
+/* Pestañas de contenido (Vividas / Disponibles / Stories / Menciones) */
+.content-tabs{display:flex;gap:18px;margin-top:12px;overflow-x:auto;scrollbar-width:none}
+.content-tabs::-webkit-scrollbar{display:none}
+.content-tabs button{
+  background:none;border:none;font-size:14px;font-weight:600;color:var(--ink-soft);
+  padding:6px 0;white-space:nowrap;cursor:pointer;position:relative;
+}
+.content-tabs button.active{color:var(--ink)}
+.content-tabs button.active::after{
+  content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:3px;
+  background:linear-gradient(90deg,var(--brand),var(--brand-2));
+}
+
+/* Zona scrollable */
+.view{flex:1;overflow-y:auto;padding:16px 16px 96px}
+.view.hidden{display:none}
+.section-title{font-size:13px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;margin:6px 2px 12px}
+
+/* Filtros */
+.filters{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.seg{display:flex;background:#ececf3;border-radius:12px;padding:4px;gap:4px}
+.seg button{
+  flex:1;border:none;background:none;padding:8px 6px;border-radius:9px;font-size:12.5px;
+  font-weight:600;color:var(--ink-soft);cursor:pointer;transition:.15s;
+}
+.seg button.active{background:#fff;color:var(--ink);box-shadow:var(--shadow-soft)}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:none;border:1px solid var(--line);background:#fff;border-radius:999px;
+  padding:7px 13px;font-size:13px;font-weight:600;color:var(--ink-soft);cursor:pointer;
+  display:flex;align-items:center;gap:6px;transition:.15s;
+}
+.chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* Tarjeta de plan */
+.plan-card{
+  background:var(--surface);border-radius:var(--radius);overflow:hidden;
+  box-shadow:var(--shadow);margin-bottom:16px;cursor:pointer;transition:transform .12s;
+}
+.plan-card:active{transform:scale(.985)}
+.plan-cover{
+  height:140px;position:relative;display:flex;align-items:flex-end;
+  padding:12px;color:#fff;
+}
+.plan-cover .emoji{position:absolute;top:12px;right:14px;font-size:34px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.badge{
+  font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;
+  background:rgba(255,255,255,.22);backdrop-filter:blur(4px);color:#fff;
+  display:flex;align-items:center;gap:4px;
+}
+.badge.free{background:rgba(19,194,150,.95)}
+.badge.paid{background:rgba(0,0,0,.45)}
+.badge.anchor{background:rgba(245,166,35,.95)}
+.badge.secret{background:rgba(0,0,0,.55)}
+.plan-body{padding:13px 14px 15px}
+.plan-title{font-size:16.5px;font-weight:700;letter-spacing:-.3px;line-height:1.25}
+.plan-meta{display:flex;align-items:center;gap:7px;margin-top:7px;color:var(--ink-soft);font-size:13px;flex-wrap:wrap}
+.plan-meta .dot{width:3px;height:3px;border-radius:50%;background:#c9cad6}
+.host-row{display:flex;align-items:center;gap:8px;margin-top:12px}
+.avatar{
+  width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-size:11px;font-weight:700;color:#fff;background:linear-gradient(135deg,#7b2ff7,#ff5a5f);
+}
+.host-name{font-size:13px;font-weight:600}
+.verified{color:var(--brand-2);font-size:13px}
+.stars{color:var(--warn);font-size:12.5px;margin-left:auto;font-weight:700}
+
+/* Barra de plazas / tamaño de grupo */
+.group-bar{margin-top:12px}
+.group-bar .track{height:7px;border-radius:99px;background:#ececf3;overflow:hidden}
+.group-bar .fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--brand-2))}
+.group-bar .lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);margin-top:6px;font-weight:600}
+.countdown{color:var(--brand);font-weight:700}
+
+/* Vividas (aftermovies) */
+.after-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.after-card{border-radius:16px;overflow:hidden;box-shadow:var(--shadow-soft);cursor:pointer;background:#fff}
+.after-cover{height:150px;display:flex;align-items:flex-end;padding:10px;color:#fff;position:relative}
+.after-cover .emoji{position:absolute;top:8px;right:10px;font-size:26px}
+.after-cover .h{font-size:12px;font-weight:700;background:rgba(0,0,0,.3);padding:3px 7px;border-radius:8px}
+.after-foot{padding:9px 10px;font-size:12px;color:var(--ink-soft);display:flex;justify-content:space-between;align-items:center}
+
+/* Aviso de inyección de plan en el feed Vividas */
+.injected-note{font-size:11px;color:var(--ink-soft);text-align:center;margin:4px 0 12px;font-weight:600}
+
+/* Placeholder de pestañas no implementadas */
+.empty-tab{text-align:center;color:var(--ink-soft);padding:60px 24px}
+.empty-tab .big{font-size:40px;margin-bottom:10px}
+.empty-tab h3{color:var(--ink);font-size:17px;margin-bottom:6px}
+.empty-tab p{font-size:13.5px;line-height:1.5}
+
+/* ===================== MAPA ===================== */
+.map-wrap{margin:-16px -16px 0;position:relative}
+.map{
+  position:relative;height:62vh;min-height:380px;overflow:hidden;
+  background:
+    linear-gradient(rgba(20,18,45,.04),rgba(20,18,45,.04)),
+    repeating-linear-gradient(0deg,#e9eaf2 0 38px,#eef0f6 38px 39px),
+    repeating-linear-gradient(90deg,#e9eaf2 0 38px,#eef0f6 38px 39px),
+    #eef0f6;
+}
+.map::before{ /* "río" / avenida diagonal */
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(115deg,transparent 44%,#d9e8ff 44% 52%,transparent 52%);
+  opacity:.8;
+}
+.map::after{ /* zona verde */
+  content:"";position:absolute;width:140px;height:120px;right:8%;bottom:10%;
+  background:#cfeccd;border-radius:40% 50% 45% 55%;opacity:.85;
+}
+.pin{
+  position:absolute;transform:translate(-50%,-100%);cursor:pointer;z-index:3;
+  display:flex;flex-direction:column;align-items:center;transition:.15s;
+}
+.pin:active{transform:translate(-50%,-100%) scale(.92)}
+.pin .dot{
+  width:38px;height:38px;border-radius:50% 50% 50% 6px;transform:rotate(45deg);
+  background:linear-gradient(135deg,var(--brand),var(--brand-2));
+  display:grid;place-items:center;box-shadow:0 6px 14px rgba(20,18,45,.3);border:2.5px solid #fff;
+}
+.pin .dot span{transform:rotate(-45deg);font-size:16px}
+.pin.business .dot{background:linear-gradient(135deg,#13c296,#0a8f6e)}
+.pin.secret .dot{background:linear-gradient(135deg,#33334a,#11111c)}
+.pin .cap{
+  margin-top:6px;font-size:11px;font-weight:700;background:#fff;color:var(--ink);
+  padding:2px 7px;border-radius:8px;box-shadow:var(--shadow-soft);white-space:nowrap;
+}
+.pin.selected .dot{outline:3px solid rgba(123,47,247,.35)}
+.map-hint{
+  position:absolute;top:12px;left:12px;right:12px;z-index:4;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-radius:12px;
+  padding:9px 12px;font-size:12.5px;color:var(--ink-soft);box-shadow:var(--shadow-soft);
+  display:flex;align-items:center;gap:8px;
+}
+.map-legend{position:absolute;bottom:12px;left:12px;z-index:4;display:flex;flex-direction:column;gap:5px}
+.map-legend .row{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--ink);
+  background:rgba(255,255,255,.9);padding:3px 8px;border-radius:8px;box-shadow:var(--shadow-soft)}
+.legend-dot{width:11px;height:11px;border-radius:50%}
+
+/* Hoja inferior del mapa con planes del lugar seleccionado */
+.map-sheet{padding:16px 16px 0}
+.map-sheet h3{font-size:16px;margin-bottom:3px;display:flex;align-items:center;gap:7px}
+.map-sheet .sub{font-size:13px;color:var(--ink-soft);margin-bottom:14px}
+.mini-plan{
+  display:flex;gap:12px;align-items:center;background:#fff;border-radius:14px;padding:10px;
+  margin-bottom:10px;box-shadow:var(--shadow-soft);cursor:pointer;
+}
+.mini-plan .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:22px;color:#fff;flex:none}
+.mini-plan .info{flex:1;min-width:0}
+.mini-plan .t{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-plan .m{font-size:12px;color:var(--ink-soft);margin-top:3px}
+.mini-plan .price{font-size:13px;font-weight:800;color:var(--accent)}
+.mini-plan .price.paid{color:var(--ink)}
+
+/* ===================== DETALLE ===================== */
+.detail-hero{height:230px;position:relative;display:flex;align-items:flex-end;padding:16px;color:#fff;margin:-16px -16px 0}
+.detail-hero .emoji{position:absolute;top:50px;right:20px;font-size:60px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.3))}
+.back-btn{
+  position:absolute;top:14px;left:14px;width:38px;height:38px;border-radius:50%;
+  background:rgba(0,0,0,.4);backdrop-filter:blur(4px);border:none;color:#fff;font-size:18px;cursor:pointer;
+}
+.detail-hero h2{font-size:23px;letter-spacing:-.5px;line-height:1.2;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+.detail-body{padding:18px 2px}
+.kpis{display:flex;gap:10px;margin-bottom:18px}
+.kpi{flex:1;background:#fff;border-radius:14px;padding:12px;box-shadow:var(--shadow-soft);text-align:center}
+.kpi .v{font-size:16px;font-weight:800}
+.kpi .k{font-size:11px;color:var(--ink-soft);margin-top:2px;font-weight:600}
+.kpi .v.cd{color:var(--brand)}
+.block{background:#fff;border-radius:16px;padding:15px;box-shadow:var(--shadow-soft);margin-bottom:14px}
+.block h4{font-size:13px;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-soft);margin-bottom:10px}
+.block p{font-size:14.5px;line-height:1.55}
+.host-card{display:flex;align-items:center;gap:12px}
+.host-card .avatar{width:46px;height:46px;font-size:17px}
+.host-card .meta{flex:1}
+.host-card .meta .n{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px}
+.host-card .meta .s{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
+.trust-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.trust{font-size:11.5px;font-weight:700;background:#f0f0f7;color:var(--ink);padding:5px 10px;border-radius:999px;display:flex;gap:5px;align-items:center}
+.trust.green{background:#e3f7f0;color:#0a8f6e}
+.attendees{display:flex;align-items:center}
+.attendees .avatar{width:34px;height:34px;border:2px solid #fff;margin-left:-9px;font-size:12px}
+.attendees .avatar:first-child{margin-left:0}
+.attendees .more{font-size:13px;color:var(--ink-soft);margin-left:10px;font-weight:600}
+.review{padding:11px 0;border-bottom:1px solid var(--line)}
+.review:last-child{border-bottom:none}
+.review .top{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:3px}
+.review .top .st{color:var(--warn)}
+.review p{font-size:13.5px;color:var(--ink-soft);line-height:1.45}
+.secret-note{display:flex;gap:9px;align-items:flex-start;background:#1a1b2e;color:#fff;border-radius:14px;padding:13px;margin-bottom:14px}
+.secret-note .ic{font-size:20px}
+.secret-note p{font-size:13px;line-height:1.5;opacity:.92}
+.place-link{display:flex;align-items:center;gap:10px;cursor:pointer}
+.place-link .pic{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,#13c296,#0a8f6e);display:grid;place-items:center;color:#fff;font-size:19px;flex:none}
+.place-link .arrow{margin-left:auto;color:var(--ink-soft)}
+
+/* Barra de acción fija del detalle */
+.action-bar{
+  position:sticky;bottom:0;background:rgba(246,246,249,.95);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:12px;margin:0 -16px;
+}
+.action-bar .pr{flex:none}
+.action-bar .pr .v{font-size:19px;font-weight:800}
+.action-bar .pr .k{font-size:11px;color:var(--ink-soft)}
+.btn-join{
+  flex:1;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;
+  background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 6px 16px rgba(123,47,247,.35);
+}
+.btn-join.joined{background:linear-gradient(135deg,#13c296,#0a8f6e);box-shadow:none}
+
+/* Navegación inferior */
+.tabbar{
+  position:absolute;left:0;right:0;bottom:0;height:68px;z-index:30;
+  background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-around;padding-bottom:6px;
+}
+.tabbar button{
+  background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;
+  color:var(--ink-soft);font-size:11px;font-weight:600;cursor:pointer;flex:1;
+}
+.tabbar button .ic{font-size:21px}
+.tabbar button.active{color:var(--brand-2)}
+
+/* Gradientes de portada */
+.g-wine{background:linear-gradient(135deg,#7b2ff7,#b21f66)}
+.g-sunset{background:linear-gradient(135deg,#ff8008,#ff5a5f)}
+.g-grape{background:linear-gradient(135deg,#5b2c8f,#c2185b)}
+.g-dark{background:linear-gradient(135deg,#232336,#0b0b14)}
+.g-forest{background:linear-gradient(135deg,#11998e,#38ef7d)}
+
+/* Toast */
+.toast{
+  position:absolute;left:50%;bottom:86px;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;font-weight:600;
+  opacity:0;pointer-events:none;transition:.25s;z-index:50;box-shadow:var(--shadow);white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <!-- Cabecera -->
+    <header class="appbar">
+      <div class="brand">
+        <div class="logo">◆</div>
+        <div>
+          <h1>planes</h1>
+          <div class="tag">Descubre un plan y la gente para hacerlo</div>
+        </div>
+        <span class="placeholder-pill">marca provisional</span>
+      </div>
+      <div id="appbar-tabs">
+        <nav class="content-tabs">
+          <button data-tab="vividas">Vividas</button>
+          <button data-tab="disponibles" class="active">Disponibles</button>
+          <button data-tab="stories">Stories</button>
+          <button data-tab="menciones">Menciones</button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Vista: Feed / Descubrir -->
+    <main id="view-feed" class="view">
+      <div id="feed-filters" class="filters"></div>
+      <div id="feed-list"></div>
+    </main>
+
+    <!-- Vista: Mapa -->
+    <main id="view-mapa" class="view hidden">
+      <div class="map-wrap"><div id="map" class="map"></div></div>
+      <div id="map-sheet" class="map-sheet"></div>
+    </main>
+
+    <!-- Vista: Detalle de plan -->
+    <main id="view-detail" class="view hidden"></main>
+
+    <!-- Navegación inferior -->
+    <nav class="tabbar">
+      <button data-nav="feed" class="active"><span class="ic">🧭</span>Descubrir</button>
+      <button data-nav="mapa"><span class="ic">🗺️</span>Mapa</button>
+    </nav>
+
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script>
+/* =========================================================================
+   Datos de ejemplo (mock) del prototipo — coherentes con PRODUCTO.md
+   ========================================================================= */
+
+// Categorías de la taxonomía de arranque
+const CATEGORIES = [
+  { id: 'outdoor',   label: 'Outdoor',     emoji: '🏔️' },
+  { id: 'fiesta',    label: 'Fiesta',      emoji: '🎉' },
+  { id: 'gastro',    label: 'Gastronomía', emoji: '🍷' },
+  { id: 'cultura',   label: 'Cultura',     emoji: '🎭' },
+  { id: 'deporte',   label: 'Deporte',     emoji: '🏃' },
+  { id: 'bienestar', label: 'Bienestar',   emoji: '🧘' },
+  { id: 'social',    label: 'Social',      emoji: '🥂' },
+  { id: 'viajeros',  label: 'Viajeros',    emoji: '🎒' },
+];
+
+// Lugares (entidad persistente). x/y = posición % sobre el mapa estilizado.
+const PLACES = [
+  { id: 'victoria',  name: 'Vermutería Victoria', kind: 'negocio', verified: true,  city: 'Burgos', category: 'gastro',  hashtag: '#himnovictoria',     x: 22, y: 30, rating: 4.8 },
+  { id: 'azotea',    name: 'Azotea Círculo',      kind: 'negocio', verified: true,  city: 'Madrid', category: 'fiesta',  hashtag: '#rooftopmadrid',     x: 54, y: 44, rating: 4.6 },
+  { id: 'debod',     name: 'Templo de Debod',     kind: 'publico', verified: false, city: 'Madrid', category: 'outdoor', hashtag: '#atardecerdebod',    x: 40, y: 52, rating: 4.9 },
+  { id: 'retiro',    name: 'Parque del Retiro',   kind: 'publico', verified: false, city: 'Madrid', category: 'outdoor', hashtag: '#retiromorning',     x: 66, y: 60, rating: 4.7 },
+  { id: 'clamores',  name: 'Sala Clamores',       kind: 'negocio', verified: true,  city: 'Madrid', category: 'cultura', hashtag: '#clamoresjazz',      x: 60, y: 30, rating: 4.5 },
+  { id: 'sierra',    name: 'Mirador de la Sierra', kind: 'publico', verified: false, city: 'Madrid', category: 'deporte', hashtag: '#trailamanecer',     x: 30, y: 68, rating: 4.8 },
+  { id: 'secreto',   name: 'Lugar por desvelar',  kind: 'publico', verified: false, city: 'Madrid', category: 'gastro',  hashtag: '#cenasecretamadrid', x: 48, y: 22, rating: 4.9, secret: true },
+  { id: 'lavapies',  name: 'Plaza de Lavapiés',   kind: 'publico', verified: false, city: 'Madrid', category: 'viajeros', hashtag: '#tapasviajeros',    x: 72, y: 46, rating: 4.6 },
+];
+
+// Helper: fecha futura a partir de ahora
+const hoursFromNow = (h) => new Date(Date.now() + h * 3600 * 1000);
+
+// Planes (unidad atómica). level: 1 ancla recurrente, 2 usuario gratuito, 3 pago curado.
+const PLANS = [
+  {
+    id: 'p1', title: 'El himno de la Victoria', placeId: 'victoria', category: 'gastro',
+    level: 1, paid: false, price: 0, recurring: true,
+    host: { name: 'Vermutería Victoria', business: true, verified: true, rating: 4.8, reliability: 99 },
+    when: hoursFromNow(5), groupMin: 10, groupMax: 60, joined: 41,
+    gradient: 'g-wine', emoji: '🍷',
+    summary: 'Cada noche a las 22:00, todo el bar canta. El ritual de Burgos que ya tiene gente: solo súmate.',
+    secret: false,
+  },
+  {
+    id: 'p2', title: 'Atardecer en el Templo de Debod', placeId: 'debod', category: 'outdoor',
+    level: 2, paid: false, price: 0, recurring: false,
+    host: { name: 'Lucía R.', business: false, verified: true, rating: 4.9, reliability: 96 },
+    when: hoursFromNow(28), groupMin: 4, groupMax: 15, joined: 9,
+    gradient: 'g-sunset', emoji: '🌅',
+    summary: 'Quedada para ver el mejor atardecer de Madrid. Traed manta y algo para picar.',
+    secret: false,
+  },
+  {
+    id: 'p3', title: 'Rooftop Sunset Sessions', placeId: 'azotea', category: 'fiesta',
+    level: 3, paid: true, price: 18, recurring: false,
+    host: { name: 'Azotea Círculo', business: true, verified: true, rating: 4.6, reliability: 98 },
+    when: hoursFromNow(52), groupMin: 20, groupMax: 80, joined: 63,
+    gradient: 'g-grape', emoji: '🌇',
+    summary: 'DJ set al atardecer en una de las mejores azoteas del centro. Primera consumición incluida.',
+    secret: false,
+  },
+  {
+    id: 'p4', title: 'Cena secreta · lugar por desvelar', placeId: 'secreto', category: 'gastro',
+    level: 3, paid: true, price: 35, recurring: false,
+    host: { name: 'Mesa 0 · Originals', business: true, verified: true, rating: 4.9, reliability: 100 },
+    when: hoursFromNow(74), groupMin: 6, groupMax: 8, joined: 6,
+    gradient: 'g-dark', emoji: '🤫',
+    summary: 'Ocho desconocidos, un menú de autor y una ubicación que se revela 2 horas antes. El secreto es parte del plan.',
+    secret: true,
+  },
+  {
+    id: 'p5', title: 'Trail al amanecer en la Sierra', placeId: 'sierra', category: 'deporte',
+    level: 1, paid: false, price: 0, recurring: true,
+    host: { name: 'Club Amanecer Trail', business: false, verified: true, rating: 4.8, reliability: 97 },
+    when: hoursFromNow(20), groupMin: 5, groupMax: 20, joined: 12,
+    gradient: 'g-forest', emoji: '🏃',
+    summary: 'Ruta suave de 8 km para ver salir el sol. Ritmo de grupo, nadie se queda atrás.',
+    secret: false,
+  },
+  {
+    id: 'p6', title: 'Ruta de tapas para viajeros', placeId: 'lavapies', category: 'viajeros',
+    level: 2, paid: false, price: 0, recurring: false,
+    host: { name: 'Marco T.', business: false, verified: true, rating: 4.7, reliability: 92 },
+    when: hoursFromNow(31), groupMin: 4, groupMax: 12, joined: 7,
+    gradient: 'g-sunset', emoji: '🍢',
+    summary: '¿Recién llegado a Madrid? Tapeo por Lavapiés con gente que también está de paso.',
+    secret: false,
+  },
+  {
+    id: 'p7', title: 'Jazz íntimo en Clamores', placeId: 'clamores', category: 'cultura',
+    level: 3, paid: true, price: 14, recurring: false,
+    host: { name: 'Sala Clamores', business: true, verified: true, rating: 4.5, reliability: 96 },
+    when: hoursFromNow(46), groupMin: 10, groupMax: 40, joined: 22,
+    gradient: 'g-grape', emoji: '🎷',
+    summary: 'Directo de jazz en formato reducido. Vente solo o con quien quieras: la sala hace el resto.',
+    secret: false,
+  },
+  {
+    id: 'p8', title: 'Yoga al sol en el Retiro', placeId: 'retiro', category: 'bienestar',
+    level: 2, paid: false, price: 0, recurring: true,
+    host: { name: 'Ana P.', business: false, verified: true, rating: 4.9, reliability: 98 },
+    when: hoursFromNow(15), groupMin: 3, groupMax: 18, joined: 10,
+    gradient: 'g-forest', emoji: '🧘',
+    summary: 'Sesión de 45 min para empezar el sábado con calma. Trae esterilla.',
+    secret: false,
+  },
+];
+
+// Aftermovies (pestaña Vividas) — prueba social de planes pasados
+const AFTERMOVIES = [
+  { id: 'a1', planTitle: 'El himno de la Victoria', placeId: 'victoria', hashtag: '#himnovictoria', emoji: '🍷', gradient: 'g-wine',   likes: 312, author: 'Vermutería Victoria' },
+  { id: 'a2', planTitle: 'Rooftop Sunset',          placeId: 'azotea',   hashtag: '#rooftopmadrid', emoji: '🌇', gradient: 'g-grape',  likes: 540, author: 'Azotea Círculo' },
+  { id: 'a3', planTitle: 'Atardecer en Debod',      placeId: 'debod',    hashtag: '#atardecerdebod', emoji: '🌅', gradient: 'g-sunset', likes: 198, author: 'Lucía R.' },
+];
+
+// Reseñas de ejemplo para la ficha de detalle
+const REVIEWS = [
+  { author: 'Sara M.', stars: 5, text: 'Ambientazo y gente muy maja. Fui sola y volví con planes para el finde.' },
+  { author: 'David L.', stars: 5, text: 'El anfitrión súper atento, todo organizado al detalle.' },
+  { author: 'Nora V.', stars: 4, text: 'Muy bien, repetiría. Solo le faltó que fuéramos un par más.' },
+];
+
+const getPlace = (id) => PLACES.find((p) => p.id === id);
+const getPlan  = (id) => PLANS.find((p) => p.id === id);
+const getCategory = (id) => CATEGORIES.find((c) => c.id === id);
+
+// Exponer explícitamente en window: garantiza que app.js (otro <script>) y los
+// manejadores inline encuentren los datos, sin depender del scope léxico compartido.
+if (typeof window !== 'undefined') {
+  Object.assign(window, { CATEGORIES, PLACES, PLANS, AFTERMOVIES, REVIEWS, getPlace, getPlan, getCategory });
+}
+
+
+/* =========================================================================
+   Prototipo visual — lógica de navegación y render (vanilla JS)
+   ========================================================================= */
+
+const state = {
+  contentTab: 'disponibles',   // vividas | disponibles | stories | menciones
+  navTab: 'feed',              // feed | mapa
+  size: 'todos',               // todos | intimo | mediano | grande
+  category: 'todas',
+  price: 'todos',              // todos | gratis | pago
+  selectedPlace: null,
+  joined: new Set(),
+};
+
+/* ---------- utilidades ---------- */
+function fmtCountdown(date){
+  const diff = date - Date.now();
+  if (diff <= 0) return 'En marcha';
+  const h = Math.floor(diff/3600000);
+  const d = Math.floor(h/24);
+  if (d >= 1) return `faltan ${d} d ${h%24} h`;
+  const m = Math.floor((diff%3600000)/60000);
+  return `faltan ${h} h ${m} min`;
+}
+function fmtWhen(date){
+  const dias=['dom','lun','mar','mié','jue','vie','sáb'];
+  const h = date.getHours().toString().padStart(2,'0');
+  const min = date.getMinutes().toString().padStart(2,'0');
+  return `${dias[date.getDay()]} · ${h}:${min}`;
+}
+function sizeBucket(p){
+  if (p.groupMax <= 8) return 'intimo';
+  if (p.groupMax <= 20) return 'mediano';
+  return 'grande';
+}
+function sizeLabel(p){
+  return {intimo:'Íntimo',mediano:'Mediano',grande:'Grande'}[sizeBucket(p)];
+}
+function initials(name){
+  return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+}
+function levelBadge(p){
+  if (p.level===1) return '<span class="badge anchor">⚓ Ancla recurrente</span>';
+  if (p.paid)      return '<span class="badge paid">€ Experiencia</span>';
+  return '<span class="badge free">Gratis</span>';
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._tmo);t._tmo=setTimeout(()=>t.classList.remove('show'),1900);
+}
+
+/* ---------- filtrado ---------- */
+function filteredPlans(){
+  return PLANS.filter(p=>{
+    if (state.size!=='todos' && sizeBucket(p)!==state.size) return false;
+    if (state.category!=='todas' && p.category!==state.category) return false;
+    if (state.price==='gratis' && p.paid) return false;
+    if (state.price==='pago' && !p.paid) return false;
+    return true;
+  });
+}
+
+/* ---------- componentes ---------- */
+function planCard(p){
+  const place = getPlace(p.placeId);
+  const cat = getCategory(p.category);
+  const pct = Math.min(100, Math.round(p.joined/p.groupMax*100));
+  return `
+  <article class="plan-card" onclick="go('plan/${p.id}')">
+    <div class="plan-cover ${p.gradient}">
+      <span class="emoji">${p.emoji}</span>
+      <div class="badges">
+        ${levelBadge(p)}
+        ${p.secret?'<span class="badge secret">🤫 Lugar secreto</span>':''}
+        <span class="badge">${cat.emoji} ${cat.label}</span>
+      </div>
+    </div>
+    <div class="plan-body">
+      <div class="plan-title">${p.title}</div>
+      <div class="plan-meta">
+        <span>📍 ${p.secret?'Zona aprox. · Madrid':place.name}</span><span class="dot"></span>
+        <span>👥 ${sizeLabel(p)}</span><span class="dot"></span>
+        <span class="countdown">⏳ ${fmtCountdown(p.when)}</span>
+      </div>
+      <div class="host-row">
+        <div class="avatar">${initials(p.host.name)}</div>
+        <span class="host-name">${p.host.name}</span>
+        ${p.host.verified?'<span class="verified" title="Verificado">✔</span>':''}
+        <span class="stars">★ ${p.host.rating}</span>
+      </div>
+      <div class="group-bar">
+        <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+        <div class="lbl"><span>${p.joined} apuntados</span><span>${p.groupMax-p.joined} plazas libres</span></div>
+      </div>
+    </div>
+  </article>`;
+}
+
+function renderFeed(){
+  const plans = filteredPlans();
+  const cont = document.getElementById('feed-list');
+  if (!plans.length){ cont.innerHTML = `<div class="empty-tab"><div class="big">🔍</div><h3>Sin planes con esos filtros</h3><p>Prueba a ampliar el tamaño de grupo o el tema.</p></div>`; return; }
+  cont.innerHTML = plans.map(planCard).join('');
+}
+
+function renderVividas(){
+  // aftermovies + inyección de 1 plan disponible (regla del producto)
+  const inject = PLANS[2];
+  const grid = AFTERMOVIES.map(a=>`
+    <div class="after-card" onclick="toast('Aftermovie · ${a.hashtag}')">
+      <div class="after-cover ${a.gradient}"><span class="emoji">${a.emoji}</span><span class="h">${a.hashtag}</span></div>
+      <div class="after-foot"><span>${a.author}</span><span>❤ ${a.likes}</span></div>
+    </div>`).join('');
+  return `
+    <div class="section-title">Vividas · lo que ya ha pasado</div>
+    <div class="after-grid">${grid}</div>
+    <div class="injected-note">— porque vienes viendo planes de azotea —</div>
+    ${planCard(inject)}`;
+}
+
+function emptyTab(emoji,title,text){
+  return `<div class="empty-tab"><div class="big">${emoji}</div><h3>${title}</h3><p>${text}</p></div>`;
+}
+
+function renderContent(){
+  const feedView = document.getElementById('view-feed');
+  const filters = document.getElementById('feed-filters');
+  const list = document.getElementById('feed-list');
+  // sincroniza pestañas
+  document.querySelectorAll('.content-tabs button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tab===state.contentTab);
+  });
+  if (state.contentTab==='disponibles'){
+    filters.style.display='flex';
+    renderFeed();
+  } else {
+    filters.style.display='none';
+    if (state.contentTab==='vividas') list.innerHTML = renderVividas();
+    else if (state.contentTab==='stories') list.innerHTML = emptyTab('🟣','Stories · el "ahora mismo"','Contenido efímero de planes en marcha. En el prototipo nos centramos en Descubrir, Mapa y la ficha de plan.');
+    else list.innerHTML = emptyTab('@','Menciones','Aquí llegan los planes y stories donde te etiquetan. Una mención no se asocia a tu perfil hasta que la aceptas.');
+  }
+}
+
+/* ---------- mapa ---------- */
+function renderMap(){
+  const map = document.getElementById('map');
+  const pins = PLACES.map(pl=>{
+    const cls = pl.secret ? 'secret' : (pl.kind==='negocio' ? 'business' : '');
+    const sel = state.selectedPlace===pl.id ? 'selected' : '';
+    const ic = pl.secret ? '🤫' : (getCategory(pl.category)?.emoji || '📍');
+    return `<button class="pin ${cls} ${sel}" style="left:${pl.x}%;top:${pl.y}%" onclick="selectPlace('${pl.id}')">
+      <span class="dot"><span>${ic}</span></span><span class="cap">${pl.secret?'?':pl.name}</span>
+    </button>`;
+  }).join('');
+  map.innerHTML = `
+    <div class="map-hint">📍 Madrid · ${PLACES.length} lugares cerca · toca un pin</div>
+    ${pins}
+    <div class="map-legend">
+      <div class="row"><span class="legend-dot" style="background:#13c296"></span>Negocio verificado</div>
+      <div class="row"><span class="legend-dot" style="background:#ff5a5f"></span>Lugar público</div>
+      <div class="row"><span class="legend-dot" style="background:#22222e"></span>Secreto</div>
+    </div>`;
+  renderMapSheet();
+}
+function renderMapSheet(){
+  const sheet = document.getElementById('map-sheet');
+  if (!state.selectedPlace){
+    sheet.innerHTML = `<h3>Planes cerca de ti</h3><div class="sub">Toca un lugar en el mapa para ver sus planes y su histórico.</div>` +
+      PLANS.slice(0,4).map(miniPlan).join('');
+    return;
+  }
+  const pl = getPlace(state.selectedPlace);
+  const plans = PLANS.filter(p=>p.placeId===pl.id);
+  sheet.innerHTML = `
+    <h3>${pl.secret?'🤫 Lugar por desvelar':pl.name} ${pl.verified?'<span class="verified">✔</span>':''}</h3>
+    <div class="sub">${pl.kind==='negocio'?'Negocio verificado':'Lugar público'} · ${pl.city} · ★ ${pl.rating} · ${pl.hashtag}</div>
+    ${plans.length?plans.map(miniPlan).join(''):'<div class="sub">Sin planes próximos en este lugar.</div>'}`;
+}
+function miniPlan(p){
+  const place=getPlace(p.placeId);
+  return `<div class="mini-plan" onclick="go('plan/${p.id}')">
+    <div class="ic ${p.gradient}">${p.emoji}</div>
+    <div class="info">
+      <div class="t">${p.title}</div>
+      <div class="m">${fmtWhen(p.when)} · 👥 ${sizeLabel(p)} · ${p.joined}/${p.groupMax}</div>
+    </div>
+    <div class="price ${p.paid?'paid':''}">${p.paid?p.price+' €':'Gratis'}</div>
+  </div>`;
+}
+function selectPlace(id){
+  state.selectedPlace = state.selectedPlace===id ? null : id;
+  renderMap();
+}
+
+/* ---------- detalle ---------- */
+function renderDetail(id){
+  const p = getPlan(id);
+  const place = getPlace(p.placeId);
+  const cat = getCategory(p.category);
+  const joined = state.joined.has(p.id);
+  const view = document.getElementById('view-detail');
+  const att = ['SM','DL','NV','JR','AP'].slice(0, Math.min(5, p.joined));
+  view.innerHTML = `
+    <div class="detail-hero ${p.gradient}">
+      <button class="back-btn" onclick="history.back()">‹</button>
+      <span class="emoji">${p.emoji}</span>
+      <div>
+        <div class="badges" style="margin-bottom:8px">${levelBadge(p)} <span class="badge">${cat.emoji} ${cat.label}</span></div>
+        <h2>${p.title}</h2>
+      </div>
+    </div>
+    <div class="detail-body">
+      <div class="kpis">
+        <div class="kpi"><div class="v cd">${fmtCountdown(p.when)}</div><div class="k">empieza</div></div>
+        <div class="kpi"><div class="v">${sizeLabel(p)}</div><div class="k">${p.groupMin}–${p.groupMax} pers.</div></div>
+        <div class="kpi"><div class="v">${p.joined}</div><div class="k">apuntados</div></div>
+      </div>
+
+      ${p.secret?`<div class="secret-note"><span class="ic">🤫</span><p>La ubicación exacta se revela 2 horas antes del plan. El secreto es parte de la experiencia: aquí pagas la reserva, no por "ver la dirección".</p></div>`:''}
+
+      <div class="block"><h4>El plan</h4><p>${p.summary}</p></div>
+
+      <div class="block">
+        <h4>Anfitrión</h4>
+        <div class="host-card">
+          <div class="avatar">${initials(p.host.name)}</div>
+          <div class="meta">
+            <div class="n">${p.host.name} ${p.host.verified?'<span class="verified">✔</span>':''} ${p.host.business?'<span class="trust green">🏢 Negocio</span>':''}</div>
+            <div class="s">★ ${p.host.rating} · responde del plan</div>
+          </div>
+        </div>
+        <div class="trust-row">
+          <span class="trust green">🛡️ Identidad verificada</span>
+          <span class="trust">👍 Fiabilidad ${p.host.reliability}%</span>
+          <span class="trust">⭐ Reseñas reales</span>
+        </div>
+      </div>
+
+      <div class="block">
+        <h4>Quién va</h4>
+        <div class="attendees">
+          ${att.map(a=>`<div class="avatar">${a}</div>`).join('')}
+          <span class="more">+${Math.max(0,p.joined-att.length)} personas afines van</span>
+        </div>
+      </div>
+
+      <div class="block">
+        <h4>Lugar</h4>
+        <div class="place-link" onclick="go('mapa');selectPlace('${place.id}')">
+          <div class="pic">${p.secret?'🤫':'📍'}</div>
+          <div>
+            <div style="font-weight:700;font-size:14.5px">${p.secret?'Zona aproximada · centro de Madrid':place.name}</div>
+            <div style="font-size:12.5px;color:var(--ink-soft)">${place.city} · ${place.kind==='negocio'?'Negocio verificado':'Lugar público'} · ${place.hashtag}</div>
+          </div>
+          <span class="arrow">›</span>
+        </div>
+      </div>
+
+      <div class="block">
+        <h4>Seguridad</h4>
+        <div class="trust-row">
+          <span class="trust">📍 Punto de encuentro in-app</span>
+          <span class="trust">🆘 Botón SOS</span>
+          <span class="trust">👤 Contacto de confianza</span>
+        </div>
+      </div>
+
+      <div class="block">
+        <h4>Reseñas de ediciones anteriores</h4>
+        ${REVIEWS.map(r=>`<div class="review"><div class="top"><span>${r.author}</span><span class="st">${'★'.repeat(r.stars)}</span></div><p>${r.text}</p></div>`).join('')}
+      </div>
+
+      <div class="action-bar">
+        <div class="pr"><div class="v">${p.paid?p.price+' €':'Gratis'}</div><div class="k">${p.paid?'pago seguro (escrow)':'sin coste'}</div></div>
+        <button class="btn-join ${joined?'joined':''}" onclick="toggleJoin('${p.id}')">${joined?'✓ Apuntado — ver chat':'Apuntarme'}</button>
+      </div>
+    </div>`;
+}
+function toggleJoin(id){
+  const p=getPlan(id);
+  if (state.joined.has(id)){ state.joined.delete(id); toast('Has salido del plan'); }
+  else {
+    state.joined.add(id);
+    toast(p.paid?'Reserva retenida en escrow ✓':'¡Apuntado! Verifica tu identidad antes del plan');
+  }
+  renderDetail(id);
+}
+
+/* ---------- router ---------- */
+function go(path){ location.hash = '#/'+path; }
+function showView(name){
+  ['feed','mapa','detail'].forEach(v=>{
+    document.getElementById('view-'+v).classList.toggle('hidden', v!==name);
+  });
+  document.getElementById('appbar-tabs').style.display = (name==='feed')?'block':'none';
+  document.querySelectorAll('.tabbar button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.nav===(name==='detail'?state.navTab:name));
+  });
+}
+function router(){
+  const hash = location.hash.replace(/^#\//,'') || 'feed';
+  const [route,arg] = hash.split('/');
+  if (route==='plan' && arg){ renderDetail(arg); showView('detail'); document.getElementById('view-detail').scrollTop=0; }
+  else if (route==='mapa'){ state.navTab='mapa'; renderMap(); showView('mapa'); }
+  else { state.navTab='feed'; renderContent(); showView('feed'); }
+}
+
+/* ---------- init ---------- */
+function buildFilters(){
+  const cont = document.getElementById('feed-filters');
+  const sizes=[['todos','Todos'],['intimo','Íntimo'],['mediano','Mediano'],['grande','Grande']];
+  const prices=[['todos','Todo'],['gratis','Gratis'],['pago','Pago']];
+  cont.innerHTML = `
+    <div class="seg" id="seg-size">${sizes.map(([v,l])=>`<button data-v="${v}" class="${v==='todos'?'active':''}">${l}</button>`).join('')}</div>
+    <div class="chips" id="chips-cat">
+      <button class="chip active" data-v="todas">Todos los temas</button>
+      ${CATEGORIES.map(c=>`<button class="chip" data-v="${c.id}">${c.emoji} ${c.label}</button>`).join('')}
+    </div>
+    <div class="seg" id="seg-price" style="max-width:230px">${prices.map(([v,l])=>`<button data-v="${v}" class="${v==='todos'?'active':''}">${l}</button>`).join('')}</div>`;
+
+  cont.querySelector('#seg-size').onclick = e=>{ const b=e.target.closest('button'); if(!b)return;
+    state.size=b.dataset.v; setActive('#seg-size button',b); renderFeed(); };
+  cont.querySelector('#seg-price').onclick = e=>{ const b=e.target.closest('button'); if(!b)return;
+    state.price=b.dataset.v; setActive('#seg-price button',b); renderFeed(); };
+  cont.querySelector('#chips-cat').onclick = e=>{ const b=e.target.closest('button'); if(!b)return;
+    state.category=b.dataset.v; setActive('#chips-cat button',b); renderFeed(); };
+}
+function setActive(sel,el){ document.querySelectorAll(sel).forEach(x=>x.classList.remove('active')); el.classList.add('active'); }
+
+function init(){
+  buildFilters();
+  document.querySelectorAll('.content-tabs button').forEach(b=>{
+    b.onclick=()=>{ state.contentTab=b.dataset.tab; renderContent(); };
+  });
+  document.querySelectorAll('.tabbar button').forEach(b=>{
+    b.onclick=()=>go(b.dataset.nav);
+  });
+  window.addEventListener('hashchange', router);
+  router();
+}
+// Arranca aunque el DOM ya esté listo (evita perder el evento si el script se
+// evalúa después de DOMContentLoaded).
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+
+  </script>
+</body>
+</html>

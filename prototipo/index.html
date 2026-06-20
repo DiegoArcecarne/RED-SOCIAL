@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Prototipo · App de planes</title>
+  <meta name="description" content="Prototipo visual navegable de la app de planes (basado en PRODUCTO.md)." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="phone">
+    <!-- Cabecera -->
+    <header class="appbar">
+      <div class="brand">
+        <div class="logo">◆</div>
+        <div>
+          <h1>planes</h1>
+          <div class="tag">Descubre un plan y la gente para hacerlo</div>
+        </div>
+        <span class="placeholder-pill">marca provisional</span>
+      </div>
+      <div id="appbar-tabs">
+        <nav class="content-tabs">
+          <button data-tab="vividas">Vividas</button>
+          <button data-tab="disponibles" class="active">Disponibles</button>
+          <button data-tab="stories">Stories</button>
+          <button data-tab="menciones">Menciones</button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Vista: Feed / Descubrir -->
+    <main id="view-feed" class="view">
+      <div id="feed-filters" class="filters"></div>
+      <div id="feed-list"></div>
+    </main>
+
+    <!-- Vista: Mapa -->
+    <main id="view-mapa" class="view hidden">
+      <div class="map-wrap"><div id="map" class="map"></div></div>
+      <div id="map-sheet" class="map-sheet"></div>
+    </main>
+
+    <!-- Vista: Detalle de plan -->
+    <main id="view-detail" class="view hidden"></main>
+
+    <!-- Navegación inferior -->
+    <nav class="tabbar">
+      <button data-nav="feed" class="active"><span class="ic">🧭</span>Descubrir</button>
+      <button data-nav="mapa"><span class="ic">🗺️</span>Mapa</button>
+    </nav>
+
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
