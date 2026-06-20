@@ -331,7 +331,7 @@ Fever, en paralelo y por fases. Primero relación vía programa de afiliados (pu
 
 ## Modelo de datos: entidades y relaciones
 
-Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema final de base de datos, sino el mapa de entidades y sus relaciones, para fijar el vocabulario y detectar huecos antes de implementar. Se agrupan por dominio.
+Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema final de base de datos, sino el mapa de entidades y sus relaciones, para fijar el vocabulario y detectar huecos antes de implementar. Se agrupan por dominio. El diagrama entidad-relación está en [`docs/modelo-datos.md`](docs/modelo-datos.md).
 
 ### Identidad y cuenta
 
