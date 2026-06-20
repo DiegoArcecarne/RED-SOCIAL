@@ -18,6 +18,14 @@ La app está abierta globalmente desde el día uno. Cualquiera, en cualquier lug
 
 La visibilidad la controla cada usuario, modelo Instagram. Un perfil público expone sus planes, stories y aftermovies a cualquiera; uno privado solo a seguidores aprobados. El descubrimiento global —feed y planes de cualquier ciudad— se nutre del contenido marcado como público. El alcance es mundial; el control, individual.
 
+## Modelo de seguidores
+
+Grafo asimétrico, tipo Instagram: uno sigue a otro sin necesidad de aprobación mutua. No es un modelo de amistad simétrica donde ambas partes confirman. Seguir es unidireccional, lo que favorece el descubrimiento y la viralidad —cualquiera puede seguir a un anfitrión, a un local o a un perfil interesante sin que el otro tenga que devolver el gesto— y encaja con el alma de red de contenido (aftermovies, stories) más que con la de mensajería privada.
+
+La privacidad se monta encima del grafo, no en lugar de él. En un perfil público, seguir es instantáneo y sin fricción. En un perfil privado, la solicitud de seguimiento requiere aprobación del titular, que es quien decide quién ve su contenido. Así, "asimétrico" no significa "sin control": el control vive en el ajuste público/privado y en los permisos granulares (quién puede seguirte, quién puede escribirte, quién puede unirse a tus planes), no en una reciprocidad obligatoria.
+
+Esta elección es coherente con el resto del producto: el grafo asimétrico alimenta el ranking de planes por afinidad (a quién sigues es señal de interés), la pestaña de Vividas y la distribución de aftermovies, mientras que las capas anti-acoso —modos de recepción de DMs, mención con aceptación previa, bloqueo— protegen el lado privado sin obligar a que seguir sea mutuo.
+
 ## La unidad atómica: el Plan
 
 Cada Plan se define por estos atributos:
@@ -40,7 +48,7 @@ Nivel 1 — Anclas recurrentes gratuitas. Planes que se repiten a hora fija, sem
 
 Nivel 2 — Planes gratuitos de usuarios. Cualquiera publica un plan. Sin depósito, fricción cero para no frenar la liquidez. El absentismo se gestiona con reputación (ver sección de confianza), no con dinero.
 
-Nivel 3 — Experiencias de pago curadas. La oferta de calidad: vía API de Fever, vía contactos de eventos en Madrid, y vía producciones propias. Aquí vive la comisión (referencia de mercado 15-30% estilo Fever) y los mecanismos de exclusividad. Incluye los planes de "lugar secreto" y los planes muy especiales.
+Nivel 3 — Experiencias de pago curadas. La oferta de calidad: vía API de Fever, vía contactos de eventos en Madrid, y vía producciones propias. Aquí vive la comisión (15% propio, en el extremo bajo del rango de mercado 15-30% estilo Fever) y los mecanismos de exclusividad. Incluye los planes de "lugar secreto" y los planes muy especiales.
 
 ## Arquitectura de contenido: las pestañas
 
@@ -68,7 +76,7 @@ Taxonomía actualizable. Las categorías no se hard-codean. Estructura propuesta
 
 Modelo de cobro tipo Booking (escrow). La plataforma cobra el evento, retiene el pago y lo libera al organizador después de que el evento se celebre. Si no se celebra, se reembolsa a los usuarios. Esto elimina el fraude del organizador que cobra y no aparece, y protege al usuario.
 
-Comisión sobre experiencias de pago. Referencia de mercado 15-30% (Fever cobra en ese rango). Es la fuente principal de ingresos, concentrada en el Nivel 3.
+Comisión sobre experiencias de pago. 15% propio, en el extremo bajo del rango de mercado 15-30% (Fever cobra en ese rango). Se elige el suelo del rango como palanca de captación de oferta: un 15% es más atractivo para organizadores y locales que la comisión de los marketplaces grandes, baja la barrera de entrada de la oferta de pago en el arranque y deja margen para subir más adelante si el producto lo justifica. Es la fuente principal de ingresos, concentrada en el Nivel 3.
 
 Micropago de desvelo (1-2 €), solo plataforma. No es un peaje sobre planes gratis. Se aplica únicamente a planes de la plataforma de dos tipos: saturados o de mucha demanda, y planes muy especiales donde el secreto es parte del producto (lugar secreto, ubicación revelada poco antes). En planes de pago, el desvelo se integra en el flujo de reserva escrow. En planes gratuitos saturados, el micropago funciona además como filtro suave de compromiso: solo paga quien de verdad va a ir.
 
@@ -229,7 +237,7 @@ Fever, en paralelo y por fases. Primero relación vía programa de afiliados (pu
 
 - Taxonomía inicial concreta de categorías (la propuesta de arriba es punto de partida).
 - Umbral de fiabilidad mínima para acceder a planes especiales/saturados.
-- Porcentaje de comisión propio dentro del rango de mercado, y cómo se reparte con Fever en los planes vía su API.
+- Cómo se reparte la comisión con Fever en los planes vía su API (la comisión propia ya está fijada en el 15%).
 - Proveedor de verificación de identidad (documento y selfie).
 - Precio de las capas de cuenta de negocio: importe del CPA por asistente confirmado y cuota de la suscripción de herramientas.
 - Revisión legal de los términos: limitación de responsabilidad por encuentros presenciales, antes de lanzar.
