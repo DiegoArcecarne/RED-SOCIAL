@@ -14,7 +14,7 @@ Lo que la app no es, y se defiende activamente: una app de ligar. Esa reputació
 
 ## Disponibilidad global y visibilidad
 
-La app está abierta globalmente desde el día uno. Cualquiera, en cualquier lugar, puede descargarla, crear un perfil, publicar un plan y ver los planes de los perfiles que hayan decidido hacer su contenido público. Madrid no es una restricción geográfica: es el foco del esfuerzo de siembra y marketing, donde se concentra la energía para encender la liquidez primero, pero la plataforma no le cierra la puerta a nadie en ningún sitio.
+La app está abierta globalmente desde el día uno. Cualquiera, en cualquier lugar, puede descargarla, crear un perfil, explorar y ver los planes de los perfiles que hayan decidido hacer su contenido público; publicar un plan o unirse a uno requiere antes verificar la identidad (ver onboarding). Madrid no es una restricción geográfica: es el foco del esfuerzo de siembra y marketing, donde se concentra la energía para encender la liquidez primero, pero la plataforma no le cierra la puerta a nadie en ningún sitio.
 
 La visibilidad la controla cada usuario, modelo Instagram. Un perfil público expone sus planes, stories y aftermovies a cualquiera; uno privado solo a seguidores aprobados. El descubrimiento global —feed y planes de cualquier ciudad— se nutre del contenido marcado como público. El alcance es mundial; el control, individual.
 
@@ -38,7 +38,7 @@ Cada Plan se define por estos atributos:
 - Recurrencia: puntual o ancla recurrente.
 - Objeto media: el post (foto o vídeo) que representa el plan.
 
-Cada Plan vive en dos estados. Próximo: perecedero y reservable. Pasado: evergreen, convertido en aftermovie que alimenta el feed social y vende la siguiente edición del plan equivalente.
+Cada Plan vive en dos estados principales. Próximo: perecedero y reservable. Pasado: evergreen, convertido en aftermovie que alimenta el feed social y vende la siguiente edición del plan equivalente. Entre ambos hay un momento intermedio —el plan en curso, mientras se celebra— en el que se activan las stories en vivo y las herramientas de seguridad presencial (check-in, SOS, reporte desde el chat).
 
 ## Los tres niveles de plan
 
@@ -80,7 +80,7 @@ Comisión sobre experiencias de pago. 15% propio, en el extremo bajo del rango d
 
 Micropago de desvelo (1-2 €), solo plataforma. No es un peaje sobre planes gratis. Se aplica únicamente a planes de la plataforma de dos tipos: saturados o de mucha demanda, y planes muy especiales donde el secreto es parte del producto (lugar secreto, ubicación revelada poco antes). En planes de pago, el desvelo se integra en el flujo de reserva escrow. En planes gratuitos saturados, el micropago funciona además como filtro suave de compromiso: solo paga quien de verdad va a ir.
 
-Fuentes de ingreso, resumidas: comisión de experiencias de pago (principal), micropago de desvelo en planes especiales/saturados, y a futuro espacios destacados o patrocinados de marcas y locales. Los planes gratuitos no generan ingreso directo: su trabajo es crear la red, el contenido y la retención.
+Fuentes de ingreso, resumidas: comisión de experiencias de pago (principal), micropago de desvelo en planes especiales/saturados, las capas de cuenta de negocio (CPA por asistente confirmado y suscripción de herramientas, ver sección propia) y, a futuro, la publicidad (espacios destacados o patrocinados de marcas y locales). Los planes gratuitos de usuario no generan ingreso directo: su trabajo es crear la red, el contenido y la retención.
 
 ## Publicidad
 
@@ -88,7 +88,7 @@ Tercera vía de ingresos, además de la comisión y el micropago de desvelo, y p
 
 Formato nativo, el plan patrocinado. Usa el mismo hueco de inyección que los planes orgánicos (1-2 cada 5-6 publicaciones), claramente etiquetado. Como el contenido de la app son planes, un plan patrocinado es nativo y no rompe el feed: la experiencia es el anuncio, en la misma lógica de Fever.
 
-Autoservicio tipo Meta Ads. Segmentación por ubicación, intereses, edad y categoría; presupuesto y puja; analíticas de campaña. Es terreno que dominas profesionalmente, y el panel debería reflejarlo.
+Autoservicio tipo Meta Ads. Segmentación por ubicación, intereses, edad y categoría; presupuesto y puja; analíticas de campaña. El panel de autoservicio debe ofrecer ese nivel de control.
 
 Dos niveles de anunciante. Marcas, locales y organizadores con campañas, y el "boost" de autoservicio para que cualquier anfitrión promocione su propio plan, al estilo de promocionar un post en Instagram. El boost es alto volumen y bajo ticket; las campañas de marca, bajo volumen y alto ticket.
 
@@ -118,7 +118,7 @@ Ventaja de ejecución. Es el ingreso más ejecutable desde el día uno: vender c
 
 El núcleo del producto, no un disclaimer. Con desconocidos y, en parte, ocio nocturno, esto es lo que diferencia de un grupo de WhatsApp y justifica la comisión.
 
-Verificación antes del primer plan. Identidad verificada como requisito de entrada.
+Verificación antes del primer plan. La identidad verificada no se exige en el alta, sino antes de unirse al primer plan o publicar uno (ver flujo de onboarding y la barrera del primer plan).
 
 Reputación por estrellas, visible en todos los perfiles. Reseñas post-plan de anfitriones y asistentes.
 
@@ -162,7 +162,7 @@ Un solo mensaje de presentación. Un desconocido solo puede enviar un primer men
 
 Bloqueo y reporte integrados. Bloquear a alguien implica que no te ve, no te escribe y no puede unirse a tus planes. El reporte enlaza con la capa de moderación.
 
-Medios controlados. Las imágenes y vídeos de desconocidos, fuera de tus contactos, llegan con opt-in o difuminados, para frenar el contenido no solicitado. La detección de acoso y solicitación se apoya en la capa automática de moderación.
+Medios controlados. Las imágenes y vídeos de desconocidos —fuera de la gente con la que ya tienes relación: a quien sigues o con quien compartes un plan— llegan con opt-in o difuminados, para frenar el contenido no solicitado. La detección de acoso y solicitación se apoya en la capa automática de moderación.
 
 Espacio de coordinación en planes pequeños. En los planes de pocos participantes, la plataforma ofrece un espacio de coordinación enriquecido: punto de encuentro en el mapa, confirmación del día y recordatorio del contacto de confianza. La clave de diseño es mantener la coordinación dentro de la app para que nadie tenga que dar su teléfono ni sus datos personales a desconocidos; el intercambio de contacto queda voluntario y opcional, nunca forzado. Así, ese espacio para contactar y compartir información es una función de seguridad, no de exposición. Además, en planes pequeños el anfitrión puede pedir una breve presentación y aprobar quién entra, un filtro ligero coherente con la confianza proporcional al tamaño del grupo.
 
@@ -245,7 +245,7 @@ La comprobación de documento y selfie no va en el alta, va como puerta justo cu
 
 Caso base: un particular publica un plan social gratuito (Nivel 2). Se anotan las variaciones para anclas recurrentes (Nivel 1) y experiencias de pago (Nivel 3).
 
-Prerrequisito — Identidad verificada. Publicar exige el distintivo de verificado, porque el anfitrión responde del plan. Si el usuario no está verificado, el botón de crear dispara primero el flujo de verificación.
+Prerrequisito — Identidad verificada. Publicar exige el distintivo de verificado, porque el anfitrión responde del plan. Si el usuario no está verificado, el botón de crear dispara primero el flujo de verificación. En las cuentas de empresa el requisito equivalente es la verificación de negocio (distintivo de negocio verificado), no la verificación de identidad personal.
 
 Paso 1 — Tipo de plan. Social gratuito o experiencia de pago. Las cuentas de empresa ven además la opción de ancla recurrente con programación.
 
