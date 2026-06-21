@@ -19,10 +19,18 @@
       </div>
       <div id="appbar-tabs">
         <nav class="content-tabs">
-          <button data-tab="vividas">Vividas</button>
-          <button data-tab="disponibles" class="active">Disponibles</button>
-          <button data-tab="stories">Stories</button>
-          <button data-tab="menciones">Menciones</button>
+          <button data-tab="vividas" aria-label="Vividas">
+            <i class="ico"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3.5"/><path d="M10.5 9.2v5.6l4.5-2.8z" class="fill"/></svg></i><span>Vividas</span>
+          </button>
+          <button data-tab="disponibles" class="active" aria-label="Disponibles">
+            <i class="ico"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.4"/></svg></i><span>Disponibles</span>
+          </button>
+          <button data-tab="stories" aria-label="Stories">
+            <i class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="2.6" class="fill"/></svg></i><span>Stories</span>
+          </button>
+          <button data-tab="menciones" aria-label="Menciones">
+            <i class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.6"/><path d="M15.6 12v1.6a2.4 2.4 0 0 0 4.4-1.6 8 8 0 1 0-3.2 6.4"/></svg></i><span>Menciones</span>
+          </button>
         </nav>
       </div>
     </header>
@@ -39,18 +47,22 @@
       <div id="map-sheet" class="map-sheet"></div>
     </main>
 
+    <!-- Vista: Perfil -->
+    <main id="view-perfil" class="view hidden"></main>
+
     <!-- Vista: Detalle de plan -->
     <main id="view-detail" class="view hidden"></main>
 
     <!-- Navegación inferior -->
     <nav class="tabbar">
-      <button data-nav="feed" class="active">
-        <i class="ico"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.4"/></svg></i>
-        Descubrir
+      <button data-nav="feed" class="active" aria-label="Descubrir">
+        <i class="ico"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7M6 9.5V20h12V9.5"/></svg></i>Descubrir
       </button>
-      <button data-nav="mapa">
-        <i class="ico"><svg viewBox="0 0 24 24"><path d="M9 4 3.5 6.2v13.6L9 17.6l6 2.2 5.5-2.2V3.9L15 6.1z"/><path d="M9 4v13.6M15 6.1v13.7"/></svg></i>
-        Mapa
+      <button data-nav="mapa" aria-label="Mapa">
+        <i class="ico"><svg viewBox="0 0 24 24"><path d="M9 4 3.5 6.2v13.6L9 17.6l6 2.2 5.5-2.2V3.9L15 6.1z"/><path d="M9 4v13.6M15 6.1v13.7"/></svg></i>Mapa
+      </button>
+      <button data-nav="perfil" aria-label="Perfil">
+        <i class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.3"/><path d="M5.6 19a6.4 6.4 0 0 1 12.8 0"/></svg></i>Perfil
       </button>
     </nav>
 

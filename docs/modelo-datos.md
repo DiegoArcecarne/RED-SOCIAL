@@ -27,6 +27,9 @@ erDiagram
     USUARIO ||--o{ INSCRIPCION : realiza
     INSCRIPCION ||--o| PAGO : genera
 
+    PLAN ||--o{ ASISTENCIA_REAL : "registra (geo)"
+    USUARIO ||--o{ ASISTENCIA_REAL : asiste
+
     PLAN ||--o{ RESENA : abre
     USUARIO ||--o{ RESENA : "escribe"
     USUARIO ||--o{ RESENA : "es resenado en"
@@ -61,6 +64,7 @@ erDiagram
         string email
         date fecha_nacimiento "gate 18+"
         bool perfil_publico
+        string presencia_default "publica|privada"
         string modo_recepcion_dm "cerrado|bajo_solicitud|abierto"
         float reputacion_estrellas "agregada"
         int indice_fiabilidad "no-shows, agregado"
@@ -114,6 +118,7 @@ erDiagram
     PLAN {
         uuid id PK
         string tipo "social_gratuito|experiencia_pago"
+        string tipo_inscripcion "apuntado|libre"
         int nivel "1|2|3"
         uuid anfitrion_id FK
         uuid lugar_id FK
@@ -134,6 +139,14 @@ erDiagram
         string estado "solicitada|aprobada|confirmada|lista_espera|cancelada|asistio|no_show"
         bool reconfirmado_dia
         uuid pago_id FK "nullable"
+    }
+    ASISTENCIA_REAL {
+        uuid id PK
+        uuid plan_id FK
+        uuid usuario_id FK
+        datetime fecha_hora
+        string metodo "geolocalizacion"
+        string visibilidad "publica|privada"
     }
     PAGO {
         uuid id PK
