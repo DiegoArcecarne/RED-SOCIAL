@@ -13,7 +13,7 @@ const state = {
   presencePublic: (typeof ME !== 'undefined') ? ME.presencePublic : true,
   profileTab: 'posts',                 // posts | vividas
   draft: { cover:'g-grape', size:'mediano', cat:'social', access:'libre', price:'gratis' },
-  draftPostKind: 'foto',
+  draftPost: { kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false },
   draftMembers: {},                    // userId -> 'admin' | 'miembro'
   pendingGroup: null,                  // grupo preseleccionado al crear plan
 };
@@ -65,6 +65,9 @@ const SVG = {
   chat:'<svg viewBox="0 0 24 24"><path d="M5 5h14v10H9.5L5 19z"/></svg>',
   compass:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M15.6 8.4 13 13l-4.6 2.6L11 11z" class="fill"/></svg>',
   hash:'<svg viewBox="0 0 24 24"><path d="M9 4 7.5 20M16.5 4 15 20M4.5 9h15M4 15h15"/></svg>',
+  tag:'<svg viewBox="0 0 24 24"><path d="M11.5 3H20v8.5l-8.5 8.5L3 11.5z"/><circle cx="15.5" cy="8.5" r="1.5"/></svg>',
+  link:'<svg viewBox="0 0 24 24"><path d="M9.5 14.5 14.5 9.5"/><path d="M8 12l-2 2a3 3 0 0 0 4.2 4.2l2-2"/><path d="M16 12l2-2a3 3 0 0 0-4.2-4.2l-2 2"/></svg>',
+  eye:'<svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg>',
 };
 function ico(name){ return `<i class="ico">${SVG[name]||''}</i>`; }
 const ICON_FOR_CAT = { outdoor:'mountain', fiesta:'music', gastro:'food', cultura:'landmark', deporte:'flag', bienestar:'leaf', social:'chat', viajeros:'compass' };
@@ -618,32 +621,96 @@ function publishPlan(){
   state.pendingGroup = null;
   toast('Plan publicado'); go('plan/'+plan.id);
 }
+function freshPostDraft(){ return { kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false }; }
+function capturePostInputs(){
+  const d=state.draftPost;
+  d.caption=val('f-caption'); d.alt=val('f-alt');
+  d.place=val('f-postplace'); d.planId=val('f-postplan');
+}
+function highlightCaption(text){
+  return escapeHtml(text)
+    .replace(/(^|\s)(@[\wáéíóúñ]+)/gi,'$1<span class="mention">$2</span>')
+    .replace(/(^|\s)(#[\wáéíóúñ]+)/gi,'$1<span class="hash">$2</span>');
+}
+function updateCaptionPreview(){
+  const el=document.getElementById('cap-preview'); if(!el) return;
+  const t=val('f-caption');
+  el.innerHTML = t ? highlightCaption(t) : '<span class="ph">La vista previa del pie aparecerá aquí…</span>';
+}
 function renderCreatePost(){
   const view = document.getElementById('view-page');
-  const k = state.draftPostKind;
+  const d = state.draftPost, k = d.kind;
   const sample = ['g-grape','g-sunset','g-forest'];
   const preview = k==='carrusel'
-    ? `<div class="post-prev carrusel">${sample.map((c,i)=>`<span class="pp ${c}">${i===0?'':''}</span>`).join('')}<span class="pp-dots">1 / ${sample.length}</span></div>`
+    ? `<div class="post-prev carrusel">${sample.map(c=>`<span class="pp ${c}"></span>`).join('')}<span class="pp-dots">1 / ${sample.length}</span></div>`
     : `<div class="post-prev"><span class="pp ${sample[0]}">${k==='video'?`<span class="play-ov">${ico('play')}</span>`:''}</span></div>`;
+  // planes vinculables: a los que asististe o que creaste
+  const linkable = PLANS.filter(p=> (ME.attendedPlanIds||[]).includes(p.id) || p.host.name===ME.name);
+  const aud=[['publico','Público','globe'],['seguidores','Seguidores','users'],['cercanos','Cercanos','star']];
+  const tagChips = USERS.filter(u=>u.id!=='me').map(u=>`<button class="tag-chip ${d.tags.includes(u.id)?'active':''}" onclick="togglePostTag('${u.id}')">${ico('user')} ${escapeHtml(u.name)}</button>`).join('');
+  const optRow=(icon,label,key,sub='')=>`<div class="opt-row" onclick="togglePostOpt('${key}')"><span class="or-ic">${ico(icon)}</span>
+    <span class="or-l">${label}${sub?`<span class="or-s">${sub}</span>`:''}</span>
+    <span class="switch ${d[key]?'on':''}"><span class="knob"></span></span></div>`;
   view.innerHTML = pageHead('Nueva publicación') + `
     <div class="page-body form">
       <div class="field"><label>Tipo</label>
         <div class="iseg" id="d-postkind">
-          <button class="${k==='foto'?'active':''}" onclick="setPostKind('foto')">${ico('image')}<span>Foto</span></button>
-          <button class="${k==='video'?'active':''}" onclick="setPostKind('video')">${ico('video')}<span>Vídeo</span></button>
-          <button class="${k==='carrusel'?'active':''}" onclick="setPostKind('carrusel')">${ico('stack')}<span>Carrusel</span></button></div></div>
+          <button class="${k==='foto'?'active':''}" onclick="setPostField('kind','foto')">${ico('image')}<span>Foto</span></button>
+          <button class="${k==='video'?'active':''}" onclick="setPostField('kind','video')">${ico('video')}<span>Vídeo</span></button>
+          <button class="${k==='carrusel'?'active':''}" onclick="setPostField('kind','carrusel')">${ico('stack')}<span>Carrusel</span></button></div></div>
       <div class="field"><label>Vista previa</label>${preview}<span class="add-media center">${ico('image')} Añadir desde galería</span></div>
-      <div class="field"><label>Pie de texto</label><textarea id="f-caption" rows="3" placeholder="Escribe un pie...">${escapeHtml(state.draftCaption||'')}</textarea></div>
+
+      <div class="field"><label>Pie de texto</label>
+        <textarea id="f-caption" rows="3" placeholder="Escribe un pie… usa @ para mencionar y # para temas" oninput="updateCaptionPreview()">${escapeHtml(d.caption||'')}</textarea>
+        <div class="cap-preview" id="cap-preview">${d.caption?highlightCaption(d.caption):'<span class="ph">La vista previa del pie aparecerá aquí…</span>'}</div></div>
+
+      <div class="field"><label>Audiencia</label>
+        <div class="iseg" id="d-audience">${aud.map(([v,l,n])=>`<button class="${d.audience===v?'active':''}" onclick="setPostField('audience','${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div>
+        <p class="hint">Coherente con tu perfil: en un perfil privado, "Público" se limita a tus seguidores aprobados.</p></div>
+
+      <div class="adv-title">Añadir a la publicación</div>
+      <div class="opt-list">
+        <div class="opt-row"><span class="or-ic">${ico('link')}</span><span class="or-l">Vincular a un plan<span class="or-s">aparece ligada al plan</span></span>
+          <select id="f-postplan" class="or-sel"><option value="">Ninguno</option>${linkable.map(p=>`<option value="${p.id}" ${d.planId===p.id?'selected':''}>${escapeHtml(p.title)}</option>`).join('')}</select></div>
+        <div class="opt-row"><span class="or-ic">${ico('pin')}</span><span class="or-l">Ubicación</span>
+          <select id="f-postplace" class="or-sel"><option value="">Sin ubicación</option>${PLACES.map(pl=>`<option value="${pl.id}" ${d.place===pl.id?'selected':''}>${escapeHtml(pl.name)} · ${pl.city}</option>`).join('')}</select></div>
+      </div>
+
+      <div class="field" style="margin-top:16px"><label>${ico('tag')} Etiquetar personas</label>
+        <div class="tag-chips">${tagChips}</div></div>
+
+      <div class="field"><label>${ico('doc')} Texto alternativo (accesibilidad)</label>
+        <input id="f-alt" placeholder="Describe la imagen para lectores de pantalla" value="${escapeHtml(d.alt||'')}" /></div>
+
+      <div class="adv-title">Opciones</div>
+      <div class="opt-list">
+        ${optRow('chat','Comentarios activos','comments','permitir comentarios')}
+        ${optRow('eye','Ocultar el número de Me gusta','hideLikes','solo tú verás el total')}
+        ${optRow('live','Compartir también en Stories','alsoStory','24 h en tu pestaña Stories')}
+      </div>
+
       <div class="form-actions"><button class="btn-primary" onclick="publishPost()">${ico('check')} Publicar</button></div>
     </div>`;
 }
-function setPostKind(k){ state.draftCaption = val('f-caption'); state.draftPostKind=k; renderCreatePost(); }
+function setPostField(key,v){ capturePostInputs(); state.draftPost[key]=v; renderCreatePost(); }
+function togglePostTag(uid){ capturePostInputs(); const t=state.draftPost.tags; const i=t.indexOf(uid); if(i>=0) t.splice(i,1); else t.push(uid); renderCreatePost(); }
+function togglePostOpt(key){ capturePostInputs(); state.draftPost[key]=!state.draftPost[key]; renderCreatePost(); }
 function publishPost(){
-  const k = state.draftPostKind;
-  const caption = val('f-caption').trim() || 'Nueva publicación';
+  capturePostInputs();
+  const d = state.draftPost, k = d.kind;
+  const caption = (d.caption||'').trim() || 'Nueva publicación';
   const media = k==='carrusel' ? ['g-grape','g-sunset','g-forest'] : [k==='video'?'g-grape':'g-sunset'];
-  POSTS.unshift({ id:'npo'+Date.now(), authorId:'me', kind:k, media, caption, likes:0 });
-  state.draftCaption=''; toast('Publicación creada'); state.profileTab='posts'; go('perfil');
+  const mentions = (caption.match(/@[\wáéíóúñ]+/gi)||[]);
+  const hashtags = (caption.match(/#[\wáéíóúñ]+/gi)||[]);
+  POSTS.unshift({
+    id:'npo'+Date.now(), authorId:'me', kind:k, media, caption, likes:0,
+    placeId:d.place||null, taggedUserIds:[...d.tags], planId:d.planId||null, altText:(d.alt||'').trim(),
+    mentions, hashtags, audience:d.audience, commentsEnabled:d.comments, hideLikes:d.hideLikes, sharedToStory:d.alsoStory,
+  });
+  const story = d.alsoStory;
+  state.draftPost = freshPostDraft();
+  toast(story ? 'Publicación creada · compartida en Stories' : 'Publicación creada');
+  state.profileTab='posts'; go('perfil');
 }
 
 /* ---------- helpers de página ---------- */

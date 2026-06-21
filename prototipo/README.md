@@ -50,7 +50,10 @@ hash (`#/...`):
    - **Plan**: título, descripción, lugar, fecha/hora, tamaño, tema, gratis/de pago,
      portada y **tipo de asistencia (libre / con aprobación)**; opción de grupo
      organizador. Publica un plan real que aparece en el feed.
-   - **Publicación**: foto, vídeo o **carrusel**, con vista previa y pie de texto.
+   - **Publicación**: foto, vídeo o **carrusel**, con vista previa, pie con menciones
+     y hashtags, y opciones tipo Instagram: ubicación, etiquetar personas, **vincular a
+     un plan**, texto alternativo, audiencia (público/seguidores/cercanos) y toggles de
+     comentarios, ocultar likes y compartir en stories.
    - **Grupo**: nombre, descripción y miembros con **rol admin/miembro**.
 6. **Grupos** — lista de grupos y detalle con miembros y roles; los planes del grupo
    usan a sus **admins** para aprobar solicitudes.

@@ -38,6 +38,8 @@ erDiagram
     GRUPO ||--o{ PLAN : organiza
 
     USUARIO ||--o{ PUBLICACION : crea
+    PLAN ||--o{ PUBLICACION : "vinculada a"
+    LUGAR ||--o{ PUBLICACION : ubica
 
     PLAN ||--o{ RESENA : abre
     USUARIO ||--o{ RESENA : "escribe"
@@ -186,7 +188,15 @@ erDiagram
         uuid autor_id FK
         string formato "foto|video|carrusel"
         string media "una o varias imagenes"
-        string pie_texto
+        string pie_texto "con @menciones y #hashtags"
+        uuid ubicacion_lugar_id FK "nullable"
+        string usuarios_etiquetados "lista de usuario_id"
+        uuid plan_vinculado_id FK "nullable"
+        string texto_alt "accesibilidad"
+        string audiencia "publico|seguidores|cercanos"
+        bool comentarios_activos
+        bool ocultar_likes
+        bool compartir_en_stories
         int likes
         string visibilidad
     }
