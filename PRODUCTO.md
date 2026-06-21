@@ -32,6 +32,8 @@ Cada Plan se define por estos atributos:
 
 - Tipo: social gratuito o experiencia de pago.
 - Tipo de inscripción: apuntado (requiere apuntarse; aforo limitado o de pago) o libre (no requiere apuntarse; p. ej. un atardecer abierto). Determina si hay lista de apuntados o solo asistencia real.
+- Modo de aprobación (en planes apuntados): automática (quien se apunta entra, hasta completar aforo) o manual (el anfitrión —o los admins del grupo organizador— aceptan o rechazan cada solicitud de asistencia). En la creación se presenta como "asistencia libre" vs "con aprobación".
+- Grupo organizador (opcional): un plan puede crearse dentro de un grupo; entonces sus admins son quienes aprueban las solicitudes.
 - Categoría temática (taxonomía actualizable, ver sección de descubrimiento).
 - Ubicación, fecha y hora.
 - Tamaño de grupo: mínimo, máximo y apuntados ahora. Eje de búsqueda de primer nivel.
@@ -160,6 +162,10 @@ Privacidad de presencia, por asistencia. Cada usuario decide, para su asistencia
 
 Relación con el resto del modelo. La asistencia real verificada refuerza el recuento honesto que ya buscaban la reconfirmación del día y la lista de espera, y alimenta el índice de fiabilidad: asistir construye reputación; apuntarse y no aparecer es el no-show penalizable. La geolocalización para verificar asistencia es un consentimiento separado, ya previsto en el onboarding y revocable en ajustes (RGPD). La privacidad de presencia es independiente de que el perfil sea público o privado: un perfil público puede tener asistencias privadas, y un perfil privado restringe a seguidores aprobados todo su contenido, incluidas sus Vividas.
 
+## Publicaciones
+
+Además de los aftermovies (planes pasados) y las stories, el usuario crea publicaciones de perfil en tres formatos: foto, vídeo o carrusel (varias imágenes). Comparten un mismo flujo de subida —selección de tipo, vista previa, pie de texto y publicar— y la capa de moderación en la subida. Las publicaciones viven en el grid del perfil; cuando proceden de un plan, alimentan también las Vividas. Su visibilidad la rige el perfil (público o privado), como el resto del contenido.
+
 ## Stories: el "ahora mismo"
 
 Stories y aftermovies son dos formatos con funciones distintas y complementarias, y van en pestañas separadas.
@@ -169,6 +175,14 @@ Stories: efímeras (24 h), en su propia pestaña y no en círculos de cabecera. 
 Aftermovies: permanentes, en la pestaña Vividas y organizados por hashtags. Prueba social acumulada que vende la siguiente edición del plan.
 
 La distinción es clara: stories para el ahora, efímeras, atracción inmediata; aftermovies permanentes, para descubrimiento y conversión. La visibilidad de ambas la rige el perfil (público o privado), con controles por pieza (por ejemplo, "mejores amigos" en stories).
+
+## Grupos y roles
+
+Los grupos son espacios de organización colectiva, al estilo de los grupos de mensajería, pensados para comunidades que montan planes de forma recurrente (un club de running, un grupo gastronómico). Un grupo tiene nombre, descripción y una lista de miembros, cada uno con un rol —administrador o miembro—, y puede tener varios administradores.
+
+Autoridad de los admins. Los administradores gestionan el grupo y, sobre todo, aprueban las solicitudes de asistencia a los planes creados dentro del grupo. Cuando un plan con aprobación pertenece a un grupo, no decide solo su creador: cualquiera de los admins puede aceptar o rechazar las solicitudes. Esto reparte la carga de organización y da continuidad cuando el creador no está disponible.
+
+Planes de grupo. Al crear un plan se puede asociar a un grupo del que seas admin. El plan hereda a los admins del grupo como aprobadores y aparece listado en la ficha del grupo, junto a su histórico de planes.
 
 ## Mensajería
 
@@ -348,7 +362,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Identidad y cuenta
 
-- Usuario. Entidad raíz. Atributos: id, tipo (particular o empresa), nombre, usuario (handle único), email, teléfono, hash de contraseña, fecha de nacimiento (gate 18+), idioma de la app, foto, biografía, ciudad o ubicación actual (opcional), idiomas hablados, intereses y categorías favoritas, perfil público o privado, visibilidad de presencia por defecto (pública o privada), modo de recepción de DMs (cerrado / bajo solicitud / abierto, por defecto bajo solicitud), permisos (quién puede seguirte, escribirte, unirse a tus planes), reputación por estrellas (agregada), índice de fiabilidad (nº de no-shows, agregado, sin detalle de eventos), fecha de alta. Derivados: contadores de seguidores/seguidos, historial de planes.
+- Usuario. Entidad raíz. Atributos: id, tipo (particular/usuario o profesional/empresa —la cuenta profesional lleva distintivo verificado de negocio; sus condiciones y precio son una decisión de negocio abierta), nombre, usuario (handle único), email, teléfono, hash de contraseña, fecha de nacimiento (gate 18+), idioma de la app, foto, biografía, ciudad o ubicación actual (opcional), idiomas hablados, intereses y categorías favoritas, perfil público o privado, visibilidad de presencia por defecto (pública o privada), modo de recepción de DMs (cerrado / bajo solicitud / abierto, por defecto bajo solicitud), permisos (quién puede seguirte, escribirte, unirse a tus planes), reputación por estrellas (agregada), índice de fiabilidad (nº de no-shows, agregado, sin detalle de eventos), fecha de alta. Derivados: contadores de seguidores/seguidos, historial de planes.
 - Cuenta de empresa. Especialización de Usuario con tipo = empresa. Campos propios: razón/nombre comercial, horario, dirección, categoría de negocio, web, enlace de reserva, distintivo de negocio verificado. Se vincula a uno o varios Lugares.
 - Verificación de identidad. Atributos: usuario_id, proveedor, estado, referencias de documento y selfie, fecha, distintivo resultante. Es la barrera del primer plan; protege a la comunidad.
 - Verificación de negocio. Atributos: cuenta_empresa_id, prueba de titularidad/datos fiscales, estado, distintivo. Distinta de la de identidad personal.
@@ -366,14 +380,21 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Plan y participación
 
-- Plan. id, tipo (social gratuito o experiencia de pago), tipo de inscripción (apuntado o libre), nivel (1 ancla recurrente / 2 usuario gratuito / 3 pago curado), anfitrión_id (Usuario o Cuenta de empresa, verificado), lugar_id o ubicación libre, ubicación oculta (bool) con zona aproximada, categoría, título, descripción, media (post foto/vídeo), fecha y hora, recurrencia (puntual o regla de recurrencia), tamaño mínimo y máximo, precio (nulo si gratuito), desvelo (importe, solo eventos especiales/saturados no de pago), requisitos de asistente (edad mínima, idioma, fiabilidad mínima, aprobación manual, presentación requerida), política de cancelación (flexible / moderada / estricta), estado (próximo / en curso / pasado), hashtag, fecha de creación. Derivados: apuntados ahora, asistentes reales.
+- Plan. id, tipo (social gratuito o experiencia de pago), tipo de inscripción (apuntado o libre), modo de aprobación (automática o manual, solo en apuntados), grupo_id (grupo organizador, nulo si no aplica), nivel (1 ancla recurrente / 2 usuario gratuito / 3 pago curado), anfitrión_id (Usuario o Cuenta de empresa, verificado), lugar_id o ubicación libre, ubicación oculta (bool) con zona aproximada, categoría, título, descripción, media (post foto/vídeo), fecha y hora, recurrencia (puntual o regla de recurrencia), tamaño mínimo y máximo, precio (nulo si gratuito), desvelo (importe, solo eventos especiales/saturados no de pago), requisitos de asistente (edad mínima, idioma, fiabilidad mínima, presentación requerida), política de cancelación (flexible / moderada / estricta), estado (próximo / en curso / pasado), hashtag, fecha de creación. Derivados: apuntados ahora, asistentes reales.
 - Inscripción. Relación Usuario–Plan para la participación, solo en planes apuntados. plan_id, usuario_id, estado (solicitada, aprobada, confirmada, en lista de espera, cancelada, asistió, no-show), reconfirmación del día (bool), pago_id (nulo en planes gratuitos), fecha. Es la entidad donde viven la lista de espera con sobreasignación y la reconfirmación.
+- Solicitud de asistencia. Relación Usuario–Plan en los planes con aprobación manual. plan_id, usuario_id, estado (pendiente, aceptada, rechazada), mensaje de presentación, fecha. La aceptan el anfitrión o los admins del grupo organizador; una solicitud aceptada equivale a una inscripción aprobada.
 - Asistencia real. Relación Usuario–Plan que registra la asistencia verificada por geolocalización. plan_id, usuario_id, fecha y hora, método (geolocalización), visibilidad (pública o privada). Es distinta de la Inscripción: un plan libre no tiene inscripciones pero sí asistencias reales; un plan apuntado tiene ambas. Alimenta el recuento de asistentes reales del plan y las Vividas del perfil; los registros con visibilidad privada cuentan en el agregado pero no se listan por identidad.
 - Pago. id, inscripción_id, usuario_id, importe, comisión (15% en planes de pago), tipo (reserva de evento, desvelo, boost de publicidad, suscripción, CPA), estado de escrow (retenido, liberado, reembolsado), método de pago, fecha de liberación, fecha de reembolso. Centraliza el modelo escrow y las reglas de cancelación.
 - Reseña. id, plan_id, autor_id, sujeto_id (anfitrión o asistente reseñado), estrellas, texto, fecha. Post-plan. Alimenta la reputación del usuario y, agregada, la del lugar.
 
+### Grupos
+
+- Grupo. id, nombre, descripción, media de portada, fecha de creación. Agrupa miembros y planes; es el espacio de organización colectiva.
+- Miembro de grupo. Relación Usuario–Grupo con rol. grupo_id, usuario_id, rol (admin o miembro), fecha de alta. Un grupo puede tener varios admins; los admins aprueban las solicitudes de asistencia de los planes del grupo (Plan.grupo_id).
+
 ### Contenido
 
+- Publicación. Post de perfil. id, autor_id, formato (foto / vídeo / carrusel), media (una o varias imágenes), pie de texto, likes, visibilidad (según perfil), fecha. El aftermovie es una publicación especializada, ligada a un plan, que vive además en Vividas.
 - Aftermovie. Post permanente. id, plan_id de origen, autor_id, media, hashtag(s), visibilidad (según perfil), fecha. Vive en la pestaña Vividas.
 - Story. Efímera (24 h). id, autor_id, plan_id (opcional), media, visibilidad (público / privado / mejores amigos), fecha de expiración. Vive en la pestaña Stories y puede aflorar destacada en Vividas.
 - Mención. id, contenido_id (plan, story o aftermovie), usuario_mencionado_id, estado (pendiente, aceptada, rechazada). No se vincula al perfil hasta aceptarse; alimenta la pestaña Menciones.
@@ -409,6 +430,9 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Un Plan tiene un anfitrión (Usuario o Empresa) y, si es apuntado, muchas Inscripciones; cada Inscripción enlaza un Usuario con un Plan y, si es de pago, con un Pago.
 - Un Plan (libre o apuntado) acumula muchas Asistencias reales; cada Asistencia real enlaza un Usuario con un Plan, verificada por geolocalización y con visibilidad pública o privada. Alimenta el recuento del Plan y las Vividas del Usuario.
 - Un Plan pasado genera un Aftermovie y abre Reseñas; las Reseñas alimentan la reputación del Usuario y, agregadas, la del Lugar.
+- Un Plan con aprobación manual recibe Solicitudes de asistencia; las aceptan el anfitrión o, si el plan tiene grupo, los admins del Grupo.
+- Un Grupo tiene muchos Miembros de grupo (Usuarios con rol admin o miembro) y muchos Planes; los admins aprueban las solicitudes de esos planes.
+- Un Usuario crea muchas Publicaciones (foto, vídeo o carrusel) que viven en su perfil.
 - Un Reporte apunta a cualquier objeto (Plan, Usuario, Mensaje, Contenido, comportamiento en evento) y puede derivar en Acciones de moderación.
 
 ## Decisiones abiertas

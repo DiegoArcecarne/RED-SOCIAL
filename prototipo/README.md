@@ -43,8 +43,23 @@ hash (`#/...`):
    libre** (no hace falta apuntarse) de **plan apuntado**, muestra el **contador de
    asistentes reales** (verificados por geolocalización), un control de **presencia
    pública/privada** y el botón **Registrar mi llegada**.
-4. **Perfil** — ejemplo de usuario con sus **Vividas** (planes asistidos), estadísticas
-   y un **toggle de perfil público/privado** y de presencia por defecto.
+4. **Perfil** — usuario con **Publicaciones** y **Vividas** en grid, estadísticas,
+   badge de cuenta **profesional** y acceso a **Configuración** (toggles de perfil y
+   presencia público/privado, opciones de cuenta).
+5. **Crear** (botón central +) — chooser que abre los flujos de creación:
+   - **Plan**: título, descripción, lugar, fecha/hora, tamaño, tema, gratis/de pago,
+     portada y **tipo de asistencia (libre / con aprobación)**; opción de grupo
+     organizador. Publica un plan real que aparece en el feed.
+   - **Publicación**: foto, vídeo o **carrusel**, con vista previa y pie de texto.
+   - **Grupo**: nombre, descripción y miembros con **rol admin/miembro**.
+6. **Grupos** — lista de grupos y detalle con miembros y roles; los planes del grupo
+   usan a sus **admins** para aprobar solicitudes.
+7. **Solicitudes** — en un plan con aprobación, el organizador/admin **acepta o
+   rechaza** cada solicitud de asistencia.
+
+Las cuentas de usuario y profesional se distinguen visualmente (badge); el modelo de
+precios/condiciones de las cuentas profesionales queda como **pendiente** a propósito
+(decisión de negocio abierta).
 
 La estética es **sin emojis**: todos los iconos (pestañas, filtros, badges, mapa,
 barra inferior) son SVG monolínea. Los filtros de tema, tamaño de grupo y precio se

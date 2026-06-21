@@ -30,6 +30,15 @@ erDiagram
     PLAN ||--o{ ASISTENCIA_REAL : "registra (geo)"
     USUARIO ||--o{ ASISTENCIA_REAL : asiste
 
+    PLAN ||--o{ SOLICITUD_ASISTENCIA : recibe
+    USUARIO ||--o{ SOLICITUD_ASISTENCIA : envia
+
+    GRUPO ||--o{ MIEMBRO_GRUPO : tiene
+    USUARIO ||--o{ MIEMBRO_GRUPO : "es miembro"
+    GRUPO ||--o{ PLAN : organiza
+
+    USUARIO ||--o{ PUBLICACION : crea
+
     PLAN ||--o{ RESENA : abre
     USUARIO ||--o{ RESENA : "escribe"
     USUARIO ||--o{ RESENA : "es resenado en"
@@ -59,7 +68,7 @@ erDiagram
 
     USUARIO {
         uuid id PK
-        string tipo "particular | empresa"
+        string tipo "particular | profesional"
         string usuario "handle unico"
         string email
         date fecha_nacimiento "gate 18+"
@@ -119,6 +128,8 @@ erDiagram
         uuid id PK
         string tipo "social_gratuito|experiencia_pago"
         string tipo_inscripcion "apuntado|libre"
+        string modo_aprobacion "automatica|manual"
+        uuid grupo_id FK "grupo organizador, nullable"
         int nivel "1|2|3"
         uuid anfitrion_id FK
         uuid lugar_id FK
@@ -147,6 +158,37 @@ erDiagram
         datetime fecha_hora
         string metodo "geolocalizacion"
         string visibilidad "publica|privada"
+    }
+    SOLICITUD_ASISTENCIA {
+        uuid id PK
+        uuid plan_id FK
+        uuid usuario_id FK
+        string estado "pendiente|aceptada|rechazada"
+        string mensaje
+        datetime fecha
+    }
+    GRUPO {
+        uuid id PK
+        string nombre
+        string descripcion
+        string media
+        datetime fecha_creacion
+    }
+    MIEMBRO_GRUPO {
+        uuid id PK
+        uuid grupo_id FK
+        uuid usuario_id FK
+        string rol "admin|miembro"
+        datetime fecha_alta
+    }
+    PUBLICACION {
+        uuid id PK
+        uuid autor_id FK
+        string formato "foto|video|carrusel"
+        string media "una o varias imagenes"
+        string pie_texto
+        int likes
+        string visibilidad
     }
     PAGO {
         uuid id PK

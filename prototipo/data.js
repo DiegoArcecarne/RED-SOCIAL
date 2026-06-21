@@ -187,17 +187,78 @@ PLANS.forEach((p) => {
   p.attendedPrivate = Math.max(0, p.attended - p.publicAttendees.length);
 });
 
-// Usuario actual (para perfil + toggles de privacidad del prototipo)
-const ME = {
-  name: 'Marina', handle: '@marina', initials: 'MA',
-  profilePublic: true,        // perfil público o privado (modelo Instagram)
-  presencePublic: true,       // presencia por defecto: pública o privada
-  followers: 184, following: 156,
-  attendedPlanIds: ['p1','p5','p8'],   // Vividas: planes a los que ha asistido
+/* ---- Bloque de creación: aprobación de asistencia + grupo organizador ----
+   approval: 'automatica' (cualquiera que se apunta entra) o 'manual'
+             (el creador/los admins aceptan o rechazan cada solicitud).
+   Para los planes libres no aplica (cualquiera asiste).
+   groupId: si el plan se crea dentro de un grupo, sus admins aprueban.            */
+const PLAN_EXTRA = {
+  p4: { approval: 'manual' },
+  p6: { approval: 'manual', groupId: 'g1' },
+  p9: { groupId: 'g2' },
 };
+PLANS.forEach((p) => {
+  const e = PLAN_EXTRA[p.id] || {};
+  p.approval = (p.joinType === 'libre') ? 'libre' : (e.approval || 'automatica');
+  p.groupId = e.groupId || null;
+});
+
+// Usuarios (perfiles). type: 'usuario' normal o 'profesional' (cuenta de negocio).
+const USERS = [
+  { id:'me', name:'Marina', handle:'@marina', initials:'MA', type:'usuario', verified:true,
+    bio:'Viajera y runner. Outdoor y gastronomía por Madrid.',
+    profilePublic:true, presencePublic:true, followers:184, following:156,
+    attendedPlanIds:['p1','p5','p8'] },
+  { id:'azotea', name:'Azotea Círculo', handle:'@azoteacirculo', initials:'AC', type:'profesional', verified:true,
+    bio:'Azotea y eventos en el centro de Madrid.', followers:5400, following:12,
+    business:{ category:'Ocio nocturno', web:'azoteacirculo.es', address:'Centro, Madrid' },
+    attendedPlanIds:['p3'] },
+  { id:'lucia', name:'Lucía R.', handle:'@lucia', initials:'LR', type:'usuario', verified:true, followers:90, following:120, attendedPlanIds:[] },
+  { id:'marco', name:'Marco T.', handle:'@marcot', initials:'MT', type:'usuario', verified:true, followers:60, following:200, attendedPlanIds:[] },
+  { id:'ana',   name:'Ana P.',  handle:'@anap',   initials:'AP', type:'usuario', verified:true, followers:140, following:80, attendedPlanIds:[] },
+];
+const ME = USERS[0]; // usuario actual
+
+// Publicaciones (foto / video / carrusel). media = lista de portadas (degradados).
+const POSTS = [
+  { id:'po1', authorId:'me', kind:'carrusel', media:['g-forest','g-sunset','g-grape'], caption:'Finde de trail por la sierra', likes:64 },
+  { id:'po2', authorId:'me', kind:'foto',     media:['g-wine'],   caption:'Noche de vinos naturales', likes:38 },
+  { id:'po3', authorId:'me', kind:'video',    media:['g-grape'],  caption:'Rooftop al atardecer', likes:120 },
+  { id:'po4', authorId:'me', kind:'foto',     media:['g-sunset'], caption:'Atardecer en Debod', likes:51 },
+  { id:'po5', authorId:'me', kind:'carrusel', media:['g-dark','g-wine'], caption:'Ruta de tapas', likes:29 },
+  { id:'po6', authorId:'me', kind:'foto',     media:['g-forest'], caption:'Yoga en el Retiro', likes:44 },
+  { id:'po7', authorId:'azotea', kind:'video', media:['g-grape'], caption:'Sunset sessions', likes:540 },
+];
+
+// Grupos (tipo grupos de WhatsApp) con roles admin/miembro.
+const GROUPS = [
+  { id:'g1', name:'Runners Madrid', gradient:'g-forest',
+    about:'Quedadas de running y trail por Madrid y la sierra.',
+    members:[ {userId:'me',role:'admin'}, {userId:'marco',role:'admin'}, {userId:'ana',role:'miembro'}, {userId:'lucia',role:'miembro'} ],
+    planIds:['p5','p10','p6'] },
+  { id:'g2', name:'Planes Gastro', gradient:'g-wine',
+    about:'Cenas, catas y rutas de tapas con buena gente.',
+    members:[ {userId:'me',role:'miembro'}, {userId:'azotea',role:'admin'} ],
+    planIds:['p9'] },
+];
+
+// Solicitudes de asistencia (para planes con aprobación manual).
+const REQUESTS = [
+  { id:'r1', planId:'p6', userId:'lucia', status:'pendiente', message:'¡Me encantaría! Soy de la zona y corro habitualmente.' },
+  { id:'r2', planId:'p6', userId:'ana',   status:'pendiente', message:'¿Es apta para ritmo principiante?' },
+  { id:'r3', planId:'p4', userId:'marco', status:'pendiente', message:'Reservo plaza para mí, ¡con muchas ganas!' },
+];
+
+const getUser  = (id) => USERS.find((u) => u.id === id);
+const getGroup = (id) => GROUPS.find((g) => g.id === id);
+const postsByUser = (uid) => POSTS.filter((p) => p.authorId === uid);
+const requestsForPlan = (pid) => REQUESTS.filter((r) => r.planId === pid);
 
 // Exponer explícitamente en window: garantiza que app.js (otro <script>) y los
 // manejadores inline encuentren los datos, sin depender del scope léxico compartido.
 if (typeof window !== 'undefined') {
-  Object.assign(window, { CATEGORIES, PLACES, PLANS, AFTERMOVIES, REVIEWS, ME, getPlace, getPlan, getCategory });
+  Object.assign(window, {
+    CATEGORIES, PLACES, PLANS, AFTERMOVIES, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
+    getPlace, getPlan, getCategory, getUser, getGroup, postsByUser, requestsForPlan,
+  });
 }
