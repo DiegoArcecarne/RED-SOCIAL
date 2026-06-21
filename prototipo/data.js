@@ -103,6 +103,42 @@ const PLANS = [
     summary: 'Sesión de 45 min para empezar el sábado con calma. Trae esterilla.',
     secret: false,
   },
+  {
+    id: 'p9', title: 'Cata de vinos naturales', placeId: 'clamores', category: 'gastro',
+    level: 3, paid: true, price: 22, recurring: false,
+    host: { name: 'Vinos Vivos', business: true, verified: true, rating: 4.7, reliability: 97 },
+    when: hoursFromNow(40), groupMin: 8, groupMax: 24, joined: 15,
+    gradient: 'g-wine', emoji: '',
+    summary: 'Seis referencias de vino natural con un sumiller que te lo cuenta sin pretensiones.',
+    secret: false,
+  },
+  {
+    id: 'p10', title: 'Running club al anochecer', placeId: 'retiro', category: 'deporte',
+    level: 1, paid: false, price: 0, recurring: true,
+    host: { name: 'Madrid Night Runners', business: false, verified: true, rating: 4.8, reliability: 95 },
+    when: hoursFromNow(9), groupMin: 6, groupMax: 30, joined: 18,
+    gradient: 'g-dark', emoji: '',
+    summary: '5 km a ritmo suave por el Retiro. Grupos por nivel, nadie corre solo.',
+    secret: false,
+  },
+  {
+    id: 'p11', title: 'Mercado de diseño independiente', placeId: 'lavapies', category: 'cultura',
+    level: 2, paid: false, price: 0, recurring: false,
+    host: { name: 'Carla D.', business: false, verified: true, rating: 4.6, reliability: 90 },
+    when: hoursFromNow(34), groupMin: 4, groupMax: 25, joined: 11,
+    gradient: 'g-grape', emoji: '',
+    summary: 'Vuelta por los puestos de creadores locales y caña final con el grupo.',
+    secret: false,
+  },
+  {
+    id: 'p12', title: 'Cine de verano en azotea', placeId: 'azotea', category: 'cultura',
+    level: 3, paid: true, price: 12, recurring: false,
+    host: { name: 'Azotea Círculo', business: true, verified: true, rating: 4.6, reliability: 98 },
+    when: hoursFromNow(60), groupMin: 15, groupMax: 50, joined: 29,
+    gradient: 'g-sunset', emoji: '',
+    summary: 'Proyección bajo las estrellas con manta y palomitas incluidas.',
+    secret: false,
+  },
 ];
 
 // Aftermovies (pestaña Vividas) — prueba social de planes pasados

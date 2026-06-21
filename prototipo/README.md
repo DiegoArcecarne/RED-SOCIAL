@@ -26,15 +26,17 @@ Para la mejor experiencia, activa la **vista móvil** en las DevTools del navega
 
 ## Qué incluye
 
-Tres vistas principales, con navegación por la barra inferior y por hash (`#/...`):
+Estética **modo oscuro tipo Instagram**, minimalista y sin emojis (los iconos son
+SVG monolínea). Tres vistas principales, con navegación por la barra inferior y por
+hash (`#/...`):
 
-1. **Descubrir** (pestaña *Disponibles*) — feed de planes filtrable por **tamaño de
-   grupo**, **tema** y **precio**. Cada tarjeta muestra nivel del plan (ancla
-   recurrente / gratis / experiencia de pago), anfitrión verificado, reputación,
-   cuenta atrás y plazas. La pestaña *Vividas* muestra aftermovies con la inyección
-   contextual de un plan; *Stories* y *Menciones* quedan como placeholders.
+1. **Descubrir** (pestaña *Disponibles*) — **cuadrícula tipo Instagram de 3 columnas**
+   con 12 publicaciones; cada celda es una portada cuadrada con título mínimo, precio
+   y tamaño de grupo. Al tocar una celda se abre la ficha. Filtrable por **tamaño de
+   grupo**, **tema** y **precio**. La pestaña *Vividas* muestra aftermovies en grid;
+   *Stories* y *Menciones* quedan como placeholders.
 2. **Mapa** — lugares (negocio verificado, público, secreto) como pines sobre un
-   mapa estilizado; al tocar un pin se ven sus planes e histórico.
+   mapa oscuro estilizado; al tocar un pin se ven sus planes e histórico.
 3. **Ficha de plan** — detalle con KPIs, anfitrión y señales de confianza,
    asistentes, lugar, herramientas de seguridad, reseñas y reserva (escrow para
    planes de pago; verificación de identidad para los gratuitos).
