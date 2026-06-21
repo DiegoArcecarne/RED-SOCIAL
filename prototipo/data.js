@@ -159,8 +159,45 @@ const getPlace = (id) => PLACES.find((p) => p.id === id);
 const getPlan  = (id) => PLANS.find((p) => p.id === id);
 const getCategory = (id) => CATEGORIES.find((c) => c.id === id);
 
+/* ---- Capa B: tipo de inscripción + asistencia real (geolocalización) ----
+   joinType:  'libre'    -> no hace falta apuntarse (p. ej. un atardecer abierto)
+              'apuntado' -> requiere apuntarse (aforo limitado o de pago)
+   attended:  asistentes reales detectados por geolocalización
+   publicAttendees: presencia pública (se listan en el plan)
+   attendedPrivate: presencia privada (cuentan en el agregado, no se listan)      */
+const PLAN_ATTENDANCE = {
+  p1:  { joinType: 'libre',    attended: 41, pub: ['SM','DL','NV','JR','AP','LT'] },
+  p2:  { joinType: 'libre',    attended: 9,  pub: ['RG','MO','TC'] },
+  p3:  { joinType: 'apuntado', attended: 58, pub: ['EK','FP','OD','BR','CM'] },
+  p4:  { joinType: 'apuntado', attended: 6,  pub: ['IL','VS'] },
+  p5:  { joinType: 'libre',    attended: 12, pub: ['HN','QA','ZD','WP'] },
+  p6:  { joinType: 'apuntado', attended: 7,  pub: ['MT','GC'] },
+  p7:  { joinType: 'apuntado', attended: 20, pub: ['JL','KP','RN','TS'] },
+  p8:  { joinType: 'libre',    attended: 10, pub: ['AP','LM','NO'] },
+  p9:  { joinType: 'apuntado', attended: 15, pub: ['DV','FE','GR'] },
+  p10: { joinType: 'libre',    attended: 18, pub: ['MN','RU','SO','PB','LC'] },
+  p11: { joinType: 'libre',    attended: 11, pub: ['CD','HV','OK'] },
+  p12: { joinType: 'apuntado', attended: 27, pub: ['AZ','CI','NE','RO'] },
+};
+PLANS.forEach((p) => {
+  const a = PLAN_ATTENDANCE[p.id] || {};
+  p.joinType = a.joinType || (p.paid ? 'apuntado' : 'libre');
+  p.attended = (a.attended != null) ? a.attended : p.joined;
+  p.publicAttendees = a.pub || ['SM','DL','NV'];
+  p.attendedPrivate = Math.max(0, p.attended - p.publicAttendees.length);
+});
+
+// Usuario actual (para perfil + toggles de privacidad del prototipo)
+const ME = {
+  name: 'Marina', handle: '@marina', initials: 'MA',
+  profilePublic: true,        // perfil público o privado (modelo Instagram)
+  presencePublic: true,       // presencia por defecto: pública o privada
+  followers: 184, following: 156,
+  attendedPlanIds: ['p1','p5','p8'],   // Vividas: planes a los que ha asistido
+};
+
 // Exponer explícitamente en window: garantiza que app.js (otro <script>) y los
 // manejadores inline encuentren los datos, sin depender del scope léxico compartido.
 if (typeof window !== 'undefined') {
-  Object.assign(window, { CATEGORIES, PLACES, PLANS, AFTERMOVIES, REVIEWS, getPlace, getPlan, getCategory });
+  Object.assign(window, { CATEGORIES, PLACES, PLANS, AFTERMOVIES, REVIEWS, ME, getPlace, getPlan, getCategory });
 }

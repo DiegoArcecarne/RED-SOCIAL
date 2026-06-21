@@ -31,6 +31,7 @@ Esta elección es coherente con el resto del producto: el grafo asimétrico alim
 Cada Plan se define por estos atributos:
 
 - Tipo: social gratuito o experiencia de pago.
+- Tipo de inscripción: apuntado (requiere apuntarse; aforo limitado o de pago) o libre (no requiere apuntarse; p. ej. un atardecer abierto). Determina si hay lista de apuntados o solo asistencia real.
 - Categoría temática (taxonomía actualizable, ver sección de descubrimiento).
 - Ubicación, fecha y hora.
 - Tamaño de grupo: mínimo, máximo y apuntados ahora. Eje de búsqueda de primer nivel.
@@ -141,11 +142,23 @@ Matching ligero por idioma e intereses para mejorar la calidad del grupo, sin em
 
 ## Perfil de usuario
 
-Información pública del perfil: nombre y usuario, foto, biografía, ciudad o ubicación actual (opcional), idiomas, intereses y categorías favoritas, distintivo de identidad verificada, reputación por estrellas y reseñas, índice de fiabilidad e historial de planes (organizados y asistidos), todo sujeto a la configuración de privacidad.
+Información pública del perfil: nombre y usuario, foto, biografía, ciudad o ubicación actual (opcional), idiomas, intereses y categorías favoritas, distintivo de identidad verificada, reputación por estrellas y reseñas, índice de fiabilidad e historial de planes (organizados y asistidos —estos últimos a partir de la asistencia real verificada por ubicación, sujeta a la privacidad de presencia de cada usuario), todo sujeto a la configuración de privacidad.
 
 Índice de fiabilidad. Se muestra de forma agregada: el número de eventos a los que el usuario no se presentó, sin desvelar cuáles. Nunca un registro público de faltas concretas.
 
 Contenido propio. Aftermovies (posts permanentes en la pestaña Vividas) y stories (efímeras), con la visibilidad que marque la configuración del perfil.
+
+## Asistencia real y privacidad de presencia
+
+Apuntarse y asistir son cosas distintas. Apuntarse es reservar plaza —solo en planes apuntados—; asistir es estar físicamente en el plan. La app verifica la asistencia real por geolocalización: cuando el usuario está en el lugar y la hora del plan, su presencia se detecta y se registra como asistencia real. Funciona igual en planes libres y apuntados, gratuitos o de pago.
+
+Planes apuntados y planes libres. Un plan apuntado requiere apuntarse —aforo limitado o de pago— y mantiene su lista de apuntados, lista de espera y reconfirmación. Un plan libre no requiere apuntarse (un atardecer abierto, una quedada de ancla recurrente): no hay inscripción previa, solo asistencia real al llegar. En ambos casos, la asistencia verificada por ubicación es lo que cuenta como "estuvo allí".
+
+Dónde se refleja la asistencia. En dos sitios: como número de asistentes reales del plan (recuento honesto, no estimado), y en el perfil del usuario, como historial de planes a los que ha asistido, que alimenta sus Vividas.
+
+Privacidad de presencia, por asistencia. Cada usuario decide, para su asistencia, si es pública o privada. Pública: aparece listado entre los asistentes del plan. Privada: su asistencia solo es visible en su propio perfil y no se lista en el plan. Decisión de diseño: los asistentes en privado cuentan en el agregado del plan, pero no se muestran por identidad; así el recuento sigue siendo honesto sin exponer a quien no quiere aparecer. El valor por defecto lo fija el usuario en ajustes.
+
+Relación con el resto del modelo. La asistencia real verificada refuerza el recuento honesto que ya buscaban la reconfirmación del día y la lista de espera, y alimenta el índice de fiabilidad: asistir construye reputación; apuntarse y no aparecer es el no-show penalizable. La geolocalización para verificar asistencia es un consentimiento separado, ya previsto en el onboarding y revocable en ajustes (RGPD). La privacidad de presencia es independiente de que el perfil sea público o privado: un perfil público puede tener asistencias privadas, y un perfil privado restringe a seguidores aprobados todo su contenido, incluidas sus Vividas.
 
 ## Stories: el "ahora mismo"
 
@@ -178,7 +191,7 @@ Espacio de coordinación en planes pequeños. En los planes de pocos participant
 Estructura del menú de ajustes:
 
 - Cuenta: editar perfil, usuario, email, teléfono, idioma de la app.
-- Privacidad: perfil público o privado, quién puede seguirte, quién puede escribirte, quién puede unirse a tus planes (todos, solo verificados, o solo con fiabilidad mínima), visibilidad de ubicación, visibilidad del historial.
+- Privacidad: perfil público o privado, quién puede seguirte, quién puede escribirte, quién puede unirse a tus planes (todos, solo verificados, o solo con fiabilidad mínima), visibilidad de ubicación, visibilidad del historial, visibilidad de presencia por defecto (pública o privada).
 - Seguridad: contraseña, verificación en dos pasos, dispositivos y sesiones activas, estado de verificación de identidad.
 - Notificaciones, granular: planes cerca de ti, recordatorios y reconfirmación del día, mensajes, nuevos seguidores, actualizaciones de planes que sigues.
 - Descubrimiento: intereses y categorías, rango de edad preferido, radio geográfico, idioma de los planes.
@@ -335,7 +348,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Identidad y cuenta
 
-- Usuario. Entidad raíz. Atributos: id, tipo (particular o empresa), nombre, usuario (handle único), email, teléfono, hash de contraseña, fecha de nacimiento (gate 18+), idioma de la app, foto, biografía, ciudad o ubicación actual (opcional), idiomas hablados, intereses y categorías favoritas, perfil público o privado, modo de recepción de DMs (cerrado / bajo solicitud / abierto, por defecto bajo solicitud), permisos (quién puede seguirte, escribirte, unirse a tus planes), reputación por estrellas (agregada), índice de fiabilidad (nº de no-shows, agregado, sin detalle de eventos), fecha de alta. Derivados: contadores de seguidores/seguidos, historial de planes.
+- Usuario. Entidad raíz. Atributos: id, tipo (particular o empresa), nombre, usuario (handle único), email, teléfono, hash de contraseña, fecha de nacimiento (gate 18+), idioma de la app, foto, biografía, ciudad o ubicación actual (opcional), idiomas hablados, intereses y categorías favoritas, perfil público o privado, visibilidad de presencia por defecto (pública o privada), modo de recepción de DMs (cerrado / bajo solicitud / abierto, por defecto bajo solicitud), permisos (quién puede seguirte, escribirte, unirse a tus planes), reputación por estrellas (agregada), índice de fiabilidad (nº de no-shows, agregado, sin detalle de eventos), fecha de alta. Derivados: contadores de seguidores/seguidos, historial de planes.
 - Cuenta de empresa. Especialización de Usuario con tipo = empresa. Campos propios: razón/nombre comercial, horario, dirección, categoría de negocio, web, enlace de reserva, distintivo de negocio verificado. Se vincula a uno o varios Lugares.
 - Verificación de identidad. Atributos: usuario_id, proveedor, estado, referencias de documento y selfie, fecha, distintivo resultante. Es la barrera del primer plan; protege a la comunidad.
 - Verificación de negocio. Atributos: cuenta_empresa_id, prueba de titularidad/datos fiscales, estado, distintivo. Distinta de la de identidad personal.
@@ -353,8 +366,9 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Plan y participación
 
-- Plan. id, tipo (social gratuito o experiencia de pago), nivel (1 ancla recurrente / 2 usuario gratuito / 3 pago curado), anfitrión_id (Usuario o Cuenta de empresa, verificado), lugar_id o ubicación libre, ubicación oculta (bool) con zona aproximada, categoría, título, descripción, media (post foto/vídeo), fecha y hora, recurrencia (puntual o regla de recurrencia), tamaño mínimo y máximo, precio (nulo si gratuito), desvelo (importe, solo eventos especiales/saturados no de pago), requisitos de asistente (edad mínima, idioma, fiabilidad mínima, aprobación manual, presentación requerida), política de cancelación (flexible / moderada / estricta), estado (próximo / en curso / pasado), hashtag, fecha de creación. Derivado: apuntados ahora.
-- Inscripción. Relación Usuario–Plan para la participación. plan_id, usuario_id, estado (solicitada, aprobada, confirmada, en lista de espera, cancelada, asistió, no-show), reconfirmación del día (bool), pago_id (nulo en planes gratuitos), fecha. Es la entidad donde viven la lista de espera con sobreasignación y la reconfirmación.
+- Plan. id, tipo (social gratuito o experiencia de pago), tipo de inscripción (apuntado o libre), nivel (1 ancla recurrente / 2 usuario gratuito / 3 pago curado), anfitrión_id (Usuario o Cuenta de empresa, verificado), lugar_id o ubicación libre, ubicación oculta (bool) con zona aproximada, categoría, título, descripción, media (post foto/vídeo), fecha y hora, recurrencia (puntual o regla de recurrencia), tamaño mínimo y máximo, precio (nulo si gratuito), desvelo (importe, solo eventos especiales/saturados no de pago), requisitos de asistente (edad mínima, idioma, fiabilidad mínima, aprobación manual, presentación requerida), política de cancelación (flexible / moderada / estricta), estado (próximo / en curso / pasado), hashtag, fecha de creación. Derivados: apuntados ahora, asistentes reales.
+- Inscripción. Relación Usuario–Plan para la participación, solo en planes apuntados. plan_id, usuario_id, estado (solicitada, aprobada, confirmada, en lista de espera, cancelada, asistió, no-show), reconfirmación del día (bool), pago_id (nulo en planes gratuitos), fecha. Es la entidad donde viven la lista de espera con sobreasignación y la reconfirmación.
+- Asistencia real. Relación Usuario–Plan que registra la asistencia verificada por geolocalización. plan_id, usuario_id, fecha y hora, método (geolocalización), visibilidad (pública o privada). Es distinta de la Inscripción: un plan libre no tiene inscripciones pero sí asistencias reales; un plan apuntado tiene ambas. Alimenta el recuento de asistentes reales del plan y las Vividas del perfil; los registros con visibilidad privada cuentan en el agregado pero no se listan por identidad.
 - Pago. id, inscripción_id, usuario_id, importe, comisión (15% en planes de pago), tipo (reserva de evento, desvelo, boost de publicidad, suscripción, CPA), estado de escrow (retenido, liberado, reembolsado), método de pago, fecha de liberación, fecha de reembolso. Centraliza el modelo escrow y las reglas de cancelación.
 - Reseña. id, plan_id, autor_id, sujeto_id (anfitrión o asistente reseñado), estrellas, texto, fecha. Post-plan. Alimenta la reputación del usuario y, agregada, la del lugar.
 
@@ -392,7 +406,8 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Un Usuario sigue a muchos Usuarios (Seguimiento, asimétrico) y puede bloquear a muchos (Bloqueo).
 - Una Cuenta de empresa es dueña de uno o varios Lugares; un Lugar tiene como mucho un propietario (o ninguno, si es público).
 - Un Lugar hospeda muchos Planes; un Plan ocurre en un Lugar (o ubicación libre).
-- Un Plan tiene un anfitrión (Usuario o Empresa) y muchas Inscripciones; cada Inscripción enlaza un Usuario con un Plan y, si es de pago, con un Pago.
+- Un Plan tiene un anfitrión (Usuario o Empresa) y, si es apuntado, muchas Inscripciones; cada Inscripción enlaza un Usuario con un Plan y, si es de pago, con un Pago.
+- Un Plan (libre o apuntado) acumula muchas Asistencias reales; cada Asistencia real enlaza un Usuario con un Plan, verificada por geolocalización y con visibilidad pública o privada. Alimenta el recuento del Plan y las Vividas del Usuario.
 - Un Plan pasado genera un Aftermovie y abre Reseñas; las Reseñas alimentan la reputación del Usuario y, agregadas, la del Lugar.
 - Un Reporte apunta a cualquier objeto (Plan, Usuario, Mensaje, Contenido, comportamiento en evento) y puede derivar en Acciones de moderación.
 

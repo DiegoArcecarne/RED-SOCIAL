@@ -39,7 +39,16 @@ hash (`#/...`):
    mapa oscuro estilizado; al tocar un pin se ven sus planes e histórico.
 3. **Ficha de plan** — detalle con KPIs, anfitrión y señales de confianza,
    asistentes, lugar, herramientas de seguridad, reseñas y reserva (escrow para
-   planes de pago; verificación de identidad para los gratuitos).
+   planes de pago; verificación de identidad para los gratuitos). Distingue **plan
+   libre** (no hace falta apuntarse) de **plan apuntado**, muestra el **contador de
+   asistentes reales** (verificados por geolocalización), un control de **presencia
+   pública/privada** y el botón **Registrar mi llegada**.
+4. **Perfil** — ejemplo de usuario con sus **Vividas** (planes asistidos), estadísticas
+   y un **toggle de perfil público/privado** y de presencia por defecto.
+
+La estética es **sin emojis**: todos los iconos (pestañas, filtros, badges, mapa,
+barra inferior) son SVG monolínea. Los filtros de tema, tamaño de grupo y precio se
+representan con iconos.
 
 Los datos son de ejemplo (`data.js`) y coherentes con el producto. La marca
 ("planes") es **provisional**: el nombre sigue siendo una decisión abierta.
