@@ -337,6 +337,14 @@ body{background:#000;color:var(--ink);display:flex;justify-content:center;-webki
 .tag-chip.active{background:var(--ink);color:#000;border-color:var(--ink)}
 .tag-chip .ico{font-size:14px}
 
+/* ======================= Imágenes reales de portada (con fallback al degradado) ======================= */
+.cover-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0}
+.mini-thumb{position:relative;overflow:hidden}
+.post-prev .pp{overflow:hidden}
+.post-prev .play-ov{z-index:2}
+.post-prev .pp-dots{z-index:2}
+/* el degradado del contenedor queda detrás como fallback si la imagen no carga (onerror la elimina) */
+
   </style>
 </head>
 <body>
@@ -547,9 +555,9 @@ const PLANS = [
 
 // Aftermovies (pestaña Vividas) — prueba social de planes pasados
 const AFTERMOVIES = [
-  { id: 'a1', planTitle: 'El himno de la Victoria', placeId: 'victoria', hashtag: '#himnovictoria', emoji: '🍷', gradient: 'g-wine',   likes: 312, author: 'Vermutería Victoria' },
-  { id: 'a2', planTitle: 'Rooftop Sunset',          placeId: 'azotea',   hashtag: '#rooftopmadrid', emoji: '🌇', gradient: 'g-grape',  likes: 540, author: 'Azotea Círculo' },
-  { id: 'a3', planTitle: 'Atardecer en Debod',      placeId: 'debod',    hashtag: '#atardecerdebod', emoji: '🌅', gradient: 'g-sunset', likes: 198, author: 'Lucía R.' },
+  { id: 'a1', planTitle: 'El himno de la Victoria', placeId: 'victoria', hashtag: '#himnovictoria', emoji: '🍷', gradient: 'g-wine',   photo:'1514362545857-3bc16c4c7d1b', likes: 312, author: 'Vermutería Victoria' },
+  { id: 'a2', planTitle: 'Rooftop Sunset',          placeId: 'azotea',   hashtag: '#rooftopmadrid', emoji: '🌇', gradient: 'g-grape',  photo:'1517457373958-b7bdd4587205', likes: 540, author: 'Azotea Círculo' },
+  { id: 'a3', planTitle: 'Atardecer en Debod',      placeId: 'debod',    hashtag: '#atardecerdebod', emoji: '🌅', gradient: 'g-sunset', photo:'1502680390469-be75c86b636f', likes: 198, author: 'Lucía R.' },
 ];
 
 // Reseñas de ejemplo para la ficha de detalle
@@ -607,6 +615,23 @@ PLANS.forEach((p) => {
   p.groupId = e.groupId || null;
 });
 
+// Foto temática (Unsplash, slug photo-<id>) por plan. Si no carga, cae al degradado.
+const PLAN_PHOTO = {
+  p1:'1514362545857-3bc16c4c7d1b',  // vermut / vino
+  p2:'1495567720989-cebdbdd97913',  // atardecer
+  p3:'1566737236500-c8ac43014a67',  // rooftop
+  p4:'1414235077428-338989a2e8c0',  // cena / restaurante
+  p5:'1551632811-561732d1e306',     // trail de montaña
+  p6:'1555939594-58d7cb561ad1',     // tapas
+  p7:'1493225457124-a3eb161ffa5f',  // concierto / jazz
+  p8:'1545205597-3d9d02c29597',     // yoga en parque
+  p9:'1474722883778-792e7990302f',  // cata de vinos
+  p10:'1571008887538-b36bb32f4571', // running
+  p11:'1555396273-367ea4eb4db5',    // mercado de diseño
+  p12:'1489599849927-2ee91cede3ba', // cine
+};
+PLANS.forEach((p) => { p.photo = PLAN_PHOTO[p.id] || ''; });
+
 // Usuarios (perfiles). type: 'usuario' normal o 'profesional' (cuenta de negocio).
 const USERS = [
   { id:'me', name:'Marina', handle:'@marina', initials:'MA', type:'usuario', verified:true,
@@ -625,13 +650,13 @@ const ME = USERS[0]; // usuario actual
 
 // Publicaciones (foto / video / carrusel). media = lista de portadas (degradados).
 const POSTS = [
-  { id:'po1', authorId:'me', kind:'carrusel', media:['g-forest','g-sunset','g-grape'], caption:'Finde de trail por la sierra', likes:64 },
-  { id:'po2', authorId:'me', kind:'foto',     media:['g-wine'],   caption:'Noche de vinos naturales', likes:38 },
-  { id:'po3', authorId:'me', kind:'video',    media:['g-grape'],  caption:'Rooftop al atardecer', likes:120 },
-  { id:'po4', authorId:'me', kind:'foto',     media:['g-sunset'], caption:'Atardecer en Debod', likes:51 },
-  { id:'po5', authorId:'me', kind:'carrusel', media:['g-dark','g-wine'], caption:'Ruta de tapas', likes:29 },
-  { id:'po6', authorId:'me', kind:'foto',     media:['g-forest'], caption:'Yoga en el Retiro', likes:44 },
-  { id:'po7', authorId:'azotea', kind:'video', media:['g-grape'], caption:'Sunset sessions', likes:540 },
+  { id:'po1', authorId:'me', kind:'carrusel', media:['g-forest','g-sunset','g-grape'], imgs:['1551632811-561732d1e306','1454496522488-7a8e488e8606','1495567720989-cebdbdd97913'], caption:'Finde de trail por la sierra', likes:64 },
+  { id:'po2', authorId:'me', kind:'foto',     media:['g-wine'],   imgs:['1474722883778-792e7990302f'], caption:'Noche de vinos naturales', likes:38 },
+  { id:'po3', authorId:'me', kind:'video',    media:['g-grape'],  imgs:['1566737236500-c8ac43014a67'], caption:'Rooftop al atardecer', likes:120 },
+  { id:'po4', authorId:'me', kind:'foto',     media:['g-sunset'], imgs:['1495567720989-cebdbdd97913'], caption:'Atardecer en Debod', likes:51 },
+  { id:'po5', authorId:'me', kind:'carrusel', media:['g-dark','g-wine'], imgs:['1555939594-58d7cb561ad1','1414235077428-338989a2e8c0'], caption:'Ruta de tapas', likes:29 },
+  { id:'po6', authorId:'me', kind:'foto',     media:['g-forest'], imgs:['1506126613408-eca07ce68773'], caption:'Yoga en el Retiro', likes:44 },
+  { id:'po7', authorId:'azotea', kind:'video', media:['g-grape'], imgs:['1517457373958-b7bdd4587205'], caption:'Sunset sessions', likes:540 },
 ];
 
 // Grupos (tipo grupos de WhatsApp) con roles admin/miembro.
@@ -761,6 +786,9 @@ function sizeLabel(p){ return {intimo:'Íntimo',mediano:'Mediano',grande:'Grande
 function initials(name){ return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
 function rating(n){ return `<span class="rate">${ico('star')} ${n}</span>`; }
 function freeIcon(p){ return p.secret ? ico('lock') : (p.paid ? ico('euro') : ico('ticket')); }
+function uimg(slug,s){ s=s||500; return `https://images.unsplash.com/photo-${slug}?w=${s}&h=${s}&fit=crop&q=60`; }
+// Imagen de portada sobre el degradado; si no carga se elimina y queda el degradado (fallback).
+function coverImg(slug,s){ return slug ? `<img class="cover-img" src="${uimg(slug,s)}" alt="" loading="lazy" onerror="this.remove()">` : ''; }
 function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function val(id){ const el=document.getElementById(id); return el?el.value:''; }
 function toast(msg){
@@ -785,6 +813,7 @@ function gridCell(p){
   const loc = p.secret ? 'Zona aprox.' : (place ? place.name : 'Madrid');
   return `
   <button class="cell ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">
+    ${coverImg(p.photo,500)}
     <span class="cell-scrim"></span>
     <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>
     <span class="cell-info">
@@ -802,6 +831,7 @@ function renderFeed(){
 function renderVividasTab(){
   const cells = AFTERMOVIES.concat(AFTERMOVIES).slice(0,6).map(a=>`
     <button class="cell ${a.gradient}" onclick="toast('Aftermovie · ${a.hashtag}')" aria-label="${a.planTitle}">
+      ${coverImg(a.photo,500)}
       <span class="cell-scrim"></span><span class="cell-corner">${ico('heart')}</span>
       <span class="cell-info"><span class="cell-title">${a.hashtag}</span><span class="cell-meta">${a.author}</span></span>
     </button>`).join('');
@@ -857,7 +887,7 @@ function renderMapSheet(){
 }
 function miniPlan(p){
   return `<button class="mini-plan" onclick="go('plan/${p.id}')">
-    <span class="mini-thumb ${p.gradient}"></span>
+    <span class="mini-thumb ${p.gradient}">${coverImg(p.photo,120)}</span>
     <span class="mini-info"><span class="mini-t">${escapeHtml(p.title)}</span>
       <span class="mini-m">${fmtWhen(p.when)} · ${sizeLabel(p)} · ${ico('geo')} ${p.attended}</span></span>
     <span class="mini-corner">${freeIcon(p)}</span></button>`;
@@ -944,6 +974,7 @@ function renderDetail(id){
 
   view.innerHTML = `
     <div class="detail-hero ${p.gradient}">
+      ${coverImg(p.photo,820)}
       <span class="hero-scrim"></span>
       <button class="back-btn" onclick="history.back()" aria-label="Atrás">${ico('chevL')}</button>
       <div class="hero-content">
@@ -981,7 +1012,7 @@ function renderDetail(id){
       </div>
       <div class="block"><h4>Lugar</h4>
         <button class="place-link" onclick="go('mapa');selectPlace('${place?place.id:''}')">
-          <span class="mini-thumb ${p.gradient}"></span>
+          <span class="mini-thumb ${p.gradient}">${coverImg(p.photo,120)}</span>
           <span class="pl-info"><span class="pl-n">${p.secret?'Zona aproximada · centro de Madrid':(place?place.name:'Madrid')}</span>
             <span class="pl-s">${place?place.city+' · '+(place.kind==='negocio'?'Negocio verificado':'Lugar público')+' · '+place.hashtag:''}</span></span>
           <span class="pl-arrow">${ico('chevR')}</span></button>
@@ -1052,6 +1083,7 @@ function profileGridPosts(uid){
   if (!posts.length) return `<div class="empty-tab"><span class="empty-ic">${ico('image')}</span><p>Aún no hay publicaciones.</p></div>`;
   return `<div class="grid">${posts.map(po=>`
     <button class="cell ${po.media[0]}" onclick="toast('Publicación · ${po.kind}')" aria-label="${escapeHtml(po.caption)}">
+      ${coverImg((po.imgs||[])[0],500)}
       <span class="cell-scrim"></span><span class="cell-corner">${ico(POST_ICON[po.kind]||'image')}</span>
       <span class="cell-info"><span class="cell-meta">${ico('heart')} ${po.likes}</span></span>
     </button>`).join('')}</div>`;
@@ -1061,6 +1093,7 @@ function profileGridVividas(u){
   if (!plans.length) return `<div class="empty-tab"><span class="empty-ic">${ico('play')}</span><p>Aún no hay Vividas.</p></div>`;
   return `<div class="grid">${plans.map(p=>`
     <button class="cell ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">
+      ${coverImg(p.photo,500)}
       <span class="cell-scrim"></span><span class="cell-corner">${freeIcon(p)}</span>
       <span class="cell-info"><span class="cell-title">${escapeHtml(p.title)}</span></span></button>`).join('')}</div>`;
 }
@@ -1310,10 +1343,10 @@ function updateCaptionPreview(){
 function renderCreatePost(){
   const view = document.getElementById('view-page');
   const d = state.draftPost, k = d.kind;
-  const sample = ['g-grape','g-sunset','g-forest'];
+  const sample = [['g-grape','1566737236500-c8ac43014a67'],['g-sunset','1495567720989-cebdbdd97913'],['g-forest','1551632811-561732d1e306']];
   const preview = k==='carrusel'
-    ? `<div class="post-prev carrusel">${sample.map(c=>`<span class="pp ${c}"></span>`).join('')}<span class="pp-dots">1 / ${sample.length}</span></div>`
-    : `<div class="post-prev"><span class="pp ${sample[0]}">${k==='video'?`<span class="play-ov">${ico('play')}</span>`:''}</span></div>`;
+    ? `<div class="post-prev carrusel">${sample.map(([c,ph])=>`<span class="pp ${c}">${coverImg(ph,500)}</span>`).join('')}<span class="pp-dots">1 / ${sample.length}</span></div>`
+    : `<div class="post-prev"><span class="pp ${sample[0][0]}">${coverImg(sample[0][1],700)}${k==='video'?`<span class="play-ov">${ico('play')}</span>`:''}</span></div>`;
   // planes vinculables: a los que asististe o que creaste
   const linkable = PLANS.filter(p=> (ME.attendedPlanIds||[]).includes(p.id) || p.host.name===ME.name);
   const aud=[['publico','Público','globe'],['seguidores','Seguidores','users'],['cercanos','Cercanos','star']];
