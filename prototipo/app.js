@@ -91,6 +91,9 @@ function sizeLabel(p){ return {intimo:'Íntimo',mediano:'Mediano',grande:'Grande
 function initials(name){ return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
 function rating(n){ return `<span class="rate">${ico('star')} ${n}</span>`; }
 function freeIcon(p){ return p.secret ? ico('lock') : (p.paid ? ico('euro') : ico('ticket')); }
+function uimg(slug,s){ s=s||500; return `https://images.unsplash.com/photo-${slug}?w=${s}&h=${s}&fit=crop&q=60`; }
+// Imagen de portada sobre el degradado; si no carga se elimina y queda el degradado (fallback).
+function coverImg(slug,s){ return slug ? `<img class="cover-img" src="${uimg(slug,s)}" alt="" loading="lazy" onerror="this.remove()">` : ''; }
 function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function val(id){ const el=document.getElementById(id); return el?el.value:''; }
 function toast(msg){
@@ -115,6 +118,7 @@ function gridCell(p){
   const loc = p.secret ? 'Zona aprox.' : (place ? place.name : 'Madrid');
   return `
   <button class="cell ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">
+    ${coverImg(p.photo,500)}
     <span class="cell-scrim"></span>
     <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>
     <span class="cell-info">
@@ -132,6 +136,7 @@ function renderFeed(){
 function renderVividasTab(){
   const cells = AFTERMOVIES.concat(AFTERMOVIES).slice(0,6).map(a=>`
     <button class="cell ${a.gradient}" onclick="toast('Aftermovie · ${a.hashtag}')" aria-label="${a.planTitle}">
+      ${coverImg(a.photo,500)}
       <span class="cell-scrim"></span><span class="cell-corner">${ico('heart')}</span>
       <span class="cell-info"><span class="cell-title">${a.hashtag}</span><span class="cell-meta">${a.author}</span></span>
     </button>`).join('');
@@ -187,7 +192,7 @@ function renderMapSheet(){
 }
 function miniPlan(p){
   return `<button class="mini-plan" onclick="go('plan/${p.id}')">
-    <span class="mini-thumb ${p.gradient}"></span>
+    <span class="mini-thumb ${p.gradient}">${coverImg(p.photo,120)}</span>
     <span class="mini-info"><span class="mini-t">${escapeHtml(p.title)}</span>
       <span class="mini-m">${fmtWhen(p.when)} · ${sizeLabel(p)} · ${ico('geo')} ${p.attended}</span></span>
     <span class="mini-corner">${freeIcon(p)}</span></button>`;
@@ -274,6 +279,7 @@ function renderDetail(id){
 
   view.innerHTML = `
     <div class="detail-hero ${p.gradient}">
+      ${coverImg(p.photo,820)}
       <span class="hero-scrim"></span>
       <button class="back-btn" onclick="history.back()" aria-label="Atrás">${ico('chevL')}</button>
       <div class="hero-content">
@@ -311,7 +317,7 @@ function renderDetail(id){
       </div>
       <div class="block"><h4>Lugar</h4>
         <button class="place-link" onclick="go('mapa');selectPlace('${place?place.id:''}')">
-          <span class="mini-thumb ${p.gradient}"></span>
+          <span class="mini-thumb ${p.gradient}">${coverImg(p.photo,120)}</span>
           <span class="pl-info"><span class="pl-n">${p.secret?'Zona aproximada · centro de Madrid':(place?place.name:'Madrid')}</span>
             <span class="pl-s">${place?place.city+' · '+(place.kind==='negocio'?'Negocio verificado':'Lugar público')+' · '+place.hashtag:''}</span></span>
           <span class="pl-arrow">${ico('chevR')}</span></button>
@@ -382,6 +388,7 @@ function profileGridPosts(uid){
   if (!posts.length) return `<div class="empty-tab"><span class="empty-ic">${ico('image')}</span><p>Aún no hay publicaciones.</p></div>`;
   return `<div class="grid">${posts.map(po=>`
     <button class="cell ${po.media[0]}" onclick="toast('Publicación · ${po.kind}')" aria-label="${escapeHtml(po.caption)}">
+      ${coverImg((po.imgs||[])[0],500)}
       <span class="cell-scrim"></span><span class="cell-corner">${ico(POST_ICON[po.kind]||'image')}</span>
       <span class="cell-info"><span class="cell-meta">${ico('heart')} ${po.likes}</span></span>
     </button>`).join('')}</div>`;
@@ -391,6 +398,7 @@ function profileGridVividas(u){
   if (!plans.length) return `<div class="empty-tab"><span class="empty-ic">${ico('play')}</span><p>Aún no hay Vividas.</p></div>`;
   return `<div class="grid">${plans.map(p=>`
     <button class="cell ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">
+      ${coverImg(p.photo,500)}
       <span class="cell-scrim"></span><span class="cell-corner">${freeIcon(p)}</span>
       <span class="cell-info"><span class="cell-title">${escapeHtml(p.title)}</span></span></button>`).join('')}</div>`;
 }
@@ -640,10 +648,10 @@ function updateCaptionPreview(){
 function renderCreatePost(){
   const view = document.getElementById('view-page');
   const d = state.draftPost, k = d.kind;
-  const sample = ['g-grape','g-sunset','g-forest'];
+  const sample = [['g-grape','1566737236500-c8ac43014a67'],['g-sunset','1495567720989-cebdbdd97913'],['g-forest','1551632811-561732d1e306']];
   const preview = k==='carrusel'
-    ? `<div class="post-prev carrusel">${sample.map(c=>`<span class="pp ${c}"></span>`).join('')}<span class="pp-dots">1 / ${sample.length}</span></div>`
-    : `<div class="post-prev"><span class="pp ${sample[0]}">${k==='video'?`<span class="play-ov">${ico('play')}</span>`:''}</span></div>`;
+    ? `<div class="post-prev carrusel">${sample.map(([c,ph])=>`<span class="pp ${c}">${coverImg(ph,500)}</span>`).join('')}<span class="pp-dots">1 / ${sample.length}</span></div>`
+    : `<div class="post-prev"><span class="pp ${sample[0][0]}">${coverImg(sample[0][1],700)}${k==='video'?`<span class="play-ov">${ico('play')}</span>`:''}</span></div>`;
   // planes vinculables: a los que asististe o que creaste
   const linkable = PLANS.filter(p=> (ME.attendedPlanIds||[]).includes(p.id) || p.host.name===ME.name);
   const aud=[['publico','Público','globe'],['seguidores','Seguidores','users'],['cercanos','Cercanos','star']];
