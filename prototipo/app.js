@@ -68,6 +68,12 @@ const SVG = {
   tag:'<svg viewBox="0 0 24 24"><path d="M11.5 3H20v8.5l-8.5 8.5L3 11.5z"/><circle cx="15.5" cy="8.5" r="1.5"/></svg>',
   link:'<svg viewBox="0 0 24 24"><path d="M9.5 14.5 14.5 9.5"/><path d="M8 12l-2 2a3 3 0 0 0 4.2 4.2l2-2"/><path d="M16 12l2-2a3 3 0 0 0-4.2-4.2l-2 2"/></svg>',
   eye:'<svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg>',
+  heartO:'<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A3.8 3.8 0 0 1 12 7a3.8 3.8 0 0 1 7 3.5C19 15.6 12 20 12 20z"/></svg>',
+  send:'<svg viewBox="0 0 24 24"><path d="M21 3 10.5 13.5"/><path d="M21 3 14.5 21l-4-7.5L3 9.5z"/></svg>',
+  bookmark:'<svg viewBox="0 0 24 24"><path d="M6.5 3.5h11v17l-5.5-4-5.5 4z"/></svg>',
+  bookmarkF:'<svg viewBox="0 0 24 24" class="fill"><path d="M6.5 3.5h11v17l-5.5-4-5.5 4z"/></svg>',
+  mute:'<svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>',
+  cast:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.2" class="fill"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.4 5.4a9.3 9.3 0 0 0 0 13.2M18.6 5.4a9.3 9.3 0 0 1 0 13.2"/></svg>',
 };
 function ico(name){ return `<i class="ico">${SVG[name]||''}</i>`; }
 const ICON_FOR_CAT = { outdoor:'mountain', fiesta:'music', gastro:'food', cultura:'landmark', deporte:'flag', bienestar:'leaf', social:'chat', viajeros:'compass' };
@@ -119,12 +125,12 @@ function attendanceView(p){
    Lo creado en la demo (planes, publicaciones, grupos, solicitudes, asistencias)
    sobrevive a recargar la página. Si el navegador bloquea el almacenamiento,
    la demo sigue funcionando en memoria. "Restablecer demo" en Ajustes lo borra. */
-const STORE_KEY = 'planes-proto-v1';
+const STORE_KEY = 'planes-proto-v2';
 function saveState(){
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
       plans: PLANS.map(p => ({ ...p, when: p.when instanceof Date ? p.when.toISOString() : p.when })),
-      posts: POSTS, groups: GROUPS, requests: REQUESTS,
+      posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES,
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds },
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested] },
     }));
@@ -143,6 +149,7 @@ function loadState(){
   if (Array.isArray(snap.posts)) POSTS.splice(0, POSTS.length, ...snap.posts);
   if (Array.isArray(snap.groups)) GROUPS.splice(0, GROUPS.length, ...snap.groups);
   if (Array.isArray(snap.requests)) REQUESTS.splice(0, REQUESTS.length, ...snap.requests);
+  if (Array.isArray(snap.stories)) STORIES.splice(0, STORIES.length, ...snap.stories);
   if (snap.me) Object.assign(ME, snap.me);
   if (snap.sets) {
     state.joined = new Set(snap.sets.joined || []);
@@ -187,14 +194,327 @@ function renderFeed(){
   cont.innerHTML = plans.length ? `<div class="grid">${plans.map(gridCell).join('')}</div>`
     : emptyTab('grid','Sin planes con esos filtros','Prueba a ampliar el tamaño de grupo o el tema.');
 }
-function renderVividasTab(){
-  const cells = AFTERMOVIES.concat(AFTERMOVIES).slice(0,6).map(a=>`
-    <button class="cell ${a.gradient}" onclick="toast('Aftermovie · ${a.hashtag}')" aria-label="${escapeHtml(a.planTitle)}">
-      ${coverImg(a.photo,500)}
-      <span class="cell-scrim"></span><span class="cell-corner">${ico('heart')}</span>
-      <span class="cell-info"><span class="cell-title">${escapeHtml(a.hashtag)}</span><span class="cell-meta">${escapeHtml(a.author)}</span></span>
-    </button>`).join('');
-  return `<div class="grid">${cells}</div>`;
+/* ======================= MURO (Vividas), STORIES Y DIRECTOS ======================= */
+function agoLabel(h){ if (h < 1) return 'ahora'; if (h < 24) return `hace ${Math.round(h)} h`; return `hace ${Math.round(h/24)} d`; }
+function minLabel(m){ return m < 1 ? 'ahora' : (m < 60 ? `hace ${m} min` : `hace ${Math.round(m/60)} h`); }
+function setContentTab(t){ state.contentTab = t; renderContent(); scrollTop('feed'); }
+
+// Publicaciones del muro, de la más reciente a la más antigua.
+function wallPosts(){ return POSTS.slice().sort((a,b)=>(a.ago||0)-(b.ago||0)); }
+
+function postMedia(po){
+  const imgs = (po.imgs && po.imgs.length) ? po.imgs : [''];
+  const grad = (i)=> (po.media||[])[i] || (po.media||[])[0] || 'g-dark';
+  const burst = `<span class="burst">${ico('heart')}</span>`;
+  if (po.kind==='carrusel' && imgs.length > 1){
+    return `<div class="pm pm-car">
+      <div class="car-track" onscroll="carouselDots(this,'${po.id}')">${imgs.map((s,i)=>`<div class="car-slide ${grad(i)}" ondblclick="likePost('${po.id}',true)">${coverImg(s,700)}</div>`).join('')}</div>
+      <span class="pm-count" id="cc-${po.id}">1/${imgs.length}</span>
+      <div class="car-dots" id="cd-${po.id}">${imgs.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>${burst}</div>`;
+  }
+  if (po.kind==='video'){
+    const d = po.duration || 20;
+    // Vídeo simulado: la portada con movimiento lento y una barra de progreso.
+    return `<div class="pm pm-video ${grad(0)}" onclick="toggleVideo(this)" ondblclick="likePost('${po.id}',true)">
+      <div class="kb">${coverImg(imgs[0],700)}</div>
+      <span class="pm-play">${ico('play')}</span>
+      <span class="pm-dur">0:${String(d).padStart(2,'0')}</span>
+      <span class="pm-mute">${ico('mute')}</span>
+      <span class="pm-bar"><i style="animation-duration:${d}s"></i></span>${burst}</div>`;
+  }
+  return `<div class="pm ${grad(0)}" ondblclick="likePost('${po.id}',true)">${coverImg(imgs[0],700)}${burst}</div>`;
+}
+
+function postCard(po){
+  const u = getUser(po.authorId) || { id:'', name:'Usuario', initials:'?', handle:'' };
+  const plan = po.planId ? getPlan(po.planId) : null;
+  const place = plan ? getPlace(plan.placeId) : (po.placeId ? getPlace(po.placeId) : null);
+  const placeName = plan && plan.secret ? 'Zona aproximada' : (place ? place.name : '');
+  const liked = !!po.likedByMe;
+  const comments = po.comments || [];
+  const commentsOff = po.commentsEnabled === false;
+  const likesHidden = po.hideLikes && po.authorId !== 'me';
+  return `<article class="post" data-post="${po.id}">
+    <header class="post-h">
+      <button class="post-av" onclick="go('u/${u.id}')" aria-label="Perfil de ${escapeHtml(u.name)}">${escapeHtml(u.initials || initials(u.name))}</button>
+      <div class="post-who">
+        <button class="post-name" onclick="go('u/${u.id}')">${escapeHtml(u.name)} ${u.verified?`<span class="vchk">${ico('check')}</span>`:''}${u.type==='profesional'?' <span class="pro-badge sm">Profesional</span>':''}</button>
+        <span class="post-sub">${placeName?escapeHtml(placeName)+' · ':''}${agoLabel(po.ago||0)}</span>
+      </div>
+      <span class="post-kind" title="${po.kind}">${ico(POST_ICON[po.kind]||'image')}</span>
+    </header>
+    ${postMedia(po)}
+    <div class="post-actions">
+      <button class="pa ${liked?'liked':''}" onclick="likePost('${po.id}')" aria-label="Me gusta" aria-pressed="${liked}">${ico(liked?'heart':'heartO')}</button>
+      ${commentsOff ? '' : `<button class="pa" onclick="openComments('${po.id}')" aria-label="Comentarios">${ico('chat')}</button>`}
+      <button class="pa" onclick="toast('Compartir estará disponible en la app')" aria-label="Compartir">${ico('send')}</button>
+      <span class="pa-sp"></span>
+      <button class="pa ${po.savedByMe?'saved':''}" onclick="savePost('${po.id}')" aria-label="Guardar" aria-pressed="${!!po.savedByMe}">${ico(po.savedByMe?'bookmarkF':'bookmark')}</button>
+    </div>
+    <div class="post-body">
+      <div class="post-likes">${likesHidden ? 'Le gusta a varias personas' : `${po.likes||0} Me gusta`}</div>
+      <p class="post-cap"><b>${escapeHtml(u.handle || u.name)}</b> ${highlightCaption(po.caption||'')}</p>
+      ${plan ? `<button class="post-plan" onclick="go('plan/${plan.id}')">${ico('link')}<span>${escapeHtml(plan.title)}</span>${ico('chevR')}</button>` : ''}
+      ${commentsOff ? '<div class="post-off">Comentarios desactivados</div>'
+        : (comments.length ? `<button class="post-more" onclick="openComments('${po.id}')">Ver ${comments.length===1?'1 comentario':'los '+comments.length+' comentarios'}</button>` : '')}
+    </div>
+  </article>`;
+}
+
+// Plan inyectado en el muro (regla de producto: 1 cada 5 publicaciones), de la
+// misma categoría que las publicaciones que se acaban de ver.
+function injectedPlan(seen, used){
+  let cat = null;
+  for (let i = seen.length - 1; i >= 0; i--){ const p = seen[i].planId && getPlan(seen[i].planId); if (p){ cat = p.category; break; } }
+  const upcoming = PLANS.filter(p => p.when > new Date() && !used.has(p.id));
+  const pick = upcoming.find(p => p.category === cat) || upcoming[0];
+  if (!pick) return '';
+  used.add(pick.id);
+  const place = getPlace(pick.placeId);
+  const seats = pick.joinType==='libre' ? 'Plan libre' : `Quedan ${Math.max(0, pick.groupMax - pick.joined)} plazas`;
+  return `<button class="inject ${pick.gradient}" onclick="go('plan/${pick.id}')">
+    ${coverImg(pick.photo,700)}<span class="inject-scrim"></span>
+    <span class="inject-tag">Puedes hacerlo tú</span>
+    <span class="inject-info">
+      <span class="inject-t">${escapeHtml(pick.title)}</span>
+      <span class="inject-m"><span>${ico('clock')} ${fmtCountdown(pick.when)}</span><span>${ico('pin')} ${escapeHtml(pick.secret?'Zona aprox.':(place?place.name:''))}</span><span>${freeIcon(pick)} ${pick.paid?pick.price+' €':'Gratis'}</span><span>${ico('users')} ${seats}</span></span>
+      <span class="inject-cta">Ver plan ${ico('chevR')}</span>
+    </span></button>`;
+}
+
+// Stories agrupadas por persona: la persona con la story más reciente va primero
+// y sus stories se reproducen de la más antigua a la más nueva.
+function storyGroups(){
+  const by = {};
+  STORIES.forEach(s => { (by[s.userId] = by[s.userId] || []).push(s); });
+  return Object.keys(by).map(userId => {
+    const list = by[userId].slice().sort((a,b)=>b.minAgo-a.minAgo);
+    return { userId, list, latest: Math.min(...list.map(s=>s.minAgo)) };
+  }).sort((a,b)=>a.latest-b.latest);
+}
+
+// Tira "Ahora mismo" dentro del muro: directos y stories destacadas.
+function storiesStrip(){
+  const lives = LIVES.map(l => { const u = getUser(l.userId) || { name:'' };
+    return `<button class="ss live" onclick="openLive('${l.id}')"><span class="ss-img">${coverImg(l.img,240)}<span class="ss-badge">En directo</span></span><span class="ss-n">${escapeHtml(u.name)}</span></button>`; }).join('');
+  const st = storyGroups().map((g,i) => { const u = getUser(g.userId) || { name:'' }; const last = g.list[g.list.length-1];
+    return `<button class="ss" onclick="openStory(${i})"><span class="ss-img">${coverImg(last.img,240)}</span><span class="ss-n">${escapeHtml(u.name)}</span></button>`; }).join('');
+  return `<section class="strip"><div class="strip-h">${ico('live')} Ahora mismo<button class="strip-all" onclick="setContentTab('stories')">Ver todo</button></div><div class="strip-row">${lives}${st}</div></section>`;
+}
+
+function renderWall(){
+  const posts = wallPosts();
+  const used = new Set();
+  let out = '';
+  posts.forEach((po,i) => {
+    out += postCard(po);
+    if (i === 1) out += storiesStrip();
+    if ((i + 1) % 5 === 0) out += injectedPlan(posts.slice(0, i + 1), used);
+  });
+  return `<div class="wall">${out}</div>`;
+}
+
+function renderStoriesTab(){
+  const lives = LIVES.map(l => { const u = getUser(l.userId) || { name:'' }; const p = getPlan(l.planId);
+    return `<button class="live-card" onclick="openLive('${l.id}')">${coverImg(l.img,600)}<span class="lc-scrim"></span>
+      <span class="live-badge">${ico('cast')} En directo</span><span class="lc-view">${ico('eye')} ${l.viewers}</span>
+      <span class="lc-info"><span class="lc-t">${escapeHtml(l.title)}</span><span class="lc-m">${escapeHtml(u.name)}${p?' · '+escapeHtml(p.title):''} · ${minLabel(l.startedMin)}</span></span></button>`; }).join('');
+  const tiles = storyGroups().map((g,i) => { const u = getUser(g.userId) || { name:'', initials:'' }; const last = g.list[g.list.length-1]; const p = getPlan(last.planId);
+    return `<button class="st-tile" onclick="openStory(${i})">${coverImg(last.img,420)}<span class="st-scrim"></span>
+      <span class="st-ring">${escapeHtml(u.initials||'')}</span><span class="st-count">${g.list.length}</span>
+      <span class="st-info"><span class="st-n">${escapeHtml(u.name)}</span><span class="st-m">${p?escapeHtml(p.title)+' · ':''}${minLabel(g.latest)}</span></span></button>`; }).join('');
+  return `<div class="stories-tab">
+    ${LIVES.length ? `<div class="sec-h">${ico('cast')} En directo ahora</div><div class="live-row">${lives}</div>` : ''}
+    <div class="sec-h">${ico('live')} Stories de hoy<span class="sec-s">desaparecen a las 24 h</span></div>
+    <div class="st-grid"><button class="st-tile st-add" onclick="newStory()"><span class="st-plus">${ico('plus')}</span><span class="st-n">Tu story</span></button>${tiles}</div>
+  </div>`;
+}
+function newStory(){ state.draftPost = freshPostDraft(); state.draftPost.alsoStory = true; go('crear-post'); }
+
+/* ---------- interacciones con publicaciones ---------- */
+function rerenderPost(id){
+  const po = POSTS.find(p=>p.id===id); if (!po) return;
+  document.querySelectorAll(`[data-post="${id}"]`).forEach(el => { el.outerHTML = postCard(po); });
+}
+function likePost(id, fromDouble){
+  const po = POSTS.find(p=>p.id===id); if (!po) return;
+  if (fromDouble && po.likedByMe){ burst(id); return; }
+  po.likedByMe = !po.likedByMe;
+  po.likes = Math.max(0, (po.likes||0) + (po.likedByMe ? 1 : -1));
+  saveState(); rerenderPost(id);
+  if (fromDouble) burst(id);
+}
+function burst(id){
+  document.querySelectorAll(`[data-post="${id}"]`).forEach(el => { el.classList.add('burst-on'); setTimeout(()=>el.classList.remove('burst-on'), 850); });
+}
+function savePost(id){
+  const po = POSTS.find(p=>p.id===id); if (!po) return;
+  po.savedByMe = !po.savedByMe; saveState(); rerenderPost(id);
+  toast(po.savedByMe ? 'Guardada en tu colección' : 'Quitada de tu colección');
+}
+function toggleVideo(el){ el.classList.toggle('playing'); }
+function carouselDots(track, id){
+  const i = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+  const dots = document.getElementById('cd-'+id);
+  if (dots) Array.from(dots.children).forEach((d,k)=>d.classList.toggle('on', k===i));
+  const c = document.getElementById('cc-'+id);
+  if (c && dots) c.textContent = (i+1) + '/' + dots.children.length;
+}
+
+/* ---------- capa superpuesta: publicación, comentarios, stories, directos ---------- */
+let overlayTimer = null;
+function overlayEl(){ return document.getElementById('overlay'); }
+function showOverlay(cls, html){ const o = overlayEl(); o.className = 'overlay ' + cls; o.innerHTML = html; o.hidden = false; }
+function closeOverlay(){
+  clearInterval(overlayTimer); overlayTimer = null;
+  const o = overlayEl(); o.hidden = true; o.innerHTML = ''; o.className = 'overlay';
+}
+function openPost(id){
+  const po = POSTS.find(p=>p.id===id); if (!po) return;
+  showOverlay('ov-post', `<div class="post-top"><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('chevL')}</button><span>Publicación</span></div>${postCard(po)}`);
+}
+function openComments(id){
+  const po = POSTS.find(p=>p.id===id); if (!po) return;
+  if (!overlayEl().hidden && overlayEl().className.includes('ov-post')) state.sheetReturn = id;
+  const list = (po.comments||[]).map(c => { const u = getUser(c.userId) || { name:c.userId, initials:'?' };
+    return `<div class="cm"><span class="post-av sm">${escapeHtml(u.initials||'')}</span><p><b>${escapeHtml(u.handle||u.name)}</b> ${highlightCaption(c.text)}</p></div>`; }).join('')
+    || '<p class="hint">Aún no hay comentarios. Escribe el primero.</p>';
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeSheet()"></div>
+    <div class="sheet" role="dialog" aria-label="Comentarios">
+      <div class="sheet-h"><span>Comentarios</span><button class="sv-x" onclick="closeSheet()" aria-label="Cerrar">${ico('close')}</button></div>
+      <div class="sheet-list">${list}</div>
+      <div class="sheet-in"><input id="cm-input" placeholder="Añade un comentario…" onkeydown="if(event.key==='Enter')addComment('${id}')"><button class="pa" onclick="addComment('${id}')" aria-label="Publicar comentario">${ico('send')}</button></div>
+    </div>`);
+}
+function closeSheet(){ const back = state.sheetReturn; state.sheetReturn = null; closeOverlay(); if (back) openPost(back); }
+function addComment(id){
+  const text = val('cm-input').trim(); if (!text) return;
+  const po = POSTS.find(p=>p.id===id); if (!po) return;
+  (po.comments = po.comments || []).push({ userId:'me', text });
+  saveState(); openComments(id); rerenderPost(id);
+}
+
+// Visor de stories: 5 s por story, toque a la izquierda o a la derecha para navegar.
+const STORY_MS = 5000;
+const storyState = { g:0, i:0, t:0 };
+function openStory(g){
+  Object.assign(storyState, { g, i:0, t:0 });
+  renderStory();
+  clearInterval(overlayTimer); overlayTimer = setInterval(tickStory, 100);
+}
+function tickStory(){
+  storyState.t += 100;
+  if (storyState.t >= STORY_MS) storyNext();
+  else { const b = document.getElementById('sv-cur'); if (b) b.style.width = (storyState.t/STORY_MS*100) + '%'; }
+}
+function storyNext(){
+  const groups = storyGroups(), g = groups[storyState.g];
+  storyState.t = 0;
+  if (g && storyState.i < g.list.length - 1) storyState.i++;
+  else if (storyState.g < groups.length - 1){ storyState.g++; storyState.i = 0; }
+  else { closeOverlay(); return; }
+  renderStory();
+}
+function storyPrev(){
+  storyState.t = 0;
+  if (storyState.i > 0) storyState.i--;
+  else if (storyState.g > 0){ storyState.g--; storyState.i = storyGroups()[storyState.g].list.length - 1; }
+  renderStory();
+}
+function renderStory(){
+  const g = storyGroups()[storyState.g]; if (!g){ closeOverlay(); return; }
+  const s = g.list[storyState.i];
+  const u = getUser(g.userId) || { name:'', initials:'?' };
+  const p = getPlan(s.planId);
+  showOverlay('ov-story', `<div class="sv-media">${coverImg(s.img,800)}</div><div class="sv-shade"></div>
+    <div class="sv-bars">${g.list.map((_,i)=>`<span class="sv-bar"><i ${i===storyState.i?'id="sv-cur"':''} style="width:${i<storyState.i?100:(i===storyState.i?storyState.t/STORY_MS*100:0)}%"></i></span>`).join('')}</div>
+    <div class="sv-head"><span class="post-av">${escapeHtml(u.initials||'')}</span>
+      <span class="sv-who"><b>${escapeHtml(u.name)}</b><span>${minLabel(s.minAgo)}${p?' · '+escapeHtml(p.title):''}</span></span>
+      <button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <button class="sv-tap prev" onclick="storyPrev()" aria-label="Story anterior"></button>
+    <button class="sv-tap next" onclick="storyNext()" aria-label="Story siguiente"></button>
+    <p class="sv-text">${escapeHtml(s.text)}</p>
+    ${p ? `<button class="sv-cta" onclick="closeOverlay();go('plan/${p.id}')">${ico('pin')} Ver el plan</button>` : ''}`);
+}
+
+// Directo: espectadores y chat simulados que se actualizan solos.
+const liveState = { id:null, host:false, viewers:0, chat:[], idx:0 };
+function openLive(id, host){
+  const l = LIVES.find(x=>x.id===id); if (!l) return;
+  Object.assign(liveState, { id, host:!!host, viewers:l.viewers, chat:[], idx:0 });
+  renderLive();
+  clearInterval(overlayTimer); overlayTimer = setInterval(tickLive, 1600);
+}
+function tickLive(){
+  liveState.chat.push(LIVE_CHAT[liveState.idx % LIVE_CHAT.length]); liveState.idx++;
+  if (liveState.chat.length > 6) liveState.chat.shift();
+  liveState.viewers = Math.max(1, liveState.viewers + Math.round(Math.random()*6) - 2);
+  renderLiveChat();
+}
+function renderLive(){
+  const l = LIVES.find(x=>x.id===liveState.id); if (!l){ closeOverlay(); return; }
+  const u = getUser(l.userId) || { name:'', initials:'?' };
+  const p = getPlan(l.planId);
+  showOverlay('ov-live', `<div class="sv-media kb-on">${coverImg(l.img,800)}</div><div class="sv-shade"></div>
+    <div class="sv-head"><span class="post-av">${escapeHtml(u.initials||'')}</span>
+      <span class="sv-who"><b>${escapeHtml(u.name)}</b><span>${escapeHtml(l.title)}</span></span>
+      <span class="live-badge">${ico('cast')} En directo</span><span class="lv-view" id="lv-view">${ico('eye')} ${liveState.viewers}</span>
+      <button class="sv-x" onclick="${liveState.host?'endLive()':'closeOverlay()'}" aria-label="Cerrar">${ico('close')}</button></div>
+    ${liveState.host ? `<div class="lv-host">${ico('shield')} Emites desde «${escapeHtml(p?p.title:'')}». No enfoques a quien no quiera salir.</div>` : ''}
+    <div class="lv-chat" id="lv-chat"></div>
+    <div class="lv-hearts" id="lv-hearts"></div>
+    <div class="lv-bar">
+      <input id="lv-input" class="lv-input" placeholder="Escribe un comentario…" onkeydown="if(event.key==='Enter')sendLiveMsg()">
+      <button class="pa" onclick="sendLiveMsg()" aria-label="Enviar">${ico('send')}</button>
+      <button class="pa lv-like" onclick="liveHeart()" aria-label="Me gusta">${ico('heart')}</button>
+      ${liveState.host ? `<button class="lv-cta end" onclick="endLive()">Finalizar</button>`
+        : (p ? `<button class="lv-cta" onclick="closeOverlay();go('plan/${p.id}')">Ir al plan</button>` : '')}
+    </div>`);
+  renderLiveChat();
+}
+function renderLiveChat(){
+  const c = document.getElementById('lv-chat');
+  if (c) c.innerHTML = liveState.chat.map(m=>`<p><b>${escapeHtml(m.name)}</b> ${escapeHtml(m.text)}</p>`).join('');
+  const v = document.getElementById('lv-view'); if (v) v.innerHTML = `${ico('eye')} ${liveState.viewers}`;
+}
+function sendLiveMsg(){
+  const t = val('lv-input').trim(); if (!t) return;
+  liveState.chat.push({ name:ME.name, text:t }); if (liveState.chat.length > 6) liveState.chat.shift();
+  const i = document.getElementById('lv-input'); if (i) i.value = '';
+  renderLiveChat();
+}
+function liveHeart(){
+  const h = document.getElementById('lv-hearts'); if (!h || !document.createElement) return;
+  const el = document.createElement('i'); el.className = 'ico'; el.innerHTML = SVG.heart;
+  el.style.left = (8 + Math.random()*28) + 'px'; h.appendChild(el);
+  setTimeout(()=>el.remove(), 1700);
+}
+function renderCreateLive(){
+  const view = document.getElementById('view-page');
+  const options = PLANS.filter(p => (ME.attendedPlanIds||[]).includes(p.id) || p.host.name===ME.name || state.joined.has(p.id));
+  view.innerHTML = pageHead('Emitir en directo') + `<div class="page-body form">
+    <div class="field"><label for="f-liveplan">Plan desde el que emites</label>
+      <select id="f-liveplan">${options.map(p=>`<option value="${p.id}">${escapeHtml(p.title)}</option>`).join('')}</select>
+      <p class="hint">Solo se emite desde un plan en marcha al que asistes o que organizas.</p></div>
+    <div class="field"><label for="f-livetitle">Título</label><input id="f-livetitle" placeholder="Ej. Atardecer en directo desde Debod" /></div>
+    <div class="block"><h4>${ico('shield')} Antes de empezar</h4><p class="hint">Pide permiso antes de enfocar a alguien; quien tenga su presencia en privado no debe salir. Los directos se pueden reportar y se moderan mientras se emiten.</p></div>
+    <div class="form-actions"><button class="btn-primary" onclick="startLive()">${ico('cast')} Empezar directo</button></div>
+  </div>`;
+}
+function startLive(){
+  const planId = val('f-liveplan') || (PLANS[0] && PLANS[0].id);
+  const p = getPlan(planId);
+  const title = val('f-livetitle').trim() || ('En directo desde ' + (p ? p.title : 'un plan'));
+  const l = { id:'lme'+Date.now(), userId:'me', planId, img:(p && p.photo) || '', title, viewers:1, startedMin:0 };
+  LIVES.unshift(l);
+  state.contentTab = 'stories'; go('feed');
+  openLive(l.id, true);
+}
+function endLive(){
+  const i = LIVES.findIndex(x => x.id===liveState.id && x.userId==='me');
+  if (i >= 0) LIVES.splice(i, 1);
+  closeOverlay(); toast('Directo finalizado');
+  if (state.contentTab==='stories') renderContent();
 }
 function emptyTab(icon,title,text){ return `<div class="empty-tab"><span class="empty-ic">${ico(icon)}</span><h3>${title}</h3><p>${text}</p></div>`; }
 function renderContent(){
@@ -204,8 +524,8 @@ function renderContent(){
   if (state.contentTab==='disponibles'){ filters.style.display='flex'; renderFeed(); }
   else {
     filters.style.display='none';
-    if (state.contentTab==='vividas') list.innerHTML = renderVividasTab();
-    else if (state.contentTab==='stories') list.innerHTML = emptyTab('live','Stories · el “ahora mismo”','Contenido efímero de planes en marcha. El prototipo se centra en las vistas principales y los flujos de creación.');
+    if (state.contentTab==='vividas') list.innerHTML = renderWall();
+    else if (state.contentTab==='stories') list.innerHTML = renderStoriesTab();
     else list.innerHTML = emptyTab('at','Menciones','Aquí llegan los planes y stories donde te etiquetan. Una mención no se asocia a tu perfil hasta que la aceptas.');
   }
 }
@@ -448,7 +768,7 @@ function profileGridPosts(uid){
   const posts = postsByUser(uid);
   if (!posts.length) return `<div class="empty-tab"><span class="empty-ic">${ico('image')}</span><p>Aún no hay publicaciones.</p></div>`;
   return `<div class="grid">${posts.map(po=>`
-    <button class="cell ${po.media[0]}" onclick="toast('Publicación · ${po.kind}')" aria-label="${escapeHtml(po.caption)}">
+    <button class="cell ${po.media[0]}" onclick="openPost('${po.id}')" aria-label="${escapeHtml(po.caption)}">
       ${coverImg((po.imgs||[])[0],500)}
       <span class="cell-scrim"></span><span class="cell-corner">${ico(POST_ICON[po.kind]||'image')}</span>
       <span class="cell-info"><span class="cell-meta">${ico('heart')} ${po.likes}</span></span>
@@ -620,6 +940,7 @@ function renderCreateChooser(){
     ${opt('pin','Plan','Organiza una quedada: libre o con aprobación','crear-plan')}
     ${opt('image','Publicación','Foto, vídeo o carrusel para tu perfil','crear-post')}
     ${opt('group','Grupo','Reúne gente con varios admins','crear-grupo')}
+    ${opt('cast','Directo','Emite en vivo desde un plan en marcha','crear-directo')}
   </div>`;
 }
 function renderCreatePlan(){
@@ -777,12 +1098,16 @@ function publishPost(){
   const media = k==='carrusel' ? ['g-grape','g-sunset','g-forest'] : [k==='video'?'g-grape':'g-sunset'];
   const mentions = (caption.match(/@[\wáéíóúñ]+/gi)||[]);
   const hashtags = (caption.match(/#[\wáéíóúñ]+/gi)||[]);
+  const sample = ['1566737236500-c8ac43014a67','1495567720989-cebdbdd97913','1551632811-561732d1e306'];
+  const imgs = k==='carrusel' ? sample : [sample[0]];
+  const id = 'npo'+Date.now();
   POSTS.unshift({
-    id:'npo'+Date.now(), authorId:'me', kind:k, media, caption, likes:0,
+    id, authorId:'me', kind:k, media, imgs, caption, likes:0, ago:0, comments:[], duration: k==='video' ? 15 : undefined,
     placeId:d.place||null, taggedUserIds:[...d.tags], planId:d.planId||null, altText:(d.alt||'').trim(),
     mentions, hashtags, audience:d.audience, commentsEnabled:d.comments, hideLikes:d.hideLikes, sharedToStory:d.alsoStory,
   });
   const story = d.alsoStory;
+  if (story) STORIES.unshift({ id:'s'+id, userId:'me', planId:d.planId||null, img:imgs[0], minAgo:0, text:caption });
   state.draftPost = freshPostDraft();
   saveState();
   toast(story ? 'Publicación creada · compartida en Stories' : 'Publicación creada');
@@ -836,6 +1161,7 @@ function router(){
     case 'crear-plan':  renderCreatePlan(); showView('page'); scrollTop('page'); break;
     case 'crear-post':  renderCreatePost(); showView('page'); scrollTop('page'); break;
     case 'crear-grupo': renderCreateGroup(); showView('page'); scrollTop('page'); break;
+    case 'crear-directo': renderCreateLive(); showView('page'); scrollTop('page'); break;
     default:        state.navTab='feed'; renderContent(); showView('feed');
   }
 }
@@ -844,6 +1170,7 @@ function router(){
 function init(){
   loadState();
   window.addEventListener('pagehide', saveState);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !overlayEl().hidden) (liveState.host ? endLive() : closeOverlay()); });
   buildFilters();
   document.querySelectorAll('.content-tabs button').forEach(b=>{ b.onclick=()=>{ state.contentTab=b.dataset.tab; renderContent(); }; });
   document.querySelectorAll('.tabbar button').forEach(b=>{ b.onclick=()=>go(b.dataset.nav==='crear'?'crear':b.dataset.nav); });

@@ -16,7 +16,7 @@ if (!code) { console.error('No se encuentra el <script> en standalone.html'); pr
 
 function makeEl() {
   return {
-    _html: '', dataset: {}, style: {}, value: '', textContent: '', scrollTop: 0,
+    _html: '', dataset: {}, style: {}, value: '', textContent: '', className: '', scrollTop: 0,
     classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
     set innerHTML(v) { this._html = v; }, get innerHTML() { return this._html; },
     set onclick(f) {}, querySelector() { return makeEl(); }, querySelectorAll() { return []; },
@@ -28,7 +28,7 @@ function makeEl() {
 function createEnv(store) {
   const reg = {};
   const ctx = {
-    console, setTimeout, clearTimeout,
+    console, setTimeout, clearTimeout, setInterval, clearInterval,
     document: { getElementById: (id) => reg[id] || (reg[id] = makeEl()), querySelectorAll: () => [], addEventListener() {}, readyState: 'complete' },
     location: { hash: '', reload() {} },
     history: { back() {} },
@@ -104,6 +104,50 @@ a.run('resolveRequest("r1","aceptada","p6")');
 const after = a.run('({ att: getPlan("p6").attended, joined: getPlan("p6").joined })');
 check('aceptar solicitud inscribe sin sumar asistencia real', after.att === before.att && after.joined === before.joined + 1);
 
+// --- Muro (Vividas) ---
+a.run('setContentTab("vividas")'); h = a.html('feed-list'); rendered += h;
+const nPosts = a.run('POSTS.length');
+check('muro: todas las publicaciones', count(h, /class="post"/g) === nPosts, count(h, /class="post"/g) + ' de ' + nPosts);
+check('muro: fotos, carruseles y vídeos', /class="pm g-[a-z]+"/.test(h) && h.includes('car-track') && h.includes('pm-video'));
+check('muro: un plan inyectado cada 5 publicaciones', count(h, /class="inject /g) === Math.floor(nPosts / 5));
+check('muro: tira "Ahora mismo" con directos y stories', h.includes('class="strip"') && h.includes('ss live'));
+check('muro: publicaciones vinculadas a su plan', h.includes('post-plan'));
+check('muro: toda imagen tiene fallback onerror', count(h, /class="cover-img"/g) === count(h, /onerror="this\.remove\(\)"/g));
+
+// --- Stories y directos ---
+a.run('setContentTab("stories")'); h = a.html('feed-list'); rendered += h;
+check('stories: directos y una tarjeta por persona', count(h, /class="live-card"/g) === a.run('LIVES.length') && count(h, /class="st-tile" /g) === a.run('storyGroups().length'));
+a.run('openStory(0)'); h = a.html('overlay'); rendered += h;
+check('visor de stories: barras de progreso y texto', h.includes('sv-bars') && h.includes('sv-text') && a.run('document.getElementById("overlay").hidden') === false);
+a.run('storyNext(); storyNext(); storyPrev()');
+check('visor de stories: avanza y retrocede', a.run('storyState.g + storyState.i') > 0);
+a.run('closeOverlay()');
+check('visor de stories: se cierra', a.run('document.getElementById("overlay").hidden') === true);
+a.run('openLive("l1")'); h = a.html('overlay'); rendered += h;
+a.run('tickLive(); tickLive()');
+check('directo: insignia, espectadores y chat que avanza', h.includes('En directo') && a.html('lv-chat').includes('<b>'));
+a.run('closeOverlay()');
+a.nav('crear-directo'); h = a.html('view-page'); rendered += h;
+check('emitir en directo: formulario', h.includes('Empezar directo'));
+const nLives = a.run('LIVES.length');
+a.run('startLive()');
+check('emitir en directo: empieza y aparece entre los directos', a.run('LIVES.length') === nLives + 1 && a.html('overlay').includes('Finalizar'));
+a.run('endLive()');
+check('emitir en directo: finalizar lo retira', a.run('LIVES.length') === nLives);
+
+// --- Interacciones con publicaciones ---
+const likes0 = a.run('POSTS.find(p => p.id === "po8").likes');
+a.run('likePost("po8")');
+check('me gusta suma uno', a.run('POSTS.find(p => p.id === "po8").likes') === likes0 + 1);
+a.run('openComments("po8"); document.getElementById("cm-input").value = "Me apunto a la próxima"; addComment("po8")');
+check('comentar añade el comentario', a.run('POSTS.find(p => p.id === "po8").comments.some(c => c.userId === "me")'));
+a.run('closeOverlay(); openPost("po1")');
+check('abrir una publicación desde el perfil', a.html('overlay').includes('data-post="po1"'));
+a.run('closeOverlay()');
+const nStories = a.run('STORIES.length');
+a.run('state.draftPost.alsoStory = true; publishPost()');
+check('publicar con "compartir en stories" crea una story', a.run('STORIES.length') === nStories + 1);
+
 // --- Creación + persistencia tras "recargar" ---
 const nPlans = a.run('PLANS.length');
 a.run('publishPlan()');
@@ -113,8 +157,9 @@ a.run('publishPost(); publishGroup(); registerArrival("p2")');
 const b = createEnv(store);   // misma "memoria" del navegador, entorno nuevo
 check('persistencia: el plan creado sobrevive a recargar', b.run(`PLANS.some(p => p.id === "${newId}")`));
 check('persistencia: la asistencia registrada sobrevive', b.run('state.attended.has("p2")'));
+check('persistencia: el me gusta y el comentario sobreviven', b.run('POSTS.find(p => p.id === "po8").likedByMe === true && POSTS.find(p => p.id === "po8").comments.some(c => c.userId === "me")'));
 check('persistencia: los planes base conservan fecha futura', b.run('getPlan("p1").when > new Date()'));
-const c = createEnv({ 'planes-proto-v1': '{corrupto' });
+const c = createEnv({ [a.run('STORE_KEY')]: '{corrupto' });
 check('persistencia: datos corruptos no rompen la demo', c.run('PLANS.length') === 12);
 
 // --- Sin emojis en la interfaz ---

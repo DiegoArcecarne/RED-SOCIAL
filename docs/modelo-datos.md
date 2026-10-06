@@ -40,6 +40,12 @@ erDiagram
     USUARIO ||--o{ PUBLICACION : crea
     PLAN ||--o{ PUBLICACION : "vinculada a"
     LUGAR ||--o{ PUBLICACION : ubica
+    PUBLICACION ||--o{ COMENTARIO : recibe
+    USUARIO ||--o{ COMENTARIO : escribe
+    PUBLICACION ||--o{ ME_GUSTA : recibe
+    USUARIO ||--o{ ME_GUSTA : da
+    USUARIO ||--o{ DIRECTO : emite
+    PLAN ||--o{ DIRECTO : "se emite desde"
 
     PLAN ||--o{ RESENA : abre
     USUARIO ||--o{ RESENA : "escribe"
@@ -229,6 +235,27 @@ erDiagram
         uuid plan_id FK "opcional"
         string visibilidad "publico|privado|mejores_amigos"
         datetime expira_at "24h"
+    }
+    DIRECTO {
+        uuid id PK
+        uuid emisor_id FK
+        uuid plan_id FK "plan en marcha"
+        string titulo
+        string estado "en_curso|finalizado"
+        datetime inicio
+        datetime fin
+    }
+    COMENTARIO {
+        uuid id PK
+        uuid publicacion_id FK
+        uuid autor_id FK
+        string texto
+        datetime fecha
+    }
+    ME_GUSTA {
+        uuid usuario_id FK
+        uuid publicacion_id FK
+        datetime fecha
     }
     MENCION {
         uuid id PK

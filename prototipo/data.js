@@ -141,12 +141,6 @@ const PLANS = [
   },
 ];
 
-// Aftermovies (pestaña Vividas) — prueba social de planes pasados
-const AFTERMOVIES = [
-  { id: 'a1', planTitle: 'El himno de la Victoria', placeId: 'victoria', hashtag: '#himnovictoria', gradient: 'g-wine',   photo:'1514362545857-3bc16c4c7d1b', likes: 312, author: 'Vermutería Victoria' },
-  { id: 'a2', planTitle: 'Rooftop Sunset',          placeId: 'azotea',   hashtag: '#rooftopmadrid', gradient: 'g-grape',  photo:'1517457373958-b7bdd4587205', likes: 540, author: 'Azotea Círculo' },
-  { id: 'a3', planTitle: 'Atardecer en Debod',      placeId: 'debod',    hashtag: '#atardecerdebod', gradient: 'g-sunset', photo:'1502680390469-be75c86b636f', likes: 198, author: 'Lucía R.' },
-];
 
 // Reseñas de ejemplo para la ficha de detalle
 const REVIEWS = [
@@ -225,7 +219,7 @@ const USERS = [
   { id:'me', name:'Marina', handle:'@marina', initials:'MA', type:'usuario', verified:true,
     bio:'Viajera y runner. Outdoor y gastronomía por Madrid.',
     profilePublic:true, presencePublic:true, followers:184, following:156,
-    attendedPlanIds:['p1','p5','p8'] },
+    attendedPlanIds:['p1','p5','p8','p2','p3','p6','p9'] },
   { id:'azotea', name:'Azotea Círculo', handle:'@azoteacirculo', initials:'AC', type:'profesional', verified:true,
     bio:'Azotea y eventos en el centro de Madrid.', followers:5400, following:12,
     business:{ category:'Ocio nocturno', web:'azoteacirculo.es', address:'Centro, Madrid' },
@@ -233,18 +227,89 @@ const USERS = [
   { id:'lucia', name:'Lucía R.', handle:'@lucia', initials:'LR', type:'usuario', verified:true, followers:90, following:120, attendedPlanIds:[] },
   { id:'marco', name:'Marco T.', handle:'@marcot', initials:'MT', type:'usuario', verified:true, followers:60, following:200, attendedPlanIds:[] },
   { id:'ana',   name:'Ana P.',  handle:'@anap',   initials:'AP', type:'usuario', verified:true, followers:140, following:80, attendedPlanIds:[] },
+  { id:'sara',  name:'Sara M.', handle:'@saram',  initials:'SM', type:'usuario', verified:true, followers:210, following:190, attendedPlanIds:['p1'] },
+  { id:'david', name:'David L.', handle:'@davidl', initials:'DL', type:'usuario', verified:true, followers:75, following:98, attendedPlanIds:['p7','p5'] },
+  { id:'nora',  name:'Nora V.', handle:'@norav',  initials:'NV', type:'usuario', verified:true, followers:330, following:240, attendedPlanIds:['p9'] },
 ];
 const ME = USERS[0]; // usuario actual
 
-// Publicaciones (foto / video / carrusel). media = lista de portadas (degradados).
+/* Publicaciones del muro (pestaña Vividas) y de los perfiles.
+   kind: foto | video | carrusel. imgs: fotos (slug de Unsplash); media: degradado
+   de respaldo por foto. planId: plan al que está vinculada. ago: horas desde que
+   se publicó. duration: segundos, solo en vídeos (simulados con la portada). */
 const POSTS = [
-  { id:'po1', authorId:'me', kind:'carrusel', media:['g-forest','g-sunset','g-grape'], imgs:['1551632811-561732d1e306','1454496522488-7a8e488e8606','1495567720989-cebdbdd97913'], caption:'Finde de trail por la sierra', likes:64 },
-  { id:'po2', authorId:'me', kind:'foto',     media:['g-wine'],   imgs:['1474722883778-792e7990302f'], caption:'Noche de vinos naturales', likes:38 },
-  { id:'po3', authorId:'me', kind:'video',    media:['g-grape'],  imgs:['1566737236500-c8ac43014a67'], caption:'Rooftop al atardecer', likes:120 },
-  { id:'po4', authorId:'me', kind:'foto',     media:['g-sunset'], imgs:['1495567720989-cebdbdd97913'], caption:'Atardecer en Debod', likes:51 },
-  { id:'po5', authorId:'me', kind:'carrusel', media:['g-dark','g-wine'], imgs:['1555939594-58d7cb561ad1','1414235077428-338989a2e8c0'], caption:'Ruta de tapas', likes:29 },
-  { id:'po6', authorId:'me', kind:'foto',     media:['g-forest'], imgs:['1506126613408-eca07ce68773'], caption:'Yoga en el Retiro', likes:44 },
-  { id:'po7', authorId:'azotea', kind:'video', media:['g-grape'], imgs:['1517457373958-b7bdd4587205'], caption:'Sunset sessions', likes:540 },
+  { id:'po7',  authorId:'azotea', planId:'p3', kind:'video', duration:24, media:['g-grape'], imgs:['1517457373958-b7bdd4587205'], ago:2,
+    caption:'Sunset Sessions de anoche. Gracias a los 63 que subisteis #rooftopmadrid', likes:540,
+    comments:[{userId:'sara',text:'Qué noche. Repito el viernes'},{userId:'marco',text:'El DJ, brutal'}] },
+  { id:'po8',  authorId:'lucia', planId:'p2', kind:'carrusel', media:['g-sunset','g-sunset'], imgs:['1495567720989-cebdbdd97913','1502680390469-be75c86b636f'], ago:3,
+    caption:'Debod a las 21:40. Gracias a @marcot y a todos los que os acercasteis #atardecerdebod', likes:118,
+    comments:[{userId:'marco',text:'El mejor atardecer de Madrid, sin discusión'},{userId:'ana',text:'La próxima no me lo pierdo'}] },
+  { id:'po9',  authorId:'marco', planId:'p10', kind:'video', duration:31, media:['g-dark'], imgs:['1486218119243-13883505764c'], ago:8,
+    caption:'5 km al anochecer con el club. Ritmo de grupo, nadie se queda atrás #runningmadrid', likes:76,
+    comments:[{userId:'ana',text:'¿Vale para principiantes?'},{userId:'marco',text:'@anap sí, hay grupo de ritmo suave'}] },
+  { id:'po10', authorId:'sara', planId:'p1', kind:'foto', media:['g-wine'], imgs:['1514362545857-3bc16c4c7d1b'], ago:14,
+    caption:'El himno de la Victoria no defrauda. Fui sola y salí con plan para el sábado #himnovictoria', likes:203,
+    comments:[{userId:'nora',text:'Eso es justo lo que buscaba al llegar a Burgos'}] },
+  { id:'po11', authorId:'david', planId:'p7', kind:'carrusel', media:['g-grape','g-grape'], imgs:['1511192336575-5a79af67a629','1493225457124-a3eb161ffa5f'], ago:20,
+    caption:'Jazz en Clamores. Sala pequeña, sonido enorme #clamoresjazz', likes:89,
+    comments:[{userId:'lucia',text:'¿Hay pase el jueves que viene?'}] },
+  { id:'po12', authorId:'ana', planId:'p8', kind:'foto', media:['g-forest'], imgs:['1545205597-3d9d02c29597'], ago:26,
+    caption:'Primera sesión de yoga al sol en el Retiro. Repetimos el sábado #retiromorning', likes:61,
+    comments:[] },
+  { id:'po1',  authorId:'me', planId:'p5', kind:'carrusel', media:['g-forest','g-forest','g-sunset'], imgs:['1551632811-561732d1e306','1454496522488-7a8e488e8606','1495567720989-cebdbdd97913'], ago:30,
+    caption:'Finde de trail por la sierra con @davidl #trailamanecer', likes:64,
+    comments:[{userId:'david',text:'La subida final, inolvidable'}] },
+  { id:'po13', authorId:'nora', planId:'p9', kind:'carrusel', media:['g-wine','g-wine'], imgs:['1510812431401-41d2bd2722f3','1474722883778-792e7990302f'], ago:40,
+    caption:'Seis vinos naturales y una mesa de desconocidos que ya no lo son #catadevinos', likes:132,
+    comments:[{userId:'sara',text:'Apuntadísima a la próxima'}] },
+  { id:'po15', authorId:'david', planId:'p5', kind:'video', duration:15, media:['g-forest'], imgs:['1454496522488-7a8e488e8606'], ago:44,
+    caption:'Subida al mirador al amanecer. Merece cada paso #trailamanecer', likes:58,
+    comments:[] },
+  { id:'po3',  authorId:'me', planId:'p3', kind:'video', duration:18, media:['g-grape'], imgs:['1566737236500-c8ac43014a67'], ago:52,
+    caption:'Rooftop al atardecer #rooftopmadrid', likes:120,
+    comments:[{userId:'azotea',text:'Gracias por venir, Marina'}] },
+  { id:'po14', authorId:'marco', planId:'p12', kind:'foto', media:['g-sunset'], imgs:['1505686994434-e3cc5abf1330'], ago:60,
+    caption:'Palomitas, manta y peli bajo las estrellas #cinedeverano', likes:47,
+    comments:[] },
+  { id:'po2',  authorId:'me', planId:'p9', kind:'foto', media:['g-wine'], imgs:['1474722883778-792e7990302f'], ago:70,
+    caption:'Noche de vinos naturales', likes:38, comments:[] },
+  { id:'po4',  authorId:'me', planId:'p2', kind:'foto', media:['g-sunset'], imgs:['1495567720989-cebdbdd97913'], ago:96,
+    caption:'Atardecer en Debod #atardecerdebod', likes:51, comments:[] },
+  { id:'po5',  authorId:'me', planId:'p6', kind:'carrusel', media:['g-dark','g-wine','g-dark'], imgs:['1558370781-d6196949e317','1555939594-58d7cb561ad1','1414235077428-338989a2e8c0'], ago:120,
+    caption:'Ruta de tapas por Lavapiés con gente de seis países #tapasviajeros', likes:29,
+    comments:[{userId:'lucia',text:'Qué buena pinta todo'}] },
+  { id:'po6',  authorId:'me', planId:'p8', kind:'foto', media:['g-forest'], imgs:['1506126613408-eca07ce68773'], ago:140,
+    caption:'Yoga en el Retiro #retiromorning', likes:44, comments:[] },
+];
+
+/* Stories (24 h): el "ahora mismo" de los planes. minAgo: minutos desde que se
+   publicó; dentro de cada usuario se reproducen de la más antigua a la más nueva. */
+const STORIES = [
+  { id:'s1', userId:'azotea', planId:'p3', img:'1517457373958-b7bdd4587205', minAgo:12, text:'La azotea está a tope. Quedan 10 plazas para esta noche' },
+  { id:'s2', userId:'azotea', planId:'p3', img:'1566737236500-c8ac43014a67', minAgo:4,  text:'Empieza el DJ set' },
+  { id:'s3', userId:'lucia',  planId:'p2', img:'1495567720989-cebdbdd97913', minAgo:25, text:'Somos 9 en Debod. Aún llegáis' },
+  { id:'s4', userId:'marco',  planId:'p10', img:'1486218119243-13883505764c', minAgo:40, text:'Salimos en 15 minutos desde la Puerta de Alcalá' },
+  { id:'s5', userId:'sara',   planId:'p1', img:'1510812431401-41d2bd2722f3', minAgo:65, text:'Brindis antes del himno' },
+  { id:'s6', userId:'sara',   planId:'p1', img:'1514362545857-3bc16c4c7d1b', minAgo:50, text:'Calentando voces' },
+  { id:'s7', userId:'nora',   planId:'p9', img:'1474722883778-792e7990302f', minAgo:180, text:'Últimas plazas para la cata del jueves' },
+];
+
+/* Directos: emisiones en vivo desde un plan en marcha. */
+const LIVES = [
+  { id:'l1', userId:'azotea', planId:'p3', img:'1566737236500-c8ac43014a67', title:'Sunset Sessions en directo', viewers:214, startedMin:18 },
+  { id:'l2', userId:'david',  planId:'p7', img:'1511192336575-5a79af67a629', title:'Jazz en Clamores, primer pase', viewers:87, startedMin:6 },
+];
+
+// Mensajes de ejemplo que aparecen en el chat de un directo.
+const LIVE_CHAT = [
+  { name:'Lucía R.', text:'Qué ambiente' },
+  { name:'Pablo G.', text:'¿Quedan plazas para la próxima?' },
+  { name:'Irene C.', text:'Voy para allá' },
+  { name:'Marco T.', text:'Subid el volumen' },
+  { name:'Ana P.', text:'Desde casa con envidia' },
+  { name:'Tomás R.', text:'¿A qué hora acaba?' },
+  { name:'Sara M.', text:'Me apunto a la siguiente' },
+  { name:'Irene C.', text:'Brutal' },
 ];
 
 // Grupos (tipo grupos de WhatsApp) con roles admin/miembro.
@@ -275,7 +340,8 @@ const requestsForPlan = (pid) => REQUESTS.filter((r) => r.planId === pid);
 // manejadores inline encuentren los datos, sin depender del scope léxico compartido.
 if (typeof window !== 'undefined') {
   Object.assign(window, {
-    CATEGORIES, PLACES, PLANS, AFTERMOVIES, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
+    CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
+    STORIES, LIVES, LIVE_CHAT,
     getPlace, getPlan, getCategory, getUser, getGroup, postsByUser, requestsForPlan,
   });
 }

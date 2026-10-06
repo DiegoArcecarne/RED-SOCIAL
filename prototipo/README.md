@@ -28,22 +28,31 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
 
 1. **Descubrir** — cuadrícula de 3 columnas con 12 planes, cada uno con foto
    temática y un icono discreto de gratis o de pago. Filtros por tema, tamaño de
-   grupo y precio. Pestañas *Vividas* (aftermovies), *Stories* y *Menciones*
-   (estas dos, de muestra).
-2. **Mapa** — lugares (negocio verificado, público, secreto) con sus planes.
-3. **Ficha de plan** — portada, cuenta atrás, anfitrión y señales de confianza,
+   grupo y precio.
+2. **Vividas (el muro)** — lo que la gente publica de los planes: fotos, carruseles
+   que se deslizan y vídeos (simulados con la portada en movimiento). Me gusta
+   (también con doble toque), comentarios, guardar y enlace al plan. Cada 5
+   publicaciones aparece un plan que puedes hacer tú, y una tira "Ahora mismo" con
+   directos y stories.
+3. **Stories y directos** — pestaña propia con los directos en emisión y las
+   stories del día. Visor de stories a pantalla completa (avanza solo; toca a los
+   lados para navegar) y vista de directo con espectadores y chat en vivo. Desde
+   *Crear ▸ Directo* puedes emitir el tuyo.
+   La pestaña *Menciones* sigue siendo de muestra.
+4. **Mapa** — lugares (negocio verificado, público, secreto) con sus planes.
+5. **Ficha de plan** — portada, cuenta atrás, anfitrión y señales de confianza,
    lugar, seguridad, reseñas y reserva (escrow en los de pago). Distingue plan
    **libre**, **apuntado** y **con aprobación**; muestra los asistentes reales y el
    control de **presencia pública o privada**.
-4. **Perfil y Ajustes** — publicaciones y Vividas en cuadrícula, insignia de cuenta
+6. **Perfil y Ajustes** — publicaciones y Vividas en cuadrícula, insignia de cuenta
    **profesional** y ajustes de privacidad.
-5. **Crear** (botón central) — **plan** (incluido el tipo de asistencia y el grupo
+7. **Crear** (botón central) — **plan** (con tipo de asistencia y grupo
    organizador), **publicación** (foto, vídeo o carrusel, con ubicación, etiquetas,
-   plan vinculado, texto alternativo, audiencia y opciones) y **grupo** (miembros
-   con rol de admin o miembro).
-6. **Grupos** — miembros y roles; los admins aprueban las solicitudes de los
+   plan vinculado, texto alternativo, audiencia y opción de compartirla en stories),
+   **grupo** (miembros con rol de admin o miembro) y **directo**.
+8. **Grupos** — miembros y roles; los admins aprueban las solicitudes de los
    planes del grupo.
-7. **Solicitudes** — el organizador acepta o rechaza cada una. Aceptar inscribe a
+9. **Solicitudes** — el organizador acepta o rechaza cada una. Aceptar inscribe a
    la persona; su asistencia real se cuenta cuando llega.
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los

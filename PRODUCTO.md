@@ -57,11 +57,11 @@ Nivel 3 — Experiencias de pago curadas. La oferta de calidad: vía API de Feve
 
 La app organiza el contenido en pestañas diferenciadas, no en una sola superficie mezclada. El eje estratégico son las dos primeras —Vividas y Disponibles—, que resuelven la tensión entre alma social y transacción: lo social y lo comercial en una misma superficie se canibalizan; separados, cada uno respira. Stories y Menciones son superficies de apoyo. Esta estructura, y en concreto sacar las stories de los círculos de arriba para darles pestaña propia, diferencia el producto de Instagram.
 
-Pestaña "Vividas". Feed evergreen de aftermovies de planes pasados, ordenado por algoritmo de afinidad. Es la superficie de retención, adicción y viralidad. Cada 5-6 publicaciones se inyectan 1-2 planes disponibles, al estilo de los anuncios de Instagram, con dos reglas: emparejamiento contextual (si vienes de tres aftermovies de surf, el plan inyectado es de surf, así no se siente publicidad sino "esto puedo hacerlo yo") y densidad dinámica (más planes cuando estás físicamente en un destino con inventario vivo, menos cuando navegas desde casa por inspiración). La tarjeta inyectada lleva los disparadores de conversión: cuenta atrás, plazas restantes, quién va. Las stories destacadas también aparecen integradas en este feed, no como círculos en la cabecera.
+Pestaña "Vividas". El muro: feed evergreen de lo que la gente publica de los planes —fotos, carruseles, vídeos y aftermovies—, cada publicación ligada a su plan, ordenado por algoritmo de afinidad. Es la superficie de retención, adicción y viralidad. Cada 5-6 publicaciones se inyectan 1-2 planes disponibles, al estilo de los anuncios de Instagram, con dos reglas: emparejamiento contextual (si vienes de tres aftermovies de surf, el plan inyectado es de surf, así no se siente publicidad sino "esto puedo hacerlo yo") y densidad dinámica (más planes cuando estás físicamente en un destino con inventario vivo, menos cuando navegas desde casa por inspiración). La tarjeta inyectada lleva los disparadores de conversión: cuenta atrás, plazas restantes, quién va. Las stories destacadas y los directos en curso también aparecen integrados en este feed, en una tira "Ahora mismo", no como círculos en la cabecera.
 
 Pestaña "Disponibles". Inventario perecedero, filtrable. Es la superficie de descubrimiento y conversión. Filtros: tamaño de grupo, tema, ubicación, edad, fecha, precio.
 
-Pestaña "Stories". Las stories tienen pestaña propia en lugar de la fila de círculos de Instagram. Es el espacio del "ahora mismo": contenido efímero (24 h) de planes en marcha, ambiente en vivo, gente que ya está en el sitio.
+Pestaña "Stories". Las stories tienen pestaña propia en lugar de la fila de círculos de Instagram. Es el espacio del "ahora mismo": contenido efímero (24 h) de planes en marcha, ambiente en vivo, gente que ya está en el sitio. Arriba, los directos que se están emitiendo; debajo, las stories del día, una tarjeta por persona.
 
 Pestaña "Menciones". Recoge las publicaciones, planes y stories en los que otros usuarios te mencionan o etiquetan. Una mención no aparece asociada a tu perfil hasta que la aceptas. Es a la vez una superficie de contenido y un control de privacidad: tú decides qué contenido ajeno se vincula a ti.
 
@@ -181,6 +181,17 @@ Stories: efímeras (24 h), en su propia pestaña y no en círculos de cabecera. 
 Aftermovies: permanentes, en la pestaña Vividas y organizados por hashtags. Prueba social acumulada que vende la siguiente edición del plan.
 
 La distinción es clara: stories para el ahora, efímeras, atracción inmediata; aftermovies permanentes, para descubrimiento y conversión. La visibilidad de ambas la rige el perfil (público o privado), con controles por pieza (por ejemplo, "mejores amigos" en stories).
+
+## Directos
+
+Un directo es una emisión en vivo desde un plan en marcha: el anfitrión o un asistente enseña el ambiente mientras ocurre. Es la forma más intensa del "ahora mismo": quien está cerca y lo ve puede acercarse o apuntarse a la siguiente edición, y quien está lejos lo vive y vuelve otra vez. Se ven arriba en la pestaña Stories ("En directo ahora") y en la tira "Ahora mismo" del muro, y cada directo enlaza a su plan.
+
+Propuesta de reglas:
+
+- Solo se emite desde un plan en marcha al que se asiste o que se organiza, y con la identidad verificada.
+- El chat del directo sigue las reglas de la mensajería: bloqueo, reporte y moderación automática.
+- Seguridad presencial: quien emite pide permiso antes de enfocar a alguien, y quien tiene su presencia en privado no debe salir. Un directo se puede reportar y la moderación puede cortarlo mientras se emite.
+- Al terminar no se publica solo: quien emitió puede guardar fragmentos como publicación vinculada al plan.
 
 ## Grupos y roles
 
@@ -377,7 +388,7 @@ Dentro del MVP:
 - Aftermovie: subir fotos de un plan pasado a su hashtag.
 - Locales: publican sus anclas como cualquier anfitrión, con el distintivo de negocio verificado concedido a mano.
 
-Fuera del MVP (fase 2 o posterior): mensajes directos, stories, menciones, grupos con roles, opciones avanzadas de publicación, mapa de lugares y "reclamar tu local", monetización de cuentas de negocio (CPA, suscripción, panel), publicidad y boost, micropago de desvelo, geolocalización automática y capa de ligar.
+Fuera del MVP (fase 2 o posterior): mensajes directos, stories, directos, menciones, grupos con roles, opciones avanzadas de publicación, mapa de lugares y "reclamar tu local", monetización de cuentas de negocio (CPA, suscripción, panel), publicidad y boost, micropago de desvelo, geolocalización automática y capa de ligar.
 
 Criterio para sumar funcionalidades: una entra cuando una métrica del piloto muestra que el bucle se rompe sin ella.
 
@@ -467,6 +478,10 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Publicación. Post de perfil. id, autor_id, formato (foto / vídeo / carrusel), media (una o varias imágenes), pie de texto (con menciones @usuario y hashtags #tema), ubicación (lugar_id, opcional), usuarios etiquetados, plan vinculado (plan_id opcional; liga la publicación a un plan al que se asistió o que se creó, para que aparezca ligada a ese plan), texto alternativo (accesibilidad), audiencia (público / solo seguidores / amigos cercanos, coherente con perfil público o privado), comentarios activos (bool), ocultar likes (bool), compartir en stories (bool), likes, visibilidad, fecha. El aftermovie es una publicación especializada, ligada a un plan, que vive además en Vividas.
 - Aftermovie. Post permanente. id, plan_id de origen, autor_id, media, hashtag(s), visibilidad (según perfil), fecha. Vive en la pestaña Vividas.
 - Story. Efímera (24 h). id, autor_id, plan_id (opcional), media, visibilidad (público / privado / mejores amigos), fecha de expiración. Vive en la pestaña Stories y puede aflorar destacada en Vividas.
+- Directo. id, emisor_id, plan_id (plan en marcha), título, estado (en curso o finalizado), inicio, fin. Derivado: espectadores. Su chat reutiliza la mensajería y la moderación.
+- Comentario. id, publicación_id, autor_id, texto, fecha. Solo cuando la publicación tiene los comentarios activos.
+- Me gusta. usuario_id, publicación_id, fecha. El contador de la publicación se deriva de aquí; "ocultar likes" solo cambia lo que ven los demás.
+- Guardado. usuario_id, publicación_id, fecha. Colección privada de cada usuario.
 - Mención. id, contenido_id (plan, story o aftermovie), usuario_mencionado_id, estado (pendiente, aceptada, rechazada). No se vincula al perfil hasta aceptarse; alimenta la pestaña Menciones.
 - Hashtag. id, texto, lugar_id o ancla asociada (opcional). Agrupa aftermovies y organiza el histórico.
 
@@ -502,7 +517,8 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Un Plan pasado genera un Aftermovie y abre Reseñas; las Reseñas alimentan la reputación del Usuario y, agregadas, la del Lugar.
 - Un Plan con aprobación manual recibe Solicitudes de asistencia; las aceptan el anfitrión o, si el plan tiene grupo, los admins del Grupo.
 - Un Grupo tiene muchos Miembros de grupo (Usuarios con rol admin o miembro) y muchos Planes; los admins aprueban las solicitudes de esos planes.
-- Un Usuario crea muchas Publicaciones (foto, vídeo o carrusel) que viven en su perfil.
+- Un Usuario crea muchas Publicaciones (foto, vídeo o carrusel) que viven en su perfil y en el muro; cada una recibe Comentarios y Me gusta.
+- Un Plan en marcha puede tener Directos, emitidos por su anfitrión o por sus asistentes.
 - Un Reporte apunta a cualquier objeto (Plan, Usuario, Mensaje, Contenido, comportamiento en evento) y puede derivar en Acciones de moderación.
 
 ## Decisiones abiertas
@@ -517,4 +533,5 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Alcance del MVP: confirmar o ajustar la propuesta de la sección correspondiente.
 - Umbral de anonimato de la presencia privada (propuesta: 10 asistentes, el valor que usa el prototipo).
 - Método de check-in del piloto y del MVP: QR del anfitrión (recomendado) frente a geolocalización automática.
+- Directos: confirmar quién puede emitir (solo anfitriones o también asistentes) y si se guardan al terminar.
 - Objetivos numéricos de las métricas y criterios para continuar o parar tras el piloto (propuesta en el plan de validación).
