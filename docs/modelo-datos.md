@@ -158,7 +158,7 @@ erDiagram
         uuid plan_id FK
         uuid usuario_id FK
         datetime fecha_hora
-        string metodo "geolocalizacion"
+        string metodo "geolocalizacion|qr_anfitrion"
         string visibilidad "publica|privada"
     }
     SOLICITUD_ASISTENCIA {

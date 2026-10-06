@@ -4,14 +4,14 @@
 
 // Categorías de la taxonomía de arranque
 const CATEGORIES = [
-  { id: 'outdoor',   label: 'Outdoor',     emoji: '🏔️' },
-  { id: 'fiesta',    label: 'Fiesta',      emoji: '🎉' },
-  { id: 'gastro',    label: 'Gastronomía', emoji: '🍷' },
-  { id: 'cultura',   label: 'Cultura',     emoji: '🎭' },
-  { id: 'deporte',   label: 'Deporte',     emoji: '🏃' },
-  { id: 'bienestar', label: 'Bienestar',   emoji: '🧘' },
-  { id: 'social',    label: 'Social',      emoji: '🥂' },
-  { id: 'viajeros',  label: 'Viajeros',    emoji: '🎒' },
+  { id: 'outdoor',   label: 'Outdoor' },
+  { id: 'fiesta',    label: 'Fiesta' },
+  { id: 'gastro',    label: 'Gastronomía' },
+  { id: 'cultura',   label: 'Cultura' },
+  { id: 'deporte',   label: 'Deporte' },
+  { id: 'bienestar', label: 'Bienestar' },
+  { id: 'social',    label: 'Social' },
+  { id: 'viajeros',  label: 'Viajeros' },
 ];
 
 // Lugares (entidad persistente). x/y = posición % sobre el mapa estilizado.
@@ -36,7 +36,7 @@ const PLANS = [
     level: 1, paid: false, price: 0, recurring: true,
     host: { name: 'Vermutería Victoria', business: true, verified: true, rating: 4.8, reliability: 99 },
     when: hoursFromNow(5), groupMin: 10, groupMax: 60, joined: 41,
-    gradient: 'g-wine', emoji: '🍷',
+    gradient: 'g-wine',
     summary: 'Cada noche a las 22:00, todo el bar canta. El ritual de Burgos que ya tiene gente: solo súmate.',
     secret: false,
   },
@@ -45,7 +45,7 @@ const PLANS = [
     level: 2, paid: false, price: 0, recurring: false,
     host: { name: 'Lucía R.', business: false, verified: true, rating: 4.9, reliability: 96 },
     when: hoursFromNow(28), groupMin: 4, groupMax: 15, joined: 9,
-    gradient: 'g-sunset', emoji: '🌅',
+    gradient: 'g-sunset',
     summary: 'Quedada para ver el mejor atardecer de Madrid. Traed manta y algo para picar.',
     secret: false,
   },
@@ -54,7 +54,7 @@ const PLANS = [
     level: 3, paid: true, price: 18, recurring: false,
     host: { name: 'Azotea Círculo', business: true, verified: true, rating: 4.6, reliability: 98 },
     when: hoursFromNow(52), groupMin: 20, groupMax: 80, joined: 63,
-    gradient: 'g-grape', emoji: '🌇',
+    gradient: 'g-grape',
     summary: 'DJ set al atardecer en una de las mejores azoteas del centro. Primera consumición incluida.',
     secret: false,
   },
@@ -63,7 +63,7 @@ const PLANS = [
     level: 3, paid: true, price: 35, recurring: false,
     host: { name: 'Mesa 0 · Originals', business: true, verified: true, rating: 4.9, reliability: 100 },
     when: hoursFromNow(74), groupMin: 6, groupMax: 8, joined: 6,
-    gradient: 'g-dark', emoji: '🤫',
+    gradient: 'g-dark',
     summary: 'Ocho desconocidos, un menú de autor y una ubicación que se revela 2 horas antes. El secreto es parte del plan.',
     secret: true,
   },
@@ -72,7 +72,7 @@ const PLANS = [
     level: 1, paid: false, price: 0, recurring: true,
     host: { name: 'Club Amanecer Trail', business: false, verified: true, rating: 4.8, reliability: 97 },
     when: hoursFromNow(20), groupMin: 5, groupMax: 20, joined: 12,
-    gradient: 'g-forest', emoji: '🏃',
+    gradient: 'g-forest',
     summary: 'Ruta suave de 8 km para ver salir el sol. Ritmo de grupo, nadie se queda atrás.',
     secret: false,
   },
@@ -81,7 +81,7 @@ const PLANS = [
     level: 2, paid: false, price: 0, recurring: false,
     host: { name: 'Marco T.', business: false, verified: true, rating: 4.7, reliability: 92 },
     when: hoursFromNow(31), groupMin: 4, groupMax: 12, joined: 7,
-    gradient: 'g-sunset', emoji: '🍢',
+    gradient: 'g-sunset',
     summary: '¿Recién llegado a Madrid? Tapeo por Lavapiés con gente que también está de paso.',
     secret: false,
   },
@@ -90,7 +90,7 @@ const PLANS = [
     level: 3, paid: true, price: 14, recurring: false,
     host: { name: 'Sala Clamores', business: true, verified: true, rating: 4.5, reliability: 96 },
     when: hoursFromNow(46), groupMin: 10, groupMax: 40, joined: 22,
-    gradient: 'g-grape', emoji: '🎷',
+    gradient: 'g-grape',
     summary: 'Directo de jazz en formato reducido. Vente solo o con quien quieras: la sala hace el resto.',
     secret: false,
   },
@@ -99,7 +99,7 @@ const PLANS = [
     level: 2, paid: false, price: 0, recurring: true,
     host: { name: 'Ana P.', business: false, verified: true, rating: 4.9, reliability: 98 },
     when: hoursFromNow(15), groupMin: 3, groupMax: 18, joined: 10,
-    gradient: 'g-forest', emoji: '🧘',
+    gradient: 'g-forest',
     summary: 'Sesión de 45 min para empezar el sábado con calma. Trae esterilla.',
     secret: false,
   },
@@ -108,7 +108,7 @@ const PLANS = [
     level: 3, paid: true, price: 22, recurring: false,
     host: { name: 'Vinos Vivos', business: true, verified: true, rating: 4.7, reliability: 97 },
     when: hoursFromNow(40), groupMin: 8, groupMax: 24, joined: 15,
-    gradient: 'g-wine', emoji: '',
+    gradient: 'g-wine',
     summary: 'Seis referencias de vino natural con un sumiller que te lo cuenta sin pretensiones.',
     secret: false,
   },
@@ -117,7 +117,7 @@ const PLANS = [
     level: 1, paid: false, price: 0, recurring: true,
     host: { name: 'Madrid Night Runners', business: false, verified: true, rating: 4.8, reliability: 95 },
     when: hoursFromNow(9), groupMin: 6, groupMax: 30, joined: 18,
-    gradient: 'g-dark', emoji: '',
+    gradient: 'g-dark',
     summary: '5 km a ritmo suave por el Retiro. Grupos por nivel, nadie corre solo.',
     secret: false,
   },
@@ -126,7 +126,7 @@ const PLANS = [
     level: 2, paid: false, price: 0, recurring: false,
     host: { name: 'Carla D.', business: false, verified: true, rating: 4.6, reliability: 90 },
     when: hoursFromNow(34), groupMin: 4, groupMax: 25, joined: 11,
-    gradient: 'g-grape', emoji: '',
+    gradient: 'g-grape',
     summary: 'Vuelta por los puestos de creadores locales y caña final con el grupo.',
     secret: false,
   },
@@ -135,7 +135,7 @@ const PLANS = [
     level: 3, paid: true, price: 12, recurring: false,
     host: { name: 'Azotea Círculo', business: true, verified: true, rating: 4.6, reliability: 98 },
     when: hoursFromNow(60), groupMin: 15, groupMax: 50, joined: 29,
-    gradient: 'g-sunset', emoji: '',
+    gradient: 'g-sunset',
     summary: 'Proyección bajo las estrellas con manta y palomitas incluidas.',
     secret: false,
   },
@@ -143,9 +143,9 @@ const PLANS = [
 
 // Aftermovies (pestaña Vividas) — prueba social de planes pasados
 const AFTERMOVIES = [
-  { id: 'a1', planTitle: 'El himno de la Victoria', placeId: 'victoria', hashtag: '#himnovictoria', emoji: '🍷', gradient: 'g-wine',   likes: 312, author: 'Vermutería Victoria' },
-  { id: 'a2', planTitle: 'Rooftop Sunset',          placeId: 'azotea',   hashtag: '#rooftopmadrid', emoji: '🌇', gradient: 'g-grape',  likes: 540, author: 'Azotea Círculo' },
-  { id: 'a3', planTitle: 'Atardecer en Debod',      placeId: 'debod',    hashtag: '#atardecerdebod', emoji: '🌅', gradient: 'g-sunset', likes: 198, author: 'Lucía R.' },
+  { id: 'a1', planTitle: 'El himno de la Victoria', placeId: 'victoria', hashtag: '#himnovictoria', gradient: 'g-wine',   photo:'1514362545857-3bc16c4c7d1b', likes: 312, author: 'Vermutería Victoria' },
+  { id: 'a2', planTitle: 'Rooftop Sunset',          placeId: 'azotea',   hashtag: '#rooftopmadrid', gradient: 'g-grape',  photo:'1517457373958-b7bdd4587205', likes: 540, author: 'Azotea Círculo' },
+  { id: 'a3', planTitle: 'Atardecer en Debod',      placeId: 'debod',    hashtag: '#atardecerdebod', gradient: 'g-sunset', photo:'1502680390469-be75c86b636f', likes: 198, author: 'Lucía R.' },
 ];
 
 // Reseñas de ejemplo para la ficha de detalle
@@ -203,6 +203,23 @@ PLANS.forEach((p) => {
   p.groupId = e.groupId || null;
 });
 
+// Foto temática (Unsplash, slug photo-<id>) por plan. Si no carga, cae al degradado.
+const PLAN_PHOTO = {
+  p1:'1514362545857-3bc16c4c7d1b',  // vermut / vino
+  p2:'1495567720989-cebdbdd97913',  // atardecer
+  p3:'1566737236500-c8ac43014a67',  // rooftop
+  p4:'1414235077428-338989a2e8c0',  // cena / restaurante
+  p5:'1551632811-561732d1e306',     // trail de montaña
+  p6:'1555939594-58d7cb561ad1',     // tapas
+  p7:'1493225457124-a3eb161ffa5f',  // concierto / jazz
+  p8:'1545205597-3d9d02c29597',     // yoga en parque
+  p9:'1474722883778-792e7990302f',  // cata de vinos
+  p10:'1571008887538-b36bb32f4571', // running
+  p11:'1555396273-367ea4eb4db5',    // mercado de diseño
+  p12:'1489599849927-2ee91cede3ba', // cine
+};
+PLANS.forEach((p) => { p.photo = PLAN_PHOTO[p.id] || ''; });
+
 // Usuarios (perfiles). type: 'usuario' normal o 'profesional' (cuenta de negocio).
 const USERS = [
   { id:'me', name:'Marina', handle:'@marina', initials:'MA', type:'usuario', verified:true,
@@ -221,13 +238,13 @@ const ME = USERS[0]; // usuario actual
 
 // Publicaciones (foto / video / carrusel). media = lista de portadas (degradados).
 const POSTS = [
-  { id:'po1', authorId:'me', kind:'carrusel', media:['g-forest','g-sunset','g-grape'], caption:'Finde de trail por la sierra', likes:64 },
-  { id:'po2', authorId:'me', kind:'foto',     media:['g-wine'],   caption:'Noche de vinos naturales', likes:38 },
-  { id:'po3', authorId:'me', kind:'video',    media:['g-grape'],  caption:'Rooftop al atardecer', likes:120 },
-  { id:'po4', authorId:'me', kind:'foto',     media:['g-sunset'], caption:'Atardecer en Debod', likes:51 },
-  { id:'po5', authorId:'me', kind:'carrusel', media:['g-dark','g-wine'], caption:'Ruta de tapas', likes:29 },
-  { id:'po6', authorId:'me', kind:'foto',     media:['g-forest'], caption:'Yoga en el Retiro', likes:44 },
-  { id:'po7', authorId:'azotea', kind:'video', media:['g-grape'], caption:'Sunset sessions', likes:540 },
+  { id:'po1', authorId:'me', kind:'carrusel', media:['g-forest','g-sunset','g-grape'], imgs:['1551632811-561732d1e306','1454496522488-7a8e488e8606','1495567720989-cebdbdd97913'], caption:'Finde de trail por la sierra', likes:64 },
+  { id:'po2', authorId:'me', kind:'foto',     media:['g-wine'],   imgs:['1474722883778-792e7990302f'], caption:'Noche de vinos naturales', likes:38 },
+  { id:'po3', authorId:'me', kind:'video',    media:['g-grape'],  imgs:['1566737236500-c8ac43014a67'], caption:'Rooftop al atardecer', likes:120 },
+  { id:'po4', authorId:'me', kind:'foto',     media:['g-sunset'], imgs:['1495567720989-cebdbdd97913'], caption:'Atardecer en Debod', likes:51 },
+  { id:'po5', authorId:'me', kind:'carrusel', media:['g-dark','g-wine'], imgs:['1555939594-58d7cb561ad1','1414235077428-338989a2e8c0'], caption:'Ruta de tapas', likes:29 },
+  { id:'po6', authorId:'me', kind:'foto',     media:['g-forest'], imgs:['1506126613408-eca07ce68773'], caption:'Yoga en el Retiro', likes:44 },
+  { id:'po7', authorId:'azotea', kind:'video', media:['g-grape'], imgs:['1517457373958-b7bdd4587205'], caption:'Sunset sessions', likes:540 },
 ];
 
 // Grupos (tipo grupos de WhatsApp) con roles admin/miembro.

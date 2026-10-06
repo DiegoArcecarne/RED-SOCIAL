@@ -327,3 +327,11 @@ body{background:#000;color:var(--ink);display:flex;justify-content:center;-webki
 .tag-chip{display:inline-flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--line);color:var(--ink-soft);border-radius:999px;padding:7px 11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
 .tag-chip.active{background:var(--ink);color:#000;border-color:var(--ink)}
 .tag-chip .ico{font-size:14px}
+
+/* ======================= Imágenes reales de portada (con fallback al degradado) ======================= */
+.cover-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0}
+.mini-thumb{position:relative;overflow:hidden}
+.post-prev .pp{overflow:hidden}
+.post-prev .play-ov{z-index:2}
+.post-prev .pp-dots{z-index:2}
+/* el degradado del contenedor queda detrás como fallback si la imagen no carga (onerror la elimina) */
