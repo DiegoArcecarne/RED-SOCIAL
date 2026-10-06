@@ -103,6 +103,60 @@ function toast(msg){
 }
 function typeBadge(u){ return u.type==='profesional' ? `<span class="pro-badge">${ico('briefcase')} Profesional</span>` : ''; }
 
+/* ---------- umbral de anonimato de la presencia privada ----------
+   Con pocos asistentes, mostrar el total delataría a quien fue en privado
+   ("4 asistentes" y 3 caras visibles → se deduce quién falta). Por debajo de
+   PRIVACY_MIN solo se cuentan y muestran los asistentes visibles. */
+const PRIVACY_MIN = 10;
+function attendanceView(p){
+  const total = p.attended || 0;
+  if (total >= PRIVACY_MIN) return { n: total, label: 'asistentes reales', priv: p.attendedPrivate || 0, below: false };
+  const visible = Math.min((p.publicAttendees || []).length, total);
+  return { n: visible, label: 'asistentes visibles', priv: 0, below: true };
+}
+
+/* ---------- persistencia local (localStorage) ----------
+   Lo creado en la demo (planes, publicaciones, grupos, solicitudes, asistencias)
+   sobrevive a recargar la página. Si el navegador bloquea el almacenamiento,
+   la demo sigue funcionando en memoria. "Restablecer demo" en Ajustes lo borra. */
+const STORE_KEY = 'planes-proto-v1';
+function saveState(){
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      plans: PLANS.map(p => ({ ...p, when: p.when instanceof Date ? p.when.toISOString() : p.when })),
+      posts: POSTS, groups: GROUPS, requests: REQUESTS,
+      me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds },
+      sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested] },
+    }));
+  } catch (e) { /* sin almacenamiento: la demo funciona en memoria */ }
+}
+function loadState(){
+  let snap = null;
+  try { snap = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { return; }
+  if (!snap) return;
+  // Los planes base conservan su fecha relativa a hoy; los creados en la demo, la suya.
+  const baseWhen = new Map(PLANS.map(p => [p.id, p.when]));
+  const saved = (snap.plans || []).map(p => ({ ...p, when: baseWhen.get(p.id) || new Date(p.when) }));
+  const savedIds = new Set(saved.map(p => p.id));
+  const merged = saved.concat(PLANS.filter(p => !savedIds.has(p.id))); // planes base nuevos tras una actualización
+  if (merged.length) PLANS.splice(0, PLANS.length, ...merged);
+  if (Array.isArray(snap.posts)) POSTS.splice(0, POSTS.length, ...snap.posts);
+  if (Array.isArray(snap.groups)) GROUPS.splice(0, GROUPS.length, ...snap.groups);
+  if (Array.isArray(snap.requests)) REQUESTS.splice(0, REQUESTS.length, ...snap.requests);
+  if (snap.me) Object.assign(ME, snap.me);
+  if (snap.sets) {
+    state.joined = new Set(snap.sets.joined || []);
+    state.attended = new Set(snap.sets.attended || []);
+    state.requested = new Set(snap.sets.requested || []);
+  }
+  state.presencePublic = ME.presencePublic;
+}
+function resetDemo(){
+  try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+  location.hash = '#/feed';
+  location.reload();
+}
+
 /* ---------- filtrado feed ---------- */
 function filteredPlans(){
   return PLANS.filter(p=>{
@@ -123,7 +177,7 @@ function gridCell(p){
     <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>
     <span class="cell-info">
       <span class="cell-title">${escapeHtml(p.title)}</span>
-      <span class="cell-meta">${escapeHtml(loc)} · ${ico('geo')} ${p.attended}</span>
+      <span class="cell-meta">${escapeHtml(loc)} · ${ico('geo')} ${attendanceView(p).n}</span>
     </span>
   </button>`;
 }
@@ -135,10 +189,10 @@ function renderFeed(){
 }
 function renderVividasTab(){
   const cells = AFTERMOVIES.concat(AFTERMOVIES).slice(0,6).map(a=>`
-    <button class="cell ${a.gradient}" onclick="toast('Aftermovie · ${a.hashtag}')" aria-label="${a.planTitle}">
+    <button class="cell ${a.gradient}" onclick="toast('Aftermovie · ${a.hashtag}')" aria-label="${escapeHtml(a.planTitle)}">
       ${coverImg(a.photo,500)}
       <span class="cell-scrim"></span><span class="cell-corner">${ico('heart')}</span>
-      <span class="cell-info"><span class="cell-title">${a.hashtag}</span><span class="cell-meta">${a.author}</span></span>
+      <span class="cell-info"><span class="cell-title">${escapeHtml(a.hashtag)}</span><span class="cell-meta">${escapeHtml(a.author)}</span></span>
     </button>`).join('');
   return `<div class="grid">${cells}</div>`;
 }
@@ -163,8 +217,8 @@ function renderMap(){
   const pins = PLACES.map(pl=>{
     const sel = state.selectedPlace===pl.id ? 'selected' : '';
     const inner = pl.secret ? ico('lock') : (pl.kind==='negocio' ? ico('shield') : ico('pin'));
-    return `<button class="pin ${placeKindClass(pl)} ${sel}" style="left:${pl.x}%;top:${pl.y}%" onclick="selectPlace('${pl.id}')" aria-label="${pl.name}">
-      <span class="pin-dot">${inner}</span><span class="pin-cap">${pl.secret?'·····':pl.name}</span></button>`;
+    return `<button class="pin ${placeKindClass(pl)} ${sel}" style="left:${pl.x}%;top:${pl.y}%" onclick="selectPlace('${pl.id}')" aria-label="${escapeHtml(pl.name)}">
+      <span class="pin-dot">${inner}</span><span class="pin-cap">${pl.secret?'·····':escapeHtml(pl.name)}</span></button>`;
   }).join('');
   map.innerHTML = `
     <div class="map-hint">${ico('pin')} Madrid · ${PLACES.length} lugares cerca · toca un pin</div>
@@ -186,7 +240,7 @@ function renderMapSheet(){
   const pl = getPlace(state.selectedPlace);
   const plans = PLANS.filter(p=>p.placeId===pl.id);
   sheet.innerHTML = `
-    <h3>${pl.secret?'Lugar por desvelar':pl.name} ${pl.verified?`<span class="vchk">${ico('check')}</span>`:''}</h3>
+    <h3>${pl.secret?'Lugar por desvelar':escapeHtml(pl.name)} ${pl.verified?`<span class="vchk">${ico('check')}</span>`:''}</h3>
     <div class="sub">${pl.kind==='negocio'?'Negocio verificado':'Lugar público'} · ${pl.city} · ${rating(pl.rating)} · ${pl.hashtag}</div>
     ${plans.length?plans.map(miniPlan).join(''):'<div class="sub">Sin planes próximos en este lugar.</div>'}`;
 }
@@ -194,7 +248,7 @@ function miniPlan(p){
   return `<button class="mini-plan" onclick="go('plan/${p.id}')">
     <span class="mini-thumb ${p.gradient}">${coverImg(p.photo,120)}</span>
     <span class="mini-info"><span class="mini-t">${escapeHtml(p.title)}</span>
-      <span class="mini-m">${fmtWhen(p.when)} · ${sizeLabel(p)} · ${ico('geo')} ${p.attended}</span></span>
+      <span class="mini-m">${fmtWhen(p.when)} · ${sizeLabel(p)} · ${ico('geo')} ${attendanceView(p).n}</span></span>
     <span class="mini-corner">${freeIcon(p)}</span></button>`;
 }
 function selectPlace(id){ state.selectedPlace = state.selectedPlace===id ? null : id; renderMap(); }
@@ -208,6 +262,7 @@ function registerArrival(id){
   if (state.presencePublic){ if(!p.publicAttendees.includes(ME.initials)) p.publicAttendees.unshift(ME.initials); }
   else { p.attendedPrivate = (p.attendedPrivate||0)+1; }
   if (!ME.attendedPlanIds.includes(id)) ME.attendedPlanIds.push(id);
+  saveState();
   toast(state.presencePublic ? 'Llegada verificada por ubicación · presencia pública' : 'Llegada verificada por ubicación · presencia privada');
   renderDetail(id);
 }
@@ -215,6 +270,7 @@ function requestAttendance(id){
   if (state.requested.has(id)) return;
   state.requested.add(id);
   REQUESTS.push({ id:'r'+Date.now(), planId:id, userId:'me', status:'pendiente', message:'Solicitud enviada desde el prototipo.' });
+  saveState();
   toast('Solicitud de asistencia enviada · pendiente de aprobación');
   renderDetail(id);
 }
@@ -261,14 +317,16 @@ function renderDetail(id){
       </div></div>`;
 
   const pubList = p.publicAttendees.slice(0,6);
-  const priv = p.attendedPrivate;
+  const av = attendanceView(p);
   const whoBlock = `
     <div class="block"><h4>Quién asiste · verificado por ubicación</h4>
       <div class="attendees">
-        ${pubList.map(a=>`<span class="avatar sm">${a}</span>`).join('')}
-        <span class="more">${ico('geo')} ${p.attended} asistentes reales${priv?` · ${priv} en privado`:''}</span>
+        ${pubList.map(a=>`<span class="avatar sm">${escapeHtml(a)}</span>`).join('')}
+        <span class="more">${ico('geo')} ${av.n} ${av.label}${av.priv?` · ${av.priv} en privado`:''}</span>
       </div>
-      <p class="hint">Los asistentes en privado cuentan en el total pero no se listan.</p></div>`;
+      <p class="hint">${av.below
+        ? `Con menos de ${PRIVACY_MIN} asistentes solo se cuentan los visibles, para que nadie pueda deducir quién fue en privado.`
+        : 'Los asistentes en privado cuentan en el total pero no se listan.'}</p></div>`;
 
   const pend = requestsForPlan(p.id).filter(r=>r.status==='pendiente').length;
   const manageBlock = canManage(p) ? `
@@ -297,7 +355,7 @@ function renderDetail(id){
       <div class="kpis">
         <div class="kpi"><div class="v">${fmtCountdown(p.when)}</div><div class="k">${ico('clock')} empieza en</div></div>
         <div class="kpi"><div class="v">${libre?'Libre':sizeLabel(p)}</div><div class="k">${ico('users')} ${libre?'sin aforo':p.groupMin+'–'+p.groupMax}</div></div>
-        <div class="kpi"><div class="v">${p.attended}</div><div class="k">${ico('geo')} asistentes</div></div>
+        <div class="kpi"><div class="v">${av.n}</div><div class="k">${ico('geo')} ${av.below?'visibles':'asistentes'}</div></div>
       </div>
       ${p.secret?`<div class="secret-note"><span class="sn-ic">${ico('lock')}</span><p>La ubicación exacta se revela 2 horas antes del plan. El secreto es parte de la experiencia.</p></div>`:''}
       <div class="block"><h4>El plan</h4><p>${escapeHtml(p.summary)}</p>
@@ -338,6 +396,7 @@ function toggleJoin(id){
   const p=getPlan(id);
   if (state.joined.has(id)) state.joined.delete(id);
   else { state.joined.add(id); toast(p.paid?'Reserva retenida en escrow':'Apuntado · verifica tu identidad antes del plan'); }
+  saveState();
   renderDetail(id);
 }
 
@@ -374,11 +433,13 @@ function resolveRequest(reqId, decision, planId){
   const r = REQUESTS.find(x=>x.id===reqId); if(!r) return;
   r.status = decision;
   if (decision==='aceptada'){
-    const p = getPlan(planId), u = getUser(r.userId);
-    p.attended = (p.attended||0)+1;
-    if (u && !p.publicAttendees.includes(u.initials)) p.publicAttendees.unshift(u.initials);
-    toast('Solicitud aceptada · ahora es asistente');
+    // Aceptar inscribe al usuario; la asistencia real se verifica al llegar, no se suma aquí.
+    const p = getPlan(planId);
+    p.joined = (p.joined||0)+1;
+    if (r.userId==='me') state.joined.add(planId);
+    toast('Solicitud aceptada · inscrito; su asistencia se verificará al llegar');
   } else toast('Solicitud rechazada');
+  saveState();
   renderRequests(planId);
 }
 
@@ -468,13 +529,17 @@ function renderSettings(){
         ${row('card','Pagos y reembolsos')}
         ${row('doc','Datos y legal')}
       </div>
+      <div class="set-group"><div class="set-title">Prototipo</div>
+        <div class="set-row static"><span class="sr-ic">${ico('image')}</span><span class="sr-l">Fotos de Unsplash (licencia Unsplash)</span></div>
+        <button class="set-row" onclick="resetDemo()"><span class="sr-ic">${ico('repeat')}</span><span class="sr-l">Restablecer demo</span><span class="soon">borra lo creado</span></button>
+      </div>
       <div class="set-group">
         <button class="set-row danger" onclick="toast('Sesión cerrada (demo)')"><span class="sr-ic">${ico('logout')}</span><span class="sr-l">Cerrar sesión</span></button>
       </div>
     </div>`;
 }
-function toggleProfilePrivacy(){ ME.profilePublic = !ME.profilePublic; renderSettings(); }
-function togglePresenceDefault(){ ME.presencePublic = !ME.presencePublic; state.presencePublic = ME.presencePublic; renderSettings(); }
+function toggleProfilePrivacy(){ ME.profilePublic = !ME.profilePublic; saveState(); renderSettings(); }
+function togglePresenceDefault(){ ME.presencePublic = !ME.presencePublic; state.presencePublic = ME.presencePublic; saveState(); renderSettings(); }
 
 /* ---------- grupos ---------- */
 function roleBadge(role){ return role==='admin' ? `<span class="role admin">${ico('shield')} Admin</span>` : `<span class="role">Miembro</span>`; }
@@ -542,6 +607,7 @@ function publishGroup(){
   const members = [{userId:'me',role:'admin'}].concat(Object.entries(state.draftMembers).map(([userId,role])=>({userId,role})));
   const g = { id:'g'+Date.now(), name, about, gradient:'g-dark', members, planIds:[] };
   GROUPS.unshift(g); state.draftMembers={}; state.draftGName=''; state.draftGAbout='';
+  saveState();
   toast('Grupo creado'); go('grupo/'+g.id);
 }
 
@@ -627,6 +693,7 @@ function publishPlan(){
   PLANS.unshift(plan);
   if (groupId){ const g=getGroup(groupId); if(g) g.planIds.unshift(plan.id); }
   state.pendingGroup = null;
+  saveState();
   toast('Plan publicado'); go('plan/'+plan.id);
 }
 function freshPostDraft(){ return { kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false }; }
@@ -717,6 +784,7 @@ function publishPost(){
   });
   const story = d.alsoStory;
   state.draftPost = freshPostDraft();
+  saveState();
   toast(story ? 'Publicación creada · compartida en Stories' : 'Publicación creada');
   state.profileTab='posts'; go('perfil');
 }
@@ -774,6 +842,8 @@ function router(){
 
 /* ---------- init ---------- */
 function init(){
+  loadState();
+  window.addEventListener('pagehide', saveState);
   buildFilters();
   document.querySelectorAll('.content-tabs button').forEach(b=>{ b.onclick=()=>{ state.contentTab=b.dataset.tab; renderContent(); }; });
   document.querySelectorAll('.tabbar button').forEach(b=>{ b.onclick=()=>go(b.dataset.nav==='crear'?'crear':b.dataset.nav); });
