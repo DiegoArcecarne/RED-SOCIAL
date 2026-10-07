@@ -36,7 +36,9 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    enviar a quien sigues, añadir a tu story o compartir fuera (WhatsApp, Telegram,
    copiar enlace, descargar la imagen o la hoja del móvil), con la vista previa del
    enlace con la imagen de la publicación (Open Graph, como la imagen destacada de
-   WordPress). Solo las publicaciones públicas se comparten fuera. Cada 5
+   WordPress). Solo las publicaciones públicas se comparten fuera. Los **planes** se
+   comparten igual desde su ficha (botón arriba a la derecha), con fecha, lugar y
+   precio en la vista previa. Cada 5
    publicaciones aparece un plan que puedes hacer tú, y una tira "Ahora mismo" con
    directos y stories.
 3. **Stories y directos** — pestaña propia con los directos en emisión y las

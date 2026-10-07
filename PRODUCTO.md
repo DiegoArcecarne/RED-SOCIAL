@@ -227,9 +227,14 @@ Al entrar en el perfil de alguien, sus publicaciones se pueden filtrar en Todo, 
 
 El flujo de creación incluye las opciones habituales de una red social, adaptadas a esta app: ubicación, etiquetado de personas, pie con menciones y hashtags, texto alternativo para accesibilidad, control de comentarios, ocultar el número de "me gusta", compartir además en stories y audiencia (público / solo seguidores / amigos). La opción propia y diferencial es vincular la publicación a un plan existente —al que se asistió o que se creó—, de modo que la publicación queda ligada a ese plan y refuerza su prueba social.
 
-## Compartir publicaciones
+## Compartir publicaciones y planes
 
-Cualquier publicación, propia o ajena, se puede compartir desde el botón de compartir. Lo mismo vale, con el mismo mecanismo, para los planes; en ese caso la imagen es la portada del plan.
+Cualquier publicación, propia o ajena, y cualquier plan se pueden compartir desde el botón de compartir (en el plan, arriba a la derecha de su ficha). Publicaciones y planes usan la misma hoja y las mismas opciones. Cambia el contenido de la vista previa:
+
+- Publicación: autor, primera foto y pie. Enlace planes.app/p/….
+- Plan: título, fecha, lugar y precio ("vie · 20:30 · Azotea Círculo · 18 €"), resumen y portada del plan. Enlace planes.app/plan/…. Si la ubicación es secreta, el enlace dice "Zona aproximada" y nunca la desvela. Al añadirlo a tu story sale como "¿Te vienes? …", con el botón "Ver el plan".
+
+Compartir planes es la forma natural de traer a amigos a un plan, así que el enlace de un plan abre su ficha con el botón para apuntarse; si no tienes la app, primero te lleva a descargarla.
 
 Dentro de la app:
 
@@ -239,9 +244,9 @@ Dentro de la app:
 Fuera de la app (WhatsApp, Telegram, SMS, correo…):
 
 - Se comparte un enlace público a la publicación (planes.app/p/…, dominio provisional como la marca). Ese enlace lleva una vista previa con imagen, igual que la imagen destacada de WordPress. Para ello, la página pública incluye etiquetas Open Graph:
-  - og:title: "Autor en planes · Plan" (si la publicación está ligada a un plan).
-  - og:description: el pie, recortado a unos 120 caracteres.
-  - og:image: una imagen de 1200×630 generada a partir de la primera foto de la publicación, con el pie, el autor y la marca encima. Recomendado: JPEG de menos de 300 KB, para que WhatsApp la muestre siempre.
+  - og:title: en una publicación, "Autor en planes · Plan" (si está ligada a un plan); en un plan, su título.
+  - og:description: en una publicación, el pie recortado a unos 120 caracteres; en un plan, "fecha · lugar · precio" y el resumen.
+  - og:image: una imagen de 1200×630 generada a partir de la primera foto (o de la portada del plan), con el pie o el título, el autor o los datos del plan y la marca encima. Recomendado: JPEG de menos de 300 KB, para que WhatsApp la muestre siempre.
   - og:url y twitter:card = summary_large_image.
 - Botones directos para WhatsApp y Telegram, "Copiar enlace", "Imagen" (descarga la imagen 1200×630) y "Más", que abre la hoja de compartir del móvil. Si el móvil lo permite, esa hoja envía la imagen como archivo junto al texto y el enlace.
 - La página pública enseña la publicación y un botón para abrirla en la app o descargarla. Con enlaces universales (iOS) y App Links (Android), si la app está instalada se abre directamente.

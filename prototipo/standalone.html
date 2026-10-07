@@ -568,6 +568,8 @@ body{background:#000;color:var(--ink);display:flex;justify-content:center;-webki
 .og-img{position:relative;display:block;aspect-ratio:1.91/1;overflow:hidden}
 .og-txt{display:flex;flex-direction:column;gap:2px;padding:9px 11px 11px;font-size:12.5px;color:var(--ink-soft);line-height:1.35}
 .og-txt b{color:var(--ink);font-size:13.5px}
+.og-sum{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.back-btn.share-btn{left:auto;right:14px}
 .og-d{font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--ink-dim)}
 .sh-apps{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 .sh-app{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:none;color:var(--ink);font:inherit;font-size:11px;text-decoration:none;cursor:pointer;padding:4px 0}
@@ -1728,13 +1730,25 @@ function carouselDots(track, id){
    foto de la publicación (shareImage). Solo las publicaciones públicas se comparten
    fuera; dentro, se envían a personas que sigues o se añaden a tu story. */
 const PUBLIC_BASE = 'https://planes.app';   // dominio provisional, como la marca
-function postUrl(po){ return `${PUBLIC_BASE}/p/${po.id}`; }
+// Lo que se comparte: una publicación (clave = su id) o un plan (clave = 'plan:' + id).
+function findShare(key){ return String(key).startsWith('plan:') ? getPlan(String(key).slice(5)) : POSTS.find(p => p.id === key); }
+const isPlan = (x) => !!(x && x.when);
+function shareKey(x){ return isPlan(x) ? 'plan:' + x.id : x.id; }
+function postUrl(po){ return isPlan(po) ? `${PUBLIC_BASE}/plan/${po.id}` : `${PUBLIC_BASE}/p/${po.id}`; }
 function postIsPublic(po){
+  if (isPlan(po)) return true;   // los planes son públicos; si la ubicación es secreta, no se desvela
   const author = getUser(po.authorId) || {};
   return (po.audience || 'publico') === 'publico' && author.profilePublic !== false;
 }
 // Metadatos Open Graph de la página pública de la publicación.
 function shareMeta(po){
+  if (isPlan(po)){
+    const place = getPlace(po.placeId);
+    const where = po.secret ? 'Zona aproximada' : (place ? place.name : 'Madrid');
+    const info = `${fmtWhen(po.when)} · ${where} · ${po.paid ? po.price + ' €' : 'Gratis'}`;
+    return { title: po.title, description: info, summary: po.summary || '', image: po.photo || '',
+      url: postUrl(po), domain: PUBLIC_BASE.replace(/^https?:\/\//, ''), host: po.host ? po.host.name : '' };
+  }
   const u = getUser(po.authorId) || { name:'' };
   const plan = po.planId && getPlan(po.planId);
   const cap = (po.caption || '').replace(/\s+/g, ' ').trim();
@@ -1751,34 +1765,35 @@ function externalShareUrl(po, app){
 }
 function shareTargets(){ return USERS.filter(u => u.id !== 'me' && follows('me', u.id)); }
 function openShare(id){
-  const po = POSTS.find(p => p.id === id); if (!po) return;
+  const po = findShare(id); if (!po) return;
   stopMusic();
   state.share = { id, to: [] };
   renderShareSheet();
 }
 function renderShareSheet(){
-  const po = POSTS.find(p => p.id === state.share.id); if (!po) return;
+  const po = findShare(state.share.id); if (!po) return;
+  const key = state.share.id, plan = isPlan(po);
   const m = shareMeta(po), pub = postIsPublic(po), sel = state.share.to;
   const people = shareTargets().map(u => `<button class="sh-person ${sel.includes(u.id)?'on':''}" onclick="toggleShareTo('${u.id}')" aria-pressed="${sel.includes(u.id)}">
       <span class="avatar">${escapeHtml(u.initials||initials(u.name))}${sel.includes(u.id)?`<i class="sh-ok">${ico('check')}</i>`:''}</span><span>${escapeHtml(u.name.split(' ')[0])}</span></button>`).join('');
-  const ext = (app, icon, label) => `<a class="sh-app" href="${externalShareUrl(po, app)}" target="_blank" rel="noopener" onclick="logShare('${po.id}','${app}')"><span class="sh-ic">${ico(icon)}</span><span>${label}</span></a>`;
+  const ext = (app, icon, label) => `<a class="sh-app" href="${externalShareUrl(po, app)}" target="_blank" rel="noopener" onclick="logShare('${key}','${app}')"><span class="sh-ic">${ico(icon)}</span><span>${label}</span></a>`;
   const btn = (fn, icon, label) => `<button class="sh-app" onclick="${fn}"><span class="sh-ic">${ico(icon)}</span><span>${label}</span></button>`;
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div>
     <div class="sheet sh" role="dialog" aria-label="Compartir">
-      <div class="sheet-h"><span>Compartir</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+      <div class="sheet-h"><span>${plan ? 'Compartir plan' : 'Compartir'}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
       <div class="sheet-list">
         <div class="sh-sec">Enviar en planes</div>
         <div class="sh-people">${people || '<p class="hint">Aún no sigues a nadie.</p>'}</div>
         ${sel.length ? `<div class="sheet-in sh-msg"><input id="sh-msg" maxlength="${LIMITS.comment}" placeholder="Escribe un mensaje…"><button class="btn-primary sm" onclick="sendShareInApp()">Enviar</button></div>` : ''}
-        ${pub || po.authorId === 'me' ? `<button class="sh-row" onclick="shareToStory('${po.id}')">${ico('live')}<span>Añadir a tu story</span>${ico('chevR')}</button>` : ''}
+        ${pub || po.authorId === 'me' ? `<button class="sh-row" onclick="shareToStory('${key}')">${ico('live')}<span>Añadir a tu story</span>${ico('chevR')}</button>` : ''}
         <div class="sh-sec">Compartir fuera</div>
         ${pub ? `<div class="og-card" aria-label="Vista previa del enlace">
-            <span class="og-img ${(po.media||[])[0]||'g-dark'}">${coverImg(m.image, 700)}</span>
-            <span class="og-txt"><span class="og-d">${escapeHtml(m.domain)}</span><b>${escapeHtml(m.title)}</b><span>${escapeHtml(m.description)}</span></span></div>
-          <p class="hint">Así se ve el enlace en WhatsApp, Telegram o un SMS: con la imagen de la publicación.</p>
+            <span class="og-img ${plan ? po.gradient : ((po.media||[])[0]||'g-dark')}">${coverImg(m.image, 700)}</span>
+            <span class="og-txt"><span class="og-d">${escapeHtml(m.domain)}</span><b>${escapeHtml(m.title)}</b><span>${escapeHtml(m.description)}</span>${plan && m.summary ? `<span class="og-sum">${escapeHtml(m.summary)}</span>` : ''}</span></div>
+          <p class="hint">Así se ve el enlace en WhatsApp, Telegram o un SMS: con la imagen ${plan ? 'del plan' : 'de la publicación'}.</p>
           <div class="sh-apps">
             ${ext('whatsapp', 'chat', 'WhatsApp')}${ext('telegram', 'send', 'Telegram')}
-            ${btn(`copyShareLink('${po.id}')`, 'link', 'Copiar enlace')}${btn(`downloadShareImage('${po.id}')`, 'download', 'Imagen')}${btn(`systemShare('${po.id}')`, 'dots', 'Más')}
+            ${btn(`copyShareLink('${key}')`, 'link', 'Copiar enlace')}${btn(`downloadShareImage('${key}')`, 'download', 'Imagen')}${btn(`systemShare('${key}')`, 'dots', 'Más')}
           </div>`
         : `<p class="hint sh-lock">${ico('lock')} Esta publicación no es pública: solo se puede enviar dentro de planes a quien ya puede verla.</p>`}
       </div></div>`);
@@ -1791,7 +1806,7 @@ function toggleShareTo(uid){
   const el = document.getElementById('sh-msg'); if (el && msg) el.value = msg;
 }
 function logShare(id, dest, to){
-  const po = POSTS.find(p => p.id === id); if (!po) return;
+  const po = findShare(id); if (!po) return;
   po.shares = (po.shares || 0) + 1;
   (po.shareLog = po.shareLog || []).push({ dest, to: to || null });
   saveState();
@@ -1805,15 +1820,18 @@ function sendShareInApp(){
   toast('Enviada a ' + (names.length > 2 ? names.slice(0, 2).join(', ') + ' y ' + (names.length - 2) + ' más' : names.join(' y ')));
 }
 function shareToStory(id){
-  const po = POSTS.find(p => p.id === id); if (!po) return;
-  const u = getUser(po.authorId) || { handle:'' };
-  STORIES.unshift({ id:'ss'+Date.now(), userId:'me', planId:po.planId||null, img:(po.imgs||[])[0]||'', minAgo:0,
-    trackId:po.trackId||null, sharedPostId:po.id, text: po.authorId === 'me' ? (po.caption||'') : 'Publicación de ' + u.handle });
+  const po = findShare(id); if (!po) return;
+  if (isPlan(po)) STORIES.unshift({ id:'ss'+Date.now(), userId:'me', planId:po.id, img:po.photo||'', minAgo:0, sharedPlanId:po.id, text:'¿Te vienes? ' + po.title });
+  else {
+    const u = getUser(po.authorId) || { handle:'' };
+    STORIES.unshift({ id:'ss'+Date.now(), userId:'me', planId:po.planId||null, img:(po.imgs||[])[0]||'', minAgo:0,
+      trackId:po.trackId||null, sharedPostId:po.id, text: po.authorId === 'me' ? (po.caption||'') : 'Publicación de ' + u.handle });
+  }
   logShare(id, 'story');
   closeOverlay(); toast('Añadida a tu story');
 }
 function copyShareLink(id){
-  const po = POSTS.find(p => p.id === id); if (!po) return;
+  const po = findShare(id); if (!po) return;
   const url = postUrl(po);
   const done = () => { logShare(id, 'copiar'); toast('Enlace copiado'); };
   try {
@@ -1825,9 +1843,10 @@ function copyShareLink(id){
 const shareImageCache = {};
 // En la vista previa del enlace se ve la imagen generada, que es la que mostraría WhatsApp.
 function showShareImage(po){
-  const put = (url) => { const el = document.querySelector('.og-img'); if (el && state.share && state.share.id === po.id) el.innerHTML = `<img class="cover-img" src="${url}" alt="Imagen que se compartirá">`; };
-  if (shareImageCache[po.id]) return put(shareImageCache[po.id]);
-  shareImage(po).then(b => { if (b && typeof URL !== 'undefined' && URL.createObjectURL){ shareImageCache[po.id] = URL.createObjectURL(b); put(shareImageCache[po.id]); } });
+  const k = shareKey(po);
+  const put = (url) => { const el = document.querySelector('.og-img'); if (el && state.share && state.share.id === k) el.innerHTML = `<img class="cover-img" src="${url}" alt="Imagen que se compartirá">`; };
+  if (shareImageCache[k]) return put(shareImageCache[k]);
+  shareImage(po).then(b => { if (b && typeof URL !== 'undefined' && URL.createObjectURL){ shareImageCache[k] = URL.createObjectURL(b); put(shareImageCache[k]); } });
 }
 function shareImage(po){
   return new Promise(resolve => {
@@ -1835,18 +1854,20 @@ function shareImage(po){
     const g = c && c.getContext && c.getContext('2d');
     if (!g) return resolve(null);
     c.width = 1200; c.height = 630;
-    const m = shareMeta(po), u = getUser(po.authorId) || { name:'' };
+    const m = shareMeta(po), u = isPlan(po) ? { name: m.host } : (getUser(po.authorId) || { name:'' });
+    const big = isPlan(po) ? m.title : (m.description || m.title);
+    const small = isPlan(po) ? m.description : `${u.name} · ${m.domain}`;
     const finish = (img) => {
       g.fillStyle = '#16141c'; g.fillRect(0, 0, 1200, 630);
       if (img){ const r = Math.max(1200 / img.width, 630 / img.height), w = img.width * r, h = img.height * r; g.drawImage(img, (1200 - w) / 2, (630 - h) / 2, w, h); }
       const grd = g.createLinearGradient(0, 260, 0, 630); grd.addColorStop(0, 'rgba(0,0,0,0)'); grd.addColorStop(1, 'rgba(0,0,0,.85)');
       g.fillStyle = grd; g.fillRect(0, 0, 1200, 630);
       g.fillStyle = '#fff'; g.font = '700 44px system-ui, -apple-system, Segoe UI, sans-serif';
-      const words = (m.description || m.title).split(' '); const lines = ['']; 
+      const words = big.split(' '); const lines = ['']; 
       words.forEach(w => { const l = lines[lines.length - 1]; if (g.measureText(l + w).width > 1080 && l) lines.push(w + ' '); else lines[lines.length - 1] = l + w + ' '; });
       lines.slice(0, 2).forEach((l, i) => g.fillText(i === 1 && lines.length > 2 ? l.trim() + '…' : l.trim(), 60, 500 + i * 54 - (lines.length > 1 ? 54 : 0)));
       g.font = '500 28px system-ui, -apple-system, Segoe UI, sans-serif'; g.fillStyle = 'rgba(255,255,255,.8)';
-      g.fillText(`${u.name} · ${m.domain}`, 60, 580);
+      g.fillText(small, 60, 580);
       g.font = '800 34px system-ui, -apple-system, Segoe UI, sans-serif'; g.fillStyle = '#fff'; g.textAlign = 'right';
       g.fillText('planes', 1140, 580);
       c.toBlob(b => resolve(b), 'image/jpeg', 0.85);
@@ -1870,10 +1891,10 @@ function saveFile(blob, filename){
   return c.use('downloads').then(d => d ? d.save({ filename, data: blob }).then(() => 'saved', e => (e && e.code) || 'error') : viaLink(), viaLink);
 }
 function downloadShareImage(id){
-  const po = POSTS.find(p => p.id === id); if (!po) return;
+  const po = findShare(id); if (!po) return;
   shareImage(po).then(b => {
     if (!b){ toast('Este navegador no puede generar la imagen'); return; }
-    saveFile(b, `planes-${po.id}.jpg`).then(r => {
+    saveFile(b, `planes-${isPlan(po) ? 'plan-' : ''}${po.id}.jpg`).then(r => {
       if (r === 'saved'){ logShare(id, 'imagen'); toast('Imagen guardada'); }
       else if (r !== 'declined') toast('No se ha podido guardar la imagen');
     });
@@ -1881,12 +1902,12 @@ function downloadShareImage(id){
 }
 // Hoja de compartir del sistema (móvil): imagen + texto + enlace, si el navegador lo permite.
 function systemShare(id){
-  const po = POSTS.find(p => p.id === id); if (!po) return;
+  const po = findShare(id); if (!po) return;
   const m = shareMeta(po);
   if (typeof navigator === 'undefined' || !navigator.share){ copyShareLink(id); return; }
   shareImage(po).then(b => {
     const data = { title: m.title, text: m.description, url: m.url };
-    if (b && typeof File !== 'undefined'){ const f = new File([b], `planes-${po.id}.jpg`, { type:'image/jpeg' }); if (navigator.canShare && navigator.canShare({ files:[f] })) data.files = [f]; }
+    if (b && typeof File !== 'undefined'){ const f = new File([b], `planes-${isPlan(po) ? 'plan-' : ''}${po.id}.jpg`, { type:'image/jpeg' }); if (navigator.canShare && navigator.canShare({ files:[f] })) data.files = [f]; }
     navigator.share(data).then(() => logShare(id, 'sistema'), () => {});
   });
 }
@@ -2198,6 +2219,7 @@ function renderDetail(id){
       ${coverImg(p.photo,820)}
       <span class="hero-scrim"></span>
       <button class="back-btn" onclick="history.back()" aria-label="Atrás">${ico('chevL')}</button>
+      <button class="back-btn share-btn" onclick="openShare('plan:${p.id}')" aria-label="Compartir plan">${ico('send')}</button>
       <div class="hero-content">
         <div class="tags-row">
           ${accessTag(p)}

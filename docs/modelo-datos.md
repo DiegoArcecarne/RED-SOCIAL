@@ -42,6 +42,7 @@ erDiagram
     LUGAR ||--o{ PUBLICACION : ubica
     PUBLICACION ||--o{ COMPARTIDO : "se comparte"
     USUARIO ||--o{ COMPARTIDO : comparte
+    PLAN ||--o{ COMPARTIDO : "se comparte"
     PUBLICACION ||--o{ COMENTARIO : recibe
     USUARIO ||--o{ COMENTARIO : escribe
     PUBLICACION ||--o{ ME_GUSTA : recibe

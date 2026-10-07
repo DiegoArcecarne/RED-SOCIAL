@@ -254,6 +254,23 @@ a.run('POSTS.find(p => p.id === "po2").audience = "amigos"; openShare("po2")'); 
 check('publicación no pública: no se comparte fuera', h.includes('sh-lock') && !h.includes('wa.me') && !h.includes('og-card'));
 a.run('POSTS.find(p => p.id === "po2").audience = "publico"; closeOverlay()');
 
+// --- Compartir planes (mismo mecanismo) ---
+a.nav('plan/p2'); h = a.html('view-detail');
+check('ficha de plan: botón de compartir', h.includes("openShare('plan:p2')"));
+a.run('openShare("plan:p2")'); h = a.html('overlay'); rendered += h;
+check('compartir plan: misma hoja (personas, story, apps) con la portada del plan', h.includes('Compartir plan') && h.includes('sh-person') && h.includes('Añadir a tu story')
+  && h.includes('wa.me') && h.includes('og-card') && h.includes(a.run('getPlan("p2").photo')) && h.includes('og-sum'));
+const pm = a.run('shareMeta(getPlan("p2"))');
+check('Open Graph del plan: título, fecha · lugar · precio y URL /plan/', pm.title === a.run('getPlan("p2").title') && pm.description.includes('Gratis') && pm.url === 'https://planes.app/plan/p2');
+check('WhatsApp del plan: enlace al plan', decodeURIComponent(a.run('externalShareUrl(getPlan("p2"), "whatsapp")')).includes('https://planes.app/plan/p2'));
+const secretDesc = a.run('shareMeta(getPlan("p4")).description');
+check('plan con ubicación secreta: el enlace no la desvela', secretDesc.includes('Zona aproximada') && !secretDesc.includes(a.run('(getPlace(getPlan("p4").placeId)||{name:"__"}).name')));
+a.run('toggleShareTo("lucia"); sendShareInApp()');
+check('enviar un plan dentro cuenta en el plan', a.run('getPlan("p2").shares') === 1);
+const ns2 = a.run('STORIES.length');
+a.run('openShare("plan:p2"); shareToStory("plan:p2")');
+check('añadir un plan a tu story (con "Ver el plan")', a.run('STORIES.length') === ns2 + 1 && a.run('STORIES[0].sharedPlanId') === 'p2' && a.run('STORIES[0].planId') === 'p2');
+
 // --- Valoraciones: públicas / privadas y quién las ve; seguidores frente a amigos ---
 check('amigos = seguimiento mutuo', a.run('areFriends("me","lucia")') === true && a.run('areFriends("me","ana")') === false && a.run('areFriends("me","sara")') === false);
 a.run('state.profileTab = "valoraciones"'); a.nav('perfil'); h = a.html('view-perfil'); rendered += h;
