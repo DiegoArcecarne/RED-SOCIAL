@@ -24,6 +24,8 @@ Grafo asimétrico, tipo Instagram: uno sigue a otro sin necesidad de aprobación
 
 La privacidad se monta encima del grafo, no en lugar de él. En un perfil público, seguir es instantáneo y sin fricción. En un perfil privado, la solicitud de seguimiento requiere aprobación del titular, que es quien decide quién ve su contenido. Así, "asimétrico" no significa "sin control": el control vive en el ajuste público/privado y en los permisos granulares (quién puede seguirte, quién puede escribirte, quién puede unirse a tus planes), no en una reciprocidad obligatoria.
 
+Seguidores y amigos son cosas distintas. Seguidor es quien te sigue, lo sigas tú o no. Amigo es quien te sigue y a quien sigues: el seguimiento mutuo. No hay solicitud de amistad aparte: en cuanto los dos os seguís, sois amigos, y si uno deja de seguir, dejáis de serlo. Esto permite dar tres niveles de audiencia en todos los controles de privacidad (todos, seguidores, amigos) sin añadir otra relación que gestionar. En el perfil de otra persona el botón lo refleja: "Seguir", "Seguir también" (te sigue y tú a ella no; aparece además la etiqueta "Te sigue"), "Siguiendo" o "Amigos".
+
 Esta elección es coherente con el resto del producto: el grafo asimétrico alimenta el ranking de planes por afinidad (a quién sigues es señal de interés), la pestaña de Vividas y la distribución de aftermovies, mientras que las capas anti-acoso —modos de recepción de DMs, mención con aceptación previa, bloqueo— protegen el lado privado sin obligar a que seguir sea mutuo.
 
 ## La unidad atómica: el Plan
@@ -150,6 +152,26 @@ Editar perfil. Desde el propio perfil (botón "Editar perfil", junto a "Comparti
 
 En el perfil de una cuenta profesional los datos de negocio se muestran sin etiquetas: la categoría en gris sobre la descripción, y la dirección y la web en una línea con iconos. El distintivo de cuenta profesional es solo un icono.
 
+### Valoraciones de planes en el perfil
+
+En el perfil se ven las valoraciones (estrellas y opinión) que la persona ha hecho de los planes a los que asistió, en una pestaña propia, "Valoraciones". Quien es dueño del perfil ve además los planes a los que asistió y aún no ha valorado, con un botón para valorarlos.
+
+Cada valoración es pública o privada:
+
+- Configuración general: por defecto, tus valoraciones son públicas o privadas (Ajustes ▸ Privacidad ▸ Valoraciones de planes).
+- Por plan: cada valoración puede seguir la configuración general o marcarse pública o privada solo para ese plan. Se cambia desde la propia valoración en tu perfil.
+
+Además, decides quién ve cada tipo:
+
+- Las públicas: todos, solo tus seguidores o solo tus amigos.
+- Las privadas: solo tus seguidores, solo tus amigos o solo tú.
+
+Reglas que acompañan:
+
+- A quien no puede ver una valoración no se le dice que existe ni cuántas hay ocultas, porque eso delataría a qué planes fue la persona.
+- Si la asistencia a un plan se registró en privado, su valoración nace privada (recomendación): una valoración pública desvelaría la asistencia.
+- La nota media de un plan cuenta todas las valoraciones, públicas y privadas, de forma anónima. La privacidad decide si la valoración aparece con tu nombre, no si cuenta.
+
 ### Longitud de los textos
 
 Propuesta de límites, tomando como referencia lo habitual en redes sociales (Instagram: 30 caracteres en nombre y usuario, 150 en la biografía, 2.200 en el pie). El prototipo ya los aplica todos desde un único sitio.
@@ -166,6 +188,7 @@ Propuesta de límites, tomando como referencia lo habitual en redes sociales (In
 | Pie de una publicación | 2.200 | Incluye menciones y hashtags. |
 | Texto alternativo | 250 | Accesibilidad. |
 | Comentario | 500 | |
+| Opinión al valorar un plan | 500 | Junto a 1–5 estrellas. |
 | Título de un directo | 60 | |
 | Mensaje en el chat de un directo | 200 | |
 | Nombre de un grupo | 50 | |
@@ -202,7 +225,7 @@ Dos tipos de publicación, según su origen. Al crearla se elige qué se compart
 
 Al entrar en el perfil de alguien, sus publicaciones se pueden filtrar en Todo, Planes y Su vida (con el número de cada una), y el muro tiene el mismo filtro (Todo, Planes, Vida). El origen no se guarda aparte: se deduce de si la publicación tiene un plan vinculado.
 
-El flujo de creación incluye las opciones habituales de una red social, adaptadas a esta app: ubicación, etiquetado de personas, pie con menciones y hashtags, texto alternativo para accesibilidad, control de comentarios, ocultar el número de "me gusta", compartir además en stories y audiencia (público / solo seguidores / amigos cercanos). La opción propia y diferencial es vincular la publicación a un plan existente —al que se asistió o que se creó—, de modo que la publicación queda ligada a ese plan y refuerza su prueba social.
+El flujo de creación incluye las opciones habituales de una red social, adaptadas a esta app: ubicación, etiquetado de personas, pie con menciones y hashtags, texto alternativo para accesibilidad, control de comentarios, ocultar el número de "me gusta", compartir además en stories y audiencia (público / solo seguidores / amigos). La opción propia y diferencial es vincular la publicación a un plan existente —al que se asistió o que se creó—, de modo que la publicación queda ligada a ese plan y refuerza su prueba social.
 
 ## Stories: el "ahora mismo"
 
@@ -487,7 +510,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Identidad y cuenta
 
-- Usuario. Entidad raíz. Atributos: id, tipo (particular/usuario o profesional/empresa —la cuenta profesional lleva distintivo verificado de negocio; sus condiciones y precio son una decisión de negocio abierta), nombre (máx. 30), usuario (handle único, 3–30, minúsculas, números, punto y guion bajo), email, teléfono, hash de contraseña, fecha de nacimiento (gate 18+), idioma de la app, foto, biografía (máx. 150), ciudad o ubicación actual (opcional), idiomas hablados, intereses y categorías favoritas, perfil público o privado, visibilidad de presencia por defecto (pública o privada), modo de recepción de DMs (cerrado / bajo solicitud / abierto, por defecto bajo solicitud), permisos (quién puede seguirte, escribirte, unirse a tus planes), reputación por estrellas (agregada), índice de fiabilidad (nº de no-shows, agregado, sin detalle de eventos), fecha de alta. Derivados: contadores de seguidores/seguidos, historial de planes.
+- Usuario. Entidad raíz. Atributos: id, tipo (particular/usuario o profesional/empresa —la cuenta profesional lleva distintivo verificado de negocio; sus condiciones y precio son una decisión de negocio abierta), nombre (máx. 30), usuario (handle único, 3–30, minúsculas, números, punto y guion bajo), email, teléfono, hash de contraseña, fecha de nacimiento (gate 18+), idioma de la app, foto, biografía (máx. 150), preferencias de valoraciones (por defecto pública o privada; quién ve las públicas: todos / seguidores / amigos; quién ve las privadas: seguidores / amigos / solo yo), ciudad o ubicación actual (opcional), idiomas hablados, intereses y categorías favoritas, perfil público o privado, visibilidad de presencia por defecto (pública o privada), modo de recepción de DMs (cerrado / bajo solicitud / abierto, por defecto bajo solicitud), permisos (quién puede seguirte, escribirte, unirse a tus planes), reputación por estrellas (agregada), índice de fiabilidad (nº de no-shows, agregado, sin detalle de eventos), fecha de alta. Derivados: contadores de seguidores/seguidos, historial de planes.
 - Cuenta de empresa. Especialización de Usuario con tipo = empresa. Campos propios: razón/nombre comercial, horario, dirección, categoría de negocio, web, enlace de reserva, distintivo de negocio verificado. Se vincula a uno o varios Lugares.
 - Verificación de identidad. Atributos: usuario_id, proveedor, estado, referencias de documento y selfie, fecha, distintivo resultante. Es la barrera del primer plan; protege a la comunidad.
 - Verificación de negocio. Atributos: cuenta_empresa_id, prueba de titularidad/datos fiscales, estado, distintivo. Distinta de la de identidad personal.
@@ -511,6 +534,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Asistencia real. Relación Usuario–Plan que registra la asistencia verificada por geolocalización. plan_id, usuario_id, fecha y hora, método (geolocalización, o QR del anfitrión en el piloto), visibilidad (pública o privada). Es distinta de la Inscripción: un plan libre no tiene inscripciones pero sí asistencias reales; un plan apuntado tiene ambas. Alimenta el recuento de asistentes reales del plan y las Vividas del perfil; los registros con visibilidad privada no se listan por identidad y solo cuentan en el total a partir del umbral de anonimato.
 - Pago. id, inscripción_id, usuario_id, importe, comisión (15% en planes de pago), tipo (reserva de evento, desvelo, boost de publicidad, suscripción, CPA), estado de escrow (retenido, liberado, reembolsado), método de pago, fecha de liberación, fecha de reembolso. Centraliza el modelo escrow y las reglas de cancelación.
 - Reseña. id, plan_id, autor_id, sujeto_id (anfitrión o asistente reseñado), estrellas, texto, fecha. Post-plan. Alimenta la reputación del usuario y, agregada, la del lugar.
+- Valoración de plan. id, plan_id, autor_id (asistente), estrellas (1–5), opinión (máx. 500), visibilidad (pública / privada / nula = la configuración general del autor), fecha. Se muestra en la pestaña Valoraciones del perfil según las preferencias del autor (Usuario: valoraciones por defecto y audiencia de las públicas y de las privadas). Cuenta, anónima, en la media del plan.
 
 ### Grupos
 
@@ -519,7 +543,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Contenido
 
-- Publicación. Post de perfil. id, autor_id, formato (foto / vídeo / carrusel), media (una o varias imágenes), pie de texto (con menciones @usuario y hashtags #tema), ubicación (lugar_id, opcional), usuarios etiquetados, plan vinculado (plan_id opcional; liga la publicación a un plan al que se asistió o que se creó, para que aparezca ligada a ese plan; si no lo tiene, es una publicación de la vida del usuario, y de ahí sale el filtro Planes / Su vida del perfil), texto alternativo (accesibilidad), audiencia (público / solo seguidores / amigos cercanos, coherente con perfil público o privado), comentarios activos (bool), ocultar likes (bool), compartir en stories (bool), pista_id (música, opcional), likes, visibilidad, fecha. El aftermovie es una publicación especializada, ligada a un plan, que vive además en Vividas.
+- Publicación. Post de perfil. id, autor_id, formato (foto / vídeo / carrusel), media (una o varias imágenes), pie de texto (con menciones @usuario y hashtags #tema), ubicación (lugar_id, opcional), usuarios etiquetados, plan vinculado (plan_id opcional; liga la publicación a un plan al que se asistió o que se creó, para que aparezca ligada a ese plan; si no lo tiene, es una publicación de la vida del usuario, y de ahí sale el filtro Planes / Su vida del perfil), texto alternativo (accesibilidad), audiencia (público / solo seguidores / amigos —seguimiento mutuo—, coherente con perfil público o privado), comentarios activos (bool), ocultar likes (bool), compartir en stories (bool), pista_id (música, opcional), likes, visibilidad, fecha. El aftermovie es una publicación especializada, ligada a un plan, que vive además en Vividas.
 - Aftermovie. Post permanente. id, plan_id de origen, autor_id, media, hashtag(s), visibilidad (según perfil), fecha. Vive en la pestaña Vividas.
 - Story. Efímera (24 h). id, autor_id, plan_id (opcional), media, pista_id (música, opcional), visibilidad (público / privado / mejores amigos), fecha de expiración. Vive en la pestaña Stories y puede aflorar destacada en Vividas.
 - Directo. id, emisor_id, plan_id (plan en marcha), título, estado (en curso o finalizado), inicio, fin. Derivado: espectadores. Su chat reutiliza la mensajería y la moderación.
@@ -581,5 +605,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Método de check-in del piloto y del MVP: QR del anfitrión (recomendado) frente a geolocalización automática.
 - Directos: confirmar quién puede emitir (solo anfitriones o también asistentes) y si se guardan al terminar.
 - Música: biblioteca libre de derechos o proveedor con licencia para el lanzamiento, cuándo (y si) incorporar catálogo comercial, y revisión legal de las licencias por país y por tipo de cuenta.
+- Valoraciones: confirmar las audiencias propuestas (públicas para todos, seguidores o amigos; privadas para seguidores, amigos o solo yo) y si una asistencia privada debe forzar la valoración privada.
+- Amigos = seguimiento mutuo: confirmar o añadir más adelante una lista de "amigos cercanos" elegida a mano (como en Instagram), además de los mutuos.
 - Longitud de los textos: confirmar los límites propuestos (nombre 30, usuario 3–30, descripción 150, título de plan 60…) y la frecuencia permitida para cambiar el nombre de usuario.
 - Objetivos numéricos de las métricas y criterios para continuar o parar tras el piloto (propuesta en el plan de validación).

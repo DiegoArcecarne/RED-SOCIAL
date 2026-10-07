@@ -219,17 +219,18 @@ const USERS = [
   { id:'me', name:'Marina', handle:'@marina', initials:'MA', type:'usuario', verified:true,
     bio:'Viajera y runner. Outdoor y gastronomía por Madrid.',
     profilePublic:true, presencePublic:true, followers:184, following:156,
+    ratings:{ default:'publica', publica:'todos', privada:'amigos' },
     attendedPlanIds:['p1','p5','p8','p2','p3','p6','p9'] },
   { id:'azotea', name:'Azotea Círculo', handle:'@azoteacirculo', initials:'AC', type:'profesional', verified:true,
     bio:'Azotea y eventos en el centro de Madrid.', followers:5400, following:12,
     business:{ category:'Ocio nocturno', web:'azoteacirculo.es', address:'Centro, Madrid' },
     attendedPlanIds:['p3'] },
-  { id:'lucia', name:'Lucía R.', handle:'@lucia', initials:'LR', type:'usuario', verified:true, followers:90, following:120, attendedPlanIds:[] },
-  { id:'marco', name:'Marco T.', handle:'@marcot', initials:'MT', type:'usuario', verified:true, followers:60, following:200, attendedPlanIds:[] },
-  { id:'ana',   name:'Ana P.',  handle:'@anap',   initials:'AP', type:'usuario', verified:true, followers:140, following:80, attendedPlanIds:[] },
-  { id:'sara',  name:'Sara M.', handle:'@saram',  initials:'SM', type:'usuario', verified:true, followers:210, following:190, attendedPlanIds:['p1'] },
-  { id:'david', name:'David L.', handle:'@davidl', initials:'DL', type:'usuario', verified:true, followers:75, following:98, attendedPlanIds:['p7','p5'] },
-  { id:'nora',  name:'Nora V.', handle:'@norav',  initials:'NV', type:'usuario', verified:true, followers:330, following:240, attendedPlanIds:['p9'] },
+  { id:'lucia', name:'Lucía R.', handle:'@lucia', initials:'LR', type:'usuario', verified:true, followers:90, following:120, ratings:{ default:'publica', publica:'todos', privada:'amigos' }, attendedPlanIds:[] },
+  { id:'marco', name:'Marco T.', handle:'@marcot', initials:'MT', type:'usuario', verified:true, followers:60, following:200, ratings:{ default:'publica', publica:'todos', privada:'amigos' }, attendedPlanIds:[] },
+  { id:'ana',   name:'Ana P.',  handle:'@anap',   initials:'AP', type:'usuario', verified:true, followers:140, following:80, ratings:{ default:'publica', publica:'seguidores', privada:'solo_yo' }, attendedPlanIds:[] },
+  { id:'sara',  name:'Sara M.', handle:'@saram',  initials:'SM', type:'usuario', verified:true, followers:210, following:190, ratings:{ default:'publica', publica:'amigos', privada:'solo_yo' }, attendedPlanIds:['p1'] },
+  { id:'david', name:'David L.', handle:'@davidl', initials:'DL', type:'usuario', verified:true, followers:75, following:98, ratings:{ default:'privada', publica:'seguidores', privada:'solo_yo' }, attendedPlanIds:['p7','p5'] },
+  { id:'nora',  name:'Nora V.', handle:'@norav',  initials:'NV', type:'usuario', verified:true, followers:330, following:240, ratings:{ default:'publica', publica:'todos', privada:'solo_yo' }, attendedPlanIds:['p9'] },
 ];
 const ME = USERS[0]; // usuario actual
 
@@ -381,6 +382,36 @@ const REQUESTS = [
   { id:'r3', planId:'p4', userId:'marco', status:'pendiente', message:'Reservo plaza para mí, ¡con muchas ganas!' },
 ];
 
+/* Grafo social asimétrico: [quien sigue, a quién sigue]. Amigos = seguimiento
+   mutuo (os seguís los dos). Seguidores = te siguen, aunque tú no a ellos. */
+const FOLLOWS = [
+  ['me','lucia'], ['lucia','me'], ['me','marco'], ['marco','me'], ['me','david'], ['david','me'],
+  ['me','ana'], ['me','azotea'], ['sara','me'], ['nora','me'],
+];
+const follows  = (a, b) => FOLLOWS.some(([x, y]) => x === a && y === b);
+const areFriends = (a, b) => follows(a, b) && follows(b, a);
+
+/* Valoraciones que cada persona hace de los planes a los que asistió.
+   visibility: 'publica' | 'privada' para ese plan, o null = usa su configuración general
+   (USUARIO.ratings.default). Quién ve cada una lo decide USUARIO.ratings.publica / .privada. */
+const RATINGS = [
+  { id:'ra1', userId:'me', planId:'p1', stars:5, visibility:null, daysAgo:2, text:'Fui sola y salí con plan para el sábado. El himno, a todo pulmón.' },
+  { id:'ra2', userId:'me', planId:'p5', stars:5, visibility:'privada', daysAgo:9, text:'La subida final cuesta, pero el amanecer lo compensa todo.' },
+  { id:'ra3', userId:'me', planId:'p8', stars:4, visibility:null, daysAgo:12, text:'Muy buen ambiente. Lleva esterilla, que no sobran.' },
+  { id:'ra4', userId:'me', planId:'p2', stars:5, visibility:'publica', daysAgo:16, text:'El mejor atardecer de Madrid y gente muy maja.' },
+  { id:'ra5', userId:'me', planId:'p3', stars:4, visibility:null, daysAgo:20, text:'Buen DJ y vistas increíbles. Las copas, caras.' },
+  { id:'ra6', userId:'me', planId:'p9', stars:3, visibility:'privada', daysAgo:30, text:'Los vinos bien, pero éramos demasiados para la sala.' },
+  { id:'ra7', userId:'lucia', planId:'p2', stars:5, visibility:null, daysAgo:3, text:'Repetiría cada semana. Lo organicé yo y salió redondo.' },
+  { id:'ra8', userId:'lucia', planId:'p1', stars:4, visibility:'privada', daysAgo:14, text:'Me gustó, aunque llegué tarde y estaba lleno.' },
+  { id:'ra9', userId:'marco', planId:'p10', stars:5, visibility:null, daysAgo:8, text:'Ritmo para todos. Nadie se queda atrás.' },
+  { id:'ra10', userId:'marco', planId:'p12', stars:4, visibility:'privada', daysAgo:21, text:'Buena peli, mucho frío al final.' },
+  { id:'ra11', userId:'ana', planId:'p8', stars:5, visibility:null, daysAgo:5, text:'Mi primera vez haciendo yoga en grupo. Volveré.' },
+  { id:'ra12', userId:'sara', planId:'p1', stars:5, visibility:null, daysAgo:6, text:'Ambientazo. Fui sola y volví con amigos.' },
+  { id:'ra13', userId:'david', planId:'p7', stars:5, visibility:'publica', daysAgo:4, text:'Sala pequeña, sonido enorme.' },
+  { id:'ra14', userId:'david', planId:'p5', stars:4, visibility:null, daysAgo:9, text:'Bien organizado, pero salimos con retraso.' },
+  { id:'ra15', userId:'nora', planId:'p9', stars:5, visibility:null, daysAgo:7, text:'Seis vinos y una mesa de desconocidos que ya no lo son.' },
+];
+
 const getUser  = (id) => USERS.find((u) => u.id === id);
 const getGroup = (id) => GROUPS.find((g) => g.id === id);
 const getTrack = (id) => TRACKS.find((t) => t.id === id);
@@ -394,7 +425,7 @@ const requestsForPlan = (pid) => REQUESTS.filter((r) => r.planId === pid);
 if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
-    STORIES, LIVES, LIVE_CHAT, TRACKS,
+    STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, RATINGS, follows, areFriends,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }

@@ -124,7 +124,7 @@ function typeBadge(u){ return u.type==='profesional' ? `<span class="pro-ic" tit
 const LIMITS = {
   name:30, username:30, bio:150, web:100, address:120,
   planTitle:60, planDesc:1000, caption:2200, alt:250, comment:500,
-  liveTitle:60, liveMsg:200, groupName:50, groupAbout:300,
+  liveTitle:60, liveMsg:200, groupName:50, groupAbout:300, rating:500,
 };
 const USERNAME_MIN = 3;
 function clip(s, key){ return (s || '').trim().slice(0, LIMITS[key]); }
@@ -164,14 +164,14 @@ function attendanceView(p){
    Lo creado en la demo (planes, publicaciones, grupos, solicitudes, asistencias)
    sobrevive a recargar la página. Si el navegador bloquea el almacenamiento,
    la demo sigue funcionando en memoria. "Restablecer demo" en Ajustes lo borra. */
-const STORE_KEY = 'planes-proto-v3';
+const STORE_KEY = 'planes-proto-v4';
 function saveState(){
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
       plans: PLANS.map(p => ({ ...p, when: p.when instanceof Date ? p.when.toISOString() : p.when })),
-      posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES,
+      posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES, ratings: RATINGS, follows: FOLLOWS,
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
-            name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business },
+            name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings },
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested] },
     }));
   } catch (e) { /* sin almacenamiento: la demo funciona en memoria */ }
@@ -190,6 +190,8 @@ function loadState(){
   if (Array.isArray(snap.groups)) GROUPS.splice(0, GROUPS.length, ...snap.groups);
   if (Array.isArray(snap.requests)) REQUESTS.splice(0, REQUESTS.length, ...snap.requests);
   if (Array.isArray(snap.stories)) STORIES.splice(0, STORIES.length, ...snap.stories);
+  if (Array.isArray(snap.ratings)) RATINGS.splice(0, RATINGS.length, ...snap.ratings);
+  if (Array.isArray(snap.follows)) FOLLOWS.splice(0, FOLLOWS.length, ...snap.follows);
   if (snap.me) Object.assign(ME, snap.me);
   if (snap.sets) {
     state.joined = new Set(snap.sets.joined || []);
@@ -1042,7 +1044,8 @@ function renderProfile(uid){
       <span class="avatar lg">${u.initials||initials(u.name)}</span>
       <div class="ph-main">
         <div class="ph-top"><span class="ph-name">${escapeHtml(u.name)} ${u.verified?`<span class="vchk">${ico('check')}</span>`:''}${typeBadge(u)}</span>
-          ${me?`<button class="ph-priv" onclick="go('ajustes')">${ico('gear')} Ajustes</button>`:`<button class="ph-priv" onclick="toast('Siguiendo a ${escapeHtml(u.name)}')">Seguir</button>`}</div>
+          ${me?`<button class="ph-priv" onclick="go('ajustes')">${ico('gear')} Ajustes</button>`:followButton(u)}</div>
+        ${!me && follows(u.id,'me') && !follows('me',u.id) ? '<span class="follows-you">Te sigue</span>' : ''}
         ${me ? `<div class="ph-handle">${u.handle}</div>` : ''}
         <div class="ph-stats">
           <span><b>${nPosts}</b> ${nPosts===1?'publicación':'publicaciones'}</span>
@@ -1054,13 +1057,123 @@ function renderProfile(uid){
     ${about ? `<p class="bio">${about}</p>` : ''}
     ${me ? `<div class="ph-actions"><button class="ph-btn" onclick="go('editar-perfil')">Editar perfil</button><button class="ph-btn" onclick="toast('Compartir perfil estará disponible en la app')">Compartir perfil</button></div>` : ''}
     ${(me && !u.profilePublic)?`<div class="priv-banner">${ico('lock')} Perfil privado: solo tus seguidores aprobados ven tu actividad.</div>`:''}
-    <div class="prof-tabs">
-      <button class="${tab==='posts'?'active':''}" onclick="setProfileTab('posts','${u.id}')">${ico('grid')} Publicaciones</button>
-      <button class="${tab==='vividas'?'active':''}" onclick="setProfileTab('vividas','${u.id}')">${ico('play')} Vividas</button>
+    <div class="prof-tabs" role="tablist">${[['posts','grid','Publicaciones'],['vividas','play','Vividas'],['valoraciones','star','Valoraciones']].map(([t,i,l])=>
+      `<button class="${tab===t?'active':''}" role="tab" aria-selected="${tab===t}" aria-label="${l}" title="${l}" onclick="setProfileTab('${t}','${u.id}')">${ico(i)}<span class="pt-l">${l}</span></button>`).join('')}
     </div>
-    <div id="profile-grid">${tab==='posts'?profileGridPosts(me?'me':u.id):profileGridVividas(u)}</div>`;
+    <div id="profile-grid">${tab==='posts'?profileGridPosts(me?'me':u.id):(tab==='vividas'?profileGridVividas(u):profileRatings(u, me))}</div>`;
 }
 function setProfileTab(t, uid){ state.profileTab=t; renderProfile(uid==='me'?'me':uid); }
+
+/* ---------- valoraciones de planes y quién las ve ----------
+   Cada valoración es pública o privada: por defecto según la configuración general
+   de su autor y, si quiere, cambiada para ese plan. El autor decide además quién ve
+   las públicas y quién las privadas: todos, sus seguidores o sus amigos (las privadas
+   también "solo yo"). Seguidor = te sigue; amigo = os seguís los dos. */
+const AUD_LABEL = { todos:'Todos', seguidores:'Seguidores', amigos:'Amigos', solo_yo:'Solo tú' };
+const AUD_OPTIONS = { publica:['todos','seguidores','amigos'], privada:['seguidores','amigos','solo_yo'] };
+function ratingPrefs(u){ return Object.assign({ default:'publica', publica:'todos', privada:'solo_yo' }, (u && u.ratings) || {}); }
+function ratingVis(r){ return r.visibility || ratingPrefs(getUser(r.userId)).default; }
+function ratingAudience(r){ return ratingPrefs(getUser(r.userId))[ratingVis(r)]; }
+// Relación de quien mira (viewer) con el autor (owner).
+function relation(ownerId, viewerId){
+  if (ownerId === viewerId) return 'yo';
+  if (areFriends(ownerId, viewerId)) return 'amigo';
+  return follows(viewerId, ownerId) ? 'seguidor' : 'nadie';
+}
+function canSeeRating(r, viewerId){
+  const rel = relation(r.userId, viewerId || 'me'), aud = ratingAudience(r);
+  if (rel === 'yo') return true;
+  if (aud === 'todos') return true;
+  if (aud === 'seguidores') return rel === 'seguidor' || rel === 'amigo';
+  if (aud === 'amigos') return rel === 'amigo';
+  return false;   // solo_yo
+}
+function stars(n){ return `<span class="r-stars" aria-label="${n} de 5">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}">${SVG.star}</i>`).join('')}</span>`; }
+function visChip(r){
+  const vis = ratingVis(r);
+  return `<button class="vis-chip" onclick="openRatingSheet('${r.planId}')">${ico(vis==='publica'?'globe':'lock')} ${vis==='publica'?'Pública':'Privada'} · ${AUD_LABEL[ratingAudience(r)]}${r.visibility?'':' <span class="vc-gen">(general)</span>'}</button>`;
+}
+function ratingCard(r, own){
+  const p = getPlan(r.planId); if (!p) return '';
+  return `<div class="rating">
+    <button class="r-thumb ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">${coverImg(p.photo,200)}</button>
+    <div class="r-body">
+      <button class="r-title" onclick="go('plan/${p.id}')">${escapeHtml(p.title)}</button>
+      <div class="r-meta">${stars(r.stars)}<span>hace ${r.daysAgo || 0} d</span></div>
+      ${r.text ? `<p class="r-text">${escapeHtml(r.text)}</p>` : ''}
+      ${own ? visChip(r) : ''}
+    </div></div>`;
+}
+function profileRatings(u, me){
+  const uid = me ? 'me' : u.id;
+  const mine = RATINGS.filter(r => r.userId === uid).sort((a,b)=>(a.daysAgo||0)-(b.daysAgo||0));
+  if (!me){
+    const visible = mine.filter(r => canSeeRating(r, 'me'));
+    // No se dice cuántas hay ocultas: delataría a qué planes fue.
+    return visible.length ? `<div class="ratings">${visible.map(r => ratingCard(r, false)).join('')}</div>`
+      : `<div class="empty-tab"><span class="empty-ic">${ico('star')}</span><p>No hay valoraciones que puedas ver.</p></div>`;
+  }
+  const pr = ratingPrefs(ME);
+  const pending = (ME.attendedPlanIds || []).filter(id => !mine.some(r => r.planId === id)).map(getPlan).filter(Boolean);
+  return `<div class="ratings">
+    <button class="r-prefs" onclick="go('ajustes')">${ico('eye')}<span>Por defecto, <b>${pr.default==='publica'?'públicas':'privadas'}</b>. Públicas: ${AUD_LABEL[pr.publica]} · Privadas: ${AUD_LABEL[pr.privada]}</span>${ico('chevR')}</button>
+    ${pending.map(p => `<div class="rating pending"><span class="r-thumb ${p.gradient}">${coverImg(p.photo,200)}</span>
+      <div class="r-body"><span class="r-title">${escapeHtml(p.title)}</span><span class="r-meta">Asististe · sin valorar</span>
+      <button class="vis-chip solid" onclick="openRatingSheet('${p.id}')">${ico('star')} Valorar</button></div></div>`).join('')}
+    ${mine.map(r => ratingCard(r, true)).join('')}
+  </div>`;
+}
+
+// Hoja para valorar un plan o cambiar su valoración y su visibilidad.
+function openRatingSheet(planId){
+  const r = RATINGS.find(x => x.userId === 'me' && x.planId === planId);
+  state.rateDraft = { planId, stars: r ? r.stars : 0, text: r ? r.text : '', visibility: r ? r.visibility : null };
+  renderRatingSheet();
+}
+function renderRatingSheet(){
+  const d = state.rateDraft, p = getPlan(d.planId), pr = ratingPrefs(ME);
+  const opts = [[null, `General (${pr.default==='publica'?'pública':'privada'})`, 'gear'], ['publica','Pública','globe'], ['privada','Privada','lock']];
+  const eff = d.visibility || pr.default;
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div>
+    <div class="sheet" role="dialog" aria-label="Valorar plan">
+      <div class="sheet-h"><span>${escapeHtml(p ? p.title : 'Valorar')}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+      <div class="sheet-list form">
+        <div class="rate-pick" role="radiogroup" aria-label="Estrellas">${[1,2,3,4,5].map(i=>`<button class="${i<=d.stars?'on':''}" onclick="setRateField('stars',${i})" aria-label="${i} estrellas">${SVG.star}</button>`).join('')}</div>
+        <div class="field"><label for="f-rtext">Tu opinión ${counter('f-rtext','rating',d.text)}</label>
+          <textarea ${lim('f-rtext','rating')} rows="3" placeholder="¿Qué tal estuvo? Ayuda a otros a decidir">${escapeHtml(d.text||'')}</textarea></div>
+        <div class="field"><label>Quién la ve</label>
+          <div class="iseg">${opts.map(([v,l,n])=>`<button class="${d.visibility===v?'active':''}" onclick="setRateField('visibility',${v?`'${v}'`:'null'})">${ico(n)}<span>${l}</span></button>`).join('')}</div>
+          <p class="hint">${eff==='publica'?'Pública':'Privada'}: la ${ratingAudienceText(pr[eff])}. Quién ve cada tipo se cambia en Ajustes.</p></div>
+        <div class="form-actions"><button class="btn-primary" onclick="saveRating()">${ico('check')} Guardar</button></div>
+      </div></div>`);
+}
+function ratingAudienceText(aud){ return { todos:'puede ver cualquiera', seguidores:'ven tus seguidores', amigos:'ven tus amigos (os seguís los dos)', solo_yo:'ves solo tú' }[aud]; }
+function setRateField(k, v){ state.rateDraft.text = val('f-rtext'); state.rateDraft[k] = v; renderRatingSheet(); }
+function saveRating(){
+  const d = state.rateDraft; d.text = clip(val('f-rtext'), 'rating');
+  if (!d.stars){ toast('Elige de 1 a 5 estrellas'); return; }
+  let r = RATINGS.find(x => x.userId === 'me' && x.planId === d.planId);
+  if (!r){ r = { id:'ra'+Date.now(), userId:'me', planId:d.planId, daysAgo:0 }; RATINGS.unshift(r); }
+  Object.assign(r, { stars:d.stars, text:d.text, visibility:d.visibility });
+  saveState(); closeOverlay(); toast('Valoración guardada');
+  state.profileTab = 'valoraciones'; renderProfile('me');
+}
+// Configuración general (Ajustes ▸ Privacidad ▸ Valoraciones).
+function setRatingPref(k, v){ ME.ratings = Object.assign(ratingPrefs(ME), { [k]: v }); saveState(); renderSettings(); }
+
+/* ---------- seguir / amigos ---------- */
+function toggleFollow(uid){
+  const i = FOLLOWS.findIndex(([a,b]) => a === 'me' && b === uid);
+  const u = getUser(uid) || { name:'' };
+  if (i >= 0){ FOLLOWS.splice(i, 1); toast('Has dejado de seguir a ' + u.name); }
+  else { FOLLOWS.push(['me', uid]); toast(areFriends('me', uid) ? 'Ahora sois amigos: os seguís los dos' : 'Siguiendo a ' + u.name); }
+  saveState(); renderProfile(uid);
+}
+function followButton(u){
+  const iFollow = follows('me', u.id), theyFollow = follows(u.id, 'me');
+  const label = iFollow ? (theyFollow ? `${ico('check')} Amigos` : 'Siguiendo') : (theyFollow ? 'Seguir también' : 'Seguir');
+  return `<button class="ph-priv ${iFollow?'':'primary'}" onclick="toggleFollow('${u.id}')">${label}</button>`;
+}
 
 /* ---------- editar perfil ---------- */
 const BIZ_CATEGORIES = ['Ocio nocturno','Restaurante','Bar','Cafetería','Cultura','Deporte','Bienestar','Organizador de eventos','Turismo','Otro'];
@@ -1130,6 +1243,16 @@ function renderSettings(){
           <span class="tg-ic">${ico(ME.presencePublic?'globe':'lock')}</span>
           <span class="tg-info"><span class="tg-n">Presencia por defecto: ${ME.presencePublic?'pública':'privada'}</span><span class="tg-s">Cómo apareces al registrar tu llegada</span></span>
           <span class="switch ${ME.presencePublic?'on':''}"><span class="knob"></span></span></div>
+      </div>
+      <div class="set-group"><div class="set-title">Valoraciones de planes</div>
+        ${(() => { const pr = ratingPrefs(ME); const seg = (k, opts) => `<div class="iseg">${opts.map(([v,l,n])=>`<button class="${pr[k]===v?'active':''}" onclick="setRatingPref('${k}','${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div>`;
+          const audIco = { todos:'globe', seguidores:'users', amigos:'heartO', solo_yo:'lock' };
+          const nFriends = USERS.filter(x => x.id !== 'me' && areFriends('me', x.id)).length;
+          return `<div class="set-box">
+            <span class="sb-l">Tus valoraciones, por defecto</span>${seg('default', [['publica','Públicas','globe'],['privada','Privadas','lock']])}
+            <span class="sb-l">Quién ve las públicas</span>${seg('publica', AUD_OPTIONS.publica.map(v=>[v,AUD_LABEL[v],audIco[v]]))}
+            <span class="sb-l">Quién ve las privadas</span>${seg('privada', AUD_OPTIONS.privada.map(v=>[v,AUD_LABEL[v],audIco[v]]))}
+            <p class="hint">Seguidores: quien te sigue. Amigos: quien te sigue y a quien sigues (tienes ${nFriends}). En cada plan puedes hacer una valoración pública o privada desde tu perfil ▸ Valoraciones.</p></div>`; })()}
       </div>
       <div class="set-group"><div class="set-title">General</div>
         ${row('bell','Notificaciones')}
@@ -1333,7 +1456,7 @@ function renderCreatePost(){
   // planes vinculables: a los que asististe o que creaste
   const linkable = linkablePlans();
   const fromPlan = d.origin === 'plan' && linkable.length > 0;
-  const aud=[['publico','Público','globe'],['seguidores','Seguidores','users'],['cercanos','Cercanos','star']];
+  const aud=[['publico','Público','globe'],['seguidores','Seguidores','users'],['amigos','Amigos','heartO']];
   const tagChips = USERS.filter(u=>u.id!=='me').map(u=>`<button class="tag-chip ${d.tags.includes(u.id)?'active':''}" onclick="togglePostTag('${u.id}')">${ico('user')} ${escapeHtml(u.name)}</button>`).join('');
   const optRow=(icon,label,key,sub='')=>`<div class="opt-row" onclick="togglePostOpt('${key}')"><span class="or-ic">${ico(icon)}</span>
     <span class="or-l">${label}${sub?`<span class="or-s">${sub}</span>`:''}</span>

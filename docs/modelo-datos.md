@@ -49,6 +49,8 @@ erDiagram
     USUARIO ||--o{ DIRECTO : emite
     PLAN ||--o{ DIRECTO : "se emite desde"
 
+    PLAN ||--o{ VALORACION_PLAN : recibe
+    USUARIO ||--o{ VALORACION_PLAN : valora
     PLAN ||--o{ RESENA : abre
     USUARIO ||--o{ RESENA : "escribe"
     USUARIO ||--o{ RESENA : "es resenado en"
@@ -82,6 +84,9 @@ erDiagram
         string nombre "max 30"
         string usuario "handle unico, 3-30"
         string biografia "max 150"
+        string valoraciones_default "publica|privada"
+        string audiencia_val_publicas "todos|seguidores|amigos"
+        string audiencia_val_privadas "seguidores|amigos|solo_yo"
         string email
         date fecha_nacimiento "gate 18+"
         bool perfil_publico
@@ -118,7 +123,7 @@ erDiagram
         uuid seguidor_id FK
         uuid seguido_id FK
         string estado "activo|pendiente"
-        datetime fecha
+        datetime fecha "amigos = seguimiento mutuo"
     }
     BLOQUEO {
         uuid id PK
@@ -203,7 +208,7 @@ erDiagram
         string usuarios_etiquetados "lista de usuario_id"
         uuid plan_vinculado_id FK "null = de su vida"
         string texto_alt "accesibilidad"
-        string audiencia "publico|seguidores|cercanos"
+        string audiencia "publico|seguidores|amigos"
         bool comentarios_activos
         bool ocultar_likes
         bool compartir_en_stories
@@ -252,6 +257,15 @@ erDiagram
         string paises "donde se puede usar"
         bool apta_profesional
         string estado "activa|retirada"
+    }
+    VALORACION_PLAN {
+        uuid id PK
+        uuid plan_id FK
+        uuid autor_id FK "asistente"
+        int estrellas "1-5"
+        string opinion "max 500"
+        string visibilidad "publica|privada|null=general"
+        datetime fecha
     }
     DIRECTO {
         uuid id PK

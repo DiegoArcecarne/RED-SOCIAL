@@ -231,6 +231,40 @@ check('música: silenciar la story', a.run('musicNow.src') === null);
 a.run('toggleStorySound(); closeOverlay()');
 check('música: cerrar la story para la música', a.run('musicNow.src') === null && a.run('state.storySound') === true);
 
+// --- Valoraciones: públicas / privadas y quién las ve; seguidores frente a amigos ---
+check('amigos = seguimiento mutuo', a.run('areFriends("me","lucia")') === true && a.run('areFriends("me","ana")') === false && a.run('areFriends("me","sara")') === false);
+a.run('state.profileTab = "valoraciones"'); a.nav('perfil'); h = a.html('view-perfil'); rendered += h;
+const myRatings = a.run('RATINGS.filter(r => r.userId === "me").length');
+check('perfil propio: todas sus valoraciones con su visibilidad', count(h, /class="rating"/g) === myRatings && count(h, /class="vis-chip"/g) === myRatings);
+check('perfil propio: planes asistidos sin valorar con "Valorar"', h.includes('rating pending') && h.includes("openRatingSheet('p6')"));
+check('perfil propio: pública por defecto (general) y privada en un plan', h.includes('Pública · Todos <span class="vc-gen">(general)') && h.includes('Privada · Amigos'));
+const seen = (uid) => a.run(`RATINGS.filter(r => r.userId === "${uid}" && canSeeRating(r, "me")).map(r => r.planId).join(",")`);
+check('lucía (amiga): ve su pública y su privada (privadas: amigos)', seen('lucia') === 'p2,p1');
+check('david: privada por defecto y "solo yo" → solo su pública', seen('david') === 'p7');
+check('ana: públicas solo para seguidores → la veo porque la sigo', seen('ana') === 'p8');
+check('sara: públicas solo para amigos y no lo somos → no veo nada', seen('sara') === '');
+a.nav('u/sara'); h = a.html('view-page'); rendered += h;
+check('perfil ajeno sin valoraciones visibles: aviso sin recuento', h.includes('No hay valoraciones que puedas ver') && h.includes('Seguir también') && h.includes('Te sigue'));
+a.run('toggleFollow("sara")'); h = a.html('view-page');
+check('seguir a quien te sigue os hace amigos y desbloquea sus valoraciones', a.run('areFriends("me","sara")') && seen('sara') === 'p1' && h.includes('Amigos'));
+a.run('toggleFollow("ana")');
+check('dejar de seguir oculta las valoraciones solo para seguidores', seen('ana') === '');
+a.run('toggleFollow("ana")');
+a.nav('u/lucia'); h = a.html('view-page');
+check('perfil ajeno: valoraciones visibles sin controles de visibilidad', count(h, /class="rating"/g) === 2 && !h.includes('vis-chip'));
+a.run('openRatingSheet("p1")'); h = a.html('overlay'); rendered += h;
+check('hoja de valoración: estrellas, opinión con límite y visibilidad', h.includes('rate-pick') && h.includes('id="f-rtext" maxlength="500"') && h.includes('General (pública)'));
+a.run('setRateField("visibility","privada"); saveRating()');
+check('cambiar una valoración a privada solo para ese plan', a.run('RATINGS.find(r => r.userId === "me" && r.planId === "p1").visibility') === 'privada');
+a.run('openRatingSheet("p6"); setRateField("stars",4); document.getElementById("f-rtext").value = "Muy buena ruta"; saveRating()');
+check('valorar un plan asistido', a.run('RATINGS.some(r => r.userId === "me" && r.planId === "p6" && r.stars === 4 && r.text === "Muy buena ruta")'));
+a.nav('ajustes'); h = a.html('view-page'); rendered += h;
+check('ajustes: por defecto y quién ve públicas y privadas', h.includes('Valoraciones de planes') && h.includes("setRatingPref('publica','amigos')") && h.includes("setRatingPref('privada','solo_yo')"));
+a.run('setRatingPref("default","privada"); setRatingPref("privada","solo_yo")');
+check('ajustes: cambiar la configuración general afecta a las que no tienen ajuste propio', a.run('ratingVis(RATINGS.find(r => r.id === "ra3"))') === 'privada' && a.run('canSeeRating(RATINGS.find(r => r.id === "ra3"), "lucia")') === false
+  && a.run('canSeeRating(RATINGS.find(r => r.id === "ra4"), "nora")') === true);
+a.run('state.profileTab = "posts"');
+
 // --- Editar perfil y longitud de los textos ---
 a.nav('perfil'); h = a.html('view-perfil');
 check('perfil propio: botón "Editar perfil"', h.includes("go('editar-perfil')"));
@@ -269,6 +303,7 @@ check('persistencia: la asistencia registrada sobrevive', b.run('state.attended.
 check('persistencia: el me gusta y el comentario sobreviven', b.run('POSTS.find(p => p.id === "po8").likedByMe === true && POSTS.find(p => p.id === "po8").comments.some(c => c.userId === "me")'));
 check('persistencia: la música de las publicaciones sobrevive', b.run('POSTS.some(p => p.authorId === "me" && p.trackId === "t2" && p.id.startsWith("npo"))'));
 check('persistencia: el perfil editado sobrevive', b.run('ME.name') === 'Marina García' && b.run('ME.handle') === '@marina.garcia' && b.run('ME.bio.length') === 150);
+check('persistencia: valoraciones, seguimientos y preferencias sobreviven', b.run('RATINGS.some(r => r.userId === "me" && r.planId === "p6")') && b.run('areFriends("me","sara")') && b.run('ratingPrefs(ME).default') === 'privada');
 check('persistencia: los planes base conservan fecha futura', b.run('getPlan("p1").when > new Date()'));
 const c = createEnv({ [a.run('STORE_KEY')]: '{corrupto' });
 check('persistencia: datos corruptos no rompen la demo', c.run('PLANS.length') === 12);
