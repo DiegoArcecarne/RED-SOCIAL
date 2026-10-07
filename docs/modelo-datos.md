@@ -40,6 +40,14 @@ erDiagram
     USUARIO ||--o{ PUBLICACION : crea
     PLAN ||--o{ PUBLICACION : "vinculada a"
     LUGAR ||--o{ PUBLICACION : ubica
+    PUBLICACION ||--o{ COMENTARIO : recibe
+    USUARIO ||--o{ COMENTARIO : escribe
+    PUBLICACION ||--o{ ME_GUSTA : recibe
+    USUARIO ||--o{ ME_GUSTA : da
+    PISTA ||--o{ PUBLICACION : "suena en"
+    PISTA ||--o{ STORY : "suena en"
+    USUARIO ||--o{ DIRECTO : emite
+    PLAN ||--o{ DIRECTO : "se emite desde"
 
     PLAN ||--o{ RESENA : abre
     USUARIO ||--o{ RESENA : "escribe"
@@ -71,7 +79,9 @@ erDiagram
     USUARIO {
         uuid id PK
         string tipo "particular | profesional"
-        string usuario "handle unico"
+        string nombre "max 30"
+        string usuario "handle unico, 3-30"
+        string biografia "max 150"
         string email
         date fecha_nacimiento "gate 18+"
         bool perfil_publico
@@ -158,7 +168,7 @@ erDiagram
         uuid plan_id FK
         uuid usuario_id FK
         datetime fecha_hora
-        string metodo "geolocalizacion"
+        string metodo "geolocalizacion|qr_anfitrion"
         string visibilidad "publica|privada"
     }
     SOLICITUD_ASISTENCIA {
@@ -191,12 +201,13 @@ erDiagram
         string pie_texto "con @menciones y #hashtags"
         uuid ubicacion_lugar_id FK "nullable"
         string usuarios_etiquetados "lista de usuario_id"
-        uuid plan_vinculado_id FK "nullable"
+        uuid plan_vinculado_id FK "null = de su vida"
         string texto_alt "accesibilidad"
         string audiencia "publico|seguidores|cercanos"
         bool comentarios_activos
         bool ocultar_likes
         bool compartir_en_stories
+        uuid pista_id FK "musica, nullable"
         int likes
         string visibilidad
     }
@@ -227,8 +238,41 @@ erDiagram
         uuid id PK
         uuid autor_id FK
         uuid plan_id FK "opcional"
+        uuid pista_id FK "musica, nullable"
         string visibilidad "publico|privado|mejores_amigos"
         datetime expira_at "24h"
+    }
+    PISTA {
+        uuid id PK
+        string titulo
+        string artista
+        string ambiente
+        int duracion_s
+        string licencia "libre|proveedor|catalogo"
+        string paises "donde se puede usar"
+        bool apta_profesional
+        string estado "activa|retirada"
+    }
+    DIRECTO {
+        uuid id PK
+        uuid emisor_id FK
+        uuid plan_id FK "plan en marcha"
+        string titulo
+        string estado "en_curso|finalizado"
+        datetime inicio
+        datetime fin
+    }
+    COMENTARIO {
+        uuid id PK
+        uuid publicacion_id FK
+        uuid autor_id FK
+        string texto
+        datetime fecha
+    }
+    ME_GUSTA {
+        uuid usuario_id FK
+        uuid publicacion_id FK
+        datetime fecha
     }
     MENCION {
         uuid id PK
