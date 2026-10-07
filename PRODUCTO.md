@@ -146,6 +146,31 @@ Matching ligero por idioma e intereses para mejorar la calidad del grupo, sin em
 
 Información pública del perfil: nombre y usuario, foto, biografía, ciudad o ubicación actual (opcional), idiomas, intereses y categorías favoritas, distintivo de identidad verificada, reputación por estrellas y reseñas, índice de fiabilidad e historial de planes (organizados y asistidos —estos últimos a partir de la asistencia real verificada por ubicación, sujeta a la privacidad de presencia de cada usuario), todo sujeto a la configuración de privacidad.
 
+Editar perfil. Desde el propio perfil (botón "Editar perfil", junto a "Compartir perfil") y desde Ajustes. Se pueden cambiar la foto, el nombre, el nombre de usuario y la descripción; las cuentas profesionales, además, la categoría (de una lista cerrada), la web y la dirección. Cada campo muestra un contador "usados/máximo" y no deja pasar del límite (ver "Longitud de los textos"). El nombre de usuario se valida mientras se escribe: formato y disponibilidad. Recomendación para producción: limitar los cambios de nombre de usuario (por ejemplo, dos cada 14 días, como hace Instagram) y reservar el anterior durante un tiempo para evitar suplantaciones.
+
+En el perfil de una cuenta profesional los datos de negocio se muestran sin etiquetas: la categoría en gris sobre la descripción, y la dirección y la web en una línea con iconos. El distintivo de cuenta profesional es solo un icono.
+
+### Longitud de los textos
+
+Propuesta de límites, tomando como referencia lo habitual en redes sociales (Instagram: 30 caracteres en nombre y usuario, 150 en la biografía, 2.200 en el pie). El prototipo ya los aplica todos desde un único sitio.
+
+| Texto | Máximo | Notas |
+|---|---|---|
+| Nombre | 30 | Obligatorio. Libre: mayúsculas, tildes y espacios. |
+| Nombre de usuario | 3–30 | Único. Solo minúsculas, números, punto y guion bajo; sin punto al principio ni al final ni dos seguidos. |
+| Descripción del perfil | 150 | Opcional. |
+| Web (cuenta profesional) | 100 | Opcional. |
+| Dirección (cuenta profesional) | 120 | Opcional. La categoría se elige de una lista. |
+| Título de un plan | 60 | Cabe en la cuadrícula y en las notificaciones. |
+| Descripción de un plan | 1.000 | |
+| Pie de una publicación | 2.200 | Incluye menciones y hashtags. |
+| Texto alternativo | 250 | Accesibilidad. |
+| Comentario | 500 | |
+| Título de un directo | 60 | |
+| Mensaje en el chat de un directo | 200 | |
+| Nombre de un grupo | 50 | |
+| Descripción de un grupo | 300 | |
+
 Índice de fiabilidad. Se muestra de forma agregada: el número de eventos a los que el usuario no se presentó, sin desvelar cuáles. Nunca un registro público de faltas concretas.
 
 Contenido propio. Aftermovies (posts permanentes en la pestaña Vividas) y stories (efímeras), con la visibilidad que marque la configuración del perfil.
@@ -462,7 +487,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Identidad y cuenta
 
-- Usuario. Entidad raíz. Atributos: id, tipo (particular/usuario o profesional/empresa —la cuenta profesional lleva distintivo verificado de negocio; sus condiciones y precio son una decisión de negocio abierta), nombre, usuario (handle único), email, teléfono, hash de contraseña, fecha de nacimiento (gate 18+), idioma de la app, foto, biografía, ciudad o ubicación actual (opcional), idiomas hablados, intereses y categorías favoritas, perfil público o privado, visibilidad de presencia por defecto (pública o privada), modo de recepción de DMs (cerrado / bajo solicitud / abierto, por defecto bajo solicitud), permisos (quién puede seguirte, escribirte, unirse a tus planes), reputación por estrellas (agregada), índice de fiabilidad (nº de no-shows, agregado, sin detalle de eventos), fecha de alta. Derivados: contadores de seguidores/seguidos, historial de planes.
+- Usuario. Entidad raíz. Atributos: id, tipo (particular/usuario o profesional/empresa —la cuenta profesional lleva distintivo verificado de negocio; sus condiciones y precio son una decisión de negocio abierta), nombre (máx. 30), usuario (handle único, 3–30, minúsculas, números, punto y guion bajo), email, teléfono, hash de contraseña, fecha de nacimiento (gate 18+), idioma de la app, foto, biografía (máx. 150), ciudad o ubicación actual (opcional), idiomas hablados, intereses y categorías favoritas, perfil público o privado, visibilidad de presencia por defecto (pública o privada), modo de recepción de DMs (cerrado / bajo solicitud / abierto, por defecto bajo solicitud), permisos (quién puede seguirte, escribirte, unirse a tus planes), reputación por estrellas (agregada), índice de fiabilidad (nº de no-shows, agregado, sin detalle de eventos), fecha de alta. Derivados: contadores de seguidores/seguidos, historial de planes.
 - Cuenta de empresa. Especialización de Usuario con tipo = empresa. Campos propios: razón/nombre comercial, horario, dirección, categoría de negocio, web, enlace de reserva, distintivo de negocio verificado. Se vincula a uno o varios Lugares.
 - Verificación de identidad. Atributos: usuario_id, proveedor, estado, referencias de documento y selfie, fecha, distintivo resultante. Es la barrera del primer plan; protege a la comunidad.
 - Verificación de negocio. Atributos: cuenta_empresa_id, prueba de titularidad/datos fiscales, estado, distintivo. Distinta de la de identidad personal.
@@ -556,4 +581,5 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Método de check-in del piloto y del MVP: QR del anfitrión (recomendado) frente a geolocalización automática.
 - Directos: confirmar quién puede emitir (solo anfitriones o también asistentes) y si se guardan al terminar.
 - Música: biblioteca libre de derechos o proveedor con licencia para el lanzamiento, cuándo (y si) incorporar catálogo comercial, y revisión legal de las licencias por país y por tipo de cuenta.
+- Longitud de los textos: confirmar los límites propuestos (nombre 30, usuario 3–30, descripción 150, título de plan 60…) y la frecuencia permitida para cambiar el nombre de usuario.
 - Objetivos numéricos de las métricas y criterios para continuar o parar tras el piloto (propuesta en el plan de validación).

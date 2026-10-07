@@ -79,7 +79,9 @@ erDiagram
     USUARIO {
         uuid id PK
         string tipo "particular | profesional"
-        string usuario "handle unico"
+        string nombre "max 30"
+        string usuario "handle unico, 3-30"
+        string biografia "max 150"
         string email
         date fecha_nacimiento "gate 18+"
         bool perfil_publico

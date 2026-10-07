@@ -498,6 +498,18 @@ body{background:#000;color:var(--ink);display:flex;justify-content:center;-webki
 .ov-post .post-top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(0,0,0,.88);border-bottom:1px solid var(--line)}
 .ov-post .post-top span{flex:1;font-weight:700;font-size:15px}
 
+/* Contador de caracteres y editar perfil */
+.field label .cnt{float:right;font-weight:600;letter-spacing:0;color:var(--ink-dim);font-variant-numeric:tabular-nums;text-transform:none}
+.field label .cnt.near{color:var(--ink)}
+.field .hint.err{color:var(--like)}
+.ph-actions{display:flex;gap:8px;padding:0 16px 12px}
+.ph-btn{flex:1;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.ep-photo{display:flex;flex-direction:column;align-items:center;gap:8px;margin:4px 0 18px}
+.at-input{display:flex;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding-left:13px}
+.at-input:focus-within{border-color:var(--accent)}
+.at-input span{color:var(--ink-soft);font-size:14.5px}
+.field .at-input input{border:none;background:none;padding-left:2px}
+
 /* Filtro por origen: planes o vida */
 .wall-filter{padding:10px 12px 4px}
 .prof-filter{padding:10px 12px 8px}
@@ -1146,6 +1158,36 @@ function toast(msg){
 // Cuenta profesional: solo el icono (el texto sobra; se explica al pasar o leer en voz alta).
 function typeBadge(u){ return u.type==='profesional' ? `<span class="pro-ic" title="Cuenta profesional" aria-label="Cuenta profesional" role="img">${ico('briefcase')}</span>` : ''; }
 
+/* ---------- longitud máxima de los textos (propuesta en PRODUCTO.md) ----------
+   Un único sitio para todos los límites: los campos los aplican con maxlength,
+   enseñan un contador "n/máx" y al guardar se recorta por si acaso. */
+const LIMITS = {
+  name:30, username:30, bio:150, web:100, address:120,
+  planTitle:60, planDesc:1000, caption:2200, alt:250, comment:500,
+  liveTitle:60, liveMsg:200, groupName:50, groupAbout:300,
+};
+const USERNAME_MIN = 3;
+function clip(s, key){ return (s || '').trim().slice(0, LIMITS[key]); }
+// Atributos de un campo con límite: maxlength y actualización del contador al escribir.
+function lim(id, key){ return `id="${id}" maxlength="${LIMITS[key]}" oninput="countChars(this,'${key}')"`; }
+function counter(id, key, v){ return `<span class="cnt" id="cnt-${id}">${(v || '').length}/${LIMITS[key]}</span>`; }
+function countChars(el, key){
+  const c = document.getElementById('cnt-' + el.id); if (!c) return;
+  const n = el.value.length, m = LIMITS[key];
+  c.textContent = n + '/' + m; c.classList.toggle('near', n >= m * 0.9);
+}
+// Nombre de usuario: 3–30 caracteres, solo minúsculas, números, punto y guion bajo;
+// sin punto al principio ni al final, sin dos puntos seguidos, y único.
+function usernameError(u, selfId){
+  if (u.length < USERNAME_MIN) return `Mínimo ${USERNAME_MIN} caracteres.`;
+  if (u.length > LIMITS.username) return `Máximo ${LIMITS.username} caracteres.`;
+  if (!/^[a-z0-9._]+$/.test(u)) return 'Solo minúsculas, números, punto (.) y guion bajo (_), sin espacios ni tildes.';
+  if (/^\.|\.$/.test(u)) return 'No puede empezar ni terminar en punto.';
+  if (u.includes('..')) return 'No puede tener dos puntos seguidos.';
+  if (USERS.some(x => x.id !== selfId && (x.handle || '').toLowerCase() === '@' + u)) return 'Ese nombre de usuario ya está cogido.';
+  return '';
+}
+
 /* ---------- umbral de anonimato de la presencia privada ----------
    Con pocos asistentes, mostrar el total delataría a quien fue en privado
    ("4 asistentes" y 3 caras visibles → se deduce quién falta). Por debajo de
@@ -1168,7 +1210,8 @@ function saveState(){
     localStorage.setItem(STORE_KEY, JSON.stringify({
       plans: PLANS.map(p => ({ ...p, when: p.when instanceof Date ? p.when.toISOString() : p.when })),
       posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES,
-      me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds },
+      me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
+            name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business },
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested] },
     }));
   } catch (e) { /* sin almacenamiento: la demo funciona en memoria */ }
@@ -1601,12 +1644,12 @@ function openComments(id){
     <div class="sheet" role="dialog" aria-label="Comentarios">
       <div class="sheet-h"><span>Comentarios</span><button class="sv-x" onclick="closeSheet()" aria-label="Cerrar">${ico('close')}</button></div>
       <div class="sheet-list">${list}</div>
-      <div class="sheet-in"><input id="cm-input" placeholder="Añade un comentario…" onkeydown="if(event.key==='Enter')addComment('${id}')"><button class="pa" onclick="addComment('${id}')" aria-label="Publicar comentario">${ico('send')}</button></div>
+      <div class="sheet-in"><input id="cm-input" maxlength="${LIMITS.comment}" placeholder="Añade un comentario…" onkeydown="if(event.key==='Enter')addComment('${id}')"><button class="pa" onclick="addComment('${id}')" aria-label="Publicar comentario">${ico('send')}</button></div>
     </div>`);
 }
 function closeSheet(){ const back = state.sheetReturn; state.sheetReturn = null; closeOverlay(); if (back) openPost(back); }
 function addComment(id){
-  const text = val('cm-input').trim(); if (!text) return;
+  const text = clip(val('cm-input'), 'comment'); if (!text) return;
   const po = POSTS.find(p=>p.id===id); if (!po) return;
   (po.comments = po.comments || []).push({ userId:'me', text });
   saveState(); openComments(id); rerenderPost(id);
@@ -1688,7 +1731,7 @@ function renderLive(){
     <div class="lv-chat" id="lv-chat"></div>
     <div class="lv-hearts" id="lv-hearts"></div>
     <div class="lv-bar">
-      <input id="lv-input" class="lv-input" placeholder="Escribe un comentario…" onkeydown="if(event.key==='Enter')sendLiveMsg()">
+      <input id="lv-input" class="lv-input" maxlength="${LIMITS.liveMsg}" placeholder="Escribe un comentario…" onkeydown="if(event.key==='Enter')sendLiveMsg()">
       <button class="pa" onclick="sendLiveMsg()" aria-label="Enviar">${ico('send')}</button>
       <button class="pa lv-like" onclick="liveHeart()" aria-label="Me gusta">${ico('heart')}</button>
       ${liveState.host ? `<button class="lv-cta end" onclick="endLive()">Finalizar</button>`
@@ -1702,7 +1745,7 @@ function renderLiveChat(){
   const v = document.getElementById('lv-view'); if (v) v.innerHTML = `${ico('eye')} ${liveState.viewers}`;
 }
 function sendLiveMsg(){
-  const t = val('lv-input').trim(); if (!t) return;
+  const t = clip(val('lv-input'), 'liveMsg'); if (!t) return;
   liveState.chat.push({ name:ME.name, text:t }); if (liveState.chat.length > 6) liveState.chat.shift();
   const i = document.getElementById('lv-input'); if (i) i.value = '';
   renderLiveChat();
@@ -1720,7 +1763,7 @@ function renderCreateLive(){
     <div class="field"><label for="f-liveplan">Plan desde el que emites</label>
       <select id="f-liveplan">${options.map(p=>`<option value="${p.id}">${escapeHtml(p.title)}</option>`).join('')}</select>
       <p class="hint">Solo se emite desde un plan en marcha al que asistes o que organizas.</p></div>
-    <div class="field"><label for="f-livetitle">Título</label><input id="f-livetitle" placeholder="Ej. Atardecer en directo desde Debod" /></div>
+    <div class="field"><label for="f-livetitle">Título ${counter('f-livetitle','liveTitle')}</label><input ${lim('f-livetitle','liveTitle')} placeholder="Ej. Atardecer en directo desde Debod" /></div>
     <div class="block"><h4>${ico('shield')} Antes de empezar</h4><p class="hint">Pide permiso antes de enfocar a alguien; quien tenga su presencia en privado no debe salir. Los directos se pueden reportar y se moderan mientras se emiten.</p></div>
     <div class="form-actions"><button class="btn-primary" onclick="startLive()">${ico('cast')} Empezar directo</button></div>
   </div>`;
@@ -1728,7 +1771,7 @@ function renderCreateLive(){
 function startLive(){
   const planId = val('f-liveplan') || (PLANS[0] && PLANS[0].id);
   const p = getPlan(planId);
-  const title = val('f-livetitle').trim() || ('En directo desde ' + (p ? p.title : 'un plan'));
+  const title = clip(val('f-livetitle'), 'liveTitle') || ('En directo desde ' + (p ? p.title : 'un plan'));
   const l = { id:'lme'+Date.now(), userId:'me', planId, img:(p && p.photo) || '', title, viewers:1, startedMin:0 };
   LIVES.unshift(l);
   state.contentTab = 'stories'; go('feed');
@@ -2049,6 +2092,7 @@ function renderProfile(uid){
       </div>
     </div>
     ${about ? `<p class="bio">${about}</p>` : ''}
+    ${me ? `<div class="ph-actions"><button class="ph-btn" onclick="go('editar-perfil')">Editar perfil</button><button class="ph-btn" onclick="toast('Compartir perfil estará disponible en la app')">Compartir perfil</button></div>` : ''}
     ${(me && !u.profilePublic)?`<div class="priv-banner">${ico('lock')} Perfil privado: solo tus seguidores aprobados ven tu actividad.</div>`:''}
     <div class="prof-tabs">
       <button class="${tab==='posts'?'active':''}" onclick="setProfileTab('posts','${u.id}')">${ico('grid')} Publicaciones</button>
@@ -2058,6 +2102,53 @@ function renderProfile(uid){
 }
 function setProfileTab(t, uid){ state.profileTab=t; renderProfile(uid==='me'?'me':uid); }
 
+/* ---------- editar perfil ---------- */
+const BIZ_CATEGORIES = ['Ocio nocturno','Restaurante','Bar','Cafetería','Cultura','Deporte','Bienestar','Organizador de eventos','Turismo','Otro'];
+function renderEditProfile(){
+  const view = document.getElementById('view-page');
+  const u = ME, biz = u.business || {};
+  const pro = u.type === 'profesional';
+  const field = (id, key, label, value, extra='') => `<div class="field"><label for="${id}">${label} ${counter(id, key, value)}</label>
+    <input ${lim(id, key)} value="${escapeHtml(value||'')}" ${extra} /></div>`;
+  view.innerHTML = pageHead('Editar perfil') + `<div class="page-body form">
+    <div class="ep-photo"><span class="avatar lg" id="ep-av">${escapeHtml(u.initials || initials(u.name))}</span>
+      <button class="pb-action" onclick="toast('Cambiar la foto estará disponible en la app')">Cambiar foto</button></div>
+    ${field('f-pname', 'name', 'Nombre', u.name, 'placeholder="Tu nombre o el de tu negocio" autocomplete="name"')}
+    <div class="field"><label for="f-puser">Nombre de usuario ${counter('f-puser', 'username', (u.handle||'').replace(/^@/,''))}</label>
+      <div class="at-input"><span>@</span><input id="f-puser" maxlength="${LIMITS.username}" value="${escapeHtml((u.handle||'').replace(/^@/,''))}" autocapitalize="none" spellcheck="false" oninput="this.value=this.value.toLowerCase();countChars(this,'username');checkUsername()" /></div>
+      <p class="hint" id="ep-user-msg">De ${USERNAME_MIN} a ${LIMITS.username} caracteres: minúsculas, números, punto y guion bajo.</p></div>
+    <div class="field"><label for="f-pbio">Descripción ${counter('f-pbio', 'bio', u.bio)}</label>
+      <textarea ${lim('f-pbio','bio')} rows="3" placeholder="Cuéntale a la gente quién eres y qué planes te gustan">${escapeHtml(u.bio||'')}</textarea></div>
+    ${pro ? `<div class="adv-title">Cuenta profesional</div>
+      <div class="field"><label for="f-pcat">Categoría</label><select id="f-pcat">${BIZ_CATEGORIES.map(c=>`<option ${biz.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      ${field('f-pweb', 'web', 'Web', biz.web, 'placeholder="tunegocio.es" inputmode="url" autocapitalize="none"')}
+      ${field('f-paddr', 'address', 'Dirección', biz.address, 'placeholder="Calle, número, ciudad"')}` : ''}
+    <div class="form-actions"><button class="btn-primary" onclick="saveProfile()">${ico('check')} Guardar</button></div>
+  </div>`;
+}
+function checkUsername(){
+  const msg = document.getElementById('ep-user-msg'); if (!msg) return '';
+  const err = usernameError(val('f-puser').trim(), ME.id);
+  msg.textContent = err || 'Disponible.';
+  msg.classList.toggle('err', !!err);
+  return err;
+}
+function saveProfile(){
+  const name = clip(val('f-pname'), 'name');
+  if (!name){ toast('El nombre no puede estar vacío'); return; }
+  const user = val('f-puser').trim().toLowerCase();
+  const err = usernameError(user, ME.id);
+  if (err){ checkUsername(); toast(err); return; }
+  ME.name = name; ME.handle = '@' + user; ME.initials = initials(name);
+  ME.bio = clip(val('f-pbio'), 'bio');
+  if (ME.type === 'profesional'){
+    ME.business = { ...(ME.business||{}), category: val('f-pcat') || (ME.business||{}).category,
+      web: clip(val('f-pweb'), 'web'), address: clip(val('f-paddr'), 'address') };
+  }
+  saveState();
+  toast('Perfil actualizado'); go('perfil');
+}
+
 /* ---------- ajustes ---------- */
 function renderSettings(){
   const view = document.getElementById('view-page');
@@ -2065,6 +2156,7 @@ function renderSettings(){
   view.innerHTML = pageHead('Configuración') + `
     <div class="page-body">
       <div class="set-group"><div class="set-title">Cuenta</div>
+        <button class="set-row" onclick="go('editar-perfil')"><span class="sr-ic">${ico('user')}</span><span class="sr-l">Editar perfil</span><span class="pl-arrow">${ico('chevR')}</span></button>
         <div class="set-row static"><span class="sr-ic">${ico('briefcase')}</span><span class="sr-l">Tipo de cuenta</span>
           <span class="pro-badge sm">${ME.type==='profesional'?'Profesional':'Usuario'}</span></div>
         <button class="set-row" onclick="toast('Cuentas profesionales: condiciones y precios pendientes de definir')"><span class="sr-ic">${ico('briefcase')}</span><span class="sr-l">Cambiar a cuenta profesional</span><span class="soon">Pendiente</span><span class="pl-arrow">${ico('chevR')}</span></button>
@@ -2148,8 +2240,8 @@ function renderCreateGroup(){
   }).join('');
   view.innerHTML = pageHead('Crear grupo') + `
     <div class="page-body form">
-      <div class="field"><label>Nombre del grupo</label><input id="f-gname" placeholder="Ej. Runners Madrid" value="${escapeHtml(state.draftGName||'')}" /></div>
-      <div class="field"><label>Descripción</label><textarea id="f-gabout" rows="2" placeholder="¿De qué va el grupo?">${escapeHtml(state.draftGAbout||'')}</textarea></div>
+      <div class="field"><label for="f-gname">Nombre del grupo ${counter('f-gname','groupName',state.draftGName)}</label><input ${lim('f-gname','groupName')} placeholder="Ej. Runners Madrid" value="${escapeHtml(state.draftGName||'')}" /></div>
+      <div class="field"><label for="f-gabout">Descripción ${counter('f-gabout','groupAbout',state.draftGAbout)}</label><textarea ${lim('f-gabout','groupAbout')} rows="2" placeholder="¿De qué va el grupo?">${escapeHtml(state.draftGAbout||'')}</textarea></div>
       <div class="field"><label>Miembros y roles</label>
         <p class="hint">Tú eres admin por defecto. Puedes nombrar varios admins.</p>
         ${memberRows}</div>
@@ -2158,8 +2250,8 @@ function renderCreateGroup(){
 }
 function setMember(uid, role){ state.draftGName=val('f-gname'); state.draftGAbout=val('f-gabout'); if(role===undefined) delete state.draftMembers[uid]; else state.draftMembers[uid]=role; renderCreateGroup(); }
 function publishGroup(){
-  const name = val('f-gname').trim() || 'Nuevo grupo';
-  const about = val('f-gabout').trim() || 'Grupo creado desde el prototipo.';
+  const name = clip(val('f-gname'), 'groupName') || 'Nuevo grupo';
+  const about = clip(val('f-gabout'), 'groupAbout') || 'Grupo creado desde el prototipo.';
   const members = [{userId:'me',role:'admin'}].concat(Object.entries(state.draftMembers).map(([userId,role])=>({userId,role})));
   const g = { id:'g'+Date.now(), name, about, gradient:'g-dark', members, planIds:[] };
   GROUPS.unshift(g); state.draftMembers={}; state.draftGName=''; state.draftGAbout='';
@@ -2191,8 +2283,8 @@ function renderCreatePlan(){
       <div class="field"><label>Portada</label>
         <div class="cover-pick" id="cover-pick">${covers.map(c=>`<button class="sw ${c} ${d.cover===c?'active':''}" data-v="${c}" onclick="setDraft('cover','${c}')"></button>`).join('')}
           <span class="add-media">${ico('image')} Añadir fotos/vídeo</span></div></div>
-      <div class="field"><label>Título</label><input id="f-title" placeholder="Ej. Atardecer en el mirador" /></div>
-      <div class="field"><label>Descripción</label><textarea id="f-desc" rows="3" placeholder="¿En qué consiste el plan?"></textarea></div>
+      <div class="field"><label for="f-title">Título ${counter('f-title','planTitle')}</label><input ${lim('f-title','planTitle')} placeholder="Ej. Atardecer en el mirador" /></div>
+      <div class="field"><label for="f-desc">Descripción ${counter('f-desc','planDesc')}</label><textarea ${lim('f-desc','planDesc')} rows="3" placeholder="¿En qué consiste el plan?"></textarea></div>
       <div class="field"><label>Lugar</label>
         <div class="mini-map">${ico('map')} Selecciona en el mapa</div>
         <select id="f-place">${PLACES.map(pl=>`<option value="${pl.id}">${pl.name} · ${pl.city}</option>`).join('')}</select></div>
@@ -2228,8 +2320,8 @@ function setDraft(key,v){
 }
 function publishPlan(){
   const d = state.draft;
-  const title = val('f-title').trim() || 'Plan sin título';
-  const desc = val('f-desc').trim() || 'Plan creado desde el prototipo.';
+  const title = clip(val('f-title'), 'planTitle') || 'Plan sin título';
+  const desc = clip(val('f-desc'), 'planDesc') || 'Plan creado desde el prototipo.';
   const placeId = val('f-place') || PLACES[0].id;
   const dateRaw = val('f-date');
   const when = dateRaw ? new Date(dateRaw) : new Date(Date.now()+24*3600*1000);
@@ -2302,8 +2394,8 @@ function renderCreatePost(){
           <button class="${k==='carrusel'?'active':''}" onclick="setPostField('kind','carrusel')">${ico('stack')}<span>Carrusel</span></button></div></div>
       <div class="field"><label>Vista previa</label>${preview}<span class="add-media center">${ico('image')} Añadir desde galería</span></div>
 
-      <div class="field"><label>Pie de texto</label>
-        <textarea id="f-caption" rows="3" placeholder="Escribe un pie… usa @ para mencionar y # para temas" oninput="updateCaptionPreview()">${escapeHtml(d.caption||'')}</textarea>
+      <div class="field"><label for="f-caption">Pie de texto ${counter('f-caption','caption',d.caption)}</label>
+        <textarea id="f-caption" maxlength="${LIMITS.caption}" rows="3" placeholder="Escribe un pie… usa @ para mencionar y # para temas" oninput="updateCaptionPreview();countChars(this,'caption')">${escapeHtml(d.caption||'')}</textarea>
         <div class="cap-preview" id="cap-preview">${d.caption?highlightCaption(d.caption):'<span class="ph">La vista previa del pie aparecerá aquí…</span>'}</div></div>
 
       <div class="field"><label>Audiencia</label>
@@ -2322,8 +2414,8 @@ function renderCreatePost(){
       <div class="field" style="margin-top:16px"><label>${ico('tag')} Etiquetar personas</label>
         <div class="tag-chips">${tagChips}</div></div>
 
-      <div class="field"><label>${ico('doc')} Texto alternativo (accesibilidad)</label>
-        <input id="f-alt" placeholder="Describe la imagen para lectores de pantalla" value="${escapeHtml(d.alt||'')}" /></div>
+      <div class="field"><label for="f-alt">${ico('doc')} Texto alternativo (accesibilidad) ${counter('f-alt','alt',d.alt)}</label>
+        <input ${lim('f-alt','alt')} placeholder="Describe la imagen para lectores de pantalla" value="${escapeHtml(d.alt||'')}" /></div>
 
       <div class="adv-title">Opciones</div>
       <div class="opt-list">
@@ -2343,7 +2435,7 @@ function togglePostOpt(key){ capturePostInputs(); state.draftPost[key]=!state.dr
 function publishPost(){
   capturePostInputs();
   const d = state.draftPost, k = d.kind;
-  const caption = (d.caption||'').trim() || 'Nueva publicación';
+  const caption = clip(d.caption, 'caption') || 'Nueva publicación';
   const media = k==='carrusel' ? ['g-grape','g-sunset','g-forest'] : [k==='video'?'g-grape':'g-sunset'];
   const mentions = (caption.match(/@[\wáéíóúñ]+/gi)||[]);
   const hashtags = (caption.match(/#[\wáéíóúñ]+/gi)||[]);
@@ -2354,7 +2446,7 @@ function publishPost(){
   const planId = (d.origin === 'plan' && linkable.length) ? (linkable.some(p => p.id === d.planId) ? d.planId : linkable[0].id) : null;
   POSTS.unshift({
     id, authorId:'me', kind:k, media, imgs, caption, likes:0, ago:0, comments:[], duration: k==='video' ? 15 : undefined,
-    placeId:d.place||null, taggedUserIds:[...d.tags], planId, altText:(d.alt||'').trim(),
+    placeId:d.place||null, taggedUserIds:[...d.tags], planId, altText:clip(d.alt, 'alt'),
     mentions, hashtags, audience:d.audience, commentsEnabled:d.comments, hideLikes:d.hideLikes, sharedToStory:d.alsoStory,
     trackId:d.trackId||null,
   });
@@ -2410,6 +2502,7 @@ function router(){
     case 'plan':    renderDetail(arg); showView('detail'); scrollTop('detail'); break;
     case 'u':       renderProfile(arg); showView('page'); scrollTop('page'); break;
     case 'grupo':   renderGroupDetail(arg); showView('page'); scrollTop('page'); break;
+    case 'editar-perfil': renderEditProfile(); showView('page'); scrollTop('page'); break;
     case 'ajustes': renderSettings(); showView('page'); scrollTop('page'); break;
     case 'solicitudes': renderRequests(arg); showView('page'); scrollTop('page'); break;
     case 'crear':   renderCreateChooser(); showView('page'); scrollTop('page'); break;

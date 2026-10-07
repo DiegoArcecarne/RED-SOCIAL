@@ -231,6 +231,32 @@ check('música: silenciar la story', a.run('musicNow.src') === null);
 a.run('toggleStorySound(); closeOverlay()');
 check('música: cerrar la story para la música', a.run('musicNow.src') === null && a.run('state.storySound') === true);
 
+// --- Editar perfil y longitud de los textos ---
+a.nav('perfil'); h = a.html('view-perfil');
+check('perfil propio: botón "Editar perfil"', h.includes("go('editar-perfil')"));
+a.nav('editar-perfil'); h = a.html('view-page'); rendered += h;
+check('editar perfil: nombre, usuario y descripción con su límite y contador', h.includes('id="f-pname" maxlength="30"') && h.includes('id="f-puser" maxlength="30"')
+  && h.includes('id="f-pbio" maxlength="150"') && h.includes('id="cnt-f-pbio"') && !h.includes('f-pweb'));
+const uerr = (u) => a.run(`usernameError(${JSON.stringify(u)}, "me")`);
+check('usuario: válidos', uerr('marina') === '' && uerr('marina_r.92') === '');
+check('usuario: inválidos (corto, largo, mayúsculas, espacios, puntos, cogido)', ['ab', 'a'.repeat(31), 'Marina', 'mari na', '.marina', 'marina.', 'mari..na', 'lucia'].every((u) => uerr(u) !== ''));
+a.run('document.getElementById("f-pname").value = "Marina García"; document.getElementById("f-puser").value = "lucia"; saveProfile()');
+check('guardar: no deja coger un usuario ocupado', a.run('ME.handle') === '@marina');
+a.run('document.getElementById("f-puser").value = "marina.garcia"; document.getElementById("f-pbio").value = "x".repeat(400); saveProfile()');
+check('guardar: actualiza nombre, usuario e iniciales', a.run('ME.name') === 'Marina García' && a.run('ME.handle') === '@marina.garcia' && a.run('ME.initials') === 'MG');
+check('guardar: la descripción se recorta a 150', a.run('ME.bio.length') === 150);
+a.run('ME.type = "profesional"; ME.business = { category:"Bar", web:"", address:"" }'); a.nav('editar-perfil'); h = a.html('view-page');
+check('editar perfil profesional: categoría, web y dirección', h.includes('id="f-pcat"') && h.includes('id="f-pweb" maxlength="100"') && h.includes('id="f-paddr" maxlength="120"'));
+a.run('ME.type = "usuario"; delete ME.business');
+a.nav('crear-plan'); h = a.html('view-page');
+check('crear plan: título y descripción con límite', h.includes('id="f-title" maxlength="60"') && h.includes('id="f-desc" maxlength="1000"'));
+a.nav('crear-post'); h = a.html('view-page');
+check('crear publicación: pie y texto alternativo con límite', h.includes('maxlength="2200"') && h.includes('id="f-alt" maxlength="250"'));
+a.nav('crear-grupo'); h = a.html('view-page');
+check('crear grupo: nombre y descripción con límite', h.includes('id="f-gname" maxlength="50"') && h.includes('id="f-gabout" maxlength="300"'));
+a.nav('crear-plan'); a.run('document.getElementById("f-title").value = "t".repeat(100); publishPlan()');
+check('publicar plan: el título se recorta a 60', a.run('PLANS[0].title.length') === 60);
+
 // --- Creación + persistencia tras "recargar" ---
 const nPlans = a.run('PLANS.length');
 a.run('publishPlan()');
@@ -242,6 +268,7 @@ check('persistencia: el plan creado sobrevive a recargar', b.run(`PLANS.some(p =
 check('persistencia: la asistencia registrada sobrevive', b.run('state.attended.has("p2")'));
 check('persistencia: el me gusta y el comentario sobreviven', b.run('POSTS.find(p => p.id === "po8").likedByMe === true && POSTS.find(p => p.id === "po8").comments.some(c => c.userId === "me")'));
 check('persistencia: la música de las publicaciones sobrevive', b.run('POSTS.some(p => p.authorId === "me" && p.trackId === "t2" && p.id.startsWith("npo"))'));
+check('persistencia: el perfil editado sobrevive', b.run('ME.name') === 'Marina García' && b.run('ME.handle') === '@marina.garcia' && b.run('ME.bio.length') === 150);
 check('persistencia: los planes base conservan fecha futura', b.run('getPlan("p1").when > new Date()'));
 const c = createEnv({ [a.run('STORE_KEY')]: '{corrupto' });
 check('persistencia: datos corruptos no rompen la demo', c.run('PLANS.length') === 12);

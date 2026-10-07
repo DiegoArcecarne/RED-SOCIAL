@@ -52,7 +52,8 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    **libre**, **apuntado** y **con aprobación**; muestra los asistentes reales y el
    control de **presencia pública o privada**.
 7. **Perfil y Ajustes** — publicaciones (filtrables en Todo / Planes / Su vida) y
-   Vividas en cuadrícula, insignia de cuenta
+   Vividas en cuadrícula, **Editar perfil** (nombre, usuario y descripción con
+   límite de caracteres y contador; el usuario se valida al escribir), insignia de cuenta
    **profesional** y ajustes de privacidad.
 8. **Crear** (botón central) — **plan** (con tipo de asistencia y grupo
    organizador), **publicación** (de un plan o de tu vida; foto, vídeo o carrusel, con música, ubicación, etiquetas,
