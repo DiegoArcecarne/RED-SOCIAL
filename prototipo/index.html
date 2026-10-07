@@ -15,6 +15,9 @@
         <h1>planes</h1>
         <span class="spacer"></span>
         <span class="tag">prototipo</span>
+        <button class="dm-btn" id="dm-btn" aria-label="Mensajes" onclick="go('mensajes')">
+          <i class="ico"><svg viewBox="0 0 24 24"><path d="M5 5h14v10H9.5L5 19z"/></svg></i><span class="dm-badge" id="dm-badge" hidden></span>
+        </button>
       </div>
       <div id="appbar-tabs">
         <nav class="content-tabs">
@@ -66,6 +69,9 @@
         <i class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.3"/><path d="M5.6 19a6.4 6.4 0 0 1 12.8 0"/></svg></i>Perfil
       </button>
     </nav>
+
+    <!-- Capa superpuesta: publicación, comentarios, stories y directos -->
+    <div id="overlay" class="overlay" hidden></div>
 
     <div id="toast" class="toast"></div>
   </div>
