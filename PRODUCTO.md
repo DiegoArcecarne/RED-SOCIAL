@@ -367,6 +367,8 @@ Conviene separar dos capas que cumplen funciones distintas y suelen confundirse.
 
 Seguridad de acceso, que protege la cuenta. Contraseña robusta y verificación en dos pasos por SMS, app de autenticación (TOTP) o email. Verificación de email y teléfono en el alta. Gestión de sesiones y dispositivos, con cierre remoto.
 
+Desde Ajustes ▸ Seguridad y acceso se cambia la contraseña, se activa o desactiva la verificación en dos pasos (app autenticadora, SMS o email), se ven y cierran las sesiones abiertas y se elimina la cuenta. Eliminar la cuenta desde la propia app es obligatorio en App Store y Google Play, y es un derecho RGPD.
+
 Verificación de identidad, que protege a la comunidad. Es distinta del 2FA. Es el requisito de confianza para quedar con desconocidos: comprobación de documento y selfie antes del primer plan, que otorga el distintivo de verificado. Es lo que diferencia de un grupo de WhatsApp y lo que sostiene la seguridad de los encuentros presenciales.
 
 ## Edad, aceptación legal y datos
@@ -405,7 +407,7 @@ El principio rector es fricción mínima al entrar y verificación donde de verd
 
 Paso 1 — Bienvenida sin pedir nada. La primera pantalla comunica el posicionamiento —planes y gente con quien vivirlos, no una app de ligar— y deja ver valor antes de pedir datos. Cero formularios por delante de la propuesta.
 
-Paso 2 — Registro y seguridad de acceso. Alta por email o teléfono con contraseña, o login social. Verificación de email y teléfono por código (OTP) en el alta. La verificación en dos pasos (2FA) se ofrece aquí pero no se obliga; vive en Seguridad y protege la cuenta, no a la comunidad.
+Paso 2 — Registro y seguridad de acceso. Alta por email o teléfono con contraseña, o login social. Verificación de email y teléfono por código (OTP) en el alta. La verificación en dos pasos (2FA) se ofrece aquí pero no se obliga; vive en Seguridad y protege la cuenta, no a la comunidad. El detalle de cada pantalla (validaciones, códigos que caducan a los 10 minutos, bloqueo tras 5 intentos, recuperación de la contraseña sin desvelar qué cuentas existen) y lo que debe hacer el servidor está en [docs/cuentas-y-acceso.md](docs/cuentas-y-acceso.md).
 
 Paso 3 — Edad y aceptación legal. Confirmación de edad (18+, no negociable) y aceptación en bloque de términos, política de privacidad y código de conducta. Los consentimientos sensibles —ubicación, datos de verificación de identidad, pagos— se piden separados y de forma contextual cuando se necesitan, no todos de golpe aquí.
 
@@ -694,7 +696,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Taxonomía inicial concreta de categorías (la propuesta de arriba es punto de partida).
 - Umbral de fiabilidad mínima para acceder a planes especiales/saturados.
 - Cómo se reparte la comisión con Fever en los planes vía su API (la comisión propia ya está fijada en el 15%).
-- Proveedor de verificación de identidad (documento y selfie).
+- Proveedor de verificación de identidad (documento y selfie) y proveedor de envío de códigos por SMS y email. Criterios en docs/cuentas-y-acceso.md.
 - Precio de las capas de cuenta de negocio: importe del CPA por asistente confirmado y cuota de la suscripción de herramientas.
 - Revisión legal de los términos: limitación de responsabilidad por encuentros presenciales, antes de lanzar.
 - Nombre y marca (el "WanderMeet" del dosier previo es genérico y débil para SEO/GEO; pendiente de trabajar).

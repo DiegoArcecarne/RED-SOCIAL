@@ -41,7 +41,9 @@ function makeAudio(counter) {
 
 // Crea un entorno aislado; `store` hace de localStorage y se comparte entre entornos
 // para simular una recarga de la página.
-function createEnv(store) {
+function createEnv(store, opts = {}) {
+  // Por defecto se entra con la cuenta de demostración; { sinSesion: true } arranca en la bienvenida.
+  if (!opts.sinSesion && !('planes-sesion' in store)) store['planes-sesion'] = 'demo';
   const reg = {};
   const audio = { notes: 0 };
   const ctx = {
@@ -470,8 +472,126 @@ check('persistencia: valoraciones, seguimientos y preferencias sobreviven', b.ru
 check('persistencia: conversaciones, modo de mensajes y bloqueos sobreviven', b.run('getConversation("c6").status') === 'aceptada' && b.run('dmWith("ana").status') === 'enviada' && b.run('ME.dmMode') === 'solicitud');
 check('persistencia: perfiles gestionados e identidad verificada sobreviven', b.run('USERS.some(u => u.handle === "@cafelaesquina" && u.managedBy === "me")') && b.run('ME.verified') === true);
 check('persistencia: los planes base conservan fecha futura', b.run('getPlan("p1").when > new Date()'));
-const c = createEnv({ [a.run('STORE_KEY')]: '{corrupto' });
+const c = createEnv({ [a.run('storeKey()')]: '{corrupto' });
 check('persistencia: datos corruptos no rompen la demo', c.run('PLANS.length') === 12);
+
+// --- Cuentas: bienvenida, registro con código, 2FA, 18+, onboarding, entrar, recuperar, seguridad ---
+const ast = {};
+let e = createEnv(ast, { sinSesion: true });
+const set = (env, id, v) => env.run(`document.getElementById(${JSON.stringify(id)}).value = ${JSON.stringify(v)}`);
+const step = (env) => env.run('state.auth && state.auth.step');
+const authErrTxt = (env) => env.run('state.auth.err');
+h = e.html('auth'); rendered += h;
+check('sin sesión: bienvenida con crear cuenta, entrar y demo', e.run('document.getElementById("auth").hidden') === false && h.includes('Crear cuenta') && h.includes('Ya tengo cuenta') && h.includes('cuenta de demostración'));
+const regToAge = (env, email) => {
+  env.run("showAuth('registro', {})"); set(env, 'f-id', email); set(env, 'f-pass', 'planes2026'); env.run('submitRegister()');
+  set(env, 'f-otp', env.run('state.otp.code')); env.run('submitCode()'); env.run("showAuth('edad')");
+};
+e.run("showAuth('registro', {})"); rendered += e.html('auth');
+set(e, 'f-id', 'lucas@'); set(e, 'f-pass', 'planes2026'); e.run('submitRegister()');
+check('registro: email no válido', authErrTxt(e).includes('email válido'));
+set(e, 'f-id', 'marina@planes.app'); e.run('submitRegister()');
+check('registro: email ya registrado', authErrTxt(e).includes('Ya hay una cuenta'));
+set(e, 'f-id', 'lucas@correo.es'); set(e, 'f-pass', 'corta1'); e.run('submitRegister()');
+check('registro: contraseña débil', authErrTxt(e).includes('Mínimo 8'));
+e.run("state.auth.data.method = 'telefono'"); set(e, 'f-id', '12345'); set(e, 'f-pass', 'planes2026'); e.run('submitRegister()');
+check('registro: teléfono no válido', authErrTxt(e).includes('teléfono válido'));
+check('teléfono español: se completa con +34', e.run('normPhone("612 345 678")') === '+34612345678' && e.run('normPhone("0033612345678")') === '+33612345678');
+e.run("state.auth.data.method = 'email'"); set(e, 'f-id', 'lucas@correo.es'); set(e, 'f-pass', 'planes2026'); e.run('submitRegister()');
+h = e.html('auth'); rendered += h;
+check('registro: envía un código (notificación simulada)', step(e) === 'codigo' && e.run('state.otp.purpose') === 'registro' && /^\d{6}$/.test(e.run('state.otp.code')) && e.html('sim-note').includes(e.run('state.otp.code')));
+set(e, 'f-otp', '000000'); e.run('submitCode()');
+check('código incorrecto: cuenta los intentos', authErrTxt(e).includes('Te quedan 4'));
+set(e, 'f-otp', e.run('state.otp.code')); e.run('submitCode()'); rendered += e.html('auth');
+check('código correcto: ofrece la verificación en dos pasos (opcional)', step(e) === '2fa' && e.html('auth').includes('Ahora no'));
+e.run("state.auth.data.twoMethod = 'sms'; startTwoFA()");
+check('2FA por SMS sin teléfono: lo explica', authErrTxt(e).includes('añade un teléfono'));
+e.run("state.auth.data.twoMethod = 'app'; startTwoFA()"); set(e, 'f-otp', e.run('state.otp.code')); e.run('submitCode()');
+check('2FA con app autenticadora activada en el alta', step(e) === 'edad' && e.run('state.auth.data.pending.twoFA') === 'app');
+rendered += e.html('auth');
+set(e, 'f-birth', '1999-05-20'); e.run('submitAge()');
+check('18+: sin aceptar los términos no se crea la cuenta', authErrTxt(e).includes('aceptar los Términos') && e.run('accounts().length') === 1);
+e.run('document.getElementById("f-legal").checked = true; submitAge()');
+const lucasId = e.run('sessionId()');
+check('cuenta creada: sesión iniciada y empieza vacía (sin el contenido de Marina)', lucasId && lucasId !== 'demo' && e.run('accounts().length') === 2
+  && e.run('POSTS.filter(p => p.authorId === "me").length') === 0 && e.run('CONVERSATIONS.length') === 0 && e.run('ME.verified') === false && step(e) === 'perfil');
+check('consentimientos guardados con su versión', e.run('getAccount(sessionId()).consents.legal') === true && e.run('getAccount(sessionId()).consents.version') === e.run('LEGAL_VERSION'));
+rendered += e.html('auth');
+e.run('submitProfile()');
+check('perfil: el nombre es obligatorio', authErrTxt(e).includes('nombre'));
+set(e, 'f-pname', 'Lucas Gil'); set(e, 'f-puser', 'lucia'); e.run('submitProfile()');
+check('perfil: usuario cogido', authErrTxt(e).includes('cogido'));
+set(e, 'f-puser', 'lucas.gil'); set(e, 'f-pcity', 'Madrid'); e.run('submitProfile()');
+check('perfil guardado y paso a intereses', step(e) === 'intereses' && e.run('ME.handle') === '@lucas.gil' && e.run('ME.initials') === 'LG');
+check('intereses: hacen falta 3', e.html('auth').includes('disabled') && e.html('auth').includes('(0/3)'));
+e.run('toggleInterest("outdoor"); toggleInterest("gastro"); toggleInterest("fiesta")');
+check('intereses: con 3 se puede seguir', !e.html('auth').includes('(0/3)') && e.run('ME.interests.length') === 3);
+e.run("stepDone('ubicacion')"); rendered += e.html('auth');
+e.run("ME.locationAllowed = false; stepDone('seguir')"); h = e.html('auth'); rendered += h;
+const sug = e.run('followSuggestions().map(x => x.u.id)');
+check('a quién seguir: locales verificados primero', sug[0] === 'azotea' && h.includes('Seguir a todos'));
+e.run('followAllSuggested()');
+check('seguir a todos', e.run('FOLLOWS.filter(f => f[0] === "me").length') === sug.length);
+e.run('finishOnboarding()');
+check('fin del onboarding: entra al muro', e.run('document.getElementById("auth").hidden') === true && e.run('getAccount(sessionId()).onboarded') === true && e.run('state.contentTab') === 'vividas');
+let e2 = createEnv(ast);
+check('al recargar sigue la sesión de la cuenta nueva con su perfil', e2.run('ME.name') === 'Lucas Gil' && e2.run('POSTS.filter(p => p.authorId === "me").length') === 0 && e2.run('follows("me","azotea")') && e2.run('document.getElementById("auth").hidden') !== false);
+e2.run('logout()');
+check('cerrar sesión', !('planes-sesion' in ast));
+let e3 = createEnv(ast, { sinSesion: true });
+e3.run("showAuth('entrar', {})"); rendered += e3.html('auth');
+for (let i = 0; i < 4; i++){ set(e3, 'f-id', 'marina@planes.app'); set(e3, 'f-pass', 'mal' + i); e3.run('submitLogin()'); }
+check('entrar: error genérico (no desvela si la cuenta existe)', authErrTxt(e3) === 'Email, teléfono o contraseña incorrectos.');
+set(e3, 'f-pass', 'otra'); e3.run('submitLogin()');
+check('entrar: 5 fallos bloquean 15 minutos', authErrTxt(e3).includes('bloqueado') && e3.run('getAccount("demo").lockedUntil') > 0);
+set(e3, 'f-pass', 'planes123'); e3.run('submitLogin()');
+check('bloqueada: ni con la contraseña correcta', authErrTxt(e3).includes('Demasiados intentos') && !('planes-sesion' in ast));
+e3.run('updateAccount("demo", { lockedUntil: null })');
+set(e3, 'f-id', 'lucas@correo.es'); set(e3, 'f-pass', 'planes2026'); e3.run('submitLogin()');
+check('entrar con 2FA: pide el código', step(e3) === 'codigo' && e3.run('state.otp.purpose') === 'login2fa' && !('planes-sesion' in ast));
+set(e3, 'f-otp', e3.run('state.otp.code')); e3.run('submitCode()');
+check('entrar con 2FA: con el código se inicia sesión', ast['planes-sesion'] === lucasId);
+delete ast['planes-sesion'];
+let e4 = createEnv(ast, { sinSesion: true });
+e4.run("showAuth('recuperar', {})"); set(e4, 'f-id', 'nadie@correo.es'); e4.run('submitRecover()');
+check('recuperar: no desvela si el email existe', step(e4) === 'recuperar' && !e4.run('state.otp'));
+set(e4, 'f-id', 'lucas@correo.es'); e4.run('submitRecover()'); set(e4, 'f-otp', e4.run('state.otp.code')); e4.run('submitCode()');
+set(e4, 'f-pass', 'nueva2027'); set(e4, 'f-pass2', 'distinta2027'); e4.run('submitNewPass()');
+check('recuperar: las contraseñas han de coincidir', step(e4) === 'nueva-clave' && authErrTxt(e4).includes('no coinciden'));
+set(e4, 'f-pass2', 'nueva2027'); e4.run('submitNewPass()');
+check('recuperar: nueva contraseña y sesión iniciada', ast['planes-sesion'] === lucasId && e4.run(`getAccount("${lucasId}").hash === demoHash("nueva2027", getAccount("${lucasId}").salt)`));
+let e5 = createEnv(ast);
+e5.nav('seguridad'); h = e5.html('view-page'); rendered += h;
+check('seguridad: email, contraseña, 2FA activada, sesiones y eliminar cuenta', h.includes('lucas@correo.es') && h.includes('Activada · App autenticadora') && h.includes('Cerrar sesión') && h.includes('Eliminar cuenta'));
+e5.run('disableTwoFA()');
+check('desactivar 2FA', e5.run('currentAccount().twoFA') === null);
+e5.run("enableTwoFA('email')"); set(e5, 'f-otp', e5.run('state.otp.code')); e5.run("confirmTwoFA('email')");
+check('activar 2FA por email desde Ajustes', e5.run('currentAccount().twoFA.method') === 'email');
+e5.run('openChangePass()'); set(e5, 'f-cur', 'mal'); set(e5, 'f-new', 'otra2028'); e5.run('changePass()');
+check('cambiar contraseña: exige la actual', e5.run('currentAccount().hash === demoHash("nueva2027", currentAccount().salt)'));
+e5.run('startVerifyFlow()'); h = e5.html('overlay'); rendered += h;
+check('verificación paso a paso: documento, frente, dorso, selfie y comprobación', h.includes('1 de 5') && h.includes('Pasaporte'));
+e5.run("state.vflow.doc = 'pasaporte'; renderVerifyFlow()");
+check('con pasaporte no se pide el dorso', e5.html('overlay').includes('1 de 4'));
+e5.run('verifyNext(); verifyNext(); verifyNext()');
+check('verificación: llega a "Comprobando…"', e5.run('state.vflow.step') === 'check' && e5.html('overlay').includes('Comprobando'));
+e5.run('state.vflow = null; doVerify()');
+check('verificación: queda verificado', e5.run('ME.verified') === true);
+e5.run('openDeleteAccount()'); set(e5, 'f-del', 'borrar'); e5.run('deleteAccount()');
+check('eliminar cuenta: pide escribir ELIMINAR', e5.run('accounts().some(a => a.id === sessionId())'));
+const lucasKey = e5.run('storeKey()');
+set(e5, 'f-del', 'ELIMINAR'); e5.run('deleteAccount()');
+check('eliminar cuenta: borra la cuenta, sus datos y la sesión', !e5.run(`accounts().some(a => a.id === "${lucasId}")`) && !(lucasKey in ast) && !('planes-sesion' in ast));
+let e6 = createEnv({}, { sinSesion: true });
+e6.run("showAuth('registro', {})"); set(e6, 'f-id', 'joven@correo.es'); set(e6, 'f-pass', 'planes2026'); e6.run('submitRegister()');
+set(e6, 'f-otp', e6.run('state.otp.code')); e6.run('submitCode()'); e6.run("showAuth('edad')");
+set(e6, 'f-birth', `${new Date().getFullYear() - 16}-01-01`); e6.run('document.getElementById("f-legal").checked = true; submitAge()');
+check('menor de 18: no se crea la cuenta', step(e6) === 'menor' && e6.run('accounts().length') === 1 && !e6.run('sessionId()'));
+// --- Web instalable (PWA) ---
+const pdir = path.join(__dirname, '..', 'prototipo');
+let man = null; try { man = JSON.parse(fs.readFileSync(path.join(pdir, 'manifest.webmanifest'), 'utf8')); } catch (err) {}
+check('PWA: manifest válido, pantalla completa y con iconos que existen', !!man && man.display === 'standalone' && man.icons.length >= 3 && man.icons.every((i) => fs.existsSync(path.join(pdir, i.src))));
+check('PWA: el HTML enlaza el manifest y el icono de iPhone', html.includes('rel="manifest"') && html.includes('apple-touch-icon') && fs.existsSync(path.join(pdir, 'sw.js')));
 
 // --- Sin emojis en la interfaz ---
 const emoji = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/u;

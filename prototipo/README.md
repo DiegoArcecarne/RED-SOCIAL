@@ -14,13 +14,28 @@ y para enseñarla; no es código de producción.
 
 El diseño es para móvil: activa la vista móvil de las DevTools (`F12` ▸ icono de móvil).
 
+**Primero, entrar.** El prototipo arranca en la bienvenida. Puedes:
+
+- Crear una cuenta: registro con email o teléfono, código, verificación en dos pasos opcional, 18+ y consentimientos, perfil, intereses, ubicación y a quién seguir. Las cuentas nuevas empiezan vacías.
+- Entrar con la cuenta de demostración (Marina, con todo el contenido de ejemplo): `marina@planes.app` · `planes123`, o el botón "Entrar con la cuenta de demostración".
+
+Los códigos llegan como una notificación dentro de la pantalla: tócala para rellenarlo. Todo es simulado y se guarda en tu navegador; lo que hará el servidor de verdad está en [`../docs/cuentas-y-acceso.md`](../docs/cuentas-y-acceso.md).
+
+**Instalarlo en el móvil (web instalable).** Hay que abrirlo desde una dirección web (https), no como archivo:
+
+1. Activa GitHub Pages en el repositorio: *Settings ▸ Pages ▸ Deploy from a branch ▸ main / (root)*.
+2. Abre en el móvil `https://<usuario>.github.io/<repositorio>/prototipo/standalone.html`.
+3. En iPhone (Safari): Compartir ▸ *Añadir a pantalla de inicio*. En Android (Chrome): menú ⋮ ▸ *Instalar aplicación*.
+
+Se abre a pantalla completa, con su icono, y funciona sin conexión una vez cargado (`manifest.webmanifest`, `sw.js` e iconos en esta carpeta).
+
 **Las fotos necesitan internet.** Se cargan desde Unsplash; sin conexión se ven los
 degradados de respaldo y el prototipo sigue funcionando. Fotos de
 [Unsplash](https://unsplash.com) bajo la licencia de Unsplash.
 
 **Lo que crees se guarda en tu navegador.** Planes, publicaciones, grupos,
-solicitudes y asistencias sobreviven a recargar la página. Para volver al estado
-inicial: *Perfil ▸ Ajustes ▸ Restablecer demo*.
+solicitudes y asistencias sobreviven a recargar la página. Cada cuenta guarda lo suyo por separado. Para volver al estado inicial (borra también las
+cuentas creadas): *Perfil ▸ Ajustes ▸ Restablecer demo*.
 
 ## Qué incluye
 
@@ -92,7 +107,7 @@ condiciones de las cuentas profesionales están pendientes de decidir.
 
 ## Para desarrollar
 
-Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `app.js`).
+Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `app.js`).
 `standalone.html` se genera; no lo edites a mano. Desde la raíz del repositorio:
 
 ```bash

@@ -2,8 +2,16 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#000000" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="planes" />
   <title>Prototipo · App de planes</title>
   <meta name="description" content="Prototipo visual navegable de la app de planes (basado en PRODUCTO.md)." />
   <link rel="stylesheet" href="styles.css" />
@@ -73,10 +81,16 @@
     <!-- Capa superpuesta: publicación, comentarios, stories y directos -->
     <div id="overlay" class="overlay" hidden></div>
 
+    <!-- Acceso: bienvenida, registro, inicio de sesión y onboarding -->
+    <div id="auth" class="auth" hidden></div>
+    <!-- Notificación simulada del sistema (SMS, email o autenticador con el código) -->
+    <div id="sim-note" class="sim-note" hidden></div>
+
     <div id="toast" class="toast"></div>
   </div>
 
   <script src="data.js"></script>
+  <script src="cuentas.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

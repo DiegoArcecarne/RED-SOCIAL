@@ -11,8 +11,8 @@ erDiagram
     PERSONA ||--o| VERIFICACION_IDENTIDAD : tiene
     USUARIO ||--o| CUENTA_EMPRESA : "puede ser"
     CUENTA_EMPRESA ||--o| VERIFICACION_NEGOCIO : tiene
-    USUARIO ||--o{ SESION_DISPOSITIVO : usa
-    USUARIO ||--o{ CONSENTIMIENTO : otorga
+    PERSONA ||--o{ SESION_DISPOSITIVO : usa
+    PERSONA ||--o{ CONSENTIMIENTO : otorga
 
     USUARIO ||--o{ SEGUIMIENTO : "sigue a"
     USUARIO ||--o{ SEGUIMIENTO : "es seguido por"
@@ -84,10 +84,14 @@ erDiagram
 
     PERSONA {
         uuid id PK
-        string email
-        string telefono
+        string email "unico, verificado por codigo"
+        string telefono "E.164, unico"
+        string password_hash "Argon2id"
+        string metodo_2fa "app|sms|email|null"
         date fecha_nacimiento "gate 18+"
         bool identidad_verificada
+        int intentos_fallidos
+        datetime bloqueado_hasta
     }
     USUARIO {
         uuid id PK
@@ -379,13 +383,13 @@ erDiagram
     }
     CONSENTIMIENTO {
         uuid id PK
-        uuid usuario_id FK
+        uuid persona_id FK
         string tipo "terminos|privacidad|edad|codigo_conducta|ubicacion|verificacion|pagos"
         string version
     }
     SESION_DISPOSITIVO {
         uuid id PK
-        uuid usuario_id FK
+        uuid persona_id FK
         string dispositivo
         datetime ultima_actividad
     }

@@ -168,13 +168,16 @@ function attendanceView(p){
    sobrevive a recargar la página. Si el navegador bloquea el almacenamiento,
    la demo sigue funcionando en memoria. "Restablecer demo" en Ajustes lo borra. */
 const STORE_KEY = 'planes-proto-v6';
+// Cada cuenta guarda lo suyo por separado (la de demostración es Marina).
+function storeKey(){ return STORE_KEY + ':' + ((typeof sessionId === 'function' && sessionId()) || 'demo'); }
 function saveState(){
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({
+    localStorage.setItem(storeKey(), JSON.stringify({
       plans: PLANS.map(p => ({ ...p, when: p.when instanceof Date ? p.when.toISOString() : p.when })),
       posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES, ratings: RATINGS, follows: FOLLOWS, conversations: CONVERSATIONS, reports: REPORTS,
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
-            name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles },
+            name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
+            city: ME.city, languages: ME.languages, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom },
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested] },
     }));
@@ -182,7 +185,7 @@ function saveState(){
 }
 function loadState(){
   let snap = null;
-  try { snap = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { return; }
+  try { snap = JSON.parse(localStorage.getItem(storeKey()) || 'null'); } catch (e) { return; }
   if (!snap) return;
   // Los planes base conservan su fecha relativa a hoy; los creados en la demo, la suya.
   const baseWhen = new Map(PLANS.map(p => [p.id, p.when]));
@@ -207,8 +210,9 @@ function loadState(){
   }
   state.presencePublic = ME.presencePublic;
 }
+// Restablecer: borra cuentas, sesión y todo lo creado en este navegador.
 function resetDemo(){
-  try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+  try { Object.keys(localStorage).filter(k => k.startsWith('planes-')).forEach(k => localStorage.removeItem(k)); } catch (e) {}
   location.hash = '#/feed';
   location.reload();
 }
@@ -1674,7 +1678,7 @@ function openVerifyGate(reason){
         <li>${ico('lock')}<span>Tu documento no se enseña nunca: los demás solo ven el distintivo ${ico('check')}.</span></li>
         <li>${ico('repeat')}<span>Se hace una vez y vale para siempre, también para los perfiles profesionales que gestiones.</span></li>
       </ul>
-      <button class="btn-primary" onclick="doVerify()">${ico('shield')} Verificar ahora</button>
+      <button class="btn-primary" onclick="startVerifyFlow()">${ico('shield')} Verificar ahora</button>
       <button class="btn-ghost" onclick="closeOverlay()">Ahora no</button>
     </div></div>`);
 }
@@ -1822,7 +1826,7 @@ function renderSettings(){
       </div>
       <div class="set-group"><div class="set-title">General</div>
         ${row('bell','Notificaciones')}
-        ${row('shield','Seguridad y verificación')}
+        <button class="set-row" onclick="go('seguridad')"><span class="sr-ic">${ico('shield')}</span><span class="sr-l">Seguridad y acceso</span><span class="pl-arrow">${ico('chevR')}</span></button>
         ${row('card','Pagos y reembolsos')}
         ${row('doc','Datos y legal')}
       </div>
@@ -1832,10 +1836,11 @@ function renderSettings(){
           <span class="tg-ic">${ico('shield')}</span>
           <span class="tg-info"><span class="tg-n">Simular cuenta sin verificar</span><span class="tg-s">Para ver qué cambia antes de verificarse</span></span>
           <span class="switch ${ME.verified?'':'on'}"><span class="knob"></span></span></div>
-        <button class="set-row" onclick="resetDemo()"><span class="sr-ic">${ico('repeat')}</span><span class="sr-l">Restablecer demo</span><span class="soon">borra lo creado</span></button>
+        <button class="set-row" onclick="openInstallHelp()"><span class="sr-ic">${ico('phone')}</span><span class="sr-l">Instalar en el móvil</span><span class="pl-arrow">${ico('chevR')}</span></button>
+        <button class="set-row" onclick="resetDemo()"><span class="sr-ic">${ico('repeat')}</span><span class="sr-l">Restablecer demo</span><span class="soon">borra cuentas y lo creado</span></button>
       </div>
       <div class="set-group">
-        <button class="set-row danger" onclick="toast('Sesión cerrada (demo)')"><span class="sr-ic">${ico('logout')}</span><span class="sr-l">Cerrar sesión</span></button>
+        <button class="set-row danger" onclick="logout()"><span class="sr-ic">${ico('logout')}</span><span class="sr-l">Cerrar sesión</span></button>
       </div>
     </div>`;
 }
@@ -2159,6 +2164,7 @@ function router(){
     case 'grupo':   renderGroupDetail(arg); showView('page'); scrollTop('page'); break;
     case 'mensajes': renderInbox(arg); showView('page'); scrollTop('page'); break;
     case 'chat':     renderChat(arg); showView('page'); { const v = document.getElementById('view-page'); v.scrollTop = v.scrollHeight || 0; } break;
+    case 'seguridad': renderSecurity(); showView('page'); scrollTop('page'); break;
     case 'nuevo-perfil': renderNewProfile(); showView('page'); scrollTop('page'); break;
     case 'editar-perfil': renderEditProfile(); showView('page'); scrollTop('page'); break;
     case 'ajustes': renderSettings(); showView('page'); scrollTop('page'); break;
@@ -2174,7 +2180,11 @@ function router(){
 
 /* ---------- init ---------- */
 function init(){
-  loadState();
+  // Sin sesión: pantalla de bienvenida. Cuenta nueva: empieza sin el contenido de demostración.
+  const acc = currentAccount();
+  if (acc && acc.id !== 'demo') freshWorld();
+  if (acc) loadState();
+  registerServiceWorker();
   window.addEventListener('pagehide', saveState);
   document.addEventListener('visibilitychange', () => { if (document.hidden) stopMusic(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !overlayEl().hidden) (liveState.host ? endLive() : closeOverlay()); });
@@ -2184,6 +2194,8 @@ function init(){
   window.addEventListener('hashchange', router);
   updateDmBadge();
   router();
+  if (!acc) showAuth('bienvenida', {});
+  else if (!acc.onboarded) showAuth(acc.step || 'perfil', {});
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();
