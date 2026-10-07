@@ -396,7 +396,7 @@ Paso 2 — Registro y seguridad de acceso. Alta por email o teléfono con contra
 
 Paso 3 — Edad y aceptación legal. Confirmación de edad (18+, no negociable) y aceptación en bloque de términos, política de privacidad y código de conducta. Los consentimientos sensibles —ubicación, datos de verificación de identidad, pagos— se piden separados y de forma contextual cuando se necesitan, no todos de golpe aquí.
 
-Paso 4 — Creación de perfil. Usuario y nombre, foto, biografía, idiomas y ciudad o ubicación actual (opcional). Es el perfil público sujeto a la configuración de privacidad.
+Paso 4 — Creación de perfil. Usuario y nombre, foto, biografía, idiomas y ciudad o ubicación actual (opcional). Es el perfil personal: público y sujeto a la configuración de privacidad. Aquí se explica, en una línea y sin pedir nada todavía, cómo funciona la confianza: "Para que te sientas seguro al compartir y al ir a planes, todas las personas que asisten a un plan o lo organizan han verificado su identidad. Para mirar, seguir y publicar no hace falta, y tú decides en todo momento quién ve tus publicaciones". La verificación se pide más tarde, en el primer gesto que la necesita (ver más abajo).
 
 Paso 5 — Intereses y descubrimiento. El usuario elige sus categorías favoritas de la taxonomía y, opcionalmente, rango de edad preferido, radio geográfico e idioma de los planes. Esto alimenta el ranking por afinidad desde el primer scroll, para que el feed no arranque en frío.
 
@@ -408,7 +408,38 @@ Paso 8 — Aterrizaje. El usuario llega a Vividas, ya con contenido afín y gent
 
 ## Verificación de identidad: la barrera del primer plan
 
-La comprobación de documento y selfie no va en el alta, va como puerta justo cuando el usuario intenta unirse a su primer plan o publicar uno. En ese momento se lanza el flujo de verificación, que otorga el distintivo de verificado y queda ya hecho para siempre. Esto separa con claridad las dos capas: el 2FA protege el acceso a la cuenta; la verificación de identidad protege a la comunidad y condiciona la participación en encuentros reales. La exigencia se gradúa luego por tamaño de grupo: más rigor de verificación y reputación en planes pequeños e íntimos, más holgura en los grandes.
+La comprobación de documento y selfie no va en el alta, va como puerta justo cuando el usuario intenta unirse a su primer plan o publicar uno. La idea: la app se usa como red social sin fricción, pero para participar en encuentros reales hay que estar verificado.
+
+Sin verificar se puede:
+
+- Ver los planes: título, fecha, zona, precio, descripción y número de asistentes.
+- Seguir, dar me gusta, comentar y guardar.
+- Publicar (fotos, carruseles, vídeos, stories) y compartir.
+- Escribir a quien ya te conoce: te sigue o compartís un plan.
+
+Hace falta estar verificado para:
+
+- Apuntarse, solicitar ir o registrar la llegada a un plan.
+- Organizar un plan o emitir un directo desde un plan.
+- Entrar al chat de un plan.
+- Ver quién va a un plan (la lista de asistentes; el número se ve igual).
+- Ver la ubicación exacta de los planes íntimos (hasta 8 personas) que no son en un negocio; hasta entonces se ve la zona aproximada. Los planes secretos siguen su propia regla.
+- Escribir a quien no te conoce (solicitud de mensaje), que es el principal canal de acoso.
+- Crear perfiles profesionales.
+
+Cuando alguien sin verificar toca una de esas acciones, aparece una explicación breve, no un muro: el porqué (el texto del paso 4), qué se pide (documento y selfie, unos 2 minutos), que el documento no se enseña nunca (solo el distintivo) y que se hace una vez para siempre. Tiene dos botones, "Verificar ahora" y "Ahora no", y al verificarse se completa la acción que quería hacer.
+
+Sobre el texto: conviene no decir que "todos los perfiles que ven las publicaciones están verificados", porque para mirar no hace falta verificarse y sería falso. La garantía es que quien asiste a un plan o lo organiza está verificado; sobre las publicaciones, lo que se promete es control (quién las ve) y que se puede cambiar en cualquier momento. En ese momento se lanza el flujo de verificación, que otorga el distintivo de verificado y queda ya hecho para siempre. Esto separa con claridad las dos capas: el 2FA protege el acceso a la cuenta; la verificación de identidad protege a la comunidad y condiciona la participación en encuentros reales. La exigencia se gradúa luego por tamaño de grupo: más rigor de verificación y reputación en planes pequeños e íntimos, más holgura en los grandes.
+
+## Varios perfiles por persona
+
+Una persona puede gestionar varios perfiles desde la misma cuenta, como en Instagram, con una regla: solo uno es personal. El perfil personal es el vinculado a su identidad verificada; los demás son profesionales: un local o negocio, o un organizador o marca.
+
+- Máximo 5 perfiles por persona, contando el personal (propuesta).
+- Los perfiles profesionales no se verifican con otro documento: heredan la identidad verificada de la persona que los gestiona. Por eso, para crear uno hay que estar verificado. El distintivo de negocio verificado es aparte (reclamar tu local).
+- No se muestra públicamente quién gestiona un perfil profesional, pero sí que detrás hay una persona verificada ("Detrás hay una persona con identidad verificada"). Así cada plan publicado tiene a alguien real responsable, y una sanción a la persona alcanza a todos sus perfiles.
+- No se puede tener un segundo perfil personal (por ejemplo, uno anónimo): rompería la confianza que da "una persona, un perfil personal verificado".
+- Se cambia de perfil desde el propio perfil (tocando el @usuario) o desde Ajustes ▸ Tus perfiles, y se crea uno nuevo desde Crear ▸ Perfil profesional. El flujo de creación recuerda que ya tienes tu perfil personal y explica por qué se verifica.
 
 ## Flujo de publicación de un plan
 
@@ -562,7 +593,8 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Identidad y cuenta
 
-- Usuario. Entidad raíz. Atributos: id, tipo (particular/usuario o profesional/empresa —la cuenta profesional lleva distintivo verificado de negocio; sus condiciones y precio son una decisión de negocio abierta), nombre (máx. 30), usuario (handle único, 3–30, minúsculas, números, punto y guion bajo), email, teléfono, hash de contraseña, fecha de nacimiento (gate 18+), idioma de la app, foto, biografía (máx. 150), preferencias de valoraciones (por defecto pública o privada; quién ve las públicas: todos / seguidores / amigos; quién ve las privadas: seguidores / amigos / solo yo), ciudad o ubicación actual (opcional), idiomas hablados, intereses y categorías favoritas, perfil público o privado, visibilidad de presencia por defecto (pública o privada), modo de recepción de DMs (cerrado / bajo solicitud / abierto, por defecto bajo solicitud), permisos (quién puede seguirte, escribirte, unirse a tus planes), reputación por estrellas (agregada), índice de fiabilidad (nº de no-shows, agregado, sin detalle de eventos), fecha de alta. Derivados: contadores de seguidores/seguidos, historial de planes.
+- Persona (titular). La persona real detrás de los perfiles: email, teléfono, contraseña y 2FA, fecha de nacimiento (18+) y verificación de identidad (documento y selfie). Gestiona uno o varios Usuarios (perfiles): exactamente uno personal y hasta cuatro profesionales. Las sanciones de moderación graves se aplican a la Persona, y por tanto a todos sus perfiles.
+- Usuario (perfil). Pertenece a una Persona (persona_id); el tipo dice si es su perfil personal o uno profesional. Atributos: id, tipo (particular/usuario o profesional/empresa —la cuenta profesional lleva distintivo verificado de negocio; sus condiciones y precio son una decisión de negocio abierta), nombre (máx. 30), usuario (handle único, 3–30, minúsculas, números, punto y guion bajo), email, teléfono, hash de contraseña, fecha de nacimiento (gate 18+), idioma de la app, foto, biografía (máx. 150), preferencias de valoraciones (por defecto pública o privada; quién ve las públicas: todos / seguidores / amigos; quién ve las privadas: seguidores / amigos / solo yo), ciudad o ubicación actual (opcional), idiomas hablados, intereses y categorías favoritas, perfil público o privado, visibilidad de presencia por defecto (pública o privada), modo de recepción de DMs (cerrado / bajo solicitud / abierto, por defecto bajo solicitud), permisos (quién puede seguirte, escribirte, unirse a tus planes), reputación por estrellas (agregada), índice de fiabilidad (nº de no-shows, agregado, sin detalle de eventos), fecha de alta. Derivados: contadores de seguidores/seguidos, historial de planes.
 - Cuenta de empresa. Especialización de Usuario con tipo = empresa. Campos propios: razón/nombre comercial, horario, dirección, categoría de negocio, web, enlace de reserva, distintivo de negocio verificado. Se vincula a uno o varios Lugares.
 - Verificación de identidad. Atributos: usuario_id, proveedor, estado, referencias de documento y selfie, fecha, distintivo resultante. Es la barrera del primer plan; protege a la comunidad.
 - Verificación de negocio. Atributos: cuenta_empresa_id, prueba de titularidad/datos fiscales, estado, distintivo. Distinta de la de identidad personal.
@@ -662,4 +694,6 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Amigos = seguimiento mutuo: confirmar o añadir más adelante una lista de "amigos cercanos" elegida a mano (como en Instagram), además de los mutuos.
 - Longitud de los textos: confirmar los límites propuestos (nombre 30, usuario 3–30, descripción 150, título de plan 60…) y la frecuencia permitida para cambiar el nombre de usuario.
 - Compartir: confirmar el ajuste "permitir que compartan mis publicaciones" y el dominio de los enlaces públicos (va con la marca).
+- Varios perfiles: confirmar el máximo (propuesta: 5, uno personal) y si el perfil profesional muestra "detrás hay una persona verificada".
+- Verificación: confirmar la lista de acciones que la piden, en especial escribir a desconocidos y el umbral de "plan íntimo" (hasta 8 personas) para ocultar la ubicación exacta.
 - Objetivos numéricos de las métricas y criterios para continuar o parar tras el piloto (propuesta en el plan de validación).

@@ -167,14 +167,15 @@ function attendanceView(p){
    Lo creado en la demo (planes, publicaciones, grupos, solicitudes, asistencias)
    sobrevive a recargar la página. Si el navegador bloquea el almacenamiento,
    la demo sigue funcionando en memoria. "Restablecer demo" en Ajustes lo borra. */
-const STORE_KEY = 'planes-proto-v5';
+const STORE_KEY = 'planes-proto-v6';
 function saveState(){
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
       plans: PLANS.map(p => ({ ...p, when: p.when instanceof Date ? p.when.toISOString() : p.when })),
       posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES, ratings: RATINGS, follows: FOLLOWS, conversations: CONVERSATIONS,
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
-            name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked },
+            name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles },
+      extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested] },
     }));
   } catch (e) { /* sin almacenamiento: la demo funciona en memoria */ }
@@ -197,6 +198,7 @@ function loadState(){
   if (Array.isArray(snap.follows)) FOLLOWS.splice(0, FOLLOWS.length, ...snap.follows);
   if (Array.isArray(snap.conversations)) CONVERSATIONS.splice(0, CONVERSATIONS.length, ...snap.conversations);
   if (snap.me) Object.assign(ME, snap.me);
+  (snap.extraProfiles || []).forEach(x => { if (!USERS.some(u => u.id === x.id)) USERS.push(x); });
   if (snap.sets) {
     state.joined = new Set(snap.sets.joined || []);
     state.attended = new Set(snap.sets.attended || []);
@@ -675,6 +677,11 @@ function msgShareCard(key){
 }
 function renderChat(id){
   const c = getConversation(id), view = document.getElementById('view-page');
+  if (c && c.type === 'plan' && !isVerified()){
+    view.innerHTML = pageHead('Chat del plan') + `<div class="empty-tab"><span class="empty-ic">${ico('shield')}</span><h3>Chat solo para personas verificadas</h3><p>${VERIFY_WHY}</p>
+      <button class="btn-primary" style="margin-top:14px" onclick="requireVerified('Verifica tu identidad para entrar al chat del plan', () => renderChat('${id}'))">Verificar ahora</button></div>`;
+    return;
+  }
   if (!c){ view.innerHTML = pageHead('Mensajes') + '<div class="empty-tab"><p>Conversación no encontrada.</p></div>'; return; }
   const st = convStatus(c);
   if (c.unread && st !== 'solicitud'){ c.unread = 0; saveState(); }   // en solicitud no se marca como leído
@@ -753,6 +760,7 @@ function openDm(uid){
   const u = getUser(uid) || { name:'' };
   if ((ME.blocked || []).includes(uid)){ toast('Has bloqueado a ' + u.name); return; }
   if (u.dmMode === 'cerrado' && !knows(uid, 'me')){ toast(u.name + ' no recibe mensajes de quien no conoce'); return; }
+  if (!knows(uid, 'me') && !requireVerified('Verifica tu identidad para escribir a quien no te conoce', () => openDm(uid))) return;
   const c = dmWith(uid, true); saveState(); closeOverlay(); go('chat/' + c.id);
 }
 function openNewMessage(){
@@ -1113,6 +1121,7 @@ function renderCreateLive(){
   </div>`;
 }
 function startLive(){
+  if (!requireVerified('Verifica tu identidad para emitir desde un plan', () => startLive())) return;
   const planId = val('f-liveplan') || (PLANS[0] && PLANS[0].id);
   const p = getPlan(planId);
   const title = clip(val('f-livetitle'), 'liveTitle') || ('En directo desde ' + (p ? p.title : 'un plan'));
@@ -1187,6 +1196,7 @@ function selectPlace(id){ state.selectedPlace = state.selectedPlace===id ? null 
 /* ---------- asistencia + presencia ---------- */
 function togglePresence(id){ state.presencePublic = !state.presencePublic; renderDetail(id); }
 function registerArrival(id){
+  if (!requireVerified('Verifica tu identidad para registrar tu llegada', () => registerArrival(id))) return;
   const p = getPlan(id);
   if (state.attended.has(id)) return;
   state.attended.add(id); p.attended = (p.attended||0)+1;
@@ -1199,6 +1209,7 @@ function registerArrival(id){
 }
 function requestAttendance(id){
   if (state.requested.has(id)) return;
+  if (!requireVerified('Verifica tu identidad para solicitar ir a este plan', () => requestAttendance(id))) return;
   state.requested.add(id);
   REQUESTS.push({ id:'r'+Date.now(), planId:id, userId:'me', status:'pendiente', message:'Solicitud enviada desde el prototipo.' });
   saveState();
@@ -1230,7 +1241,8 @@ function renderDetail(id){
   const view = document.getElementById('view-detail');
 
   let cta;
-  if (attended) cta = `<button class="btn-join done" disabled>${ico('check')} Asististe · verificado</button>`;
+  if (!isVerified() && !attended && !joined) cta = `<button class="btn-join" onclick="requireVerified('Verifica tu identidad para ir a este plan', () => renderDetail('${p.id}'))">${ico('shield')} Verifícate para ir</button>`;
+  else if (attended) cta = `<button class="btn-join done" disabled>${ico('check')} Asististe · verificado</button>`;
   else if (libre || joined) cta = `<button class="btn-join" onclick="registerArrival('${p.id}')">${ico('geo')} Registrar mi llegada</button>`;
   else if (manual) cta = requested
       ? `<button class="btn-join done" disabled>${ico('clock')} Solicitud enviada</button>`
@@ -1249,7 +1261,13 @@ function renderDetail(id){
 
   const pubList = p.publicAttendees.slice(0,6);
   const av = attendanceView(p);
-  const whoBlock = `
+  const ver = isVerified();
+  // Planes íntimos fuera de un negocio: la ubicación exacta solo para verificados.
+  const hideExact = !ver && sizeBucket(p) === 'intimo' && !p.secret && !(place && place.kind === 'negocio');
+  const whoBlock = !ver ? `
+    <div class="block"><h4>Quién asiste</h4>
+      <div class="attendees"><span class="more">${ico('geo')} ${av.n} ${av.label}</span></div>
+      <button class="vg-inline" onclick="requireVerified('Verifica tu identidad para ver quién va')">${ico('shield')} Verifícate para ver quién va. ${VERIFY_WHY.split('.')[0]}.</button></div>` : `
     <div class="block"><h4>Quién asiste · verificado por ubicación</h4>
       <div class="attendees">
         ${pubList.map(a=>`<span class="avatar sm">${escapeHtml(a)}</span>`).join('')}
@@ -1280,7 +1298,7 @@ function renderDetail(id){
           ${p.secret?`<span class="tag tag-line">${ico('lock')} Secreto</span>`:''}
         </div>
         <h2>${escapeHtml(p.title)}</h2>
-        <div class="hero-loc">${ico('pin')} ${p.secret?'Zona aprox. · Madrid':(place?place.name+' · '+place.city:'Madrid')}</div>
+        <div class="hero-loc">${ico('pin')} ${p.secret||hideExact?'Zona aprox. · Madrid':(place?place.name+' · '+place.city:'Madrid')}</div>
       </div>
     </div>
     <div class="detail-body">
@@ -1308,7 +1326,7 @@ function renderDetail(id){
       <div class="block"><h4>Lugar</h4>
         <button class="place-link" onclick="go('mapa');selectPlace('${place?place.id:''}')">
           <span class="mini-thumb ${p.gradient}">${coverImg(p.photo,120)}</span>
-          <span class="pl-info"><span class="pl-n">${p.secret?'Zona aproximada · centro de Madrid':(place?place.name:'Madrid')}</span>
+          <span class="pl-info"><span class="pl-n">${p.secret?'Zona aproximada · centro de Madrid':(hideExact?'Zona aproximada · verifícate para ver el sitio':(place?place.name:'Madrid'))}</span>
             <span class="pl-s">${place?place.city+' · '+(place.kind==='negocio'?'Negocio verificado':'Lugar público')+' · '+place.hashtag:''}</span></span>
           <span class="pl-arrow">${ico('chevR')}</span></button>
       </div>
@@ -1326,6 +1344,7 @@ function renderDetail(id){
 }
 function toggleJoin(id){
   const p=getPlan(id);
+  if (!state.joined.has(id) && !requireVerified('Verifica tu identidad para apuntarte', () => toggleJoin(id))) return;
   if (state.joined.has(id)) state.joined.delete(id);
   else { state.joined.add(id); toast(p.paid?'Reserva retenida en escrow':'Apuntado · verifica tu identidad antes del plan'); }
   saveState();
@@ -1419,7 +1438,8 @@ function renderProfile(uid){
   ].join('') : '';
   const about = (biz && biz.category ? `<span class="ph-cat">${escapeHtml(biz.category)}</span>` : '')
     + (u.bio ? `<span>${escapeHtml(u.bio)}</span>` : '')
-    + (bizLinks ? `<span class="ph-biz">${bizLinks}</span>` : '');
+    + (bizLinks ? `<span class="ph-biz">${bizLinks}</span>` : '')
+    + (u.type === 'profesional' ? `<span class="ph-biz">${ico('shield')} Detrás hay una persona con identidad verificada</span>` : '');
   const nPosts = postsByUser(u.id).length, nAtt = (u.attendedPlanIds||[]).length;
   const head = me ? '' : pageHead(u.handle || u.name);   // como en Instagram: el @usuario arriba, el nombre abajo
   container.innerHTML = `${head}
@@ -1429,7 +1449,7 @@ function renderProfile(uid){
         <div class="ph-top"><span class="ph-name">${escapeHtml(u.name)} ${u.verified?`<span class="vchk">${ico('check')}</span>`:''}${typeBadge(u)}</span>
           ${me?`<button class="ph-priv" onclick="go('ajustes')">${ico('gear')} Ajustes</button>`:''}</div>
         ${!me && follows(u.id,'me') && !follows('me',u.id) ? '<span class="follows-you">Te sigue</span>' : ''}
-        ${me ? `<div class="ph-handle">${u.handle}</div>` : ''}
+        ${me ? `<button class="ph-handle ph-switch" onclick="openProfileSwitcher()">${u.handle} ${ico('chevR')}</button>${isVerified() ? '' : `<button class="vg-chip" onclick="requireVerified('Verifica tu identidad')">${ico('shield')} Sin verificar</button>`}` : ''}
         <div class="ph-stats">
           <span><b>${nPosts}</b> ${nPosts===1?'publicación':'publicaciones'}</span>
           <span><b>${nAtt}</b> ${nAtt===1?'asistido':'asistidos'}</span>
@@ -1439,7 +1459,8 @@ function renderProfile(uid){
     </div>
     ${about ? `<p class="bio">${about}</p>` : ''}
     ${me ? `<div class="ph-actions"><button class="ph-btn" onclick="go('editar-perfil')">Editar perfil</button><button class="ph-btn" onclick="toast('Compartir perfil estará disponible en la app')">Compartir perfil</button></div>`
-      : ((ME.blocked || []).includes(u.id) ? `<div class="ph-actions"><span class="hint">Has bloqueado a ${escapeHtml(u.name)}.</span><button class="ph-btn" onclick="unblockUser('${u.id}')">Desbloquear</button></div>`
+      : (u.managedBy === 'me' ? `<div class="ph-actions"><span class="hint">${ico('briefcase')} Gestionas este perfil desde tu cuenta personal.</span><button class="ph-btn" onclick="openProfileSwitcher()">Tus perfiles</button></div>`
+      : (ME.blocked || []).includes(u.id) ? `<div class="ph-actions"><span class="hint">Has bloqueado a ${escapeHtml(u.name)}.</span><button class="ph-btn" onclick="unblockUser('${u.id}')">Desbloquear</button></div>`
         : `<div class="ph-actions">${followButton(u)}<button class="ph-btn" onclick="openDm('${u.id}')">Mensaje</button></div>`)}
     ${(me && !u.profilePublic)?`<div class="priv-banner">${ico('lock')} Perfil privado: solo tus seguidores aprobados ven tu actividad.</div>`:''}
     <div class="prof-tabs" role="tablist">${[['posts','grid','Publicaciones'],['vividas','play','Vividas'],['valoraciones','star','Valoraciones']].map(([t,i,l])=>
@@ -1560,6 +1581,95 @@ function followButton(u){
   return `<button class="ph-btn ${iFollow?'':'primary'}" onclick="toggleFollow('${u.id}')">${label}</button>`;
 }
 
+/* ---------- verificación de identidad y varios perfiles ----------
+   Sin verificar se usa la app como red social: mirar planes, seguir, publicar, stories,
+   comentar y escribir a quien ya te conoce. Para participar en planes (apuntarse,
+   solicitar, registrar la llegada, organizar, emitir desde un plan, su chat), ver quién
+   va o la ubicación exacta de los planes íntimos, escribir a desconocidos o crear más
+   perfiles, hay que verificar la identidad una vez (documento y selfie).
+   Una persona tiene un solo perfil personal (el verificado) y puede gestionar varios
+   perfiles profesionales vinculados a esa identidad. */
+const MAX_PROFILES = 5;   // en total, contando el personal
+const VERIFY_WHY = 'Para que te sientas seguro al compartir y al ir a planes, todas las personas que asisten a un plan o lo organizan han verificado su identidad. Para mirar, seguir y publicar no hace falta, y tú decides en todo momento quién ve tus publicaciones.';
+function isVerified(){ return !!ME.verified; }
+// Si no está verificado, abre la explicación y guarda la acción para hacerla al verificar.
+function requireVerified(reason, after){
+  if (isVerified()) return true;
+  state.afterVerify = after || null;
+  openVerifyGate(reason);
+  return false;
+}
+function openVerifyGate(reason){
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div>
+    <div class="sheet" role="dialog" aria-label="Verifica tu identidad"><div class="sheet-list vg">
+      <span class="vg-ic">${ico('shield')}</span>
+      <h3>${escapeHtml(reason || 'Verifica tu identidad')}</h3>
+      <p>${VERIFY_WHY}</p>
+      <ul class="vg-list">
+        <li>${ico('doc')}<span>Una foto de tu DNI, NIE o pasaporte y un selfie. Unos 2 minutos.</span></li>
+        <li>${ico('lock')}<span>Tu documento no se enseña nunca: los demás solo ven el distintivo ${ico('check')}.</span></li>
+        <li>${ico('repeat')}<span>Se hace una vez y vale para siempre, también para los perfiles profesionales que gestiones.</span></li>
+      </ul>
+      <button class="btn-primary" onclick="doVerify()">${ico('shield')} Verificar ahora</button>
+      <button class="btn-ghost" onclick="closeOverlay()">Ahora no</button>
+    </div></div>`);
+}
+// Simulado: en la app real lo hace un proveedor de verificación (decisión abierta).
+function doVerify(){
+  ME.verified = true; saveState(); closeOverlay();
+  toast('Identidad verificada');
+  const after = state.afterVerify; state.afterVerify = null;
+  if (typeof after === 'function') after(); else router();
+}
+function setVerifiedSim(v){ ME.verified = v; saveState(); renderSettings(); }
+
+// Perfiles que gestiona esta persona: el personal y los profesionales vinculados.
+function myProfiles(){ return [ME].concat(USERS.filter(u => u.managedBy === 'me')); }
+function openProfileSwitcher(){
+  const list = myProfiles();
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Tus perfiles">
+    <div class="sheet-h"><span>Tus perfiles</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list">
+      ${list.map(u => `<button class="conv" onclick="closeOverlay();go('${u.id==='me'?'perfil':'u/'+u.id}')"><span class="avatar conv-av">${escapeHtml(u.initials||initials(u.name))}</span>
+        <span class="conv-main"><b>${escapeHtml(u.name)} ${u.verified?`<span class="vchk">${ico('check')}</span>`:''}</b><span>${escapeHtml(u.handle)} · ${u.id==='me' ? 'Personal' + (isVerified() ? ', verificado' : ', sin verificar') : 'Profesional'}</span></span>
+        ${u.id==='me' ? `<span class="conv-side">${ico('check')}</span>` : ''}</button>`).join('')}
+      ${list.length < MAX_PROFILES ? `<button class="sh-row" onclick="closeOverlay();go('nuevo-perfil')">${ico('plus')}<span>Añadir un perfil profesional</span>${ico('chevR')}</button>` : ''}
+      <p class="hint">Solo puedes tener un perfil personal: el que está vinculado a tu identidad. Hasta ${MAX_PROFILES} perfiles en total.</p>
+    </div></div>`);
+}
+function renderNewProfile(){
+  const view = document.getElementById('view-page');
+  const d = state.draftProfile = state.draftProfile || { kind:'negocio' };
+  view.innerHTML = pageHead('Nuevo perfil') + `<div class="page-body form">
+    <div class="vg-note">${ico('user')}<p>Ya tienes tu perfil personal, ${escapeHtml(ME.name)}. Solo hay uno por persona; este será un perfil <b>profesional</b> que gestionas tú.</p></div>
+    <div class="field"><label>Qué es</label>
+      <div class="iseg">${[['negocio','Local o negocio','briefcase'],['organizador','Organizador o marca','flag']].map(([v,l,n])=>`<button class="${d.kind===v?'active':''}" onclick="state.draftProfile.kind='${v}';renderNewProfile()">${ico(n)}<span>${l}</span></button>`).join('')}</div></div>
+    <div class="field"><label for="f-npname">Nombre ${counter('f-npname','name')}</label><input ${lim('f-npname','name')} placeholder="${d.kind==='negocio'?'Ej. Café La Esquina':'Ej. Runners del Retiro'}" /></div>
+    <div class="field"><label for="f-npuser">Nombre de usuario ${counter('f-npuser','username')}</label>
+      <div class="at-input"><span>@</span><input id="f-npuser" maxlength="${LIMITS.username}" autocapitalize="none" spellcheck="false" oninput="this.value=this.value.toLowerCase();countChars(this,'username')" /></div></div>
+    <div class="field"><label for="f-npcat">Categoría</label><select id="f-npcat">${BIZ_CATEGORIES.map(c=>`<option>${c}</option>`).join('')}</select></div>
+    <div class="field"><label for="f-npbio">Descripción ${counter('f-npbio','bio')}</label><textarea ${lim('f-npbio','bio')} rows="2"></textarea></div>
+    <div class="block"><h4>${ico('shield')} Por qué se verifica</h4>
+      <p class="hint">${VERIFY_WHY}</p>
+      <p class="hint">Este perfil queda vinculado a tu identidad verificada. No se muestra quién lo gestiona, pero cada plan que publique tiene detrás a una persona real responsable. El distintivo de negocio verificado se pide aparte.</p></div>
+    <div class="form-actions"><button class="btn-primary" onclick="createProfile()">${ico('check')} Crear perfil</button></div>
+  </div>`;
+}
+function createProfile(){
+  if (myProfiles().length >= MAX_PROFILES){ toast(`Máximo ${MAX_PROFILES} perfiles por persona`); return; }
+  const vals = { name: val('f-npname'), user: val('f-npuser'), cat: val('f-npcat'), bio: val('f-npbio') };
+  if (!requireVerified('Verifica tu identidad para crear otro perfil', () => createProfile())) return;
+  const name = clip(vals.name, 'name'); if (!name){ toast('Ponle un nombre al perfil'); return; }
+  const user = (vals.user || '').trim().toLowerCase();
+  const err = usernameError(user, null); if (err){ toast(err); return; }
+  const id = 'pr' + Date.now();
+  USERS.push({ id, name, handle:'@'+user, initials: initials(name), type:'profesional', managedBy:'me', verified:false, followers:0, following:0,
+    bio: clip(vals.bio, 'bio'), business:{ category: vals.cat || BIZ_CATEGORIES[0], web:'', address:'' }, attendedPlanIds:[] });
+  ME.profiles = myProfiles().map(u => u.id);
+  state.draftProfile = null; saveState();
+  toast('Perfil creado'); go('u/' + id);
+}
+
 /* ---------- editar perfil ---------- */
 const BIZ_CATEGORIES = ['Ocio nocturno','Restaurante','Bar','Cafetería','Cultura','Deporte','Bienestar','Organizador de eventos','Turismo','Otro'];
 function renderEditProfile(){
@@ -1615,6 +1725,8 @@ function renderSettings(){
     <div class="page-body">
       <div class="set-group"><div class="set-title">Cuenta</div>
         <button class="set-row" onclick="go('editar-perfil')"><span class="sr-ic">${ico('user')}</span><span class="sr-l">Editar perfil</span><span class="pl-arrow">${ico('chevR')}</span></button>
+        <button class="set-row" onclick="${isVerified() ? "toast('Identidad verificada: documento y selfie')" : "requireVerified('Verifica tu identidad')"}"><span class="sr-ic">${ico('shield')}</span><span class="sr-l">Identidad</span><span class="soon">${isVerified() ? 'Verificada' : 'Sin verificar'}</span><span class="pl-arrow">${ico('chevR')}</span></button>
+        <button class="set-row" onclick="openProfileSwitcher()"><span class="sr-ic">${ico('users')}</span><span class="sr-l">Tus perfiles</span><span class="soon">${myProfiles().length} de ${MAX_PROFILES}</span><span class="pl-arrow">${ico('chevR')}</span></button>
         <div class="set-row static"><span class="sr-ic">${ico('briefcase')}</span><span class="sr-l">Tipo de cuenta</span>
           <span class="pro-badge sm">${ME.type==='profesional'?'Profesional':'Usuario'}</span></div>
         <button class="set-row" onclick="toast('Cuentas profesionales: condiciones y precios pendientes de definir')"><span class="sr-ic">${ico('briefcase')}</span><span class="sr-l">Cambiar a cuenta profesional</span><span class="soon">Pendiente</span><span class="pl-arrow">${ico('chevR')}</span></button>
@@ -1652,6 +1764,10 @@ function renderSettings(){
       </div>
       <div class="set-group"><div class="set-title">Prototipo</div>
         <div class="set-row static"><span class="sr-ic">${ico('image')}</span><span class="sr-l">Fotos de Unsplash (licencia Unsplash)</span></div>
+        <div class="toggle-row set" onclick="setVerifiedSim(!ME.verified)">
+          <span class="tg-ic">${ico('shield')}</span>
+          <span class="tg-info"><span class="tg-n">Simular cuenta sin verificar</span><span class="tg-s">Para ver qué cambia antes de verificarse</span></span>
+          <span class="switch ${ME.verified?'':'on'}"><span class="knob"></span></span></div>
         <button class="set-row" onclick="resetDemo()"><span class="sr-ic">${ico('repeat')}</span><span class="sr-l">Restablecer demo</span><span class="soon">borra lo creado</span></button>
       </div>
       <div class="set-group">
@@ -1742,6 +1858,7 @@ function renderCreateChooser(){
     ${opt('image','Publicación','Foto, vídeo o carrusel para tu perfil','crear-post')}
     ${opt('group','Grupo','Reúne gente con varios admins','crear-grupo')}
     ${opt('cast','Directo','Emite en vivo desde un plan en marcha','crear-directo')}
+    ${opt('briefcase','Perfil profesional','Para tu local, negocio o marca, gestionado desde tu cuenta','nuevo-perfil')}
   </div>`;
 }
 function renderCreatePlan(){
@@ -1792,6 +1909,7 @@ function setDraft(key,v){
     : 'Cualquiera puede asistir; la presencia se verifica por ubicación.'; }
 }
 function publishPlan(){
+  if (!requireVerified('Verifica tu identidad para organizar un plan', () => publishPlan())) return;
   const d = state.draft;
   const title = clip(val('f-title'), 'planTitle') || 'Plan sin título';
   const desc = clip(val('f-desc'), 'planDesc') || 'Plan creado desde el prototipo.';
@@ -1977,6 +2095,7 @@ function router(){
     case 'grupo':   renderGroupDetail(arg); showView('page'); scrollTop('page'); break;
     case 'mensajes': renderInbox(arg); showView('page'); scrollTop('page'); break;
     case 'chat':     renderChat(arg); showView('page'); { const v = document.getElementById('view-page'); v.scrollTop = v.scrollHeight || 0; } break;
+    case 'nuevo-perfil': renderNewProfile(); showView('page'); scrollTop('page'); break;
     case 'editar-perfil': renderEditProfile(); showView('page'); scrollTop('page'); break;
     case 'ajustes': renderSettings(); showView('page'); scrollTop('page'); break;
     case 'solicitudes': renderRequests(arg); showView('page'); scrollTop('page'); break;

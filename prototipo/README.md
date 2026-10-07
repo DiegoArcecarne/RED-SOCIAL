@@ -77,6 +77,11 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    no conoces (aceptar, eliminar o bloquear; sus fotos llegan difuminadas). Un solo
    mensaje de presentación a quien no te conoce; "Quién puede escribirte" en Ajustes;
    lo que compartes "en planes" llega como mensaje.
+12. **Verificación y varios perfiles** — sin verificar se usa como red social (mirar,
+   seguir, publicar); para ir a planes, organizarlos, su chat, ver quién va o escribir a
+   desconocidos se pide verificar, con una explicación breve. Un perfil personal y
+   perfiles profesionales vinculados (Crear ▸ Perfil profesional; cambia de perfil
+   tocando tu @usuario). Pruébalo en *Ajustes ▸ Simular cuenta sin verificar*.
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.

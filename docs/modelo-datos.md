@@ -7,8 +7,9 @@ principales. Los atributos se muestran abreviados (clave y campos representativo
 
 ```mermaid
 erDiagram
+    PERSONA ||--|{ USUARIO : "gestiona (1 personal + profesionales)"
+    PERSONA ||--o| VERIFICACION_IDENTIDAD : tiene
     USUARIO ||--o| CUENTA_EMPRESA : "puede ser"
-    USUARIO ||--o| VERIFICACION_IDENTIDAD : tiene
     CUENTA_EMPRESA ||--o| VERIFICACION_NEGOCIO : tiene
     USUARIO ||--o{ SESION_DISPOSITIVO : usa
     USUARIO ||--o{ CONSENTIMIENTO : otorga
@@ -81,8 +82,17 @@ erDiagram
     PLAN ||--o| CAMPANA_BOOST : promociona
     USUARIO ||--o{ NOTIFICACION : recibe
 
+    PERSONA {
+        uuid id PK
+        string email
+        string telefono
+        date fecha_nacimiento "gate 18+"
+        bool identidad_verificada
+    }
     USUARIO {
         uuid id PK
+        uuid persona_id FK
+        bool es_personal "uno por persona"
         string tipo "particular | profesional"
         string nombre "max 30"
         string usuario "handle unico, 3-30"
@@ -90,8 +100,6 @@ erDiagram
         string valoraciones_default "publica|privada"
         string audiencia_val_publicas "todos|seguidores|amigos"
         string audiencia_val_privadas "seguidores|amigos|solo_yo"
-        string email
-        date fecha_nacimiento "gate 18+"
         bool perfil_publico
         string presencia_default "publica|privada"
         string modo_recepcion_dm "cerrado|bajo_solicitud|abierto"
@@ -110,7 +118,7 @@ erDiagram
     }
     VERIFICACION_IDENTIDAD {
         uuid id PK
-        uuid usuario_id FK
+        uuid persona_id FK
         string proveedor
         string estado
         datetime fecha

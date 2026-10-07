@@ -350,6 +350,55 @@ a.run('openShare("po8"); toggleShareTo("lucia"); toggleShareTo("ana"); sendShare
 check('compartir dentro llega como mensaje (y no salta una solicitud pendiente)', a.run('getConversation("c1").messages.length') === c1len + 1 && a.run('lastOf(getConversation("c1")).share') === 'po8'
   && a.run('dmWith("ana").messages.filter(m => m.from === "me").length') === 1);
 
+// --- Verificación de identidad: red social sin fricción, planes solo verificados ---
+a.run('setVerifiedSim(false)');
+const intimo = a.run('PLANS.find(p => !p.secret && p.placeId && getPlace(p.placeId) && getPlace(p.placeId).kind !== "negocio" && !state.joined.has(p.id) && !state.attended.has(p.id)).id');
+const gmax = a.run(`getPlan("${intimo}").groupMax`); a.run(`getPlan("${intimo}").groupMax = 8`);   // plan íntimo para la prueba
+const intimoPlace = a.run(`getPlace(getPlan("${intimo}").placeId).name`);
+a.nav('plan/' + intimo); h = a.html('view-detail'); rendered += h;
+check('sin verificar: la ficha se ve, con "Verifícate para ir"', h.includes(a.run(`getPlan("${intimo}").title`)) && h.includes('Verifícate para ir'));
+check('sin verificar: no se ve quién va (solo el número)', h.includes('Verifícate para ver quién va') && !h.includes('class="avatar sm"'));
+const noTitle = h.split(a.run(`getPlan("${intimo}").title`)).join('');   // el título lo escribe el organizador
+check('sin verificar: plan íntimo sin ubicación exacta', !noTitle.includes(intimoPlace) && h.includes('Zona aproximada'));
+a.run(`toggleJoin("${intimo}")`); h = a.html('overlay'); rendered += h;
+check('apuntarse sin verificar abre la explicación (y no apunta)', !a.run(`state.joined.has("${intimo}")`) && h.includes('Verificar ahora') && h.includes('todas las personas que asisten a un plan o lo organizan'));
+a.run('doVerify()');
+check('verificarse completa la acción pendiente', a.run('ME.verified') === true && a.run(`state.joined.has("${intimo}")`));
+a.run(`getPlan("${intimo}").groupMax = ${gmax}`);
+a.run('setVerifiedSim(false)');
+const likes1 = a.run('POSTS.find(p => p.id === "po10").likes'); a.run('likePost("po10")');
+const nP = a.run('POSTS.length'); a.run('state.draftPost = freshPostDraft(); state.draftPost.origin = "vida"; publishPost()');
+check('sin verificar: dar me gusta y publicar funcionan (red social sin fricción)', a.run('POSTS.find(p => p.id === "po10").likes') === likes1 + 1 && a.run('POSTS.length') === nP + 1);
+a.nav('chat/c2'); h = a.html('view-page');
+check('sin verificar: el chat del plan pide verificarse', h.includes('Chat solo para personas verificadas') && !h.includes('msg-input'));
+a.nav('chat/c1');
+check('sin verificar: hablar con quien ya te conoce funciona', a.html('view-page').includes('id="msg-input"'));
+a.run('closeOverlay(); openDm("ana")');
+check('sin verificar: escribir a un desconocido pide verificarse', a.html('overlay').includes('escribir a quien no te conoce'));
+a.run('closeOverlay()');
+a.nav('crear-plan'); a.run('document.getElementById("f-title").value = "Plan sin verificar"; publishPlan()');
+check('sin verificar: organizar un plan pide verificarse', a.run('PLANS[0].title') !== 'Plan sin verificar' && a.html('overlay').includes('organizar un plan'));
+a.run('closeOverlay()');
+a.nav('perfil'); h = a.html('view-perfil');
+check('perfil propio sin verificar: aviso y selector de perfiles', h.includes('Sin verificar') && h.includes('openProfileSwitcher'));
+a.nav('ajustes'); h = a.html('view-page');
+check('ajustes: identidad, tus perfiles y simulación', h.includes('Identidad') && h.includes('Tus perfiles') && h.includes('Simular cuenta sin verificar'));
+// --- Varios perfiles: uno personal verificado y profesionales vinculados ---
+a.nav('nuevo-perfil'); h = a.html('view-page'); rendered += h;
+check('nuevo perfil: solo profesional y explica por qué se verifica', h.includes('Solo hay uno por persona') && h.includes('Por qué se verifica') && h.includes('persona real responsable'));
+a.run('document.getElementById("f-npname").value = "Café La Esquina"; document.getElementById("f-npuser").value = "cafelaesquina"; createProfile()');
+check('crear perfil sin verificar pide verificarse primero', !a.run('USERS.some(u => u.handle === "@cafelaesquina")') && a.html('overlay').includes('crear otro perfil'));
+a.run('doVerify()');
+check('al verificarse se crea el perfil profesional vinculado', a.run('USERS.some(u => u.handle === "@cafelaesquina" && u.managedBy === "me" && u.type === "profesional")'));
+const proId = a.run('USERS.find(u => u.handle === "@cafelaesquina").id');
+a.nav('u/' + proId); h = a.html('view-page');
+check('perfil profesional gestionado: aviso y "persona verificada detrás"', h.includes('Gestionas este perfil') && h.includes('persona con identidad verificada'));
+a.run('openProfileSwitcher()'); h = a.html('overlay'); rendered += h;
+check('selector: perfil personal y profesionales', h.includes('Personal, verificado') && h.includes('Café La Esquina') && h.includes('Añadir un perfil profesional'));
+a.run('closeOverlay()');
+a.run('document.getElementById("f-npuser").value = "cafelaesquina"; document.getElementById("f-npname").value = "Otro"; createProfile()');
+check('el usuario del nuevo perfil también ha de ser único', a.run('USERS.filter(u => u.handle === "@cafelaesquina").length') === 1);
+
 // --- Editar perfil y longitud de los textos ---
 a.nav('perfil'); h = a.html('view-perfil');
 check('perfil propio: botón "Editar perfil"', h.includes("go('editar-perfil')"));
@@ -390,6 +439,7 @@ check('persistencia: la música de las publicaciones sobrevive', b.run('POSTS.so
 check('persistencia: el perfil editado sobrevive', b.run('ME.name') === 'Marina García' && b.run('ME.handle') === '@marina.garcia' && b.run('ME.bio.length') === 150);
 check('persistencia: valoraciones, seguimientos y preferencias sobreviven', b.run('RATINGS.some(r => r.userId === "me" && r.planId === "p6")') && b.run('areFriends("me","sara")') && b.run('ratingPrefs(ME).default') === 'privada');
 check('persistencia: conversaciones, modo de mensajes y bloqueos sobreviven', b.run('getConversation("c6").status') === 'aceptada' && b.run('dmWith("ana").status') === 'enviada' && b.run('ME.dmMode') === 'solicitud');
+check('persistencia: perfiles gestionados e identidad verificada sobreviven', b.run('USERS.some(u => u.handle === "@cafelaesquina" && u.managedBy === "me")') && b.run('ME.verified') === true);
 check('persistencia: los planes base conservan fecha futura', b.run('getPlan("p1").when > new Date()'));
 const c = createEnv({ [a.run('STORE_KEY')]: '{corrupto' });
 check('persistencia: datos corruptos no rompen la demo', c.run('PLANS.length') === 12);
