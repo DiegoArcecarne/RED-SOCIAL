@@ -1,72 +1,104 @@
 # Prototipo visual — App de planes
 
-Prototipo navegable y estático (HTML + CSS + JS vanilla, **sin frameworks ni build**)
-de la app definida en [`../PRODUCTO.md`](../PRODUCTO.md). Sirve para *ver la idea
-funcionando*, no es código de producción.
+Prototipo navegable y estático (HTML, CSS y JavaScript sin frameworks) de la app
+definida en [`../PRODUCTO.md`](../PRODUCTO.md). Sirve para *ver la idea funcionando*
+y para enseñarla; no es código de producción.
 
-## Cómo previsualizarlo
+## Cómo verlo
 
-**Opción más simple (un solo archivo):** abre `standalone.html` directamente en el
-navegador. Lleva TODO en línea (HTML + CSS + datos + JS), sin archivos externos, así
-que funciona con `file://` sin ninguna dependencia ni servidor.
+- **Lo más simple:** abre `standalone.html` en el navegador (doble clic). Lleva HTML,
+  CSS, datos y JavaScript en un único archivo y funciona sin servidor.
+- **Multi-archivo:** `index.html` (usa `styles.css`, `data.js` y `app.js`).
+- **Con servidor local:** `python3 -m http.server 8000` desde esta carpeta y abre
+  `http://localhost:8000`.
 
-**Opción multi-archivo:** abre `index.html` (usa `styles.css`, `data.js`, `app.js`).
-También funciona con `file://` porque no usa `fetch`; los datos se exponen además en
-`window` para no depender del scope compartido entre `<script>`.
+El diseño es para móvil: activa la vista móvil de las DevTools (`F12` ▸ icono de móvil).
 
-**Opción recomendada (servidor local):** desde esta carpeta,
+**Las fotos necesitan internet.** Se cargan desde Unsplash; sin conexión se ven los
+degradados de respaldo y el prototipo sigue funcionando. Fotos de
+[Unsplash](https://unsplash.com) bajo la licencia de Unsplash.
 
-```bash
-python3 -m http.server 8000
-# luego abre http://localhost:8000  en el navegador
-```
-
-Para la mejor experiencia, activa la **vista móvil** en las DevTools del navegador
-(`F12` ▸ icono de móvil), ya que el diseño es mobile-first.
+**Lo que crees se guarda en tu navegador.** Planes, publicaciones, grupos,
+solicitudes y asistencias sobreviven a recargar la página. Para volver al estado
+inicial: *Perfil ▸ Ajustes ▸ Restablecer demo*.
 
 ## Qué incluye
 
-Estética **modo oscuro tipo Instagram**, minimalista y sin emojis (los iconos son
-SVG monolínea). Tres vistas principales, con navegación por la barra inferior y por
-hash (`#/...`):
+Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de trazo fino).
 
-1. **Descubrir** (pestaña *Disponibles*) — **cuadrícula tipo Instagram de 3 columnas**
-   con 12 publicaciones; cada celda es una portada cuadrada con título mínimo, precio
-   y tamaño de grupo. Al tocar una celda se abre la ficha. Filtrable por **tamaño de
-   grupo**, **tema** y **precio**. La pestaña *Vividas* muestra aftermovies en grid;
-   *Stories* y *Menciones* quedan como placeholders.
-2. **Mapa** — lugares (negocio verificado, público, secreto) como pines sobre un
-   mapa oscuro estilizado; al tocar un pin se ven sus planes e histórico.
-3. **Ficha de plan** — detalle con KPIs, anfitrión y señales de confianza,
-   asistentes, lugar, herramientas de seguridad, reseñas y reserva (escrow para
-   planes de pago; verificación de identidad para los gratuitos). Distingue **plan
-   libre** (no hace falta apuntarse) de **plan apuntado**, muestra el **contador de
-   asistentes reales** (verificados por geolocalización), un control de **presencia
-   pública/privada** y el botón **Registrar mi llegada**.
-4. **Perfil** — usuario con **Publicaciones** y **Vividas** en grid, estadísticas,
-   badge de cuenta **profesional** y acceso a **Configuración** (toggles de perfil y
-   presencia público/privado, opciones de cuenta).
-5. **Crear** (botón central +) — chooser que abre los flujos de creación:
-   - **Plan**: título, descripción, lugar, fecha/hora, tamaño, tema, gratis/de pago,
-     portada y **tipo de asistencia (libre / con aprobación)**; opción de grupo
-     organizador. Publica un plan real que aparece en el feed.
-   - **Publicación**: foto, vídeo o **carrusel**, con vista previa, pie con menciones
-     y hashtags, y opciones tipo Instagram: ubicación, etiquetar personas, **vincular a
-     un plan**, texto alternativo, audiencia (público/seguidores/cercanos) y toggles de
-     comentarios, ocultar likes y compartir en stories.
-   - **Grupo**: nombre, descripción y miembros con **rol admin/miembro**.
-6. **Grupos** — lista de grupos y detalle con miembros y roles; los planes del grupo
-   usan a sus **admins** para aprobar solicitudes.
-7. **Solicitudes** — en un plan con aprobación, el organizador/admin **acepta o
-   rechaza** cada solicitud de asistencia.
+1. **Descubrir** — cuadrícula de 3 columnas con 12 planes, cada uno con foto
+   temática y un icono discreto de gratis o de pago. Filtros por tema, tamaño de
+   grupo y precio.
+2. **Vividas (el muro)** — lo que la gente publica, tanto de los planes como de su
+   vida, con un filtro Todo / Planes / Vida: fotos, carruseles
+   que se deslizan y vídeos (simulados con la portada en movimiento). Me gusta
+   (también con doble toque), comentarios, guardar y enlace al plan. **Compartir**:
+   enviar a quien sigues, añadir a tu story o compartir fuera (WhatsApp, Telegram,
+   copiar enlace, descargar la imagen o la hoja del móvil), con la vista previa del
+   enlace con la imagen de la publicación (Open Graph, como la imagen destacada de
+   WordPress). Solo las publicaciones públicas se comparten fuera. Los **planes** se
+   comparten igual desde su ficha (botón arriba a la derecha), con fecha, lugar y
+   precio en la vista previa. Cada 5
+   publicaciones aparece un plan que puedes hacer tú, y una tira "Ahora mismo" con
+   directos y stories.
+3. **Stories y directos** — pestaña propia con los directos en emisión y las
+   stories del día. Visor de stories a pantalla completa (avanza solo; toca a los
+   lados para navegar) y vista de directo con espectadores y chat en vivo. Desde
+   *Crear ▸ Directo* puedes emitir el tuyo.
+   La pestaña *Menciones* sigue siendo de muestra.
+4. **Música** — fotos, carruseles, vídeos y stories con canción, como en Instagram.
+   Toca la canción bajo el nombre o el altavoz sobre la imagen para escucharla; las stories
+   suenan solas y se pueden silenciar. Al crear una publicación, *Música* abre un
+   selector con buscador, filtros por ambiente y escucha previa. Las pistas son
+   originales y ficticias: se generan en el navegador (sin archivos ni canciones
+   reales), así que suenan también sin conexión. Sube el volumen del dispositivo.
+5. **Mapa** — lugares (negocio verificado, público, secreto) con sus planes.
+6. **Ficha de plan** — portada, cuenta atrás, anfitrión y señales de confianza,
+   lugar, seguridad, reseñas y reserva (escrow en los de pago). Distingue plan
+   **libre**, **apuntado** y **con aprobación**; muestra los asistentes reales y el
+   control de **presencia pública o privada**.
+7. **Perfil y Ajustes** — publicaciones (filtrables en Todo / Planes / Su vida) y
+   Vividas en cuadrícula, **Valoraciones** de los planes a los que fue (públicas o
+   privadas, en general o por plan, y quién ve cada tipo: todos, seguidores o amigos;
+   amigos = os seguís los dos), botón Seguir / Seguir también / Siguiendo / Amigos,
+   **Editar perfil** (nombre, usuario y descripción con
+   límite de caracteres y contador; el usuario se valida al escribir), insignia de cuenta
+   **profesional** y ajustes de privacidad.
+8. **Crear** (botón central) — **plan** (con tipo de asistencia y grupo
+   organizador), **publicación** (de un plan o de tu vida; foto, vídeo o carrusel, con música, ubicación, etiquetas,
+   plan vinculado, texto alternativo, audiencia y opción de compartirla en stories),
+   **grupo** (miembros con rol de admin o miembro) y **directo**.
+9. **Grupos** — miembros y roles; los admins aprueban las solicitudes de los
+   planes del grupo.
+10. **Solicitudes** — el organizador acepta o rechaza cada una. Aceptar inscribe a
+   la persona; su asistencia real se cuenta cuando llega.
+11. **Mensajes** (icono de la barra superior, con los no leídos) — Chats, chats de
+   cada plan (con punto de encuentro y "Confirmo que voy") y Solicitudes de gente que
+   no conoces (aceptar, eliminar o bloquear; sus fotos llegan difuminadas). Un solo
+   mensaje de presentación a quien no te conoce; "Quién puede escribirte" en Ajustes;
+   lo que compartes "en planes" llega como mensaje.
+12. **Verificación y varios perfiles** — sin verificar se usa como red social (mirar,
+   seguir, publicar); para ir a planes, organizarlos, su chat, ver quién va o escribir a
+   desconocidos se pide verificar, con una explicación breve. Un perfil personal y
+   perfiles profesionales vinculados (Crear ▸ Perfil profesional; cambia de perfil
+   tocando tu @usuario). Pruébalo en *Ajustes ▸ Simular cuenta sin verificar*.
 
-Las cuentas de usuario y profesional se distinguen visualmente (badge); el modelo de
-precios/condiciones de las cuentas profesionales queda como **pendiente** a propósito
-(decisión de negocio abierta).
+**Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
+visibles, para que nadie pueda deducir quién fue en privado.
 
-La estética es **sin emojis**: todos los iconos (pestañas, filtros, badges, mapa,
-barra inferior) son SVG monolínea. Los filtros de tema, tamaño de grupo y precio se
-representan con iconos.
+Los datos son de ejemplo (`data.js`). La marca ("planes") es provisional y las
+condiciones de las cuentas profesionales están pendientes de decidir.
 
-Los datos son de ejemplo (`data.js`) y coherentes con el producto. La marca
-("planes") es **provisional**: el nombre sigue siendo una decisión abierta.
+## Para desarrollar
+
+Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `app.js`).
+`standalone.html` se genera; no lo edites a mano. Desde la raíz del repositorio:
+
+```bash
+node scripts/build-standalone.js           # regenera standalone.html
+node scripts/build-standalone.js --check   # comprueba que está al día
+node scripts/smoke-test.js                 # prueba todas las vistas y flujos
+```
+
+La integración continua (`.github/workflows/prototipo.yml`) ejecuta las tres cosas
+en cada pull request.
