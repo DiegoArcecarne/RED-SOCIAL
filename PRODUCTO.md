@@ -24,6 +24,8 @@ Grafo asimétrico, tipo Instagram: uno sigue a otro sin necesidad de aprobación
 
 La privacidad se monta encima del grafo, no en lugar de él. En un perfil público, seguir es instantáneo y sin fricción. En un perfil privado, la solicitud de seguimiento requiere aprobación del titular, que es quien decide quién ve su contenido. Así, "asimétrico" no significa "sin control": el control vive en el ajuste público/privado y en los permisos granulares (quién puede seguirte, quién puede escribirte, quién puede unirse a tus planes), no en una reciprocidad obligatoria.
 
+Seguidores y amigos son cosas distintas. Seguidor es quien te sigue, lo sigas tú o no. Amigo es quien te sigue y a quien sigues: el seguimiento mutuo. No hay solicitud de amistad aparte: en cuanto los dos os seguís, sois amigos, y si uno deja de seguir, dejáis de serlo. Esto permite dar tres niveles de audiencia en todos los controles de privacidad (todos, seguidores, amigos) sin añadir otra relación que gestionar. En el perfil de otra persona el botón lo refleja: "Seguir", "Seguir también" (te sigue y tú a ella no; aparece además la etiqueta "Te sigue"), "Siguiendo" o "Amigos".
+
 Esta elección es coherente con el resto del producto: el grafo asimétrico alimenta el ranking de planes por afinidad (a quién sigues es señal de interés), la pestaña de Vividas y la distribución de aftermovies, mientras que las capas anti-acoso —modos de recepción de DMs, mención con aceptación previa, bloqueo— protegen el lado privado sin obligar a que seguir sea mutuo.
 
 ## La unidad atómica: el Plan
@@ -57,11 +59,11 @@ Nivel 3 — Experiencias de pago curadas. La oferta de calidad: vía API de Feve
 
 La app organiza el contenido en pestañas diferenciadas, no en una sola superficie mezclada. El eje estratégico son las dos primeras —Vividas y Disponibles—, que resuelven la tensión entre alma social y transacción: lo social y lo comercial en una misma superficie se canibalizan; separados, cada uno respira. Stories y Menciones son superficies de apoyo. Esta estructura, y en concreto sacar las stories de los círculos de arriba para darles pestaña propia, diferencia el producto de Instagram.
 
-Pestaña "Vividas". Feed evergreen de aftermovies de planes pasados, ordenado por algoritmo de afinidad. Es la superficie de retención, adicción y viralidad. Cada 5-6 publicaciones se inyectan 1-2 planes disponibles, al estilo de los anuncios de Instagram, con dos reglas: emparejamiento contextual (si vienes de tres aftermovies de surf, el plan inyectado es de surf, así no se siente publicidad sino "esto puedo hacerlo yo") y densidad dinámica (más planes cuando estás físicamente en un destino con inventario vivo, menos cuando navegas desde casa por inspiración). La tarjeta inyectada lleva los disparadores de conversión: cuenta atrás, plazas restantes, quién va. Las stories destacadas también aparecen integradas en este feed, no como círculos en la cabecera.
+Pestaña "Vividas". El muro: feed evergreen de lo que la gente publica de los planes —fotos, carruseles, vídeos y aftermovies—, cada publicación ligada a su plan, ordenado por algoritmo de afinidad. Es la superficie de retención, adicción y viralidad. Cada 5-6 publicaciones se inyectan 1-2 planes disponibles, al estilo de los anuncios de Instagram, con dos reglas: emparejamiento contextual (si vienes de tres aftermovies de surf, el plan inyectado es de surf, así no se siente publicidad sino "esto puedo hacerlo yo") y densidad dinámica (más planes cuando estás físicamente en un destino con inventario vivo, menos cuando navegas desde casa por inspiración). La tarjeta inyectada lleva los disparadores de conversión: cuenta atrás, plazas restantes, quién va. Las stories destacadas y los directos en curso también aparecen integrados en este feed, en una tira "Ahora mismo", no como círculos en la cabecera.
 
 Pestaña "Disponibles". Inventario perecedero, filtrable. Es la superficie de descubrimiento y conversión. Filtros: tamaño de grupo, tema, ubicación, edad, fecha, precio.
 
-Pestaña "Stories". Las stories tienen pestaña propia en lugar de la fila de círculos de Instagram. Es el espacio del "ahora mismo": contenido efímero (24 h) de planes en marcha, ambiente en vivo, gente que ya está en el sitio.
+Pestaña "Stories". Las stories tienen pestaña propia en lugar de la fila de círculos de Instagram. Es el espacio del "ahora mismo": contenido efímero (24 h) de planes en marcha, ambiente en vivo, gente que ya está en el sitio. Arriba, los directos que se están emitiendo; debajo, las stories del día, una tarjeta por persona.
 
 Pestaña "Menciones". Recoge las publicaciones, planes y stories en los que otros usuarios te mencionan o etiquetan. Una mención no aparece asociada a tu perfil hasta que la aceptas. Es a la vez una superficie de contenido y un control de privacidad: tú decides qué contenido ajeno se vincula a ti.
 
@@ -146,6 +148,52 @@ Matching ligero por idioma e intereses para mejorar la calidad del grupo, sin em
 
 Información pública del perfil: nombre y usuario, foto, biografía, ciudad o ubicación actual (opcional), idiomas, intereses y categorías favoritas, distintivo de identidad verificada, reputación por estrellas y reseñas, índice de fiabilidad e historial de planes (organizados y asistidos —estos últimos a partir de la asistencia real verificada por ubicación, sujeta a la privacidad de presencia de cada usuario), todo sujeto a la configuración de privacidad.
 
+Editar perfil. Desde el propio perfil (botón "Editar perfil", junto a "Compartir perfil") y desde Ajustes. Se pueden cambiar la foto, el nombre, el nombre de usuario y la descripción; las cuentas profesionales, además, la categoría (de una lista cerrada), la web y la dirección. Cada campo muestra un contador "usados/máximo" y no deja pasar del límite (ver "Longitud de los textos"). El nombre de usuario se valida mientras se escribe: formato y disponibilidad. Recomendación para producción: limitar los cambios de nombre de usuario (por ejemplo, dos cada 14 días, como hace Instagram) y reservar el anterior durante un tiempo para evitar suplantaciones.
+
+En el perfil de una cuenta profesional los datos de negocio se muestran sin etiquetas: la categoría en gris sobre la descripción, y la dirección y la web en una línea con iconos. El distintivo de cuenta profesional es solo un icono.
+
+### Valoraciones de planes en el perfil
+
+En el perfil se ven las valoraciones (estrellas y opinión) que la persona ha hecho de los planes a los que asistió, en una pestaña propia, "Valoraciones". Quien es dueño del perfil ve además los planes a los que asistió y aún no ha valorado, con un botón para valorarlos.
+
+Cada valoración es pública o privada:
+
+- Configuración general: por defecto, tus valoraciones son públicas o privadas (Ajustes ▸ Privacidad ▸ Valoraciones de planes).
+- Por plan: cada valoración puede seguir la configuración general o marcarse pública o privada solo para ese plan. Se cambia desde la propia valoración en tu perfil.
+
+Además, decides quién ve cada tipo:
+
+- Las públicas: todos, solo tus seguidores o solo tus amigos.
+- Las privadas: solo tus seguidores, solo tus amigos o solo tú.
+
+Reglas que acompañan:
+
+- A quien no puede ver una valoración no se le dice que existe ni cuántas hay ocultas, porque eso delataría a qué planes fue la persona.
+- Si la asistencia a un plan se registró en privado, su valoración nace privada (recomendación): una valoración pública desvelaría la asistencia.
+- La nota media de un plan cuenta todas las valoraciones, públicas y privadas, de forma anónima. La privacidad decide si la valoración aparece con tu nombre, no si cuenta.
+
+### Longitud de los textos
+
+Propuesta de límites, tomando como referencia lo habitual en redes sociales (Instagram: 30 caracteres en nombre y usuario, 150 en la biografía, 2.200 en el pie). El prototipo ya los aplica todos desde un único sitio.
+
+| Texto | Máximo | Notas |
+|---|---|---|
+| Nombre | 30 | Obligatorio. Libre: mayúsculas, tildes y espacios. |
+| Nombre de usuario | 3–30 | Único. Solo minúsculas, números, punto y guion bajo; sin punto al principio ni al final ni dos seguidos. |
+| Descripción del perfil | 150 | Opcional. |
+| Web (cuenta profesional) | 100 | Opcional. |
+| Dirección (cuenta profesional) | 120 | Opcional. La categoría se elige de una lista. |
+| Título de un plan | 60 | Cabe en la cuadrícula y en las notificaciones. |
+| Descripción de un plan | 1.000 | |
+| Pie de una publicación | 2.200 | Incluye menciones y hashtags. |
+| Texto alternativo | 250 | Accesibilidad. |
+| Comentario | 500 | |
+| Opinión al valorar un plan | 500 | Junto a 1–5 estrellas. |
+| Título de un directo | 60 | |
+| Mensaje en el chat de un directo | 200 | |
+| Nombre de un grupo | 50 | |
+| Descripción de un grupo | 300 | |
+
 Índice de fiabilidad. Se muestra de forma agregada: el número de eventos a los que el usuario no se presentó, sin desvelar cuáles. Nunca un registro público de faltas concretas.
 
 Contenido propio. Aftermovies (posts permanentes en la pestaña Vividas) y stories (efímeras), con la visibilidad que marque la configuración del perfil.
@@ -160,13 +208,24 @@ Dónde se refleja la asistencia. En dos sitios: como número de asistentes reale
 
 Privacidad de presencia, por asistencia. Cada usuario decide, para su asistencia, si es pública o privada. Pública: aparece listado entre los asistentes del plan. Privada: su asistencia solo es visible en su propio perfil y no se lista en el plan. Decisión de diseño: los asistentes en privado cuentan en el agregado del plan, pero no se muestran por identidad; así el recuento sigue siendo honesto sin exponer a quien no quiere aparecer. El valor por defecto lo fija el usuario en ajustes.
 
+Umbral de anonimato en planes pequeños. Contar a los privados en el total tiene un límite: en un plan de cuatro personas con tres caras visibles, "4 asistentes" delata que hubo alguien más y, a menudo, quién. Por eso, por debajo de un umbral (propuesta: 10 asistentes) el plan solo cuenta y muestra a los asistentes visibles; a partir del umbral muestra el total real y cuántos fueron en privado. El valor exacto del umbral es una decisión abierta; el prototipo usa 10.
+
+Método de verificación en el piloto (recomendación). La geolocalización automática implica ubicación en segundo plano, consentimientos RGPD, consumo de batería y riesgo de ubicación falseada. Para el piloto y el MVP se recomienda un check-in más barato y más difícil de falsear: un código QR que el anfitrión muestra en el sitio, o su confirmación manual. La geolocalización automática queda como objetivo de producto una vez validado el bucle.
+
 Relación con el resto del modelo. La asistencia real verificada refuerza el recuento honesto que ya buscaban la reconfirmación del día y la lista de espera, y alimenta el índice de fiabilidad: asistir construye reputación; apuntarse y no aparecer es el no-show penalizable. La geolocalización para verificar asistencia es un consentimiento separado, ya previsto en el onboarding y revocable en ajustes (RGPD). La privacidad de presencia es independiente de que el perfil sea público o privado: un perfil público puede tener asistencias privadas, y un perfil privado restringe a seguidores aprobados todo su contenido, incluidas sus Vividas.
 
 ## Publicaciones
 
 Además de los aftermovies (planes pasados) y las stories, el usuario crea publicaciones de perfil en tres formatos: foto, vídeo o carrusel (varias imágenes). Comparten un mismo flujo de subida —selección de tipo, vista previa, pie de texto y publicar— y la capa de moderación en la subida. Las publicaciones viven en el grid del perfil; cuando proceden de un plan, alimentan también las Vividas. Su visibilidad la rige el perfil (público o privado), como el resto del contenido.
 
-El flujo de creación incluye las opciones habituales de una red social, adaptadas a esta app: ubicación, etiquetado de personas, pie con menciones y hashtags, texto alternativo para accesibilidad, control de comentarios, ocultar el número de "me gusta", compartir además en stories y audiencia (público / solo seguidores / amigos cercanos). La opción propia y diferencial es vincular la publicación a un plan existente —al que se asistió o que se creó—, de modo que la publicación queda ligada a ese plan y refuerza su prueba social.
+Dos tipos de publicación, según su origen. Al crearla se elige qué se comparte:
+
+- Experiencia de un plan: va vinculada a un plan al que se asistió o que se creó. Enlaza al plan, aparece en su ficha y cuenta como prueba social del plan.
+- Momento de tu vida: una foto, carrusel o vídeo sin plan (un viaje, la familia, un domingo cualquiera). Es lo que hace que la app sea también una red social de personas y no solo un escaparate de planes; da contexto sobre quién es cada uno antes de quedar.
+
+Al entrar en el perfil de alguien, sus publicaciones se pueden filtrar en Todo, Planes y Su vida (con el número de cada una), y el muro tiene el mismo filtro (Todo, Planes, Vida). El origen no se guarda aparte: se deduce de si la publicación tiene un plan vinculado.
+
+El flujo de creación incluye las opciones habituales de una red social, adaptadas a esta app: ubicación, etiquetado de personas, pie con menciones y hashtags, texto alternativo para accesibilidad, control de comentarios, ocultar el número de "me gusta", compartir además en stories y audiencia (público / solo seguidores / amigos). La opción propia y diferencial es vincular la publicación a un plan existente —al que se asistió o que se creó—, de modo que la publicación queda ligada a ese plan y refuerza su prueba social.
 
 ## Stories: el "ahora mismo"
 
@@ -177,6 +236,29 @@ Stories: efímeras (24 h), en su propia pestaña y no en círculos de cabecera. 
 Aftermovies: permanentes, en la pestaña Vividas y organizados por hashtags. Prueba social acumulada que vende la siguiente edición del plan.
 
 La distinción es clara: stories para el ahora, efímeras, atracción inmediata; aftermovies permanentes, para descubrimiento y conversión. La visibilidad de ambas la rige el perfil (público o privado), con controles por pieza (por ejemplo, "mejores amigos" en stories).
+
+## Directos
+
+Un directo es una emisión en vivo desde un plan en marcha: el anfitrión o un asistente enseña el ambiente mientras ocurre. Es la forma más intensa del "ahora mismo": quien está cerca y lo ve puede acercarse o apuntarse a la siguiente edición, y quien está lejos lo vive y vuelve otra vez. Se ven arriba en la pestaña Stories ("En directo ahora") y en la tira "Ahora mismo" del muro, y cada directo enlaza a su plan.
+
+Propuesta de reglas:
+
+- Solo se emite desde un plan en marcha al que se asiste o que se organiza, y con la identidad verificada.
+- El chat del directo sigue las reglas de la mensajería: bloqueo, reporte y moderación automática.
+- Seguridad presencial: quien emite pide permiso antes de enfocar a alguien, y quien tiene su presencia en privado no debe salir. Un directo se puede reportar y la moderación puede cortarlo mientras se emite.
+- Al terminar no se publica solo: quien emitió puede guardar fragmentos como publicación vinculada al plan.
+
+## Música
+
+Las publicaciones y las stories pueden llevar una canción, como en Instagram: se elige al crearlas desde un selector con buscador (canción, artista o ambiente) y filtros por ambiente, se puede escuchar antes de elegirla, y luego aparece bajo el nombre del autor ("Artista · Canción"). En el muro la música no suena sola: se activa al tocar la canción o el botón de sonido del vídeo. En las stories suena al abrirlas y se puede silenciar. Nunca suena con la app en segundo plano.
+
+La música con derechos no es gratis ni automática. Usar canciones comerciales exige licencias de los titulares (discográficas y editoriales; en España, además, entidades de gestión como SGAE) o un proveedor que las agregue, y suele incluir restricciones por país y por tipo de cuenta. Propuesta, pendiente de revisión legal (esto no es asesoramiento jurídico):
+
+- Empezar con una biblioteca libre de derechos o con licencia de un proveedor de música para redes sociales, y valorar el catálogo comercial más adelante, cuando el uso lo justifique.
+- Las cuentas profesionales solo pueden usar música libre de derechos: el uso comercial (promocionar un local o un evento de pago) suele quedar fuera de las licencias de uso personal. El prototipo ya aplica esta regla en el selector.
+- La música se guarda como referencia a una pista de la biblioteca, no como audio copiado en la publicación, para poder retirarla si cambia la licencia sin borrar la publicación.
+
+En el prototipo las pistas son originales y ficticias, generadas en el propio navegador, sin archivos ni canciones reales.
 
 ## Grupos y roles
 
@@ -350,13 +432,77 @@ Condición de activación: solo después de consolidar la reputación de "aquí 
 
 ## Roadmap de lanzamiento
 
-Validación low-code primero. Antes de construir la app: landing, grupo por ciudad y pasarela de pago, con planes sembrados a mano. Es como arrancó el ganador de la categoría (Timeleft llegó a 1 M€/mes de ingresos con Typeform, WhatsApp y Stripe antes de tecnología pesada). El objetivo es validar el bucle completo —la gente se apunta, paga, sube el aftermovie, vuelve— a coste casi cero.
+Validación low-code primero. Antes de construir la app: landing, grupo por ciudad y pasarela de pago, con planes sembrados a mano. Es como arrancó el ganador de la categoría (Timeleft llegó a 1 M€/mes de ingresos con Typeform, WhatsApp y Stripe antes de tecnología pesada). El objetivo es validar el bucle completo —la gente se apunta, paga, sube el aftermovie, vuelve— a coste casi cero. El plan detallado del piloto (hipótesis, herramientas, calendario de seis semanas, métricas y criterios para continuar o parar) está en [`docs/plan-validacion-madrid.md`](docs/plan-validacion-madrid.md).
 
 Ciudad de ignición: Madrid. Con contacto ya abierto con Fever y contactos locales con acceso a eventos importantes, Madrid resuelve la parte más difícil (oferta de pago de calidad y diferencial real) y aporta densidad de demanda desde el día uno. Se enciende una ciudad primero y se prueba el bucle entero ahí; no se reparten tres a la vez para no diluir la liquidez.
 
 Expansión: Burgos y Llanes después, con el playbook probado. Burgos como ciudad real de tamaño medio con raíces y relaciones locales, y con el flujo constante de viajeros del Camino de Santiago como usuarios sociales de paso. Llanes como prueba de la tesis de destino turístico estacional. Sirven para demostrar que el modelo funciona en tres arquetipos de densidad distintos.
 
-Fever, en paralelo y por fases. Primero relación vía programa de afiliados (puerta de entrada). Después integración vía API transaccional para nutrir la pestaña de pago con inventario Fever reservable in-app y comisión compartida. El producto debe estar definido y, idealmente, con audiencia demostrable antes de la conversación seria de API. El activo propio que no depende de Fever: el grafo social, la comunidad, el motor de aftermovies y las anclas recurrentes gratuitas.
+Fever, en paralelo y por fases. Primero relación vía programa de afiliados (puerta de entrada). Después integración vía API transaccional para nutrir la pestaña de pago con inventario Fever reservable in-app y comisión compartida. El producto debe estar definido y, idealmente, con audiencia demostrable antes de la conversación seria de API. El activo propio que no depende de Fever: el grafo social, la comunidad, el motor de aftermovies y las anclas recurrentes gratuitas. Hay un borrador de propuesta, pendiente de completar con los datos del piloto, en [`docs/borrador-propuesta-fever.md`](docs/borrador-propuesta-fever.md).
+
+## Alcance del MVP (propuesta)
+
+Este documento describe el producto completo. Para lanzar, la recomendación es construir solo lo que necesita el bucle central —descubrir un plan, apuntarse, ir y volver— y dejar el resto para cuando haya datos de uso. Es una propuesta pendiente de confirmar.
+
+Dentro del MVP:
+
+- Planes: crear, descubrir (feed con filtros de tema, fecha y tamaño de grupo) y ficha de detalle.
+- Inscripción: plan libre o con aprobación, lista de apuntados y reconfirmación del día.
+- Asistencia: check-in por QR del anfitrión e índice de fiabilidad.
+- Confianza: verificación de identidad antes del primer plan, reseñas post-plan, reporte y bloqueo.
+- Pagos: planes de pago con escrow y comisión del 15%.
+- Chat de grupo de cada plan.
+- Aftermovie: subir fotos de un plan pasado a su hashtag.
+- Locales: publican sus anclas como cualquier anfitrión, con el distintivo de negocio verificado concedido a mano.
+
+Fuera del MVP (fase 2 o posterior): mensajes directos, stories, directos, música en publicaciones y stories, menciones, grupos con roles, opciones avanzadas de publicación, mapa de lugares y "reclamar tu local", monetización de cuentas de negocio (CPA, suscripción, panel), publicidad y boost, micropago de desvelo, geolocalización automática y capa de ligar.
+
+Criterio para sumar funcionalidades: una entra cuando una métrica del piloto muestra que el bucle se rompe sin ella.
+
+## Métricas
+
+Métrica principal: asistencias reales verificadas por semana en la ciudad. Resume oferta, demanda y confianza en un solo número: solo sube si hay planes, si la gente se apunta y si aparece.
+
+Embudo del bucle:
+
+| Métrica | Definición | Qué indica |
+|---|---|---|
+| Activación | % de registrados que se apuntan a su primer plan en 14 días | Si la propuesta convence |
+| Tasa de asistencia | Asistencias verificadas ÷ apuntados | Si el compromiso es real (el problema del no-show) |
+| Repetición | % de asistentes que van a otro plan en 30 días | Si el producto engancha, el factor decisivo |
+| Liquidez | % de planes publicados que alcanzan su mínimo de grupo | Si hay masa crítica |
+| Conversión a pago | % de usuarios activos que reservan un plan de pago en 60 días | Si existe el negocio |
+| Calidad | Valoración media post-plan y reportes por cada 100 asistencias | Si la experiencia y la seguridad aguantan |
+| Contenido | % de planes pasados con aftermovie | Si el motor de contenido funciona |
+
+Los objetivos concretos de cada métrica se fijan en el plan de validación.
+
+## Economía unitaria (modelo a validar)
+
+- Ingreso por reserva de pago = precio medio × 15%.
+- Contribución por reserva = ingreso − coste de la pasarela de pago − reembolsos e incidencias.
+- Valor de un usuario (LTV) ≈ reservas de pago por usuario y año × contribución por reserva × años de vida del usuario.
+- Condición de viabilidad: el LTV debe quedar claramente por encima del coste de adquirir un usuario activo (CAC); la referencia habitual es al menos tres veces.
+
+Ejemplo ilustrativo, con supuestos inventados solo para mostrar el cálculo (no es una previsión): precio medio 20 €, comisión 3 €, coste de pasarela unos 0,60 €, contribución unos 2,40 € por reserva. Con 4 reservas de pago al año y 2 años de vida, el LTV ronda los 19 €, así que el CAC tendría que quedar por debajo de unos 6 €.
+
+Lectura: con un 15% sobre tickets bajos, el margen por usuario es pequeño. El modelo depende de la frecuencia (las anclas recurrentes que traen de vuelta), de una adquisición barata (orgánica, locales, boca a boca) y de las vías de ingreso adicionales. El piloto debe medir el precio medio, la frecuencia y el CAC reales.
+
+## Competencia
+
+| Alternativa | Qué ofrece | Qué le falta frente a esta app |
+|---|---|---|
+| Timeleft | Cenas entre desconocidos en grupos pequeños, a día y hora fijos | Formato único (cena y copas); sin planes variados ni anclas gratuitas |
+| Fever | Marketplace de experiencias y entradas, con producciones propias | Vas solo o con los tuyos: no hay capa social ni planes gratis |
+| Meetup | Grupos y eventos organizados por comunidades | Foco en grupos estables y temáticos; poca capa de experiencias y de seguridad presencial |
+| Bondy | App española de planes entre desconocidos | Al revisarla al inicio del proyecto: tracción limitada y sin monetización visible |
+| Eventbrite | Venta de entradas de eventos de terceros | Es ticketing, no red social |
+| Bumble For Friends | Hacer amigos con emparejamiento uno a uno | Swipe entre personas; aquí el centro es el plan, sin emparejar |
+| GetYourGuide, Airbnb Experiences | Actividades turísticas de pago | Turismo de pago; sin planes gratuitos ni comunidad local |
+| Grupos de WhatsApp y Telegram | Gratis y ya instalados | Sin descubrimiento, verificación, reputación ni pagos |
+| Plan&Go | App española de planes, cerrada pese a tener tracción | Aviso: la tracción sin monetización no basta |
+
+El diferencial defendible es la combinación: plan, gente y reserva en una superficie; confianza diseñada como núcleo, y anclas recurrentes gratuitas que ningún marketplace tiene.
 
 ## Modelo de datos: entidades y relaciones
 
@@ -364,7 +510,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Identidad y cuenta
 
-- Usuario. Entidad raíz. Atributos: id, tipo (particular/usuario o profesional/empresa —la cuenta profesional lleva distintivo verificado de negocio; sus condiciones y precio son una decisión de negocio abierta), nombre, usuario (handle único), email, teléfono, hash de contraseña, fecha de nacimiento (gate 18+), idioma de la app, foto, biografía, ciudad o ubicación actual (opcional), idiomas hablados, intereses y categorías favoritas, perfil público o privado, visibilidad de presencia por defecto (pública o privada), modo de recepción de DMs (cerrado / bajo solicitud / abierto, por defecto bajo solicitud), permisos (quién puede seguirte, escribirte, unirse a tus planes), reputación por estrellas (agregada), índice de fiabilidad (nº de no-shows, agregado, sin detalle de eventos), fecha de alta. Derivados: contadores de seguidores/seguidos, historial de planes.
+- Usuario. Entidad raíz. Atributos: id, tipo (particular/usuario o profesional/empresa —la cuenta profesional lleva distintivo verificado de negocio; sus condiciones y precio son una decisión de negocio abierta), nombre (máx. 30), usuario (handle único, 3–30, minúsculas, números, punto y guion bajo), email, teléfono, hash de contraseña, fecha de nacimiento (gate 18+), idioma de la app, foto, biografía (máx. 150), preferencias de valoraciones (por defecto pública o privada; quién ve las públicas: todos / seguidores / amigos; quién ve las privadas: seguidores / amigos / solo yo), ciudad o ubicación actual (opcional), idiomas hablados, intereses y categorías favoritas, perfil público o privado, visibilidad de presencia por defecto (pública o privada), modo de recepción de DMs (cerrado / bajo solicitud / abierto, por defecto bajo solicitud), permisos (quién puede seguirte, escribirte, unirse a tus planes), reputación por estrellas (agregada), índice de fiabilidad (nº de no-shows, agregado, sin detalle de eventos), fecha de alta. Derivados: contadores de seguidores/seguidos, historial de planes.
 - Cuenta de empresa. Especialización de Usuario con tipo = empresa. Campos propios: razón/nombre comercial, horario, dirección, categoría de negocio, web, enlace de reserva, distintivo de negocio verificado. Se vincula a uno o varios Lugares.
 - Verificación de identidad. Atributos: usuario_id, proveedor, estado, referencias de documento y selfie, fecha, distintivo resultante. Es la barrera del primer plan; protege a la comunidad.
 - Verificación de negocio. Atributos: cuenta_empresa_id, prueba de titularidad/datos fiscales, estado, distintivo. Distinta de la de identidad personal.
@@ -385,9 +531,10 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Plan. id, tipo (social gratuito o experiencia de pago), tipo de inscripción (apuntado o libre), modo de aprobación (automática o manual, solo en apuntados), grupo_id (grupo organizador, nulo si no aplica), nivel (1 ancla recurrente / 2 usuario gratuito / 3 pago curado), anfitrión_id (Usuario o Cuenta de empresa, verificado), lugar_id o ubicación libre, ubicación oculta (bool) con zona aproximada, categoría, título, descripción, media (post foto/vídeo), fecha y hora, recurrencia (puntual o regla de recurrencia), tamaño mínimo y máximo, precio (nulo si gratuito), desvelo (importe, solo eventos especiales/saturados no de pago), requisitos de asistente (edad mínima, idioma, fiabilidad mínima, presentación requerida), política de cancelación (flexible / moderada / estricta), estado (próximo / en curso / pasado), hashtag, fecha de creación. Derivados: apuntados ahora, asistentes reales.
 - Inscripción. Relación Usuario–Plan para la participación, solo en planes apuntados. plan_id, usuario_id, estado (solicitada, aprobada, confirmada, en lista de espera, cancelada, asistió, no-show), reconfirmación del día (bool), pago_id (nulo en planes gratuitos), fecha. Es la entidad donde viven la lista de espera con sobreasignación y la reconfirmación.
 - Solicitud de asistencia. Relación Usuario–Plan en los planes con aprobación manual. plan_id, usuario_id, estado (pendiente, aceptada, rechazada), mensaje de presentación, fecha. La aceptan el anfitrión o los admins del grupo organizador; una solicitud aceptada equivale a una inscripción aprobada.
-- Asistencia real. Relación Usuario–Plan que registra la asistencia verificada por geolocalización. plan_id, usuario_id, fecha y hora, método (geolocalización), visibilidad (pública o privada). Es distinta de la Inscripción: un plan libre no tiene inscripciones pero sí asistencias reales; un plan apuntado tiene ambas. Alimenta el recuento de asistentes reales del plan y las Vividas del perfil; los registros con visibilidad privada cuentan en el agregado pero no se listan por identidad.
+- Asistencia real. Relación Usuario–Plan que registra la asistencia verificada por geolocalización. plan_id, usuario_id, fecha y hora, método (geolocalización, o QR del anfitrión en el piloto), visibilidad (pública o privada). Es distinta de la Inscripción: un plan libre no tiene inscripciones pero sí asistencias reales; un plan apuntado tiene ambas. Alimenta el recuento de asistentes reales del plan y las Vividas del perfil; los registros con visibilidad privada no se listan por identidad y solo cuentan en el total a partir del umbral de anonimato.
 - Pago. id, inscripción_id, usuario_id, importe, comisión (15% en planes de pago), tipo (reserva de evento, desvelo, boost de publicidad, suscripción, CPA), estado de escrow (retenido, liberado, reembolsado), método de pago, fecha de liberación, fecha de reembolso. Centraliza el modelo escrow y las reglas de cancelación.
 - Reseña. id, plan_id, autor_id, sujeto_id (anfitrión o asistente reseñado), estrellas, texto, fecha. Post-plan. Alimenta la reputación del usuario y, agregada, la del lugar.
+- Valoración de plan. id, plan_id, autor_id (asistente), estrellas (1–5), opinión (máx. 500), visibilidad (pública / privada / nula = la configuración general del autor), fecha. Se muestra en la pestaña Valoraciones del perfil según las preferencias del autor (Usuario: valoraciones por defecto y audiencia de las públicas y de las privadas). Cuenta, anónima, en la media del plan.
 
 ### Grupos
 
@@ -396,9 +543,14 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Contenido
 
-- Publicación. Post de perfil. id, autor_id, formato (foto / vídeo / carrusel), media (una o varias imágenes), pie de texto (con menciones @usuario y hashtags #tema), ubicación (lugar_id, opcional), usuarios etiquetados, plan vinculado (plan_id opcional; liga la publicación a un plan al que se asistió o que se creó, para que aparezca ligada a ese plan), texto alternativo (accesibilidad), audiencia (público / solo seguidores / amigos cercanos, coherente con perfil público o privado), comentarios activos (bool), ocultar likes (bool), compartir en stories (bool), likes, visibilidad, fecha. El aftermovie es una publicación especializada, ligada a un plan, que vive además en Vividas.
+- Publicación. Post de perfil. id, autor_id, formato (foto / vídeo / carrusel), media (una o varias imágenes), pie de texto (con menciones @usuario y hashtags #tema), ubicación (lugar_id, opcional), usuarios etiquetados, plan vinculado (plan_id opcional; liga la publicación a un plan al que se asistió o que se creó, para que aparezca ligada a ese plan; si no lo tiene, es una publicación de la vida del usuario, y de ahí sale el filtro Planes / Su vida del perfil), texto alternativo (accesibilidad), audiencia (público / solo seguidores / amigos —seguimiento mutuo—, coherente con perfil público o privado), comentarios activos (bool), ocultar likes (bool), compartir en stories (bool), pista_id (música, opcional), likes, visibilidad, fecha. El aftermovie es una publicación especializada, ligada a un plan, que vive además en Vividas.
 - Aftermovie. Post permanente. id, plan_id de origen, autor_id, media, hashtag(s), visibilidad (según perfil), fecha. Vive en la pestaña Vividas.
-- Story. Efímera (24 h). id, autor_id, plan_id (opcional), media, visibilidad (público / privado / mejores amigos), fecha de expiración. Vive en la pestaña Stories y puede aflorar destacada en Vividas.
+- Story. Efímera (24 h). id, autor_id, plan_id (opcional), media, pista_id (música, opcional), visibilidad (público / privado / mejores amigos), fecha de expiración. Vive en la pestaña Stories y puede aflorar destacada en Vividas.
+- Directo. id, emisor_id, plan_id (plan en marcha), título, estado (en curso o finalizado), inicio, fin. Derivado: espectadores. Su chat reutiliza la mensajería y la moderación.
+- Pista. Canción de la biblioteca de música. id, título, artista, ambiente, duración, origen de la licencia (libre de derechos / proveedor / catálogo comercial), países donde se puede usar, apta para cuentas profesionales (bool), estado (activa o retirada). Publicaciones y stories la referencian por pista_id; si se retira, la publicación se queda sin música pero no se borra.
+- Comentario. id, publicación_id, autor_id, texto, fecha. Solo cuando la publicación tiene los comentarios activos.
+- Me gusta. usuario_id, publicación_id, fecha. El contador de la publicación se deriva de aquí; "ocultar likes" solo cambia lo que ven los demás.
+- Guardado. usuario_id, publicación_id, fecha. Colección privada de cada usuario.
 - Mención. id, contenido_id (plan, story o aftermovie), usuario_mencionado_id, estado (pendiente, aceptada, rechazada). No se vincula al perfil hasta aceptarse; alimenta la pestaña Menciones.
 - Hashtag. id, texto, lugar_id o ancla asociada (opcional). Agrupa aftermovies y organiza el histórico.
 
@@ -434,7 +586,9 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Un Plan pasado genera un Aftermovie y abre Reseñas; las Reseñas alimentan la reputación del Usuario y, agregadas, la del Lugar.
 - Un Plan con aprobación manual recibe Solicitudes de asistencia; las aceptan el anfitrión o, si el plan tiene grupo, los admins del Grupo.
 - Un Grupo tiene muchos Miembros de grupo (Usuarios con rol admin o miembro) y muchos Planes; los admins aprueban las solicitudes de esos planes.
-- Un Usuario crea muchas Publicaciones (foto, vídeo o carrusel) que viven en su perfil.
+- Un Usuario crea muchas Publicaciones (foto, vídeo o carrusel) que viven en su perfil y en el muro; cada una recibe Comentarios y Me gusta.
+- Un Plan en marcha puede tener Directos, emitidos por su anfitrión o por sus asistentes.
+- Una Pista de la biblioteca puede sonar en muchas Publicaciones y Stories; cada una lleva como mucho una.
 - Un Reporte apunta a cualquier objeto (Plan, Usuario, Mensaje, Contenido, comportamiento en evento) y puede derivar en Acciones de moderación.
 
 ## Decisiones abiertas
@@ -446,3 +600,12 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Precio de las capas de cuenta de negocio: importe del CPA por asistente confirmado y cuota de la suscripción de herramientas.
 - Revisión legal de los términos: limitación de responsabilidad por encuentros presenciales, antes de lanzar.
 - Nombre y marca (el "WanderMeet" del dosier previo es genérico y débil para SEO/GEO; pendiente de trabajar).
+- Alcance del MVP: confirmar o ajustar la propuesta de la sección correspondiente.
+- Umbral de anonimato de la presencia privada (propuesta: 10 asistentes, el valor que usa el prototipo).
+- Método de check-in del piloto y del MVP: QR del anfitrión (recomendado) frente a geolocalización automática.
+- Directos: confirmar quién puede emitir (solo anfitriones o también asistentes) y si se guardan al terminar.
+- Música: biblioteca libre de derechos o proveedor con licencia para el lanzamiento, cuándo (y si) incorporar catálogo comercial, y revisión legal de las licencias por país y por tipo de cuenta.
+- Valoraciones: confirmar las audiencias propuestas (públicas para todos, seguidores o amigos; privadas para seguidores, amigos o solo yo) y si una asistencia privada debe forzar la valoración privada.
+- Amigos = seguimiento mutuo: confirmar o añadir más adelante una lista de "amigos cercanos" elegida a mano (como en Instagram), además de los mutuos.
+- Longitud de los textos: confirmar los límites propuestos (nombre 30, usuario 3–30, descripción 150, título de plan 60…) y la frecuencia permitida para cambiar el nombre de usuario.
+- Objetivos numéricos de las métricas y criterios para continuar o parar tras el piloto (propuesta en el plan de validación).
