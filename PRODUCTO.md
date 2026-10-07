@@ -170,6 +170,13 @@ Relación con el resto del modelo. La asistencia real verificada refuerza el rec
 
 Además de los aftermovies (planes pasados) y las stories, el usuario crea publicaciones de perfil en tres formatos: foto, vídeo o carrusel (varias imágenes). Comparten un mismo flujo de subida —selección de tipo, vista previa, pie de texto y publicar— y la capa de moderación en la subida. Las publicaciones viven en el grid del perfil; cuando proceden de un plan, alimentan también las Vividas. Su visibilidad la rige el perfil (público o privado), como el resto del contenido.
 
+Dos tipos de publicación, según su origen. Al crearla se elige qué se comparte:
+
+- Experiencia de un plan: va vinculada a un plan al que se asistió o que se creó. Enlaza al plan, aparece en su ficha y cuenta como prueba social del plan.
+- Momento de tu vida: una foto, carrusel o vídeo sin plan (un viaje, la familia, un domingo cualquiera). Es lo que hace que la app sea también una red social de personas y no solo un escaparate de planes; da contexto sobre quién es cada uno antes de quedar.
+
+Al entrar en el perfil de alguien, sus publicaciones se pueden filtrar en Todo, Planes y Su vida (con el número de cada una), y el muro tiene el mismo filtro (Todo, Planes, Vida). El origen no se guarda aparte: se deduce de si la publicación tiene un plan vinculado.
+
 El flujo de creación incluye las opciones habituales de una red social, adaptadas a esta app: ubicación, etiquetado de personas, pie con menciones y hashtags, texto alternativo para accesibilidad, control de comentarios, ocultar el número de "me gusta", compartir además en stories y audiencia (público / solo seguidores / amigos cercanos). La opción propia y diferencial es vincular la publicación a un plan existente —al que se asistió o que se creó—, de modo que la publicación queda ligada a ese plan y refuerza su prueba social.
 
 ## Stories: el "ahora mismo"
@@ -487,7 +494,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Contenido
 
-- Publicación. Post de perfil. id, autor_id, formato (foto / vídeo / carrusel), media (una o varias imágenes), pie de texto (con menciones @usuario y hashtags #tema), ubicación (lugar_id, opcional), usuarios etiquetados, plan vinculado (plan_id opcional; liga la publicación a un plan al que se asistió o que se creó, para que aparezca ligada a ese plan), texto alternativo (accesibilidad), audiencia (público / solo seguidores / amigos cercanos, coherente con perfil público o privado), comentarios activos (bool), ocultar likes (bool), compartir en stories (bool), pista_id (música, opcional), likes, visibilidad, fecha. El aftermovie es una publicación especializada, ligada a un plan, que vive además en Vividas.
+- Publicación. Post de perfil. id, autor_id, formato (foto / vídeo / carrusel), media (una o varias imágenes), pie de texto (con menciones @usuario y hashtags #tema), ubicación (lugar_id, opcional), usuarios etiquetados, plan vinculado (plan_id opcional; liga la publicación a un plan al que se asistió o que se creó, para que aparezca ligada a ese plan; si no lo tiene, es una publicación de la vida del usuario, y de ahí sale el filtro Planes / Su vida del perfil), texto alternativo (accesibilidad), audiencia (público / solo seguidores / amigos cercanos, coherente con perfil público o privado), comentarios activos (bool), ocultar likes (bool), compartir en stories (bool), pista_id (música, opcional), likes, visibilidad, fecha. El aftermovie es una publicación especializada, ligada a un plan, que vive además en Vividas.
 - Aftermovie. Post permanente. id, plan_id de origen, autor_id, media, hashtag(s), visibilidad (según perfil), fecha. Vive en la pestaña Vividas.
 - Story. Efímera (24 h). id, autor_id, plan_id (opcional), media, pista_id (música, opcional), visibilidad (público / privado / mejores amigos), fecha de expiración. Vive en la pestaña Stories y puede aflorar destacada en Vividas.
 - Directo. id, emisor_id, plan_id (plan en marcha), título, estado (en curso o finalizado), inicio, fin. Derivado: espectadores. Su chat reutiliza la mensajería y la moderación.

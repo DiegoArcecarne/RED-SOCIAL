@@ -199,7 +199,7 @@ erDiagram
         string pie_texto "con @menciones y #hashtags"
         uuid ubicacion_lugar_id FK "nullable"
         string usuarios_etiquetados "lista de usuario_id"
-        uuid plan_vinculado_id FK "nullable"
+        uuid plan_vinculado_id FK "null = de su vida"
         string texto_alt "accesibilidad"
         string audiencia "publico|seguidores|cercanos"
         bool comentarios_activos

@@ -483,6 +483,16 @@ body{background:#000;color:var(--ink);display:flex;justify-content:center;-webki
 .ov-post .post-top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(0,0,0,.88);border-bottom:1px solid var(--line)}
 .ov-post .post-top span{flex:1;font-weight:700;font-size:15px}
 
+/* Filtro por origen: planes o vida */
+.wall-filter{padding:10px 12px 4px}
+.prof-filter{padding:10px 12px 8px}
+.origin-seg button{flex-direction:row;justify-content:center;gap:6px;padding:8px 4px}
+.origin-seg button .ico{font-size:16px}
+.origin-seg button span{font-size:12px}
+.origin-seg em{font-style:normal;font-size:11px;color:var(--ink-dim);font-variant-numeric:tabular-nums}
+.cm-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.or-sel.wide{max-width:none;width:100%;margin-top:8px;padding:10px}
+
 /* Música */
 .post-music{background:none;border:none;color:var(--ink);font:inherit;font-size:11.5px;padding:1px 0 0;display:flex;align-items:center;gap:5px;cursor:pointer;min-width:0;max-width:100%;text-align:left}
 .post-music .ico{font-size:13px;flex:none}

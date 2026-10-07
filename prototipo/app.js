@@ -12,8 +12,10 @@ const state = {
   joined: new Set(), attended: new Set(), requested: new Set(),
   presencePublic: (typeof ME !== 'undefined') ? ME.presencePublic : true,
   profileTab: 'posts',                 // posts | vividas
+  profileFilter: 'todo',               // publicaciones del perfil: todo | plan | vida
+  wallFilter: 'todo',                  // publicaciones del muro: todo | plan | vida
   draft: { cover:'g-grape', size:'mediano', cat:'social', access:'libre', price:'gratis' },
-  draftPost: { kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' },
+  draftPost: { origin:'plan', kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' },
   storySound: true,                    // las stories suenan con su música (se puede silenciar)
   musicQuery: '', musicMood: 'todas',  // filtros del selector de música
   draftMembers: {},                    // userId -> 'admin' | 'miembro'
@@ -208,6 +210,15 @@ function setContentTab(t){ stopMusic(); state.contentTab = t; renderContent(); s
 // Publicaciones del muro, de la más reciente a la más antigua.
 function wallPosts(){ return POSTS.slice().sort((a,b)=>(a.ago||0)-(b.ago||0)); }
 
+// Filtro por origen: experiencias de planes o momentos de la vida de cada uno.
+function byOrigin(posts, f){ return f === 'todo' ? posts : posts.filter(po => postOrigin(po) === f); }
+function originFilter(posts, cur, call, vidaLabel){
+  const opts = [['todo','Todo','layers'],['plan','Planes','ticket'],['vida',vidaLabel,'heartO']];
+  return `<div class="iseg origin-seg" role="tablist">${opts.map(([v,l,n]) =>
+    `<button class="${cur===v?'active':''}" role="tab" aria-selected="${cur===v}" onclick="${call(v)}">${ico(n)}<span>${l}</span><em>${byOrigin(posts, v).length}</em></button>`).join('')}</div>`;
+}
+function setWallFilter(f){ stopMusic(); state.wallFilter = f; renderContent(); scrollTop('feed'); }
+
 // Botón de sonido sobre la foto, el carrusel o el vídeo (si la publicación lleva música).
 function soundBtn(po){
   return po.trackId ? `<button class="pm-mute ${musicNow.src===po.id?'on':''}" data-music="${po.id}" onclick="event.stopPropagation();togglePostMusic('${po.id}')" aria-label="Activar o silenciar la música">${ico('mute')}${ico('volume')}</button>` : '';
@@ -314,9 +325,11 @@ function storiesStrip(){
 }
 
 function renderWall(){
-  const posts = wallPosts();
+  const all = wallPosts();
+  const posts = byOrigin(all, state.wallFilter);
   const used = new Set();
-  let out = '';
+  let out = `<div class="wall-filter">${originFilter(all, state.wallFilter, v => `setWallFilter('${v}')`, 'Vida')}</div>`;
+  if (!posts.length) out += emptyTab('image', 'Nada por aquí todavía', 'Cuando la gente a la que sigues publique, lo verás aquí.');
   posts.forEach((po,i) => {
     out += postCard(po);
     if (i === 1) out += storiesStrip();
@@ -947,15 +960,22 @@ function resolveRequest(reqId, decision, planId){
 
 /* ---------- perfil ---------- */
 function profileGridPosts(uid){
-  const posts = postsByUser(uid);
-  if (!posts.length) return `<div class="empty-tab"><span class="empty-ic">${ico('image')}</span><p>Aún no hay publicaciones.</p></div>`;
-  return `<div class="grid">${posts.map(po=>`
+  const me = uid === 'me';
+  const all = postsByUser(uid).slice().sort((a,b)=>(a.ago||0)-(b.ago||0));
+  const f = state.profileFilter;
+  const posts = byOrigin(all, f);
+  const filter = all.length ? `<div class="prof-filter">${originFilter(all, f, v => `setProfileFilter('${v}','${uid}')`, me ? 'Tu vida' : 'Su vida')}</div>` : '';
+  const emptyText = { todo:'Aún no hay publicaciones.', plan:'Aún no hay publicaciones de planes.', vida: me ? 'Aún no has compartido nada de tu vida.' : 'Aún no ha compartido nada de su vida.' }[f];
+  if (!posts.length) return `${filter}<div class="empty-tab"><span class="empty-ic">${ico('image')}</span><p>${emptyText}</p></div>`;
+  return `${filter}<div class="grid">${posts.map(po=>{ const plan = po.planId && getPlan(po.planId);
+    return `
     <button class="cell ${po.media[0]}" onclick="openPost('${po.id}')" aria-label="${escapeHtml(po.caption)}">
       ${coverImg((po.imgs||[])[0],500)}
       <span class="cell-scrim"></span><span class="cell-corner">${ico(POST_ICON[po.kind]||'image')}</span>
-      <span class="cell-info"><span class="cell-meta">${ico('heart')} ${po.likes}</span></span>
-    </button>`).join('')}</div>`;
+      <span class="cell-info"><span class="cell-meta">${plan ? `${ico('ticket')} <span class="cm-t">${escapeHtml(plan.title)}</span>` : `${ico('heart')} ${po.likes}`}</span></span>
+    </button>`; }).join('')}</div>`;
 }
+function setProfileFilter(f, uid){ stopMusic(); state.profileFilter = f; const g = document.getElementById('profile-grid'); if (g) g.innerHTML = profileGridPosts(uid); }
 function profileGridVividas(u){
   const plans = (u.attendedPlanIds||[]).map(getPlan).filter(Boolean);
   if (!plans.length) return `<div class="empty-tab"><span class="empty-ic">${ico('play')}</span><p>Aún no hay Vividas.</p></div>`;
@@ -971,6 +991,8 @@ function renderProfile(uid){
   if (!u){ document.getElementById(me?'view-perfil':'view-page').innerHTML = '<div class="empty-tab"><p>Perfil no encontrado.</p></div>'; return; }
   const container = me ? document.getElementById('view-perfil') : document.getElementById('view-page');
   const tab = state.profileTab;
+  const fid = me ? 'me' : u.id;
+  if (state.profileFilterUid !== fid){ state.profileFilterUid = fid; state.profileFilter = 'todo'; }  // cada perfil empieza en "Todo"
   const proExtra = u.type==='profesional' ? `
     <div class="block"><h4>${ico('briefcase')} Información de negocio</h4>
       <div class="kv"><span>Categoría</span><b>${escapeHtml(u.business?.category||'—')}</b></div>
@@ -1000,7 +1022,7 @@ function renderProfile(uid){
       <button class="${tab==='posts'?'active':''}" onclick="setProfileTab('posts','${u.id}')">${ico('grid')} Publicaciones</button>
       <button class="${tab==='vividas'?'active':''}" onclick="setProfileTab('vividas','${u.id}')">${ico('play')} Vividas</button>
     </div>
-    <div id="profile-grid">${tab==='posts'?profileGridPosts(u.id):profileGridVividas(u)}</div>`;
+    <div id="profile-grid">${tab==='posts'?profileGridPosts(me?'me':u.id):profileGridVividas(u)}</div>`;
 }
 function setProfileTab(t, uid){ state.profileTab=t; renderProfile(uid==='me'?'me':uid); }
 
@@ -1199,7 +1221,7 @@ function publishPlan(){
   saveState();
   toast('Plan publicado'); go('plan/'+plan.id);
 }
-function freshPostDraft(){ return { kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' }; }
+function freshPostDraft(){ return { origin:'plan', kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' }; }
 function capturePostInputs(){
   const d=state.draftPost;
   d.caption=val('f-caption'); d.alt=val('f-alt');
@@ -1225,7 +1247,8 @@ function renderCreatePost(){
     ? `<div class="post-prev carrusel">${sample.map(([c,ph])=>`<span class="pp ${c}">${coverImg(ph,500)}</span>`).join('')}<span class="pp-dots">1 / ${sample.length}</span>${musicSticker}</div>`
     : `<div class="post-prev"><span class="pp ${sample[0][0]}">${coverImg(sample[0][1],700)}${k==='video'?`<span class="play-ov">${ico('play')}</span>`:''}${musicSticker}</span></div>`;
   // planes vinculables: a los que asististe o que creaste
-  const linkable = PLANS.filter(p=> (ME.attendedPlanIds||[]).includes(p.id) || p.host.name===ME.name);
+  const linkable = linkablePlans();
+  const fromPlan = d.origin === 'plan' && linkable.length > 0;
   const aud=[['publico','Público','globe'],['seguidores','Seguidores','users'],['cercanos','Cercanos','star']];
   const tagChips = USERS.filter(u=>u.id!=='me').map(u=>`<button class="tag-chip ${d.tags.includes(u.id)?'active':''}" onclick="togglePostTag('${u.id}')">${ico('user')} ${escapeHtml(u.name)}</button>`).join('');
   const optRow=(icon,label,key,sub='')=>`<div class="opt-row" onclick="togglePostOpt('${key}')"><span class="or-ic">${ico(icon)}</span>
@@ -1233,7 +1256,14 @@ function renderCreatePost(){
     <span class="switch ${d[key]?'on':''}"><span class="knob"></span></span></div>`;
   view.innerHTML = pageHead('Nueva publicación') + `
     <div class="page-body form">
-      <div class="field"><label>Tipo</label>
+      <div class="field"><label>Qué compartes</label>
+        <div class="iseg" id="d-postorigin">
+          <button class="${fromPlan?'active':''}" onclick="setPostField('origin','plan')">${ico('ticket')}<span>Un plan</span></button>
+          <button class="${fromPlan?'':'active'}" onclick="setPostField('origin','vida')">${ico('heartO')}<span>Tu vida</span></button></div>
+        ${fromPlan ? `<select id="f-postplan" class="or-sel wide" aria-label="Plan del que compartes la experiencia">${linkable.map(p=>`<option value="${p.id}" ${d.planId===p.id?'selected':''}>${escapeHtml(p.title)}</option>`).join('')}</select>
+          <p class="hint">Queda ligada al plan y cuenta como prueba social; en tu perfil sale dentro de "Planes".</p>`
+        : `<p class="hint">${linkable.length ? 'Un momento tuyo, sin plan: sale en tu perfil, dentro de "Tu vida".' : 'Aún no has asistido a ningún plan; puedes compartir momentos de tu vida.'}</p>`}</div>
+      <div class="field"><label>Formato</label>
         <div class="iseg" id="d-postkind">
           <button class="${k==='foto'?'active':''}" onclick="setPostField('kind','foto')">${ico('image')}<span>Foto</span></button>
           <button class="${k==='video'?'active':''}" onclick="setPostField('kind','video')">${ico('video')}<span>Vídeo</span></button>
@@ -1250,8 +1280,6 @@ function renderCreatePost(){
 
       <div class="adv-title">Añadir a la publicación</div>
       <div class="opt-list">
-        <div class="opt-row"><span class="or-ic">${ico('link')}</span><span class="or-l">Vincular a un plan<span class="or-s">aparece ligada al plan</span></span>
-          <select id="f-postplan" class="or-sel"><option value="">Ninguno</option>${linkable.map(p=>`<option value="${p.id}" ${d.planId===p.id?'selected':''}>${escapeHtml(p.title)}</option>`).join('')}</select></div>
         <div class="opt-row" onclick="openMusicPicker()"><span class="or-ic">${ico('music')}</span>
           <span class="or-l">Música<span class="or-s">${tr ? escapeHtml(trackLabel(tr)) : `Añade una canción ${{foto:'a la foto',video:'al vídeo',carrusel:'al carrusel'}[k]||'a la publicación'}`}</span></span>
           ${tr ? `<button class="or-clear" onclick="clearPostTrack(event)" aria-label="Quitar música">${ico('close')}</button>` : `<span class="pl-arrow">${ico('chevR')}</span>`}</div>
@@ -1275,6 +1303,8 @@ function renderCreatePost(){
       <div class="form-actions"><button class="btn-primary" onclick="publishPost()">${ico('check')} Publicar</button></div>
     </div>`;
 }
+// Planes que puedes vincular a una publicación: a los que asististe o que creaste.
+function linkablePlans(){ return PLANS.filter(p=> (ME.attendedPlanIds||[]).includes(p.id) || p.host.name===ME.name); }
 function setPostField(key,v){ capturePostInputs(); state.draftPost[key]=v; renderCreatePost(); }
 function togglePostTag(uid){ capturePostInputs(); const t=state.draftPost.tags; const i=t.indexOf(uid); if(i>=0) t.splice(i,1); else t.push(uid); renderCreatePost(); }
 function togglePostOpt(key){ capturePostInputs(); state.draftPost[key]=!state.draftPost[key]; renderCreatePost(); }
@@ -1288,18 +1318,22 @@ function publishPost(){
   const sample = ['1566737236500-c8ac43014a67','1495567720989-cebdbdd97913','1551632811-561732d1e306'];
   const imgs = k==='carrusel' ? sample : [sample[0]];
   const id = 'npo'+Date.now();
+  const linkable = linkablePlans();
+  const planId = (d.origin === 'plan' && linkable.length) ? (linkable.some(p => p.id === d.planId) ? d.planId : linkable[0].id) : null;
   POSTS.unshift({
     id, authorId:'me', kind:k, media, imgs, caption, likes:0, ago:0, comments:[], duration: k==='video' ? 15 : undefined,
-    placeId:d.place||null, taggedUserIds:[...d.tags], planId:d.planId||null, altText:(d.alt||'').trim(),
+    placeId:d.place||null, taggedUserIds:[...d.tags], planId, altText:(d.alt||'').trim(),
     mentions, hashtags, audience:d.audience, commentsEnabled:d.comments, hideLikes:d.hideLikes, sharedToStory:d.alsoStory,
     trackId:d.trackId||null,
   });
   const story = d.alsoStory;
-  if (story) STORIES.unshift({ id:'s'+id, userId:'me', planId:d.planId||null, img:imgs[0], minAgo:0, trackId:d.trackId||null, text:caption });
+  if (story) STORIES.unshift({ id:'s'+id, userId:'me', planId, img:imgs[0], minAgo:0, trackId:d.trackId||null, text:caption });
   state.draftPost = freshPostDraft();
   saveState();
   toast(story ? 'Publicación creada · compartida en Stories' : 'Publicación creada');
-  state.profileTab='posts'; go('perfil');
+  // Tu perfil se abre en el apartado donde ha quedado la publicación.
+  state.profileTab='posts'; state.profileFilterUid='me'; state.profileFilter = planId ? 'plan' : 'vida';
+  go('perfil');
 }
 
 /* ---------- helpers de página ---------- */

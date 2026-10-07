@@ -237,6 +237,9 @@ const ME = USERS[0]; // usuario actual
    kind: foto | video | carrusel. imgs: fotos (slug de Unsplash); media: degradado
    de respaldo por foto. planId: plan al que está vinculada. ago: horas desde que
    se publicó. duration: segundos, solo en vídeos (simulados con la portada). */
+/* Publicaciones del muro y de los perfiles. Pueden ser experiencias de un plan
+   (con planId: enlazan al plan y cuentan como prueba social) o momentos de la vida
+   de cada uno (sin planId). */
 const POSTS = [
   { id:'po7',  authorId:'azotea', planId:'p3', trackId:'t2', kind:'video', duration:24, media:['g-grape'], imgs:['1517457373958-b7bdd4587205'], ago:2,
     caption:'Sunset Sessions de anoche. Gracias a los 63 que subisteis #rooftopmadrid', likes:540,
@@ -280,6 +283,27 @@ const POSTS = [
     comments:[{userId:'lucia',text:'Qué buena pinta todo'}] },
   { id:'po6',  authorId:'me', planId:'p8', kind:'foto', media:['g-forest'], imgs:['1506126613408-eca07ce68773'], ago:140,
     caption:'Yoga en el Retiro #retiromorning', likes:44, comments:[] },
+  // Momentos de la vida de cada uno (sin plan vinculado)
+  { id:'pv1', authorId:'lucia', trackId:'t5', kind:'foto', media:['g-dark'], imgs:['1495474472287-4d71bcdd2085'], ago:5,
+    caption:'Café de domingo con mi hermana, antes de que se despierte Madrid', likes:94,
+    comments:[{userId:'ana',text:'Ese sitio tiene el mejor flat white'}] },
+  { id:'pv2', authorId:'marco', trackId:'t1', kind:'carrusel', media:['g-forest','g-sunset'], imgs:['1543466835-00a7907e9de1','1507525428034-b723cf961d3e'], ago:11,
+    caption:'Primer día de playa de Toby. No quería volver #vacaciones', likes:211,
+    comments:[{userId:'lucia',text:'Toby es el verdadero protagonista de tu perfil'},{userId:'sara',text:'Qué cara de felicidad'}] },
+  { id:'pv3', authorId:'sara', trackId:'t6', kind:'foto', media:['g-sunset'], imgs:['1484723091739-30a097e8f929'], ago:18,
+    caption:'Brunch de cumpleaños en casa. 30 y contando', likes:156,
+    comments:[{userId:'nora',text:'Felicidades, Sara'}] },
+  { id:'pv4', authorId:'nora', kind:'foto', media:['g-forest'], imgs:['1490645935967-10de6ba17061'], ago:22,
+    caption:'Primera comida en el piso nuevo de Burgos. Ya huele a casa', likes:48, comments:[] },
+  { id:'pv5', authorId:'ana', trackId:'t5', kind:'video', duration:20, media:['g-forest'], imgs:['1501785888041-af3ef285b470'], ago:34,
+    caption:'Vacaciones en los Dolomitas. El agua era así de verde de verdad', likes:183, comments:[] },
+  { id:'pv6', authorId:'me', trackId:'t1', kind:'carrusel', media:['g-sunset','g-dark'], imgs:['1500530855697-b586d89ba3ee','1519681393784-d120267933ba'], ago:36,
+    caption:'Road trip con mis padres. De noche, estrellas y cero cobertura', likes:87,
+    comments:[{userId:'david',text:'Ese cielo no es real'}] },
+  { id:'pv7', authorId:'david', trackId:'t6', kind:'foto', media:['g-sunset'], imgs:['1529156069898-49953e39b3ac'], ago:50,
+    caption:'Los de siempre, desde el colegio', likes:132, comments:[] },
+  { id:'pv8', authorId:'me', kind:'foto', media:['g-dark'], imgs:['1513475382585-d06e58bcb0e0'], ago:80,
+    caption:'Domingo de sofá y libro', likes:41, comments:[] },
 ];
 
 /* Stories (24 h): el "ahora mismo" de los planes. minAgo: minutos desde que se
@@ -361,6 +385,8 @@ const getUser  = (id) => USERS.find((u) => u.id === id);
 const getGroup = (id) => GROUPS.find((g) => g.id === id);
 const getTrack = (id) => TRACKS.find((t) => t.id === id);
 const postsByUser = (uid) => POSTS.filter((p) => p.authorId === uid);
+// Origen de una publicación: experiencia de un plan (tiene plan vinculado) o de su vida.
+const postOrigin = (po) => (po.planId ? 'plan' : 'vida');
 const requestsForPlan = (pid) => REQUESTS.filter((r) => r.planId === pid);
 
 // Exponer explícitamente en window: garantiza que app.js (otro <script>) y los
@@ -369,6 +395,6 @@ if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
     STORIES, LIVES, LIVE_CHAT, TRACKS,
-    getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, requestsForPlan,
+    getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }

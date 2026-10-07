@@ -29,7 +29,8 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
 1. **Descubrir** — cuadrícula de 3 columnas con 12 planes, cada uno con foto
    temática y un icono discreto de gratis o de pago. Filtros por tema, tamaño de
    grupo y precio.
-2. **Vividas (el muro)** — lo que la gente publica de los planes: fotos, carruseles
+2. **Vividas (el muro)** — lo que la gente publica, tanto de los planes como de su
+   vida, con un filtro Todo / Planes / Vida: fotos, carruseles
    que se deslizan y vídeos (simulados con la portada en movimiento). Me gusta
    (también con doble toque), comentarios, guardar y enlace al plan. Cada 5
    publicaciones aparece un plan que puedes hacer tú, y una tira "Ahora mismo" con
@@ -50,10 +51,11 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    lugar, seguridad, reseñas y reserva (escrow en los de pago). Distingue plan
    **libre**, **apuntado** y **con aprobación**; muestra los asistentes reales y el
    control de **presencia pública o privada**.
-7. **Perfil y Ajustes** — publicaciones y Vividas en cuadrícula, insignia de cuenta
+7. **Perfil y Ajustes** — publicaciones (filtrables en Todo / Planes / Su vida) y
+   Vividas en cuadrícula, insignia de cuenta
    **profesional** y ajustes de privacidad.
 8. **Crear** (botón central) — **plan** (con tipo de asistencia y grupo
-   organizador), **publicación** (foto, vídeo o carrusel, con música, ubicación, etiquetas,
+   organizador), **publicación** (de un plan o de tu vida; foto, vídeo o carrusel, con música, ubicación, etiquetas,
    plan vinculado, texto alternativo, audiencia y opción de compartirla en stories),
    **grupo** (miembros con rol de admin o miembro) y **directo**.
 9. **Grupos** — miembros y roles; los admins aprueban las solicitudes de los

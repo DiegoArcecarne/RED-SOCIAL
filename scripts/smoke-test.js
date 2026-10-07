@@ -106,7 +106,7 @@ check('crear: selector plan / publicación / grupo', ['crear-plan', 'crear-post'
 a.nav('crear-plan'); h = a.html('view-page'); rendered += h;
 check('crear plan: tipo de asistencia', h.includes('Tipo de asistencia'));
 a.nav('crear-post'); h = a.html('view-page'); rendered += h;
-check('crear publicación: opciones', ['Vincular a un plan', 'Música', 'Ubicación', 'Etiquetar personas', 'Texto alternativo', 'Audiencia',
+check('crear publicación: opciones', ['Qué compartes', 'Un plan', 'Tu vida', 'f-postplan', 'Música', 'Ubicación', 'Etiquetar personas', 'Texto alternativo', 'Audiencia',
   'Comentarios activos', 'Ocultar el número de Me gusta', 'Compartir también en Stories', 'cap-preview'].every((t) => h.includes(t)));
 a.nav('crear-grupo'); h = a.html('view-page'); rendered += h;
 check('crear grupo: miembros y roles', h.includes('Miembros y roles'));
@@ -166,6 +166,29 @@ a.run('closeOverlay()');
 const nStories = a.run('STORIES.length');
 a.run('state.draftPost.alsoStory = true; publishPost()');
 check('publicar con "compartir en stories" crea una story', a.run('STORIES.length') === nStories + 1);
+
+// --- Publicaciones de planes y de la vida de cada uno ---
+const nVida = a.run('POSTS.filter(p => !p.planId).length'), nPlan = a.run('POSTS.filter(p => p.planId).length');
+check('vida: hay publicaciones de planes y de la vida', nVida > 0 && nPlan > 0);
+a.run('setContentTab("vividas"); setWallFilter("vida")'); h = a.html('feed-list'); rendered += h;
+check('muro: filtro "Vida" muestra solo publicaciones sin plan', count(h, /class="post"/g) === nVida && !h.includes('post-plan'));
+a.run('setWallFilter("plan")'); h = a.html('feed-list');
+check('muro: filtro "Planes" muestra solo experiencias de planes', count(h, /class="post"/g) === nPlan);
+a.run('setWallFilter("todo")');
+a.nav('u/marco'); h = a.html('view-page'); rendered += h;
+check('perfil ajeno: filtro Todo / Planes / Su vida', h.includes('origin-seg') && h.includes('Su vida'));
+a.run('setProfileFilter("vida","marco")'); h = a.html('profile-grid');
+check('perfil ajeno: "Su vida" muestra solo sus publicaciones sin plan', count(h, /class="cell /g) === a.run('POSTS.filter(p => p.authorId === "marco" && !p.planId).length'));
+a.run('setProfileFilter("plan","marco")'); h = a.html('profile-grid');
+check('perfil ajeno: "Planes" muestra solo sus experiencias de planes', count(h, /class="cell /g) === a.run('POSTS.filter(p => p.authorId === "marco" && p.planId).length'));
+a.nav('u/lucia');
+check('cada perfil empieza en "Todo"', a.run('state.profileFilter') === 'todo');
+a.nav('crear-post'); a.run('setPostField("origin","vida")'); h = a.html('view-page');
+check('crear: "Tu vida" oculta el selector de plan', !h.includes('id="f-postplan"'));
+a.run('publishPost()');
+check('crear: publicar un momento de tu vida (sin plan)', a.run('POSTS[0].planId') === null && a.run('state.profileFilter') === 'vida');
+a.nav('crear-post'); a.run('state.draftPost = freshPostDraft(); publishPost()');
+check('crear: publicar la experiencia de un plan la vincula', a.run('linkablePlans().some(p => p.id === POSTS[0].planId)') && a.run('state.profileFilter') === 'plan');
 
 // --- Música ---
 a.nav('crear-post'); a.run('state.draftPost = freshPostDraft()');
