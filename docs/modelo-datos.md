@@ -7,11 +7,12 @@ principales. Los atributos se muestran abreviados (clave y campos representativo
 
 ```mermaid
 erDiagram
+    PERSONA ||--|{ USUARIO : "gestiona (1 personal + profesionales)"
+    PERSONA ||--o| VERIFICACION_IDENTIDAD : tiene
     USUARIO ||--o| CUENTA_EMPRESA : "puede ser"
-    USUARIO ||--o| VERIFICACION_IDENTIDAD : tiene
     CUENTA_EMPRESA ||--o| VERIFICACION_NEGOCIO : tiene
-    USUARIO ||--o{ SESION_DISPOSITIVO : usa
-    USUARIO ||--o{ CONSENTIMIENTO : otorga
+    PERSONA ||--o{ SESION_DISPOSITIVO : usa
+    PERSONA ||--o{ CONSENTIMIENTO : otorga
 
     USUARIO ||--o{ SEGUIMIENTO : "sigue a"
     USUARIO ||--o{ SEGUIMIENTO : "es seguido por"
@@ -40,7 +41,20 @@ erDiagram
     USUARIO ||--o{ PUBLICACION : crea
     PLAN ||--o{ PUBLICACION : "vinculada a"
     LUGAR ||--o{ PUBLICACION : ubica
+    PUBLICACION ||--o{ COMPARTIDO : "se comparte"
+    USUARIO ||--o{ COMPARTIDO : comparte
+    PLAN ||--o{ COMPARTIDO : "se comparte"
+    PUBLICACION ||--o{ COMENTARIO : recibe
+    USUARIO ||--o{ COMENTARIO : escribe
+    PUBLICACION ||--o{ ME_GUSTA : recibe
+    USUARIO ||--o{ ME_GUSTA : da
+    PISTA ||--o{ PUBLICACION : "suena en"
+    PISTA ||--o{ STORY : "suena en"
+    USUARIO ||--o{ DIRECTO : emite
+    PLAN ||--o{ DIRECTO : "se emite desde"
 
+    PLAN ||--o{ VALORACION_PLAN : recibe
+    USUARIO ||--o{ VALORACION_PLAN : valora
     PLAN ||--o{ RESENA : abre
     USUARIO ||--o{ RESENA : "escribe"
     USUARIO ||--o{ RESENA : "es resenado en"
@@ -68,12 +82,28 @@ erDiagram
     PLAN ||--o| CAMPANA_BOOST : promociona
     USUARIO ||--o{ NOTIFICACION : recibe
 
+    PERSONA {
+        uuid id PK
+        string email "unico, verificado por codigo"
+        string telefono "E.164, unico"
+        string password_hash "Argon2id"
+        string metodo_2fa "app|sms|email|null"
+        date fecha_nacimiento "gate 18+"
+        bool identidad_verificada
+        int intentos_fallidos
+        datetime bloqueado_hasta
+    }
     USUARIO {
         uuid id PK
+        uuid persona_id FK
+        bool es_personal "uno por persona"
         string tipo "particular | profesional"
-        string usuario "handle unico"
-        string email
-        date fecha_nacimiento "gate 18+"
+        string nombre "max 30"
+        string usuario "handle unico, 3-30"
+        string biografia "max 150"
+        string valoraciones_default "publica|privada"
+        string audiencia_val_publicas "todos|seguidores|amigos"
+        string audiencia_val_privadas "seguidores|amigos|solo_yo"
         bool perfil_publico
         string presencia_default "publica|privada"
         string modo_recepcion_dm "cerrado|bajo_solicitud|abierto"
@@ -92,7 +122,7 @@ erDiagram
     }
     VERIFICACION_IDENTIDAD {
         uuid id PK
-        uuid usuario_id FK
+        uuid persona_id FK
         string proveedor
         string estado
         datetime fecha
@@ -107,8 +137,8 @@ erDiagram
         uuid id PK
         uuid seguidor_id FK
         uuid seguido_id FK
-        string estado "activo|pendiente"
-        datetime fecha
+        string estado "activo|pendiente (perfil privado)"
+        datetime fecha "amigos = seguimiento mutuo"
     }
     BLOQUEO {
         uuid id PK
@@ -143,14 +173,17 @@ erDiagram
         decimal precio "nullable"
         decimal desvelo "solo especial/saturado no de pago"
         string politica_cancelacion "flexible|moderada|estricta"
-        string estado "proximo|en_curso|pasado"
+        string estado "proximo|en_curso|pasado|cancelado"
+        string foto "url en almacenamiento"
     }
     INSCRIPCION {
         uuid id PK
         uuid plan_id FK
         uuid usuario_id FK
-        string estado "solicitada|aprobada|confirmada|lista_espera|cancelada|asistio|no_show"
+        string estado "solicitada|aprobada|rechazada|confirmada|lista_espera|cancelada|cancelada_tarde|asistio|no_show"
+        int posicion_espera "si lista_espera"
         bool reconfirmado_dia
+        decimal reembolsado
         uuid pago_id FK "nullable"
     }
     ASISTENCIA_REAL {
@@ -158,7 +191,7 @@ erDiagram
         uuid plan_id FK
         uuid usuario_id FK
         datetime fecha_hora
-        string metodo "geolocalizacion"
+        string metodo "qr_anfitrion|manual_anfitrion|geolocalizacion"
         string visibilidad "publica|privada"
     }
     SOLICITUD_ASISTENCIA {
@@ -187,16 +220,17 @@ erDiagram
         uuid id PK
         uuid autor_id FK
         string formato "foto|video|carrusel"
-        string media "una o varias imagenes"
+        string media "1 foto, 2-10 fotos o 1 video (max 60 s) con miniatura"
         string pie_texto "con @menciones y #hashtags"
         uuid ubicacion_lugar_id FK "nullable"
         string usuarios_etiquetados "lista de usuario_id"
-        uuid plan_vinculado_id FK "nullable"
+        uuid plan_vinculado_id FK "null = de su vida"
         string texto_alt "accesibilidad"
-        string audiencia "publico|seguidores|cercanos"
+        string audiencia "publico|seguidores|amigos"
         bool comentarios_activos
         bool ocultar_likes
         bool compartir_en_stories
+        uuid pista_id FK "musica, nullable"
         int likes
         string visibilidad
     }
@@ -227,13 +261,65 @@ erDiagram
         uuid id PK
         uuid autor_id FK
         uuid plan_id FK "opcional"
+        uuid pista_id FK "musica, nullable"
         string visibilidad "publico|privado|mejores_amigos"
         datetime expira_at "24h"
     }
+    PISTA {
+        uuid id PK
+        string titulo
+        string artista
+        string ambiente
+        int duracion_s
+        string licencia "libre|proveedor|catalogo"
+        string paises "donde se puede usar"
+        bool apta_profesional
+        string estado "activa|retirada"
+    }
+    VALORACION_PLAN {
+        uuid id PK
+        uuid plan_id FK
+        uuid autor_id FK "asistente"
+        int estrellas "1-5"
+        string opinion "max 500"
+        string visibilidad "publica|privada|null=general"
+        datetime fecha
+    }
+    DIRECTO {
+        uuid id PK
+        uuid emisor_id FK
+        uuid plan_id FK "plan en marcha"
+        string titulo
+        string estado "en_curso|finalizado"
+        datetime inicio
+        datetime fin
+    }
+    COMPARTIDO {
+        uuid id PK
+        uuid publicacion_id FK "o plan_id"
+        uuid usuario_id FK
+        string destino "chat|story|whatsapp|telegram|copiar|imagen|sistema"
+        string destinatarios "si es chat"
+        datetime fecha
+    }
+    COMENTARIO {
+        uuid id PK
+        uuid publicacion_id FK
+        uuid autor_id FK
+        string texto
+        datetime fecha
+    }
+    ME_GUSTA {
+        uuid usuario_id FK
+        uuid publicacion_id FK
+        datetime fecha
+    }
     MENCION {
         uuid id PK
-        string contenido_tipo "plan|story|aftermovie"
+        string tipo "etiqueta|pie|comentario"
+        string contenido_tipo "publicacion|plan|story"
         uuid contenido_id
+        uuid autor_id FK
         uuid usuario_mencionado_id FK
         string estado "pendiente|aceptada|rechazada"
     }
@@ -241,11 +327,15 @@ erDiagram
         uuid id PK
         string tipo "chat_plan|dm"
         uuid plan_id FK "si chat_plan"
+        string estado "aceptada|solicitud|enviada"
     }
     MENSAJE {
         uuid id PK
         uuid conversacion_id FK
         uuid autor_id FK
+        string texto "max 1000"
+        string media "foto, difuminada si es de un desconocido"
+        string compartido "publicacion o plan, opcional"
         string estado "solicitud|aceptado"
         bool leido
     }
@@ -254,7 +344,8 @@ erDiagram
         uuid reportante_id FK "anonimo ante reportado"
         string objeto_tipo "plan|usuario|mensaje|contenido|evento"
         uuid objeto_id
-        string categoria
+        string categoria "spam|acoso|sexual|suplantacion|estafa|menor|peligro|otro"
+        string evidencia "p. ej. mensajes de la conversacion"
         string gravedad
         string estado "cola|en_revision|resuelto|escalado"
     }
@@ -297,20 +388,23 @@ erDiagram
     }
     CONSENTIMIENTO {
         uuid id PK
-        uuid usuario_id FK
+        uuid persona_id FK
         string tipo "terminos|privacidad|edad|codigo_conducta|ubicacion|verificacion|pagos"
         string version
     }
     SESION_DISPOSITIVO {
         uuid id PK
-        uuid usuario_id FK
+        uuid persona_id FK
         string dispositivo
         datetime ultima_actividad
     }
     NOTIFICACION {
         uuid id PK
         uuid usuario_id FK
-        string tipo
+        string tipo "recordatorio|solicitud|mensaje|cambio|plaza|despues_plan"
+        string referencia "plan, conversacion o ruta"
+        string texto
         bool leida
+        datetime fecha
     }
 ```
