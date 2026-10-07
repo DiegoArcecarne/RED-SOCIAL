@@ -220,6 +220,7 @@ const USERS = [
     bio:'Viajera y runner. Outdoor y gastronomía por Madrid.',
     profilePublic:true, presencePublic:true, followers:184, following:156,
     ratings:{ default:'publica', publica:'todos', privada:'amigos' },
+    dmMode:'solicitud',   // quién puede escribirte: cerrado | solicitud | abierto (por defecto, bajo solicitud)
     attendedPlanIds:['p1','p5','p8','p2','p3','p6','p9'] },
   { id:'azotea', name:'Azotea Círculo', handle:'@azoteacirculo', initials:'AC', type:'profesional', verified:true,
     bio:'Azotea y eventos en el centro de Madrid.', followers:5400, following:12,
@@ -412,6 +413,39 @@ const RATINGS = [
   { id:'ra15', userId:'nora', planId:'p9', stars:5, visibility:null, daysAgo:7, text:'Seis vinos y una mesa de desconocidos que ya no lo son.' },
 ];
 
+/* Mensajería. Dos tipos de conversación:
+   - dm: mensaje directo 1:1. status: 'aceptada'; 'solicitud' (te escribe alguien que no
+     conoces: cae en Solicitudes) o 'enviada' (tu primer mensaje a quien no te conoce:
+     solo uno hasta que acepte).
+   - plan: chat de grupo de un plan, para coordinarse.
+   min: minutos desde el mensaje. share: publicación ('po8') o plan ('plan:p2') compartido.
+   img: foto adjunta (las de desconocidos llegan difuminadas). */
+const CONVERSATIONS = [
+  { id:'c1', type:'dm', with:'lucia', status:'aceptada', unread:2, messages:[
+    { from:'me', text:'¡Qué bien lo pasamos en Debod!', min:1500 },
+    { from:'lucia', text:'Total. El jueves repetimos, ¿te apuntas?', min:42 },
+    { from:'lucia', share:'plan:p2', min:41 } ] },
+  { id:'c2', type:'plan', planId:'p3', members:['me','azotea','lucia','sara','marco'], unread:3, messages:[
+    { from:'azotea', text:'Hola a todos. Abrimos puertas a las 20:00; la primera consumición va incluida.', min:180 },
+    { from:'sara', text:'¿Hay sitio para dejar la bici?', min:95 },
+    { from:'azotea', text:'Sí, en el patio de la entrada.', min:90 },
+    { from:'marco', text:'Llego un poco tarde, guardadme sitio cerca del DJ', min:12 } ] },
+  { id:'c3', type:'dm', with:'marco', status:'aceptada', unread:0, messages:[
+    { from:'marco', share:'plan:p10', text:'¿Te vienes a correr el martes?', min:300 },
+    { from:'me', text:'¡Claro! ¿Ritmo suave?', min:290 },
+    { from:'marco', text:'Hay grupo de ritmo suave, sí', min:285 } ] },
+  { id:'c4', type:'plan', planId:'p5', members:['me','david','marco'], unread:0, messages:[
+    { from:'david', text:'Quedamos a las 6:15 en el parking del puerto.', min:900 },
+    { from:'marco', text:'¿Hace falta frontal?', min:880 },
+    { from:'david', text:'Sí, hasta que amanezca.', min:870 } ] },
+  { id:'c5', type:'dm', with:'david', status:'aceptada', unread:0, messages:[
+    { from:'david', share:'po11', text:'Esto te va a gustar', min:2000 } ] },
+  { id:'c6', type:'dm', with:'nora', status:'solicitud', unread:1, messages:[
+    { from:'nora', text:'¡Hola! Vi que fuiste a la cata de vinos naturales. Acabo de llegar a Burgos y busco gente para planes así.', min:65 },
+    { from:'nora', img:'1474722883778-792e7990302f', min:64 } ] },
+];
+const getConversation = (id) => CONVERSATIONS.find((c) => c.id === id);
+
 const getUser  = (id) => USERS.find((u) => u.id === id);
 const getGroup = (id) => GROUPS.find((g) => g.id === id);
 const getTrack = (id) => TRACKS.find((t) => t.id === id);
@@ -425,7 +459,7 @@ const requestsForPlan = (pid) => REQUESTS.filter((r) => r.planId === pid);
 if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
-    STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, RATINGS, follows, areFriends,
+    STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }

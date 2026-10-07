@@ -310,11 +310,15 @@ erDiagram
         uuid id PK
         string tipo "chat_plan|dm"
         uuid plan_id FK "si chat_plan"
+        string estado "aceptada|solicitud|enviada"
     }
     MENSAJE {
         uuid id PK
         uuid conversacion_id FK
         uuid autor_id FK
+        string texto "max 1000"
+        string media "foto, difuminada si es de un desconocido"
+        string compartido "publicacion o plan, opcional"
         string estado "solicitud|aceptado"
         bool leido
     }

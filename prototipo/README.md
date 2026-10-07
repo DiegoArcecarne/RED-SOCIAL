@@ -72,6 +72,11 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    planes del grupo.
 10. **Solicitudes** — el organizador acepta o rechaza cada una. Aceptar inscribe a
    la persona; su asistencia real se cuenta cuando llega.
+11. **Mensajes** (icono de la barra superior, con los no leídos) — Chats, chats de
+   cada plan (con punto de encuentro y "Confirmo que voy") y Solicitudes de gente que
+   no conoces (aceptar, eliminar o bloquear; sus fotos llegan difuminadas). Un solo
+   mensaje de presentación a quien no te conoce; "Quién puede escribirte" en Ajustes;
+   lo que compartes "en planes" llega como mensaje.
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.

@@ -305,6 +305,51 @@ check('ajustes: cambiar la configuración general afecta a las que no tienen aju
   && a.run('canSeeRating(RATINGS.find(r => r.id === "ra4"), "nora")') === true);
 a.run('state.profileTab = "posts"');
 
+// --- Mensajes: chats, chats de plan, solicitudes y capas anti-acoso ---
+a.nav('mensajes/chats'); h = a.html('view-page'); rendered += h;
+const nChats = a.run('CONVERSATIONS.filter(c => c.type === "dm" && ["aceptada","enviada"].includes(convStatus(c))).length');
+check('bandeja: pestañas Chats / Planes / Solicitudes y conversaciones', h.includes('Solicitudes') && count(a.html('conv-list'), /class="conv /g) === nChats);
+check('bandeja: insignia de no leídos', a.run('document.getElementById("dm-badge").hidden') === false && Number(a.run('document.getElementById("dm-badge").textContent')) > 0);
+a.nav('mensajes/planes');
+check('bandeja: chats de plan', count(a.html('conv-list'), /class="conv /g) === a.run('CONVERSATIONS.filter(c => c.type === "plan").length'));
+a.nav('mensajes/solicitudes'); h = a.html('view-page');
+check('bandeja: solicitudes de desconocidos', count(a.html('conv-list'), /class="conv /g) === 1 && a.html('conv-list').includes('Nora') && h.includes('No sabrán que los has leído'));
+a.nav('chat/c1'); h = a.html('view-page'); rendered += h;
+check('chat: burbujas, plan compartido y campo de mensaje', count(h, /class="msg /g) + count(h, /class="msg"/g) === a.run('getConversation("c1").messages.length') && h.includes('msg-card') && h.includes('id="msg-input" maxlength="1000"'));
+check('chat: abrirlo marca como leído', a.run('getConversation("c1").unread') === 0);
+a.run('document.getElementById("msg-input").value = "¡Me apunto!"; sendMsg("c1")');
+check('chat: enviar un mensaje', a.run('lastOf(getConversation("c1")).text') === '¡Me apunto!' && a.run('lastOf(getConversation("c1")).from') === 'me');
+a.nav('chat/c2'); h = a.html('view-page');
+check('chat de plan: nombres, punto de encuentro y confirmación del día', h.includes('msg-who') && h.includes('Punto de encuentro') && h.includes('Confirmo que voy'));
+a.nav('chat/c6'); h = a.html('view-page'); rendered += h;
+check('solicitud: aceptar / eliminar / bloquear, sin marcar como leída', h.includes('quiere enviarte un mensaje') && h.includes('acceptRequest') && h.includes('blockUser') && a.run('getConversation("c6").unread') === 1);
+check('solicitud: la foto de una desconocida llega difuminada', h.includes('msg-img blur') && h.includes('revealImg'));
+a.run('revealImg("c6", 1)');
+check('ver la foto difuminada si quieres', !a.html('view-page').includes('msg-img blur'));
+a.run('acceptRequest("c6")');
+check('aceptar la solicitud la pasa a Chats', a.run('convStatus(getConversation("c6"))') === 'aceptada' && a.html('view-page').includes('id="msg-input"'));
+a.run('openDm("ana")'); const anaC = a.run('dmWith("ana").id'); a.nav('chat/' + anaC); h = a.html('view-page');
+check('escribir a quien no te sigue: aviso de solicitud', a.run('dmWith("ana").status') === 'enviada' && h.includes('solo puedes enviar uno'));
+a.run(`document.getElementById("msg-input").value = "Hola Ana"; sendMsg("${anaC}")`); h = a.html('view-page');
+check('un solo mensaje de presentación', !h.includes('id="msg-input"') && h.includes('Solicitud enviada') && a.run(`canWrite(getConversation("${anaC}"))`) === false);
+a.run('setDmMode("abierto")');
+check('modo abierto: no hay solicitudes', a.run('CONVERSATIONS.filter(c => convStatus(c) === "solicitud").length') === 0);
+a.run('CONVERSATIONS.push({ id:"cx", type:"dm", with:"azotea", status:"solicitud", unread:1, messages:[{ from:"sara", text:"Hola", min:3 }] }); setDmMode("cerrado")');
+check('modo cerrado: los mensajes de desconocidos no llegan', a.run('convStatus(getConversation("cx"))') === 'oculta');
+a.run('setDmMode("solicitud")'); a.nav('ajustes'); h = a.html('view-page');
+check('ajustes: quién puede escribirte', h.includes('Quién puede escribirte') && h.includes("setDmMode('cerrado')") && h.includes('Recomendado'));
+a.run('blockUser("azotea")');
+check('bloquear: borra el chat, deja de seguir y no deja escribir', !a.run('CONVERSATIONS.some(c => c.with === "azotea")') && !a.run('follows("me","azotea")') && a.run('ME.blocked.includes("azotea")'));
+a.nav('u/azotea'); h = a.html('view-page');
+check('perfil bloqueado: aviso y desbloquear', h.includes('Has bloqueado a') && h.includes('unblockUser'));
+a.run('unblockUser("azotea")');
+a.nav('u/lucia'); h = a.html('view-page');
+check('perfil ajeno: botón "Mensaje"', h.includes("openDm('lucia')"));
+const c1len = a.run('getConversation("c1").messages.length');
+a.run('openShare("po8"); toggleShareTo("lucia"); toggleShareTo("ana"); sendShareInApp()');
+check('compartir dentro llega como mensaje (y no salta una solicitud pendiente)', a.run('getConversation("c1").messages.length') === c1len + 1 && a.run('lastOf(getConversation("c1")).share') === 'po8'
+  && a.run('dmWith("ana").messages.filter(m => m.from === "me").length') === 1);
+
 // --- Editar perfil y longitud de los textos ---
 a.nav('perfil'); h = a.html('view-perfil');
 check('perfil propio: botón "Editar perfil"', h.includes("go('editar-perfil')"));
@@ -344,6 +389,7 @@ check('persistencia: el me gusta y el comentario sobreviven', b.run('POSTS.find(
 check('persistencia: la música de las publicaciones sobrevive', b.run('POSTS.some(p => p.authorId === "me" && p.trackId === "t2" && p.id.startsWith("npo"))'));
 check('persistencia: el perfil editado sobrevive', b.run('ME.name') === 'Marina García' && b.run('ME.handle') === '@marina.garcia' && b.run('ME.bio.length') === 150);
 check('persistencia: valoraciones, seguimientos y preferencias sobreviven', b.run('RATINGS.some(r => r.userId === "me" && r.planId === "p6")') && b.run('areFriends("me","sara")') && b.run('ratingPrefs(ME).default') === 'privada');
+check('persistencia: conversaciones, modo de mensajes y bloqueos sobreviven', b.run('getConversation("c6").status') === 'aceptada' && b.run('dmWith("ana").status') === 'enviada' && b.run('ME.dmMode') === 'solicitud');
 check('persistencia: los planes base conservan fecha futura', b.run('getPlan("p1").when > new Date()'));
 const c = createEnv({ [a.run('STORE_KEY')]: '{corrupto' });
 check('persistencia: datos corruptos no rompen la demo', c.run('PLANS.length') === 12);

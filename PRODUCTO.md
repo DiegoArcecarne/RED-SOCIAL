@@ -191,6 +191,7 @@ Propuesta de límites, tomando como referencia lo habitual en redes sociales (In
 | Opinión al valorar un plan | 500 | Junto a 1–5 estrellas. |
 | Título de un directo | 60 | |
 | Mensaje en el chat de un directo | 200 | |
+| Mensaje (chat o directo) | 1.000 | |
 | Nombre de un grupo | 50 | |
 | Descripción de un grupo | 300 | |
 
@@ -309,6 +310,24 @@ Dos tipos de conversación. El chat de plan es grupal y contextual: al unirte a 
 Tres modos de recepción de mensajes directos, que elige el usuario: cerrado (nadie te escribe en directo), bajo solicitud (los mensajes de quien no conoces caen en una bandeja de solicitudes que aceptas o rechazas, sin confirmación de lectura hasta que aceptas) y abierto (cualquiera te escribe). El valor por defecto es "bajo solicitud", no abierto: en una app de conocer desconocidos, abrir por defecto invita al acoso.
 
 Un solo mensaje de presentación. Un desconocido solo puede enviar un primer mensaje-solicitud; no puede bombardearte hasta que respondas o aceptes. Es el patrón de Bondy, y corta de raíz el spam y el acoso por insistencia.
+
+Pantalla de mensajes. Se abre desde el icono de mensajes de la barra superior, que lleva el número de conversaciones sin leer. Tiene tres pestañas:
+
+- Chats: mensajes directos.
+- Planes: el chat de cada plan al que te has unido.
+- Solicitudes: mensajes de gente que no conoces, con su número.
+
+Hay buscador y un botón para escribir un mensaje nuevo; también se escribe desde el botón "Mensaje" del perfil de cada persona. Cuando compartes una publicación o un plan "en planes", llega como mensaje con una tarjeta que lo abre.
+
+- En una conversación directa se ve con quién hablas y vuestra relación (amigos, te sigue, le sigues). El menú ofrece ver perfil, reportar y bloquear.
+- En el chat de un plan se ve el nombre de quien escribe, y arriba queda fijado el punto de encuentro con la fecha y un botón "Confirmo que voy" para la confirmación del día. Si la ubicación es secreta, el punto de encuentro se desvela el día del plan.
+- Conocer a alguien, a efectos de mensajes, es seguirle o compartir un plan con él. Lo que llega de quien no conoces depende de tu modo de recepción:
+  - en "bajo solicitud" llega a Solicitudes, y no se marca como leído ni se avisa de la lectura hasta que aceptas;
+  - en "abierto" llega directamente;
+  - en "cerrado" no llega.
+- Una solicitud muestra el mensaje y tres botones: Aceptar, Eliminar y Bloquear. Las fotos de desconocidos llegan difuminadas, con un botón para verlas si quieres.
+- Si escribes a alguien que no te conoce, se avisa de que tu mensaje le llegará como solicitud, y después de ese único mensaje la conversación queda en espera hasta que acepte.
+- El modo de recepción se elige en Ajustes ▸ Mensajes ("Quién puede escribirte": Nadie, Bajo solicitud o Todos). Un mensaje admite hasta 1.000 caracteres.
 
 Bloqueo y reporte integrados. Bloquear a alguien implica que no te ve, no te escribe y no puede unirse a tus planes. El reporte enlaza con la capa de moderación.
 
@@ -590,8 +609,8 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Mensajería
 
-- Conversación. id, tipo (chat de plan grupal o DM 1:1), plan_id (si es chat de plan), participantes, estado. El chat de plan se crea al publicar.
-- Mensaje. id, conversación_id, autor_id, texto, media, estado (solicitud o aceptado — soporta el único mensaje de presentación y los modos de recepción), leído, fecha.
+- Conversación. id, tipo (chat de plan grupal o DM 1:1), plan_id (si es chat de plan), participantes, estado (aceptada, solicitud recibida o solicitud enviada; esta última admite un solo mensaje hasta que se acepta), no leídos por participante. El chat de plan se crea al publicar.
+- Mensaje. id, conversación_id, autor_id, texto (máx. 1.000), media (foto; difuminada si el autor es un desconocido), contenido compartido (publicación o plan, opcional), estado (solicitud o aceptado — soporta el único mensaje de presentación y los modos de recepción), leído, fecha.
 
 ### Seguridad presencial y moderación
 

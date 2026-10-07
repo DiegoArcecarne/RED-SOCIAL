@@ -127,7 +127,7 @@ function typeBadge(u){ return u.type==='profesional' ? `<span class="pro-ic" tit
 const LIMITS = {
   name:30, username:30, bio:150, web:100, address:120,
   planTitle:60, planDesc:1000, caption:2200, alt:250, comment:500,
-  liveTitle:60, liveMsg:200, groupName:50, groupAbout:300, rating:500,
+  liveTitle:60, liveMsg:200, groupName:50, groupAbout:300, rating:500, message:1000,
 };
 const USERNAME_MIN = 3;
 function clip(s, key){ return (s || '').trim().slice(0, LIMITS[key]); }
@@ -167,14 +167,14 @@ function attendanceView(p){
    Lo creado en la demo (planes, publicaciones, grupos, solicitudes, asistencias)
    sobrevive a recargar la página. Si el navegador bloquea el almacenamiento,
    la demo sigue funcionando en memoria. "Restablecer demo" en Ajustes lo borra. */
-const STORE_KEY = 'planes-proto-v4';
+const STORE_KEY = 'planes-proto-v5';
 function saveState(){
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
       plans: PLANS.map(p => ({ ...p, when: p.when instanceof Date ? p.when.toISOString() : p.when })),
-      posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES, ratings: RATINGS, follows: FOLLOWS,
+      posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES, ratings: RATINGS, follows: FOLLOWS, conversations: CONVERSATIONS,
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
-            name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings },
+            name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked },
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested] },
     }));
   } catch (e) { /* sin almacenamiento: la demo funciona en memoria */ }
@@ -195,6 +195,7 @@ function loadState(){
   if (Array.isArray(snap.stories)) STORIES.splice(0, STORIES.length, ...snap.stories);
   if (Array.isArray(snap.ratings)) RATINGS.splice(0, RATINGS.length, ...snap.ratings);
   if (Array.isArray(snap.follows)) FOLLOWS.splice(0, FOLLOWS.length, ...snap.follows);
+  if (Array.isArray(snap.conversations)) CONVERSATIONS.splice(0, CONVERSATIONS.length, ...snap.conversations);
   if (snap.me) Object.assign(ME, snap.me);
   if (snap.sets) {
     state.joined = new Set(snap.sets.joined || []);
@@ -585,6 +586,184 @@ function carouselDots(track, id){
   if (c && dots) c.textContent = (i+1) + '/' + dots.children.length;
 }
 
+/* ======================= MENSAJES ======================= */
+/* Chats de plan (grupales, para coordinarse) y mensajes directos, con las capas
+   anti-acoso de PRODUCTO.md: modos de recepción (cerrado / bajo solicitud / abierto),
+   un solo mensaje de presentación, fotos de desconocidos difuminadas, bloqueo y reporte. */
+const DM_MODES = [['cerrado','Nadie','lock'],['solicitud','Bajo solicitud','shield'],['abierto','Todos','globe']];
+const AUTO_REPLIES = ['¡Genial!', 'Me parece perfecto', 'Jajaja, sí', '¿A qué hora quedamos?', 'Te escribo luego', 'Vale, nos vemos allí'];
+function sharePlanChat(a, b){ return CONVERSATIONS.some(c => c.type === 'plan' && c.members.includes(a) && c.members.includes(b)); }
+// ¿Conoce `uid` a `other`? Le sigue o comparten un plan (en ese caso le escribe sin solicitud).
+function knows(uid, other){ return follows(uid, other) || sharePlanChat(uid, other); }
+function dmWith(uid, create){
+  let c = CONVERSATIONS.find(x => x.type === 'dm' && x.with === uid);
+  if (!c && create){
+    c = { id:'c'+Date.now()+uid, type:'dm', with:uid, status: knows(uid, 'me') ? 'aceptada' : 'enviada', unread:0, messages:[] };
+    CONVERSATIONS.unshift(c);
+  }
+  return c;
+}
+// Estado efectivo según tu modo de recepción: en "abierto" no hay solicitudes; en "cerrado"
+// los mensajes de desconocidos no te llegan.
+function convStatus(c){
+  if (c.type === 'plan') return 'plan';
+  if (c.status === 'solicitud') return ME.dmMode === 'abierto' ? 'aceptada' : (ME.dmMode === 'cerrado' ? 'oculta' : 'solicitud');
+  return c.status;
+}
+function canWrite(c){ return c.status !== 'solicitud' && !(c.status === 'enviada' && c.messages.some(m => m.from === 'me')); }
+const lastOf = (c) => c.messages[c.messages.length - 1];
+function convTitle(c){ if (c.type === 'plan'){ const p = getPlan(c.planId); return p ? p.title : 'Plan'; } return (getUser(c.with) || { name:'' }).name; }
+function convAvatar(c, cls=''){
+  if (c.type === 'plan'){ const p = getPlan(c.planId) || {}; return `<span class="conv-av plan ${p.gradient||'g-dark'} ${cls}">${coverImg(p.photo,120)}</span>`; }
+  const u = getUser(c.with) || { name:'?' }; return `<span class="avatar conv-av ${cls}">${escapeHtml(u.initials || initials(u.name))}</span>`;
+}
+function msgPreview(m, c){
+  if (!m) return 'Aún no hay mensajes';
+  const who = m.from === 'me' ? 'Tú: ' : (c.type === 'plan' ? ((getUser(m.from) || { name:'' }).name.split(' ')[0] + ': ') : '');
+  const what = m.text ? m.text : (m.share ? (String(m.share).startsWith('plan:') ? 'Ha compartido un plan' : 'Ha compartido una publicación') : (m.img ? 'Foto' : ''));
+  return who + what;
+}
+function updateDmBadge(){
+  const n = CONVERSATIONS.filter(c => c.unread > 0 && convStatus(c) !== 'oculta').length;
+  const b = document.getElementById('dm-badge'); if (!b) return;
+  b.textContent = n > 9 ? '9+' : String(n); b.hidden = n === 0;
+}
+
+function renderInbox(tab){
+  state.inboxTab = tab || state.inboxTab || 'chats';
+  const t = state.inboxTab;
+  const visible = CONVERSATIONS.filter(c => !((ME.blocked || []).includes(c.with)));
+  const groups = {
+    chats: visible.filter(c => c.type === 'dm' && ['aceptada','enviada'].includes(convStatus(c))),
+    planes: visible.filter(c => c.type === 'plan'),
+    solicitudes: visible.filter(c => convStatus(c) === 'solicitud'),
+  };
+  const view = document.getElementById('view-page');
+  const tabs = [['chats','Chats','chat'],['planes','Planes','ticket'],['solicitudes','Solicitudes','shield']];
+  view.innerHTML = `<div class="page-bar"><button class="pb-back" onclick="history.back()" aria-label="Atrás">${ico('chevL')}</button>
+      <span class="pb-title">Mensajes</span><button class="pb-back" onclick="openNewMessage()" aria-label="Nuevo mensaje">${ico('plus')}</button></div>
+    <div class="page-body inbox">
+      <div class="mp-search">${ico('search')}<input id="dm-q" placeholder="Buscar" value="${escapeHtml(state.dmQuery||'')}" oninput="state.dmQuery=this.value;renderConvList()"></div>
+      <div class="iseg origin-seg">${tabs.map(([v,l,n]) => `<button class="${t===v?'active':''}" onclick="go('mensajes/${v}')">${ico(n)}<span>${l}</span>${groups[v].length && v==='solicitudes' ? `<em>${groups[v].length}</em>` : ''}${groups[v].some(c=>c.unread) && v!=='solicitudes' ? '<i class="tab-dot"></i>' : ''}</button>`).join('')}</div>
+      ${t==='solicitudes' ? `<p class="hint">${ME.dmMode==='cerrado' ? 'Tienes los mensajes directos cerrados: quien no conoces no puede escribirte.' : (ME.dmMode==='abierto' ? 'Tienes los mensajes abiertos: cualquiera te escribe directamente.' : 'Mensajes de gente que no conoces. No sabrán que los has leído hasta que aceptes.')} <button class="link-btn" onclick="go('ajustes')">Cambiar</button></p>` : ''}
+      ${t==='planes' ? '<p class="hint">Al unirte a un plan entras en su chat para coordinaros sin dar tu teléfono.</p>' : ''}
+      <div id="conv-list"></div>
+    </div>`;
+  state.inboxList = groups[t];
+  renderConvList();
+}
+function renderConvList(){
+  const el = document.getElementById('conv-list'); if (!el) return;
+  const q = (state.dmQuery || '').trim().toLowerCase();
+  const list = (state.inboxList || []).filter(c => !q || convTitle(c).toLowerCase().includes(q))
+    .slice().sort((a,b) => ((lastOf(a)||{min:1e9}).min) - ((lastOf(b)||{min:1e9}).min));
+  el.innerHTML = list.map(c => { const m = lastOf(c);
+    return `<button class="conv ${c.unread?'unread':''}" onclick="go('chat/${c.id}')">${convAvatar(c)}
+      <span class="conv-main"><b>${escapeHtml(convTitle(c))}</b><span>${escapeHtml(msgPreview(m, c))}</span></span>
+      <span class="conv-side"><span>${m ? minLabel(m.min).replace('hace ','') : ''}</span>${c.unread ? `<i class="conv-dot">${c.unread}</i>` : ''}</span></button>`; }).join('')
+    || `<div class="empty-tab"><span class="empty-ic">${ico('chat')}</span><p>${q ? 'Sin resultados.' : 'No hay conversaciones aquí.'}</p></div>`;
+}
+
+function msgShareCard(key){
+  const x = findShare(key); if (!x) return '<span class="hint">Contenido no disponible</span>';
+  if (isPlan(x)){ const place = getPlace(x.placeId);
+    return `<button class="msg-card" onclick="go('plan/${x.id}')"><span class="mc-img ${x.gradient}">${coverImg(x.photo,400)}</span>
+      <span class="mc-txt"><b>${escapeHtml(x.title)}</b><span>${fmtWhen(x.when)} · ${escapeHtml(x.secret ? 'Zona aproximada' : (place ? place.name : 'Madrid'))}</span></span></button>`; }
+  const u = getUser(x.authorId) || { name:'' };
+  return `<button class="msg-card" onclick="openPost('${x.id}')"><span class="mc-img ${(x.media||[])[0]||'g-dark'}">${coverImg((x.imgs||[])[0],400)}</span>
+    <span class="mc-txt"><b>${escapeHtml(u.name)}</b><span>${escapeHtml((x.caption||'').slice(0,80))}</span></span></button>`;
+}
+function renderChat(id){
+  const c = getConversation(id), view = document.getElementById('view-page');
+  if (!c){ view.innerHTML = pageHead('Mensajes') + '<div class="empty-tab"><p>Conversación no encontrada.</p></div>'; return; }
+  const st = convStatus(c);
+  if (c.unread && st !== 'solicitud'){ c.unread = 0; saveState(); }   // en solicitud no se marca como leído
+  updateDmBadge();
+  const plan = c.type === 'plan' ? getPlan(c.planId) : null;
+  const u = c.type === 'dm' ? (getUser(c.with) || { name:'', handle:'' }) : null;
+  const rel = u ? (areFriends('me', u.id) ? 'Amigos' : (follows(u.id, 'me') ? 'Te sigue' : (follows('me', u.id) ? 'Le sigues' : 'No os seguís'))) : '';
+  const head = `<div class="page-bar chat-bar"><button class="pb-back" onclick="history.back()" aria-label="Atrás">${ico('chevL')}</button>
+    <button class="chat-who" onclick="${plan ? `go('plan/${plan.id}')` : `go('u/${u.id}')`}">${convAvatar(c, 'sm2')}
+      <span class="cw-t"><b>${escapeHtml(convTitle(c))}</b><span>${plan ? `${c.members.length} personas · Ver plan` : `${escapeHtml(u.handle)} · ${rel}`}</span></span></button>
+    ${u ? `<button class="pb-back" onclick="openChatMenu('${c.id}')" aria-label="Opciones">${ico('dots')}</button>` : '<span style="width:34px"></span>'}</div>`;
+  const place = plan && getPlace(plan.placeId);
+  const pinned = plan ? `<div class="chat-pin">${ico('pin')}<span><b>Punto de encuentro</b> ${escapeHtml(plan.secret ? 'se desvela el día del plan' : (place ? place.name : 'Madrid'))} · ${fmtWhen(plan.when)}</span>
+      <button class="vis-chip ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'solid' : ''}" onclick="confirmDay('${plan.id}','${c.id}')">${ico('check')} ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'Confirmado' : 'Confirmo que voy'}</button></div>` : '';
+  let prev = null;
+  const bubbles = c.messages.map((m, i) => {
+    const mine = m.from === 'me';
+    const who = (!mine && c.type === 'plan' && prev !== m.from) ? `<span class="msg-who">${escapeHtml((getUser(m.from) || { name:'' }).name)}</span>` : '';
+    prev = m.from;
+    const blurred = m.img && !mine && (st === 'solicitud' || !knows('me', m.from)) && !m.revealed;
+    const img = m.img ? `<span class="msg-img ${blurred ? 'blur' : ''}">${coverImg(m.img, 500)}${blurred ? `<button class="msg-reveal" onclick="revealImg('${c.id}',${i})">${ico('eye')} Foto de alguien que no conoces · Ver</button>` : ''}</span>` : '';
+    return `<div class="msg ${mine ? 'me' : ''}">${who}${m.share ? msgShareCard(m.share) : ''}${img}${m.text ? `<span class="bubble">${escapeHtml(m.text)}</span>` : ''}</div>`;
+  }).join('');
+  const first = c.messages[0];
+  let foot;
+  if (st === 'solicitud') foot = `<div class="chat-req"><p><b>${escapeHtml(u.name)}</b> quiere enviarte un mensaje. No sabrá que lo has leído hasta que aceptes.</p>
+      <div class="chat-req-b"><button class="ph-btn" onclick="blockUser('${u.id}')">Bloquear</button><button class="ph-btn" onclick="deleteConv('${c.id}')">Eliminar</button><button class="ph-btn primary" onclick="acceptRequest('${c.id}')">Aceptar</button></div></div>`;
+  else if (!canWrite(c)) foot = `<div class="chat-req"><p>${ico('clock')} Solicitud enviada. Podrás escribir más cuando ${escapeHtml(u.name.split(' ')[0])} la acepte.</p></div>`;
+  else foot = `${c.status === 'enviada' ? `<p class="hint chat-note">${escapeHtml(u.name.split(' ')[0])} no te sigue: tu primer mensaje le llegará como solicitud y solo puedes enviar uno.</p>` : ''}
+    <div class="chat-in"><input id="msg-input" maxlength="${LIMITS.message}" placeholder="Mensaje…" onkeydown="if(event.key==='Enter')sendMsg('${c.id}')">
+      <button class="pa" onclick="sendMsg('${c.id}')" aria-label="Enviar">${ico('send')}</button></div>`;
+  view.innerHTML = head + pinned + `<div class="chat-body">${first ? `<div class="chat-sep">${minLabel(first.min)}</div>` : ''}${bubbles || '<p class="hint" style="text-align:center">Escribe el primer mensaje.</p>'}</div><div class="chat-foot">${foot}</div>`;
+  view.scrollTop = view.scrollHeight || 0;
+}
+function sendMsg(id){
+  const c = getConversation(id); if (!c || !canWrite(c)) return;
+  const text = clip(val('msg-input'), 'message'); if (!text) return;
+  c.messages.push({ from:'me', text, min:0 });
+  saveState(); renderChat(id);
+  // Respuesta simulada para que la demo se sienta viva (no en solicitudes enviadas).
+  if (c.status === 'aceptada' || c.type === 'plan'){
+    const others = c.type === 'plan' ? c.members.filter(x => x !== 'me') : [c.with];
+    setTimeout(() => {
+      c.messages.push({ from: others[Math.floor(Math.random() * others.length)], text: AUTO_REPLIES[c.messages.length % AUTO_REPLIES.length], min:0 });
+      saveState();
+      if (location.hash === '#/chat/' + id) renderChat(id); else { c.unread = (c.unread || 0) + 1; updateDmBadge(); }
+    }, 1800);
+  }
+}
+function acceptRequest(id){ const c = getConversation(id); if (!c) return; c.status = 'aceptada'; c.unread = 0; saveState(); toast('Solicitud aceptada'); renderChat(id); }
+function deleteConv(id){ const i = CONVERSATIONS.findIndex(c => c.id === id); if (i >= 0) CONVERSATIONS.splice(i, 1); saveState(); updateDmBadge(); toast('Conversación eliminada'); go('mensajes/' + (state.inboxTab || 'chats')); }
+function revealImg(id, i){ const c = getConversation(id); if (c && c.messages[i]){ c.messages[i].revealed = true; saveState(); renderChat(id); } }
+function confirmDay(planId, convId){ state.dayConfirmed = state.dayConfirmed || {}; state.dayConfirmed[planId] = !state.dayConfirmed[planId]; toast(state.dayConfirmed[planId] ? 'Confirmado: el grupo sabe que vas' : 'Confirmación retirada'); renderChat(convId); }
+// Bloquear: no te ve, no te escribe y no puede unirse a tus planes.
+function blockUser(uid){
+  const u = getUser(uid) || { name:'' };
+  ME.blocked = Array.from(new Set([...(ME.blocked || []), uid]));
+  for (let i = CONVERSATIONS.length - 1; i >= 0; i--) if (CONVERSATIONS[i].type === 'dm' && CONVERSATIONS[i].with === uid) CONVERSATIONS.splice(i, 1);
+  for (let i = FOLLOWS.length - 1; i >= 0; i--) if ((FOLLOWS[i][0] === uid && FOLLOWS[i][1] === 'me') || (FOLLOWS[i][0] === 'me' && FOLLOWS[i][1] === uid)) FOLLOWS.splice(i, 1);
+  saveState(); updateDmBadge(); closeOverlay();
+  toast('Has bloqueado a ' + u.name); go('mensajes/' + (state.inboxTab || 'chats'));
+}
+function unblockUser(uid){ ME.blocked = (ME.blocked || []).filter(x => x !== uid); saveState(); toast('Desbloqueado'); renderProfile(uid); }
+function openChatMenu(id){
+  const c = getConversation(id); if (!c) return; const u = getUser(c.with) || { name:'' };
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Opciones">
+    <div class="sheet-h"><span>${escapeHtml(u.name)}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list">
+      <button class="sh-row" onclick="closeOverlay();go('u/${u.id}')">${ico('user')}<span>Ver perfil</span>${ico('chevR')}</button>
+      <button class="sh-row" onclick="closeOverlay();toast('Reporte enviado. Lo revisará moderación; ${escapeHtml(u.name)} no sabrá quién lo ha enviado.')">${ico('alert')}<span>Reportar</span>${ico('chevR')}</button>
+      <button class="sh-row danger" onclick="blockUser('${u.id}')">${ico('lock')}<span>Bloquear</span>${ico('chevR')}</button>
+    </div></div>`);
+}
+// Escribir a alguien desde su perfil o desde "nuevo mensaje".
+function openDm(uid){
+  const u = getUser(uid) || { name:'' };
+  if ((ME.blocked || []).includes(uid)){ toast('Has bloqueado a ' + u.name); return; }
+  if (u.dmMode === 'cerrado' && !knows(uid, 'me')){ toast(u.name + ' no recibe mensajes de quien no conoce'); return; }
+  const c = dmWith(uid, true); saveState(); closeOverlay(); go('chat/' + c.id);
+}
+function openNewMessage(){
+  const people = USERS.filter(u => u.id !== 'me' && !(ME.blocked || []).includes(u.id));
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Nuevo mensaje">
+    <div class="sheet-h"><span>Nuevo mensaje</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list">${people.map(u => `<button class="conv" onclick="openDm('${u.id}')"><span class="avatar conv-av">${escapeHtml(u.initials||initials(u.name))}</span>
+      <span class="conv-main"><b>${escapeHtml(u.name)}</b><span>${escapeHtml(u.handle)}${knows(u.id,'me') ? '' : ' · le llegará como solicitud'}</span></span></button>`).join('')}</div></div>`);
+}
+function setDmMode(v){ ME.dmMode = v; saveState(); updateDmBadge(); renderSettings(); }
+
 /* ---------- compartir: dentro de la app y en otras apps ----------
    Fuera de la app se comparte un enlace público a la publicación. Esa página lleva
    etiquetas Open Graph (og:title, og:description, og:image) y por eso WhatsApp,
@@ -674,13 +853,23 @@ function logShare(id, dest, to){
   (po.shareLog = po.shareLog || []).push({ dest, to: to || null });
   saveState();
 }
+// Enviar dentro de la app: llega como mensaje directo a cada persona elegida.
 function sendShareInApp(){
   const to = state.share.to.slice(); if (!to.length) return;
-  clip(val('sh-msg'), 'comment');   // el mensaje viajaría con el envío (mensajería: fuera del MVP)
-  logShare(state.share.id, 'chat', to);
-  const names = to.map(id => (getUser(id) || {}).name || '').map(n => n.split(' ')[0]);
+  const text = clip(val('sh-msg'), 'message');
+  const sent = [], waiting = [];
+  to.forEach(uid => {
+    const c = dmWith(uid, true);
+    if (!canWrite(c)){ waiting.push(uid); return; }
+    c.messages.push({ from:'me', share: state.share.id, text: text || undefined, min:0 });
+    sent.push(uid);
+  });
+  if (sent.length) logShare(state.share.id, 'chat', sent);
+  saveState(); updateDmBadge();
+  const first = (ids) => ids.map(id => ((getUser(id) || {}).name || '').split(' ')[0]);
+  const list = (n) => n.length > 2 ? n.slice(0, 2).join(', ') + ' y ' + (n.length - 2) + ' más' : n.join(' y ');
   closeOverlay();
-  toast('Enviada a ' + (names.length > 2 ? names.slice(0, 2).join(', ') + ' y ' + (names.length - 2) + ' más' : names.join(' y ')));
+  toast((sent.length ? 'Enviado a ' + list(first(sent)) : '') + (waiting.length ? (sent.length ? '. ' : '') + list(first(waiting)) + ' aún no ha aceptado tu solicitud' : ''));
 }
 function shareToStory(id){
   const po = findShare(id); if (!po) return;
@@ -1238,7 +1427,7 @@ function renderProfile(uid){
       <span class="avatar lg">${u.initials||initials(u.name)}</span>
       <div class="ph-main">
         <div class="ph-top"><span class="ph-name">${escapeHtml(u.name)} ${u.verified?`<span class="vchk">${ico('check')}</span>`:''}${typeBadge(u)}</span>
-          ${me?`<button class="ph-priv" onclick="go('ajustes')">${ico('gear')} Ajustes</button>`:followButton(u)}</div>
+          ${me?`<button class="ph-priv" onclick="go('ajustes')">${ico('gear')} Ajustes</button>`:''}</div>
         ${!me && follows(u.id,'me') && !follows('me',u.id) ? '<span class="follows-you">Te sigue</span>' : ''}
         ${me ? `<div class="ph-handle">${u.handle}</div>` : ''}
         <div class="ph-stats">
@@ -1249,7 +1438,9 @@ function renderProfile(uid){
       </div>
     </div>
     ${about ? `<p class="bio">${about}</p>` : ''}
-    ${me ? `<div class="ph-actions"><button class="ph-btn" onclick="go('editar-perfil')">Editar perfil</button><button class="ph-btn" onclick="toast('Compartir perfil estará disponible en la app')">Compartir perfil</button></div>` : ''}
+    ${me ? `<div class="ph-actions"><button class="ph-btn" onclick="go('editar-perfil')">Editar perfil</button><button class="ph-btn" onclick="toast('Compartir perfil estará disponible en la app')">Compartir perfil</button></div>`
+      : ((ME.blocked || []).includes(u.id) ? `<div class="ph-actions"><span class="hint">Has bloqueado a ${escapeHtml(u.name)}.</span><button class="ph-btn" onclick="unblockUser('${u.id}')">Desbloquear</button></div>`
+        : `<div class="ph-actions">${followButton(u)}<button class="ph-btn" onclick="openDm('${u.id}')">Mensaje</button></div>`)}
     ${(me && !u.profilePublic)?`<div class="priv-banner">${ico('lock')} Perfil privado: solo tus seguidores aprobados ven tu actividad.</div>`:''}
     <div class="prof-tabs" role="tablist">${[['posts','grid','Publicaciones'],['vividas','play','Vividas'],['valoraciones','star','Valoraciones']].map(([t,i,l])=>
       `<button class="${tab===t?'active':''}" role="tab" aria-selected="${tab===t}" aria-label="${l}" title="${l}" onclick="setProfileTab('${t}','${u.id}')">${ico(i)}<span class="pt-l">${l}</span></button>`).join('')}
@@ -1366,7 +1557,7 @@ function toggleFollow(uid){
 function followButton(u){
   const iFollow = follows('me', u.id), theyFollow = follows(u.id, 'me');
   const label = iFollow ? (theyFollow ? `${ico('check')} Amigos` : 'Siguiendo') : (theyFollow ? 'Seguir también' : 'Seguir');
-  return `<button class="ph-priv ${iFollow?'':'primary'}" onclick="toggleFollow('${u.id}')">${label}</button>`;
+  return `<button class="ph-btn ${iFollow?'':'primary'}" onclick="toggleFollow('${u.id}')">${label}</button>`;
 }
 
 /* ---------- editar perfil ---------- */
@@ -1437,6 +1628,11 @@ function renderSettings(){
           <span class="tg-ic">${ico(ME.presencePublic?'globe':'lock')}</span>
           <span class="tg-info"><span class="tg-n">Presencia por defecto: ${ME.presencePublic?'pública':'privada'}</span><span class="tg-s">Cómo apareces al registrar tu llegada</span></span>
           <span class="switch ${ME.presencePublic?'on':''}"><span class="knob"></span></span></div>
+      </div>
+      <div class="set-group"><div class="set-title">Mensajes</div>
+        <div class="set-box"><span class="sb-l">Quién puede escribirte</span>
+          <div class="iseg">${DM_MODES.map(([v,l,n])=>`<button class="${(ME.dmMode||'solicitud')===v?'active':''}" onclick="setDmMode('${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div>
+          <p class="hint">${{ cerrado:'Nadie que no conozcas puede escribirte. Los chats de tus planes siguen funcionando.', solicitud:'Quien no conoces te escribe un único mensaje, que llega a Solicitudes; tú decides si aceptas. Recomendado.', abierto:'Cualquiera puede escribirte directamente.' }[ME.dmMode||'solicitud']} "Conocer" es que le sigas o compartáis un plan.</p></div>
       </div>
       <div class="set-group"><div class="set-title">Valoraciones de planes</div>
         ${(() => { const pr = ratingPrefs(ME); const seg = (k, opts) => `<div class="iseg">${opts.map(([v,l,n])=>`<button class="${pr[k]===v?'active':''}" onclick="setRatingPref('${k}','${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div>`;
@@ -1769,7 +1965,7 @@ function showView(name){
 }
 function scrollTop(v){ const el=document.getElementById('view-'+v); if(el) el.scrollTop=0; }
 function router(){
-  stopMusic();
+  stopMusic(); updateDmBadge();
   const hash = location.hash.replace(/^#\//,'') || 'feed';
   const [route,arg] = hash.split('/');
   switch(route){
@@ -1779,6 +1975,8 @@ function router(){
     case 'plan':    renderDetail(arg); showView('detail'); scrollTop('detail'); break;
     case 'u':       renderProfile(arg); showView('page'); scrollTop('page'); break;
     case 'grupo':   renderGroupDetail(arg); showView('page'); scrollTop('page'); break;
+    case 'mensajes': renderInbox(arg); showView('page'); scrollTop('page'); break;
+    case 'chat':     renderChat(arg); showView('page'); { const v = document.getElementById('view-page'); v.scrollTop = v.scrollHeight || 0; } break;
     case 'editar-perfil': renderEditProfile(); showView('page'); scrollTop('page'); break;
     case 'ajustes': renderSettings(); showView('page'); scrollTop('page'); break;
     case 'solicitudes': renderRequests(arg); showView('page'); scrollTop('page'); break;
@@ -1801,6 +1999,7 @@ function init(){
   document.querySelectorAll('.content-tabs button').forEach(b=>{ b.onclick=()=>setContentTab(b.dataset.tab); });
   document.querySelectorAll('.tabbar button').forEach(b=>{ b.onclick=()=>go(b.dataset.nav==='crear'?'crear':b.dataset.nav); });
   window.addEventListener('hashchange', router);
+  updateDmBadge();
   router();
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
