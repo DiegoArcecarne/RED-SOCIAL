@@ -362,8 +362,9 @@ const NOTIF_TYPES = {
   mencion:      ['at','Menciones','Cuando te mencionan o te etiquetan'],
 };
 function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true, seguidor:true, mencion:true }, ME.notifPrefs || {}); }
+// "seguridad" (SOS, decisiones de moderación, resultado de tus reportes) no se puede desactivar.
 function notify(type, text, ref){
-  if (!notifPrefs()[type]) return null;
+  if (type !== 'seguridad' && !notifPrefs()[type]) return null;
   const n = Object.assign({ id:'n' + Date.now() + Math.random().toString(36).slice(2, 5), type, text, at: Date.now(), read:false }, ref || {});
   NOTIFICATIONS.unshift(n);
   if (NOTIFICATIONS.length > 60) NOTIFICATIONS.length = 60;
@@ -391,7 +392,7 @@ function askNotifPermission(){
 function renderNotifications(){
   const view = document.getElementById('view-page');
   const perm = typeof Notification === 'undefined' ? 'no' : Notification.permission;
-  const item = (n) => { const [icon] = NOTIF_TYPES[n.type] || ['bell'];
+  const item = (n) => { const [icon] = NOTIF_TYPES[n.type] || [n.type === 'seguridad' ? 'shield' : 'bell'];
     return `<button class="notif ${n.read ? '' : 'unread'}" onclick="openNotif('${n.id}')"><span class="notif-ic">${ico(icon)}</span>
       <span class="notif-t">${escapeHtml(n.text)}<span>${minLabel(notifAge(n))}</span></span>${n.read ? '' : '<i class="conv-dot sm"></i>'}</button>`; };
   const fresh = NOTIFICATIONS.filter(n => !n.read), old = NOTIFICATIONS.filter(n => n.read);
@@ -420,7 +421,7 @@ function openNotifPrefs(){
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Preferencias de notificaciones">
     <div class="sheet-h"><span>Qué te avisamos</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list">${Object.entries(NOTIF_TYPES).map(([k, [icon, l, sub]]) => `<div class="opt-row" onclick="toggleNotifPref('${k}')"><span class="or-ic">${ico(icon)}</span><span class="or-l">${l}<span class="or-s">${sub}</span></span><span class="switch ${pr[k] ? 'on' : ''}"><span class="knob"></span></span></div>`).join('')}
-      <p class="hint">Los avisos de seguridad (SOS, cambios de última hora en un plan al que vas) no se pueden desactivar.</p></div></div>`);
+      <p class="hint">Los avisos de seguridad (SOS, decisiones de moderación y el resultado de tus reportes) no se pueden desactivar.</p></div></div>`);
 }
 function toggleNotifPref(k){ ME.notifPrefs = Object.assign(notifPrefs(), { [k]: !notifPrefs()[k] }); saveState(); openNotifPrefs(); }
 

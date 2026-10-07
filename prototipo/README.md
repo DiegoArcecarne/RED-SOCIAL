@@ -114,6 +114,17 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    en Ajustes); **buscador** de personas, planes y #temas (en Descubrir); página de cada
    tema; y la pestaña **Menciones** para aceptar o quitar menciones y etiquetas.
    Especificación del servidor: [`../docs/social.md`](../docs/social.md).
+15. **Confianza y seguridad** — **filtros automáticos**: un insulto pregunta "¿Seguro que
+   quieres publicarlo?", tu teléfono a un desconocido avisa, y una amenaza o spam se
+   retiene (solo lo ves tú, "En revisión"). **Reportar** publicaciones, comentarios,
+   perfiles (⋯), conversaciones y planes; *Tus reportes* con su estado; *Cuentas
+   bloqueadas*. **Panel de moderación** (Ajustes ▸ Prototipo): cola por gravedad,
+   acciones (retirar, aviso, suspender, cerrar, quitar organizar…), alertas SOS,
+   apelaciones e historial. *Estado de tu cuenta* con los motivos de cada decisión y
+   **Apelar** (prueba con el comentario retirado de Marina). **Contactos de confianza** y
+   **botón SOS** en la ficha y el chat de cada plan. **Tus datos**: descargar una copia
+   (JSON), consentimientos y eliminar la cuenta.
+   Especificación del servidor: [`../docs/confianza-y-seguridad.md`](../docs/confianza-y-seguridad.md).
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.
@@ -123,7 +134,7 @@ condiciones de las cuentas profesionales están pendientes de decidir.
 
 ## Para desarrollar
 
-Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `app.js`).
+Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `app.js`).
 `standalone.html` se genera; no lo edites a mano. Desde la raíz del repositorio:
 
 ```bash

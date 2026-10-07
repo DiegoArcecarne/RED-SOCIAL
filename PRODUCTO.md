@@ -362,8 +362,8 @@ Estructura del menú de ajustes:
 - Notificaciones, granular: planes cerca de ti, recordatorios y reconfirmación del día, mensajes, nuevos seguidores, actualizaciones de planes que sigues.
 - Descubrimiento: intereses y categorías, rango de edad preferido, radio geográfico, idioma de los planes.
 - Pagos: métodos de pago, historial de reservas, reembolsos.
-- Datos y legal: términos y condiciones, política de privacidad, descargar mis datos, eliminar cuenta.
-- Moderación: usuarios bloqueados, reportes realizados.
+- Tu seguridad: contactos de confianza y SOS, cuentas bloqueadas, tus reportes (con su estado) y estado de tu cuenta (decisiones de moderación sobre ti, con sus motivos y la opción de apelar).
+- Tus datos y privacidad: descargar una copia de tus datos, consentimientos (con su historial), corregir tus datos, términos y política de privacidad, eliminar cuenta.
 
 ## Seguridad y verificación de cuenta
 
@@ -381,7 +381,7 @@ Edad mínima de 18 años, no negociable. La app facilita quedar con desconocidos
 
 Aceptación en el onboarding: términos y condiciones, política de privacidad, confirmación de edad y código de conducta de la comunidad (anti-acoso, normas de comportamiento). Consentimientos específicos y separados para uso de ubicación, datos de verificación de identidad y pagos.
 
-Cumplimiento RGPD desde el diseño, al operar en España y la UE: consentimiento explícito, minimización de datos, y derechos de acceso, portabilidad y eliminación accesibles desde ajustes.
+Cumplimiento RGPD desde el diseño, al operar en España y la UE: consentimiento explícito, minimización de datos, y derechos de acceso, portabilidad y eliminación accesibles desde ajustes. En Ajustes ▸ Tus datos y privacidad se descarga una copia de todos tus datos (JSON legible por máquina; en la app real, con las fotos y los vídeos en un ZIP), se gestionan los consentimientos opcionales (novedades por email, ubicación, estadísticas) y la oposición a las recomendaciones por actividad (interés legítimo), y se elimina la cuenta, ofreciendo antes la descarga. Detalle y plazos en [docs/confianza-y-seguridad.md](docs/confianza-y-seguridad.md).
 
 La facilitación de encuentros presenciales entre desconocidos conlleva responsabilidad legal real. Los términos deben abordar la limitación de responsabilidad de la plataforma, y conviene revisarlos con un abogado especializado antes de lanzar. Esto no es asesoramiento legal.
 
@@ -397,11 +397,25 @@ Tres capas de revisión. Primera, automática y proactiva: análisis de contenid
 
 Acciones graduadas. Aviso y retirada de contenido, reducción de alcance (ligada al sistema de reputación), suspensión temporal, y bloqueo permanente. Como la identidad está verificada, un bloqueo grave impide que esa identidad vuelva a registrarse fácilmente: es una ventaja real de exigir verificación. A un anfitrión problemático se le puede retirar la capacidad de organizar y, si el evento fue fraudulento, retener el pago en el escrow.
 
-Capa de seguridad presencial, que es lo que diferencia de una red social normal. Herramientas dentro del plan en vivo: compartir tu plan con un contacto de confianza, confirmación de "he llegado bien", botón de emergencia o SOS, y poder reportar desde el propio chat del plan en marcha. Responsabilidad del anfitrión: está verificado y responde del plan; reportes de seguridad reiterados sobre un anfitrión implican su retirada. La exigencia de verificación y reputación es mayor en los planes pequeños e íntimos, donde el riesgo es más alto.
+Capa de seguridad presencial, que es lo que diferencia de una red social normal. Herramientas dentro del plan en vivo: compartir tu plan con un contacto de confianza, confirmación de "he llegado bien", botón de emergencia o SOS, y poder reportar desde el propio chat del plan en marcha.
+
+- Contactos de confianza: hasta 3 personas, aunque no usen la app. Aceptan por SMS. Se les puede compartir cada plan automáticamente, y la app puede preguntarte si estás bien al acabar y avisarles si no respondes.
+- El botón SOS está en la ficha y en el chat de cada plan. Ofrece llamar al 112 o enviar una alerta con tu ubicación a tus contactos y al equipo de seguridad (24 horas), que la ve la primera en su panel. Responsabilidad del anfitrión: está verificado y responde del plan; reportes de seguridad reiterados sobre un anfitrión implican su retirada. La exigencia de verificación y reputación es mayor en los planes pequeños e íntimos, donde el riesgo es más alto.
 
 Usos prohibidos con tolerancia cero. Cualquier indicio de menor en la plataforma se escala de inmediato, sin excepción: la app es solo para mayores de 18. Solicitación sexual, trata o uso del producto como tapadera para esos fines están prohibidos por política, con detección y reporte. Estafa y suplantación, igual. Estas políticas se publican en el código de conducta y se aplican.
 
 Transparencia y apelación. Al usuario sancionado se le notifica la acción y el motivo, y existe un proceso de apelación. A escala, conviene publicar informes de transparencia periódicos. El objetivo es que la moderación se perciba como justa, no arbitraria.
+
+Cómo funciona en el prototipo (y qué debe hacer el servidor, en [docs/confianza-y-seguridad.md](docs/confianza-y-seguridad.md)):
+
+- Filtros automáticos al publicar comentarios, pies, mensajes, planes y la descripción del perfil:
+  - Un insulto pregunta "¿Seguro que quieres publicarlo?" (Editar / Publicar igualmente). Si se publica, se muestra a menos gente y entra en la cola con prioridad baja.
+  - Dar tu teléfono o email a quien no conoces avisa de que es más seguro el chat de la app.
+  - Las amenazas, el odio y el spam se retienen: solo los ve quien los publicó, marcados "En revisión", hasta que los revisa una persona.
+- Gravedad y plazo de respuesta: crítica (peligro, posible menor, amenaza), 1 hora; alta (acoso, sexual), 24 horas; media (estafa, suplantación), 48 horas; baja (spam, otro), 72 horas.
+- Cada decisión lleva su exposición de motivos (qué, por qué, qué norma, si fue automática y cómo apelar), visible en Ajustes ▸ Estado de tu cuenta. Quien reportó recibe el resultado en Ajustes ▸ Tus reportes.
+- Apelación en 6 meses, revisada por una persona distinta de la que decidió. También puede pedir otra revisión quien reportó, si se desestimó su reporte.
+- El panel de moderación es una herramienta interna (en la app real, una web aparte con roles): cola por gravedad, alertas SOS primero, apelaciones e historial.
 
 Señales proactivas que reducen la necesidad de moderar a posteriori: identidad verificada, reputación e índice de fiabilidad visibles, valoraciones de anfitriones, reseñas de planes y la reconfirmación del día, que evita recuentos de asistentes falsos.
 
@@ -665,10 +679,13 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Seguridad presencial y moderación
 
-- Contacto de confianza. usuario_id, datos del contacto, plan compartido (opcional). Soporta "compartir tu plan" y los recordatorios.
-- Evento de seguridad. usuario_id, plan_id, tipo (check-in "he llegado bien" o SOS), ubicación, fecha.
+- Contacto de confianza. usuario_id, nombre, teléfono, estado (invitado, aceptado). Hasta 3 por usuario. Soporta "compartir tu plan", "he llegado bien" y el SOS.
+- Evento de seguridad. usuario_id, plan_id, tipo (plan compartido, "he llegado bien", SOS, sin respuesta tras el plan), ubicación (en el SOS), estado (activa o cerrada, y por quién), avisado al 112, fecha.
 - Reporte. id, reportante_id (anónimo frente al reportado), objeto (tipo: plan / usuario / mensaje / contenido / comportamiento en evento; objeto_id), categoría (spam, acoso, sexual no pedido, suplantación, estafa, posible menor, peligro, otro), detalle, evidencia (por ejemplo, los mensajes de la conversación), bloqueó también (bool), gravedad (la categoría "peligro" entra con prioridad máxima), estado (en cola, en revisión, resuelto, escalado), fecha.
-- Acción de moderación. id, objeto, tipo (aviso, retirada de contenido, reducción de alcance, suspensión, bloqueo permanente, retirada de capacidad de organizar, retención de escrow), motivo, apelable (bool), fecha.
+- Reporte (además): origen (una persona o el filtro automático) y categoría del filtro (amenaza, odio, spam, insulto). Objetos: usuario, conversación, publicación, comentario, mensaje, plan.
+- Acción de moderación. id, persona afectada, objeto, tipo (retenido por el filtro, retirada de contenido, aviso, reducción de alcance, retirada de capacidad de organizar, suspensión de 7 o 30 días, cierre de la cuenta, escalado a autoridades, retención de escrow), motivo y norma, exposición de motivos, automática (bool), estado (en revisión, vigente, anulada), fecha.
+- Apelación. acción (o reporte, si apela quien reportó), texto, revisor (distinto de quien decidió), estado (pendiente, estimada, desestimada), fecha.
+- Solicitud de datos (RGPD). persona_id, tipo (exportar, borrar, rectificar, oponerse, limitar), estado, enlace caducable, fechas.
 
 ### Monetización avanzada (fase 2)
 
@@ -678,7 +695,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 ### Soporte transversal
 
 - Categoría. id, nombre, estado (activa, fusionada, jubilada). Taxonomía actualizable; no se hard-codea.
-- Notificación. usuario_id, tipo (recordatorio y reconfirmación, solicitud, mensaje, cambio en un plan, plaza de la lista de espera, después del plan; y más adelante planes cerca y nuevo seguidor), referencia (plan, conversación o ruta), texto, leída, fecha. Las preferencias por tipo viven en el Usuario. Los avisos de seguridad no se pueden desactivar.
+- Notificación. usuario_id, tipo (recordatorio y reconfirmación, solicitud, mensaje, cambio en un plan, plaza de la lista de espera, después del plan, seguidor, mención y seguridad —resultado de tus reportes, decisiones de moderación y SOS—; y más adelante planes cerca), referencia (plan, conversación o ruta), texto, leída, fecha. Las preferencias por tipo viven en el Usuario. Los avisos de seguridad no se pueden desactivar.
 
 ### Relaciones clave, de un vistazo
 
@@ -693,7 +710,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Un Usuario crea muchas Publicaciones (foto, vídeo o carrusel) que viven en su perfil y en el muro; cada una recibe Comentarios y Me gusta.
 - Un Plan en marcha puede tener Directos, emitidos por su anfitrión o por sus asistentes.
 - Una Pista de la biblioteca puede sonar en muchas Publicaciones y Stories; cada una lleva como mucho una.
-- Un Reporte apunta a cualquier objeto (Plan, Usuario, Mensaje, Contenido, comportamiento en evento) y puede derivar en Acciones de moderación.
+- Un Reporte apunta a cualquier objeto (Plan, Usuario, Mensaje, Contenido, comportamiento en evento) y puede derivar en Acciones de moderación; cada Acción se puede recurrir con una Apelación.
 
 ## Decisiones abiertas
 

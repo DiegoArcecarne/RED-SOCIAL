@@ -143,7 +143,7 @@ function openPostMenu(id){
       ${mine ? `<button class="sh-row" onclick="openEditCaption('${id}')">${ico('doc')}<span>Editar el pie</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openDeletePost('${id}')">${ico('close')}<span>Eliminar publicación</span>${ico('chevR')}</button>`
       : `<button class="sh-row" onclick="closeOverlay();toggleFollowQuiet('${u.id}')">${ico('user')}<span>${follows('me', u.id) ? 'Dejar de seguir' : 'Seguir'} a ${escapeHtml(u.name)}</span>${ico('chevR')}</button>
-        <button class="sh-row danger" onclick="openReport('${u.id}', null)">${ico('alert')}<span>Reportar</span>${ico('chevR')}</button>`}
+        <button class="sh-row danger" onclick="openReport('${u.id}', null, { objectType:'publicacion', postId:'${id}' })">${ico('alert')}<span>Reportar</span>${ico('chevR')}</button>`}
       <button class="sh-row" onclick="closeOverlay();copyShareLink('${id}')">${ico('link')}<span>Copiar enlace</span>${ico('chevR')}</button>
     </div></div>`);
 }
@@ -158,7 +158,15 @@ function openEditCaption(id){
 }
 function saveCaption(id){
   const po = POSTS.find(p => p.id === id); if (!po) return;
-  po.caption = clip(val('f-ecap'), 'caption') || po.caption;
+  const cap = clip(val('f-ecap'), 'caption') || po.caption;
+  guardText(cap, { kind:'publicacion', onEdit: () => openEditCaption(id) }, flag => {
+    po.caption = cap; if (flag) po.held = true;
+    commitCaption(po);
+    return { objectType:'publicacion', postId:id };
+  });
+}
+function commitCaption(po){
+  const id = po.id;
   po.mentions = po.caption.match(MENTION_RE) || []; po.hashtags = po.caption.match(/#[\wáéíóúñ]+/gi) || []; po.edited = true;
   saveState(); closeOverlay(); rerenderPost(id); toast('Pie actualizado');
 }
@@ -187,7 +195,9 @@ function deleteComment(postId, idx){
 const isPrivate = (u) => !!u && u.id !== 'me' && u.profilePublic === false;
 function canSeeProfile(u){ return !!u && (u.id === 'me' || !isPrivate(u) || follows('me', u.id)); }
 function canSeePost(po){
-  if (po.authorId === 'me') return true;
+  if (po.removed) return false;                       // retirada por moderación
+  if (po.authorId === 'me') return true;              // las tuyas en revisión las ves tú
+  if (po.held || isSanctioned(po.authorId)) return false;
   const u = getUser(po.authorId);
   if (!canSeeProfile(u)) return false;
   if ((ME.blocked || []).includes(po.authorId)) return false;
@@ -284,7 +294,7 @@ function allHashtags(){
 function searchAll(q){
   const n = norm(q).replace(/^[#@]/, '').trim();
   if (!n) return { people: [], plans: [], tags: [] };
-  const people = USERS.filter(u => u.id !== 'me' && !(ME.blocked || []).includes(u.id) && [u.name, u.handle, u.bio, u.business && u.business.category].some(f => norm(f).includes(n)));
+  const people = USERS.filter(u => u.id !== 'me' && !(ME.blocked || []).includes(u.id) && userMod(u.id).status !== 'expulsada' && [u.name, u.handle, u.bio, u.business && u.business.category].some(f => norm(f).includes(n)));
   const plans = PLANS.filter(p => !isCancelled(p) && [p.title, p.summary, (getPlace(p.placeId) || {}).name, (getCategory(p.category) || {}).label, (p.host || {}).name].some(f => norm(f).includes(n)));
   const tags = allHashtags().filter(t => norm(t.tag).includes(n));
   return { people, plans, tags };

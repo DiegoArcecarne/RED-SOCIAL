@@ -180,7 +180,9 @@ function saveState(){
       posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES, ratings: RATINGS, follows: FOLLOWS, conversations: CONVERSATIONS, reports: REPORTS, followRequests: FOLLOW_REQUESTS,
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
-            city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom },
+            city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom,
+            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog },
+      modActions: MOD_ACTIONS, userMod: USER_MOD, safety: SAFETY_EVENTS,
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
       notifications: NOTIFICATIONS,
@@ -209,6 +211,9 @@ function loadState(){
   if (Array.isArray(snap.reports)) REPORTS.splice(0, REPORTS.length, ...snap.reports);
   if (Array.isArray(snap.followRequests)) FOLLOW_REQUESTS.splice(0, FOLLOW_REQUESTS.length, ...snap.followRequests);
   if (Array.isArray(snap.notifications)) NOTIFICATIONS.splice(0, NOTIFICATIONS.length, ...snap.notifications);
+  if (Array.isArray(snap.modActions)) MOD_ACTIONS.splice(0, MOD_ACTIONS.length, ...snap.modActions);
+  if (Array.isArray(snap.safety)) SAFETY_EVENTS.splice(0, SAFETY_EVENTS.length, ...snap.safety);
+  if (snap.userMod){ Object.keys(USER_MOD).forEach(k => delete USER_MOD[k]); Object.assign(USER_MOD, snap.userMod); }
   if (snap.me) Object.assign(ME, snap.me);
   (snap.extraProfiles || []).forEach(x => { if (!USERS.some(u => u.id === x.id)) USERS.push(x); });
   if (snap.sets) {
@@ -235,6 +240,7 @@ function filteredPlans(){
     if (state.price==='pago' && !p.paid) return false;
     if (!matchesWhen(p, state.when)) return false;
     if (isCancelled(p)) return false;
+    if (p.removed || p.held) return false;   // retirado o en revisión (el anfitrión lo ve en su ficha)
     return true;
   });
 }
@@ -316,7 +322,7 @@ function postCard(po){
   const place = plan ? getPlace(plan.placeId) : (po.placeId ? getPlace(po.placeId) : null);
   const placeName = plan && plan.secret ? 'Zona aproximada' : (place ? place.name : '');
   const liked = !!po.likedByMe;
-  const comments = po.comments || [];
+  const comments = visibleComments(po);
   const commentsOff = po.commentsEnabled === false;
   const likesHidden = po.hideLikes && po.authorId !== 'me';
   return `<article class="post" data-post="${po.id}">
@@ -329,6 +335,7 @@ function postCard(po){
       </div>
       <button class="post-kind" onclick="openPostMenu('${po.id}')" aria-label="Opciones de la publicación">${ico('dots')}</button>
     </header>
+    ${po.held ? `<div class="held-note">${ico('clock')} En revisión: de momento solo la ves tú</div>` : ''}
     ${postMedia(po)}
     <div class="post-actions">
       <button class="pa ${liked?'liked':''}" onclick="likePost('${po.id}')" aria-label="Me gusta" aria-pressed="${liked}">${ico(liked?'heart':'heartO')}</button>
@@ -728,16 +735,18 @@ function renderChat(id){
     ${u ? `<button class="pb-back" onclick="openChatMenu('${c.id}')" aria-label="Opciones">${ico('dots')}</button>` : '<span style="width:34px"></span>'}</div>`;
   const place = plan && getPlace(plan.placeId);
   const pinned = plan ? `<div class="chat-pin">${ico('pin')}<span><b>Punto de encuentro</b> ${escapeHtml(plan.secret ? 'se desvela el día del plan' : (place ? place.name : 'Madrid'))} · ${fmtWhen(plan.when)}</span>
-      <button class="vis-chip ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'solid' : ''}" onclick="confirmDay('${plan.id}','${c.id}')">${ico('check')} ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'Confirmado' : 'Confirmo que voy'}</button></div>` : '';
+      <button class="vis-chip ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'solid' : ''}" onclick="confirmDay('${plan.id}','${c.id}')">${ico('check')} ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'Confirmado' : 'Confirmo que voy'}</button>
+      <button class="vis-chip sos-chip" onclick="openSos('${plan.id}')" aria-label="SOS: pedir ayuda">SOS</button></div>` : '';
   let prev = null;
   const bubbles = c.messages.map((m, i) => {
     if (m.from === 'system'){ prev = null; return `<div class="msg-sys">${escapeHtml(m.text)}</div>`; }
+    if (m.removed || (m.held && m.from !== 'me')) return '';
     const mine = m.from === 'me';
     const who = (!mine && c.type === 'plan' && prev !== m.from) ? `<span class="msg-who">${escapeHtml((getUser(m.from) || { name:'' }).name)}</span>` : '';
     prev = m.from;
     const blurred = m.img && !mine && (st === 'solicitud' || !knows('me', m.from)) && !m.revealed;
     const img = m.img ? `<span class="msg-img ${blurred ? 'blur' : ''}">${coverImg(m.img, 500)}${blurred ? `<button class="msg-reveal" onclick="revealImg('${c.id}',${i})">${ico('eye')} Foto de alguien que no conoces · Ver</button>` : ''}</span>` : '';
-    return `<div class="msg ${mine ? 'me' : ''}">${who}${m.share ? msgShareCard(m.share) : ''}${img}${m.text ? `<span class="bubble">${escapeHtml(m.text)}</span>` : ''}</div>`;
+    return `<div class="msg ${mine ? 'me' : ''}">${who}${m.share ? msgShareCard(m.share) : ''}${img}${m.text ? `<span class="bubble">${escapeHtml(m.text)}</span>` : ''}${m.held ? `<span class="msg-held">${ico('clock')} No entregado: en revisión</span>` : ''}</div>`;
   }).join('');
   const first = c.messages.find(m => m.from !== 'system') || c.messages[0];
   let foot;
@@ -754,8 +763,20 @@ function renderChat(id){
 function sendMsg(id){
   const c = getConversation(id); if (!c || !canWrite(c)) return;
   const text = clip(val('msg-input'), 'message'); if (!text) return;
-  c.messages.push({ from:'me', text, min:0 });
+  // Filtro automático: avisa antes de enviar un insulto o tu teléfono a quien no conoces; retiene amenazas y spam.
+  guardText(text, { kind:'mensaje', known: c.type === 'plan' || knows(c.with, 'me'),
+    onEdit: (t) => { renderChat(id); const el = document.getElementById('msg-input'); if (el) el.value = t; } }, flag => deliverMsg(id, text, flag));
+}
+function deliverMsg(id, text, flag){
+  const c = getConversation(id); if (!c) return null;
+  const msg = { id:newId('m'), from:'me', text, min:0 };
+  if (flag) msg.held = true;
+  c.messages.push(msg);
   saveState(); renderChat(id);
+  if (!flag) autoReply(c, id);   // lo retenido no se entrega
+  return { objectType:'mensaje', convId:id, msgId:msg.id };
+}
+function autoReply(c, id){
   // Respuesta simulada para que la demo se sienta viva (no en solicitudes enviadas).
   if (c.status === 'aceptada' || c.type === 'plan'){
     const others = c.type === 'plan' ? c.members.filter(x => x !== 'me') : [c.with];
@@ -794,37 +815,43 @@ function rejectAllRequests(){
 }
 
 /* Reportar (a moderación, dentro de la app) y, si hay peligro, cómo denunciar ante las
-   autoridades. Quien es reportado nunca sabe quién le ha reportado. */
-function openReport(uid, convId){
-  state.report = { uid, convId: convId || null, reason: null, block: true };
+   autoridades. Quien es reportado nunca sabe quién le ha reportado. Se puede reportar a una
+   persona, una conversación, una publicación, un comentario o un plan (obj); el reporte
+   guarda el texto como prueba y va a la cola del panel de moderación. */
+function openReport(uid, convId, obj){
+  // Bloquear viene marcado al reportar a una persona o una conversación; no al reportar un contenido suelto.
+  state.report = { uid, convId: convId || null, obj: obj || null, reason: null, block: !!uid && (!obj || ['usuario','conversacion'].includes(obj.objectType)) };
   renderReport();
 }
 function renderReport(){
   const r = state.report, u = getUser(r.uid) || { name:'' };
+  const what = r.obj && r.obj.objectType !== 'usuario' ? { publicacion:'la publicación', comentario:'el comentario', plan:'el plan' }[r.obj.objectType] : null;
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Reportar">
-    <div class="sheet-h"><span>Reportar a ${escapeHtml(u.name)}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-h"><span>Reportar ${what || 'a ' + escapeHtml(u.name)}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list rep">
-      <p class="hint">¿Qué está pasando? ${escapeHtml(u.name.split(' ')[0])} no sabrá quién lo ha reportado.</p>
+      <p class="hint">¿Qué está pasando? ${u.name ? escapeHtml(u.name.split(' ')[0]) + ' no sabrá quién lo ha reportado.' : 'Nadie sabrá quién lo ha reportado.'}</p>
       <div class="rep-list" role="radiogroup">${REPORT_REASONS.map(([v,l]) => `<button class="rep-opt ${r.reason===v?'on':''}" role="radio" aria-checked="${r.reason===v}" onclick="setReportField('reason','${v}')"><span class="rep-dot"></span>${l}</button>`).join('')}</div>
       ${r.reason === 'peligro' ? `<div class="rep-danger">${ico('alert')}<div><b>Si estás en peligro ahora, llama al 112.</b>
         <p>También puedes denunciarlo ante la Policía Nacional, la Guardia Civil o la policía autonómica. Guardamos esta conversación como prueba y colaboramos con las autoridades cuando nos lo piden.</p>
         <a class="ph-btn primary rep-call" href="tel:112">Llamar al 112</a></div></div>` : ''}
-      <div class="opt-row" onclick="setReportField('block', ${!r.block})"><span class="or-ic">${ico('lock')}</span><span class="or-l">Bloquear también<span class="or-s">no te verá ni podrá escribirte</span></span><span class="switch ${r.block?'on':''}"><span class="knob"></span></span></div>
-      ${r.convId ? '<p class="hint">Se adjuntan los mensajes de esta conversación para que moderación pueda revisarlos.</p>' : ''}
+      ${u.id && u.id !== 'me' ? `<div class="opt-row" onclick="setReportField('block', ${!r.block})"><span class="or-ic">${ico('lock')}</span><span class="or-l">Bloquear también<span class="or-s">no te verá ni podrá escribirte</span></span><span class="switch ${r.block?'on':''}"><span class="knob"></span></span></div>` : ''}
+      ${r.convId ? '<p class="hint">Se adjuntan los mensajes de esta conversación para que moderación pueda revisarlos.</p>' : (what ? `<p class="hint">Se adjunta ${what} para que moderación pueda revisarlo.</p>` : '')}
       <button class="btn-primary" ${r.reason ? '' : 'disabled'} onclick="submitReport()">Enviar reporte</button>
     </div></div>`);
 }
 function setReportField(k, v){ state.report[k] = v; renderReport(); }
 function submitReport(){
   const r = state.report; if (!r || !r.reason) return;
-  REPORTS.push({ id:'rp'+Date.now(), targetUserId:r.uid, conversationId:r.convId, reason:r.reason, withMessages: !!r.convId, status:'en_cola' });
+  const obj = r.obj || { objectType: r.convId ? 'conversacion' : 'usuario' };
+  REPORTS.push(Object.assign({ id:newId('rp'), reporterId:'me', targetUserId:r.uid, convId:r.convId, reason:r.reason, evidence: reportEvidence(r),
+    source:'usuario', status:'en_cola', at:Date.now() }, obj));
   const u = getUser(r.uid) || { name:'' };
   const c = r.convId && getConversation(r.convId);
   if (c && c.status === 'solicitud') CONVERSATIONS.splice(CONVERSATIONS.indexOf(c), 1);   // una solicitud reportada sale de la bandeja
   saveState(); closeOverlay();
-  if (r.block) blockUser(r.uid, true);
-  toast('Gracias. Moderación revisará el reporte' + (r.block ? ' y has bloqueado a ' + u.name.split(' ')[0] : ''));
-  if (!r.block) go('mensajes/' + (state.inboxTab || 'chats'));
+  if (r.block && r.uid) blockUser(r.uid, true);
+  toast('Gracias. Moderación revisará el reporte' + (r.block && r.uid ? ' y has bloqueado a ' + u.name.split(' ')[0] : ''));
+  if (!r.block && r.convId) go('mensajes/' + (state.inboxTab || 'chats'));
 }
 function deleteConv(id){ const i = CONVERSATIONS.findIndex(c => c.id === id); if (i >= 0) CONVERSATIONS.splice(i, 1); saveState(); updateDmBadge(); toast('Conversación eliminada'); go('mensajes/' + (state.inboxTab || 'chats')); }
 function revealImg(id, i){ const c = getConversation(id); if (c && c.messages[i]){ c.messages[i].revealed = true; saveState(); renderChat(id); } }
@@ -837,9 +864,9 @@ function blockUser(uid, quiet){
   for (let i = FOLLOWS.length - 1; i >= 0; i--) if ((FOLLOWS[i][0] === uid && FOLLOWS[i][1] === 'me') || (FOLLOWS[i][0] === 'me' && FOLLOWS[i][1] === uid)) FOLLOWS.splice(i, 1);
   saveState(); updateDmBadge(); closeOverlay();
   if (!quiet) toast('Has bloqueado a ' + u.name);
-  go('mensajes/' + (state.inboxTab || 'chats'));
+  if (/^#\/(chat|mensajes)/.test(location.hash)) go('mensajes/' + (state.inboxTab || 'chats')); else router();
 }
-function unblockUser(uid){ ME.blocked = (ME.blocked || []).filter(x => x !== uid); saveState(); toast('Desbloqueado'); renderProfile(uid); }
+function unblockUser(uid){ ME.blocked = (ME.blocked || []).filter(x => x !== uid); saveState(); toast('Desbloqueado'); if (location.hash === '#/bloqueados') renderBlocked(); else renderProfile(uid); }
 function openChatMenu(id){
   const c = getConversation(id); if (!c) return; const u = getUser(c.with) || { name:'' };
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Opciones">
@@ -854,6 +881,7 @@ function openChatMenu(id){
 function openDm(uid){
   const u = getUser(uid) || { name:'' };
   if ((ME.blocked || []).includes(uid)){ toast('Has bloqueado a ' + u.name); return; }
+  if (isSanctioned(uid)){ toast(sanctionNote(u)); return; }
   if (u.dmMode === 'cerrado' && !knows(uid, 'me')){ toast(u.name + ' no recibe mensajes de quien no conoce'); return; }
   if (!knows(uid, 'me') && !requireVerified('Verifica tu identidad para escribir a quien no te conoce', () => openDm(uid))) return;
   const c = dmWith(uid, true); saveState(); closeOverlay(); go('chat/' + c.id);
@@ -1085,8 +1113,10 @@ function openPost(id){
 function openComments(id){
   const po = POSTS.find(p=>p.id===id); if (!po) return;
   if (!overlayEl().hidden && overlayEl().className.includes('ov-post')) state.sheetReturn = id;
-  const list = (po.comments||[]).map((c, i) => { const u = c.userId === 'me' ? ME : (getUser(c.userId) || { name:c.userId, initials:'?' });
-    return `<div class="cm"><span class="post-av sm">${escapeHtml(u.initials||'')}</span><p><b>${escapeHtml(u.handle||u.name)}</b> ${highlightCaption(c.text)}</p>${c.userId === 'me' ? `<button class="cm-del" onclick="deleteComment('${id}', ${i})" aria-label="Borrar mi comentario">${ico('close')}</button>` : ''}</div>`; }).join('')
+  ensureCommentIds(po);
+  // Los tuyos se pueden borrar; los de otros, reportar. Los retirados o de cuentas bloqueadas no salen.
+  const list = (po.comments||[]).map((c, i) => { if (!commentVisible(c)) return ''; const u = c.userId === 'me' ? ME : (getUser(c.userId) || { name:c.userId, initials:'?' });
+    return `<div class="cm"><span class="post-av sm">${escapeHtml(u.initials||'')}</span><p><b>${escapeHtml(u.handle||u.name)}</b> ${highlightCaption(c.text)}${c.held ? `<span class="cm-held">${ico('clock')} En revisión: solo lo ves tú</span>` : ''}</p>${c.userId === 'me' ? `<button class="cm-del" onclick="deleteComment('${id}', ${i})" aria-label="Borrar mi comentario">${ico('close')}</button>` : `<button class="cm-del" onclick="reportComment('${id}','${c.id}')" aria-label="Reportar comentario">${ico('alert')}</button>`}</div>`; }).join('')
     || '<p class="hint">Aún no hay comentarios. Escribe el primero.</p>';
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeSheet()"></div>
     <div class="sheet" role="dialog" aria-label="Comentarios">
@@ -1099,8 +1129,13 @@ function closeSheet(){ const back = state.sheetReturn; state.sheetReturn = null;
 function addComment(id){
   const text = clip(val('cm-input'), 'comment'); if (!text) return;
   const po = POSTS.find(p=>p.id===id); if (!po) return;
-  (po.comments = po.comments || []).push({ userId:'me', text });
-  saveState(); openComments(id); rerenderPost(id);
+  guardText(text, { kind:'comentario', onEdit: (t) => { openComments(id); const el = document.getElementById('cm-input'); if (el) el.value = t; } }, flag => {
+    const c = { id:newId('cm'), userId:'me', text };
+    if (flag) c.held = true;
+    (po.comments = po.comments || []).push(c);
+    saveState(); openComments(id); rerenderPost(id);
+    return { objectType:'comentario', postId:id, commentId:c.id };
+  });
 }
 
 // Visor de stories: 5 s por story, toque a la izquierda o a la derecha para navegar.
@@ -1436,6 +1471,7 @@ function renderDetail(id){
       <div class="block"><h4>El plan</h4><p>${escapeHtml(p.summary)}</p>
         <p class="hint">${manual?'Plan con aprobación: envía una solicitud; el creador o los admins la aceptan o rechazan.':(libre?'Plan libre: no hace falta apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.':'Plan apuntado: hay que apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.')}</p>
       </div>
+      ${p.held ? `<div class="pl-banner">${ico('clock')}<div><b>En revisión</b><p>El filtro automático ha retenido este plan: solo lo ves tú hasta que lo revise una persona del equipo. Puedes apelar en Ajustes ▸ Estado de tu cuenta.</p></div></div>` : ''}
       ${cancelBanner}${reconfirmBanner}
       ${myBlock}
       ${hostBlock}
@@ -1458,9 +1494,7 @@ function renderDetail(id){
             <span class="pl-s">${place?place.city+' · '+(place.kind==='negocio'?'Negocio verificado':'Lugar público')+' · '+place.hashtag:''}</span></span>
           <span class="pl-arrow">${ico('chevR')}</span></button>
       </div>
-      <div class="block"><h4>Seguridad</h4>
-        <div class="trust-row"><span class="trust">${ico('pin')} Punto de encuentro in-app</span><span class="trust">${ico('alert')} Botón SOS</span><span class="trust">${ico('user')} Contacto de confianza</span></div>
-      </div>
+      ${safetyBlock(p)}
       <div class="block"><h4>Reseñas de ediciones anteriores</h4>
         ${REVIEWS.map(r=>`<div class="review"><div class="top"><span>${r.author}</span><span class="st">${Array(r.stars).fill(ico('star')).join('')}</span></div><p>${r.text}</p></div>`).join('')}
       </div>
@@ -1587,7 +1621,8 @@ function renderProfile(uid){
     ${me ? `<div class="ph-actions"><button class="ph-btn" onclick="go('editar-perfil')">Editar perfil</button><button class="ph-btn" onclick="toast('Compartir perfil estará disponible en la app')">Compartir perfil</button></div>`
       : (u.managedBy === 'me' ? `<div class="ph-actions"><span class="hint">${ico('briefcase')} Gestionas este perfil desde tu cuenta personal.</span><button class="ph-btn" onclick="openProfileSwitcher()">Tus perfiles</button></div>`
       : (ME.blocked || []).includes(u.id) ? `<div class="ph-actions"><span class="hint">Has bloqueado a ${escapeHtml(u.name)}.</span><button class="ph-btn" onclick="unblockUser('${u.id}')">Desbloquear</button></div>`
-        : `<div class="ph-actions">${followButton(u)}<button class="ph-btn" onclick="openDm('${u.id}')">Mensaje</button></div>`)}
+        : sanctionNote(u) ? `<div class="ph-actions"><span class="hint">${escapeHtml(sanctionNote(u))}</span><button class="ph-btn ph-more" onclick="openUserMenu('${u.id}')" aria-label="Más opciones">${ico('dots')}</button></div>`
+        : `<div class="ph-actions">${followButton(u)}<button class="ph-btn" onclick="openDm('${u.id}')">Mensaje</button><button class="ph-btn ph-more" onclick="openUserMenu('${u.id}')" aria-label="Más opciones">${ico('dots')}</button></div>`)}
     ${(me && !u.profilePublic)?`<div class="priv-banner">${ico('lock')} Perfil privado: solo tus seguidores aprobados ven tu actividad.</div>`:''}
     ${!canSeeProfile(u) ? `<div class="empty-tab priv-block"><span class="empty-ic">${ico('lock')}</span><h3>Esta cuenta es privada</h3><p>Sigue a ${escapeHtml(u.name)} para ver sus publicaciones, planes y valoraciones.</p></div>` : `
     <div class="prof-tabs" role="tablist">${[['posts','grid','Publicaciones'],['vividas','play','Vividas'],['valoraciones','star','Valoraciones'],['etiquetadas','tag','Etiquetadas']].concat(me ? [['guardados','bookmark','Guardados']] : []).map(([t,i,l])=>
@@ -1837,8 +1872,10 @@ function saveProfile(){
   const user = val('f-puser').trim().toLowerCase();
   const err = usernameError(user, ME.id);
   if (err){ checkUsername(); toast(err); return; }
+  const bio = clip(val('f-pbio'), 'bio');
+  if (moderateText(bio, { kind:'bio' }).level === 'retener'){ guardText(bio, { kind:'bio' }, () => null); return; }
   ME.name = name; ME.handle = '@' + user; ME.initials = initials(name);
-  ME.bio = clip(val('f-pbio'), 'bio');
+  ME.bio = bio;
   if (ME.type === 'profesional'){
     ME.business = { ...(ME.business||{}), category: val('f-pcat') || (ME.business||{}).category,
       web: clip(val('f-pweb'), 'web'), address: clip(val('f-paddr'), 'address') };
@@ -1891,11 +1928,17 @@ function renderSettings(){
             <span class="sb-l">Quién ve las privadas</span>${seg('privada', AUD_OPTIONS.privada.map(v=>[v,AUD_LABEL[v],audIco[v]]))}
             <p class="hint">Seguidores: quien te sigue. Amigos: quien te sigue y a quien sigues (tienes ${nFriends}). En cada plan puedes hacer una valoración pública o privada desde tu perfil ▸ Valoraciones.</p></div>`; })()}
       </div>
+      <div class="set-group"><div class="set-title">Tu seguridad</div>
+        <button class="set-row" onclick="go('contactos-confianza')"><span class="sr-ic">${ico('user')}</span><span class="sr-l">Contactos de confianza y SOS</span><span class="soon">${trustedContacts().length || 'Ninguno'}</span><span class="pl-arrow">${ico('chevR')}</span></button>
+        <button class="set-row" onclick="go('bloqueados')"><span class="sr-ic">${ico('lock')}</span><span class="sr-l">Cuentas bloqueadas</span><span class="soon">${(ME.blocked || []).length}</span><span class="pl-arrow">${ico('chevR')}</span></button>
+        <button class="set-row" onclick="go('mis-reportes')"><span class="sr-ic">${ico('alert')}</span><span class="sr-l">Tus reportes</span><span class="pl-arrow">${ico('chevR')}</span></button>
+        <button class="set-row" onclick="go('estado-cuenta')"><span class="sr-ic">${ico('shield')}</span><span class="sr-l">Estado de tu cuenta</span><span class="soon">${MOD_ACTIONS.some(a => a.targetUserId === 'me' && a.status !== 'revocada') ? 'Con avisos' : 'En regla'}</span><span class="pl-arrow">${ico('chevR')}</span></button>
+      </div>
       <div class="set-group"><div class="set-title">General</div>
         <button class="set-row" onclick="go('notificaciones')"><span class="sr-ic">${ico('bell')}</span><span class="sr-l">Notificaciones</span><span class="pl-arrow">${ico('chevR')}</span></button>
         <button class="set-row" onclick="go('seguridad')"><span class="sr-ic">${ico('shield')}</span><span class="sr-l">Seguridad y acceso</span><span class="pl-arrow">${ico('chevR')}</span></button>
+        <button class="set-row" onclick="go('mis-datos')"><span class="sr-ic">${ico('doc')}</span><span class="sr-l">Tus datos y privacidad</span><span class="pl-arrow">${ico('chevR')}</span></button>
         ${row('card','Pagos y reembolsos')}
-        ${row('doc','Datos y legal')}
       </div>
       <div class="set-group"><div class="set-title">Prototipo</div>
         <div class="set-row static"><span class="sr-ic">${ico('image')}</span><span class="sr-l">Fotos de Unsplash (licencia Unsplash)</span></div>
@@ -1903,6 +1946,7 @@ function renderSettings(){
           <span class="tg-ic">${ico('shield')}</span>
           <span class="tg-info"><span class="tg-n">Simular cuenta sin verificar</span><span class="tg-s">Para ver qué cambia antes de verificarse</span></span>
           <span class="switch ${ME.verified?'':'on'}"><span class="knob"></span></span></div>
+        <button class="set-row" onclick="go('moderacion')"><span class="sr-ic">${ico('shield')}</span><span class="sr-l">Panel de moderación<span class="or-s">equipo interno</span></span><span class="soon">${REPORTS.filter(r => r.status === 'en_cola').length} en cola</span><span class="pl-arrow">${ico('chevR')}</span></button>
         <button class="set-row" onclick="openInstallHelp()"><span class="sr-ic">${ico('phone')}</span><span class="sr-l">Instalar en el móvil</span><span class="pl-arrow">${ico('chevR')}</span></button>
         <button class="set-row" onclick="resetDemo()"><span class="sr-ic">${ico('repeat')}</span><span class="sr-l">Restablecer demo</span><span class="soon">borra cuentas y lo creado</span></button>
       </div>
@@ -2053,9 +2097,13 @@ function setDraft(key,v){
 }
 function publishPlan(){
   if (!requireVerified('Verifica tu identidad para organizar un plan', () => publishPlan())) return;
-  const d = state.draft;
+  if (!userMod('me').canHost){ toast('Moderación te ha retirado la opción de organizar planes. Mira Ajustes ▸ Estado de tu cuenta'); return; }
   const title = clip(val('f-title'), 'planTitle') || 'Plan sin título';
   const desc = clip(val('f-desc'), 'planDesc') || 'Plan creado desde el prototipo.';
+  guardText(title + '\n' + desc, { kind:'plan' }, flag => commitPlan(title, desc, flag));
+}
+function commitPlan(title, desc, flag){
+  const d = state.draft;
   const placeId = val('f-place') || PLACES[0].id;
   const dateRaw = val('f-date');
   const when = dateRaw ? new Date(dateRaw) : new Date(Date.now()+24*3600*1000);
@@ -2072,15 +2120,17 @@ function publishPlan(){
     when, groupMin:ranges[0], groupMax:ranges[1], joined:0, attended:0, publicAttendees:[], attendedPrivate:0,
     joinType: access==='libre' ? 'libre' : 'apuntado',
     approval: access==='aprobacion' ? 'manual' : (access==='libre' ? 'libre' : 'automatica'),
-    groupId,
+    groupId, held: !!flag || undefined,
   };
   PLANS.unshift(plan);
   if (groupId){ const g=getGroup(groupId); if(g) g.planIds.unshift(plan.id); }
   state.pendingGroup = null; d.photo = null;
   ensurePlanChat(plan.id);
   saveState();
-  if (plan.approval === 'manual') setTimeout(() => simulateIncomingRequest(plan.id), 5000);   // demo: llega una solicitud
-  toast('Plan publicado'); go('plan/'+plan.id);
+  if (plan.approval === 'manual' && !flag) setTimeout(() => simulateIncomingRequest(plan.id), 5000);   // demo: llega una solicitud
+  if (!flag) toast('Plan publicado');
+  go('plan/'+plan.id);
+  return { objectType:'plan', planId:plan.id };
 }
 function freshPostDraft(){ return { items:[], origin:'plan', kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' }; }
 function capturePostInputs(){
@@ -2173,8 +2223,11 @@ function togglePostTag(uid){ capturePostInputs(); const t=state.draftPost.tags; 
 function togglePostOpt(key){ capturePostInputs(); state.draftPost[key]=!state.draftPost[key]; renderCreatePost(); }
 function publishPost(){
   capturePostInputs();
+  const caption = clip(state.draftPost.caption, 'caption') || 'Nueva publicación';
+  guardText(caption, { kind:'publicacion' }, flag => commitPost(caption, flag));
+}
+function commitPost(caption, flag){
   const d = state.draftPost, k = d.kind;
-  const caption = clip(d.caption, 'caption') || 'Nueva publicación';
   const media = k==='carrusel' ? ['g-grape','g-sunset','g-forest'] : [k==='video'?'g-grape':'g-sunset'];
   const mentions = (caption.match(MENTION_RE)||[]);
   const hashtags = (caption.match(/#[\wáéíóúñ]+/gi)||[]);
@@ -2188,16 +2241,17 @@ function publishPost(){
     id, authorId:'me', kind: up ? up.kind : k, media: up ? imgs.map(() => 'g-dark') : media, imgs, video: up && up.video ? up.video : undefined, caption, likes:0, ago:0, comments:[], duration: up && up.duration ? up.duration : (k==='video' ? 15 : undefined),
     placeId:d.place||null, taggedUserIds:[...d.tags], planId, altText:clip(d.alt, 'alt'),
     mentions, hashtags, audience:d.audience, commentsEnabled:d.comments, hideLikes:d.hideLikes, sharedToStory:d.alsoStory,
-    trackId:d.trackId||null,
+    trackId:d.trackId||null, held: !!flag || undefined,
   });
-  const story = d.alsoStory;
+  const story = d.alsoStory && !flag;
   if (story) STORIES.unshift({ id:'s'+id, userId:'me', planId, img:imgs[0], minAgo:0, trackId:d.trackId||null, text:caption });
   state.draftPost = freshPostDraft();
   saveState();
-  toast(story ? 'Publicación creada · compartida en Stories' : 'Publicación creada');
+  if (!flag) toast(story ? 'Publicación creada · compartida en Stories' : 'Publicación creada');
   // Tu perfil se abre en el apartado donde ha quedado la publicación.
   state.profileTab='posts'; state.profileFilterUid='me'; state.profileFilter = planId ? 'plan' : 'vida';
   go('perfil');
+  return { objectType:'publicacion', postId:id };
 }
 
 /* ---------- helpers de página ---------- */
@@ -2253,6 +2307,12 @@ function router(){
     case 'notificaciones': renderNotifications(); showView('page'); scrollTop('page'); break;
     case 'editar-plan': renderEditPlan(arg); showView('page'); scrollTop('page'); break;
     case 'seguridad': renderSecurity(); showView('page'); scrollTop('page'); break;
+    case 'contactos-confianza': renderTrusted(); showView('page'); scrollTop('page'); break;
+    case 'bloqueados': renderBlocked(); showView('page'); scrollTop('page'); break;
+    case 'mis-reportes': renderMyReports(); showView('page'); scrollTop('page'); break;
+    case 'estado-cuenta': renderAccountStatus(); showView('page'); scrollTop('page'); break;
+    case 'mis-datos': renderMyData(); showView('page'); scrollTop('page'); break;
+    case 'moderacion': renderModeration(arg); showView('page'); scrollTop('page'); break;
     case 'nuevo-perfil': renderNewProfile(); showView('page'); scrollTop('page'); break;
     case 'editar-perfil': renderEditProfile(); showView('page'); scrollTop('page'); break;
     case 'ajustes': renderSettings(); showView('page'); scrollTop('page'); break;

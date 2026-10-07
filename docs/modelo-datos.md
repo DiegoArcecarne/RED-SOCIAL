@@ -76,6 +76,10 @@ erDiagram
     PLAN ||--o{ EVENTO_SEGURIDAD : "ocurre en"
     USUARIO ||--o{ REPORTE : emite
     REPORTE ||--o{ ACCION_MODERACION : "deriva en"
+    PERSONA ||--o{ ACCION_MODERACION : "recibe"
+    ACCION_MODERACION ||--o| APELACION : "se recurre con"
+    REPORTE ||--o| APELACION : "quien reporta pide revisar"
+    PERSONA ||--o{ SOLICITUD_DATOS : "pide (RGPD)"
 
     CUENTA_EMPRESA ||--o{ SUSCRIPCION_NEGOCIO : contrata
     USUARIO ||--o{ CAMPANA_BOOST : anuncia
@@ -341,32 +345,68 @@ erDiagram
     }
     REPORTE {
         uuid id PK
-        uuid reportante_id FK "anonimo ante reportado"
-        string objeto_tipo "plan|usuario|mensaje|contenido|evento"
+        uuid reportante_id FK "null si viene del filtro; anonimo ante reportado"
+        string origen "usuario|automatico"
+        uuid reportado_id FK
+        string objeto_tipo "usuario|conversacion|publicacion|comentario|mensaje|plan|evento"
         uuid objeto_id
         string categoria "spam|acoso|sexual|suplantacion|estafa|menor|peligro|otro"
-        string evidencia "p. ej. mensajes de la conversacion"
-        string gravedad
-        string estado "cola|en_revision|resuelto|escalado"
+        string categoria_filtro "amenaza|odio|spam|insulto, si es automatico"
+        string evidencia "copia del texto o de los mensajes"
+        string gravedad "critica 1h|alta 24h|media 48h|baja 72h"
+        string estado "en_cola|en_revision|resuelto|desestimado|escalado"
+        datetime fecha
     }
     ACCION_MODERACION {
         uuid id PK
-        uuid reporte_id FK
-        string tipo "aviso|retirada|reduccion_alcance|suspension|bloqueo|retirar_organizar|retener_escrow"
-        bool apelable
+        uuid reporte_id FK "opcional"
+        uuid persona_id FK "afectada"
+        uuid moderador_id FK "null si es automatica"
+        string tipo "retener|retirar|aviso|reduccion_alcance|retirar_organizar|suspension_7|suspension_30|cierre|autoridades|retener_escrow"
+        string objeto_tipo
+        uuid objeto_id
+        string motivo "categoria y norma incumplida"
+        string exposicion_motivos "lo que se le dice, art. 17 DSA"
+        bool automatica
+        string estado "en_revision|vigente|revocada"
+        datetime fecha
+        datetime hasta "en suspensiones"
+    }
+    APELACION {
+        uuid id PK
+        uuid accion_id FK "o reporte_id si apela quien reporto"
+        uuid persona_id FK
+        string texto "max 1000"
+        uuid revisor_id FK "distinto de quien decidio"
+        string estado "pendiente|estimada|desestimada"
+        datetime fecha
     }
     CONTACTO_CONFIANZA {
         uuid id PK
         uuid usuario_id FK
-        string contacto
-        uuid plan_compartido_id FK "opcional"
+        string nombre
+        string telefono "E.164, cifrado"
+        string estado "invitado|aceptado|rechazado"
     }
     EVENTO_SEGURIDAD {
         uuid id PK
         uuid usuario_id FK
         uuid plan_id FK
-        string tipo "checkin|sos"
-        point ubicacion
+        string tipo "compartir|llegada|sos|sin_respuesta"
+        point ubicacion "solo en SOS"
+        string estado "activa|cerrada (SOS)"
+        string cerrada_por "usuario|equipo"
+        bool avisado_112
+        datetime fecha
+    }
+    SOLICITUD_DATOS {
+        uuid id PK
+        uuid persona_id FK
+        string tipo "exportar|borrar|rectificar|oponerse|limitar"
+        string estado "recibida|en_proceso|lista|caducada"
+        string enlace "exportacion, firmado y caducable"
+        datetime fecha
+        datetime completada
     }
     SUSCRIPCION_NEGOCIO {
         uuid id PK
@@ -389,8 +429,10 @@ erDiagram
     CONSENTIMIENTO {
         uuid id PK
         uuid persona_id FK
-        string tipo "terminos|privacidad|edad|codigo_conducta|ubicacion|verificacion|pagos"
+        string tipo "terminos|privacidad|edad|codigo_conducta|ubicacion|verificacion|pagos|marketing|analitica|personalizacion"
         string version
+        bool valor "historico: cada cambio es una fila nueva"
+        datetime fecha
     }
     SESION_DISPOSITIVO {
         uuid id PK
@@ -401,7 +443,7 @@ erDiagram
     NOTIFICACION {
         uuid id PK
         uuid usuario_id FK
-        string tipo "recordatorio|solicitud|mensaje|cambio|plaza|despues_plan"
+        string tipo "recordatorio|solicitud|mensaje|cambio|plaza|despues_plan|seguidor|mencion|seguridad"
         string referencia "plan, conversacion o ruta"
         string texto
         bool leida

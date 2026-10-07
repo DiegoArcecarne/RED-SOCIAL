@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * Genera prototipo/standalone.html a partir de las fuentes del prototipo
- * (index.html + styles.css + data.js + cuentas.js + planes.js + social.js + app.js), todo en línea en un único archivo.
+ * (index.html + styles.css + data.js + cuentas.js + planes.js + social.js + confianza.js + app.js), todo en línea en un único archivo.
  *
  * Uso:
  *   node scripts/build-standalone.js           # regenera standalone.html
@@ -22,16 +22,17 @@ function build() {
   const cuentas = read('cuentas.js');
   const planes = read('planes.js');
   const social = read('social.js');
+  const confianza = read('confianza.js');
   const app = read('app.js');
 
   const link = '<link rel="stylesheet" href="styles.css" />';
-  const scripts = /  <script src="data.js"><\/script>\n  <script src="cuentas.js"><\/script>\n  <script src="planes.js"><\/script>\n  <script src="social.js"><\/script>\n  <script src="app.js"><\/script>/;
+  const scripts = /  <script src="data.js"><\/script>\n  <script src="cuentas.js"><\/script>\n  <script src="planes.js"><\/script>\n  <script src="social.js"><\/script>\n  <script src="confianza.js"><\/script>\n  <script src="app.js"><\/script>/;
   if (!html.includes(link)) throw new Error('index.html: no se encuentra el <link> a styles.css');
-  if (!scripts.test(html)) throw new Error('index.html: no se encuentran los <script> de data.js, cuentas.js, planes.js, social.js y app.js');
+  if (!scripts.test(html)) throw new Error('index.html: no se encuentran los <script> de data.js, cuentas.js, planes.js, social.js, confianza.js y app.js');
 
   // Funciones de reemplazo: evitan que "$&", "$1"… del CSS/JS se interpreten como patrones.
   html = html.replace(link, () => '<style>\n' + css + '\n  </style>');
-  html = html.replace(scripts, () => '  <script>\n' + data + '\n\n' + cuentas + '\n\n' + planes + '\n\n' + social + '\n\n' + app + '\n  </script>');
+  html = html.replace(scripts, () => '  <script>\n' + data + '\n\n' + cuentas + '\n\n' + planes + '\n\n' + social + '\n\n' + confianza + '\n\n' + app + '\n  </script>');
   html = html.replace('<title>Prototipo · App de planes</title>', '<title>Prototipo (standalone) · App de planes</title>');
   return html;
 }

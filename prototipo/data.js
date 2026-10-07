@@ -242,6 +242,8 @@ const USERS = [
   // Perfil privado: para ver sus publicaciones hay que pedir seguirla.
   { id:'irene', name:'Irene C.', handle:'@irenec', initials:'IC', type:'usuario', verified:true, profilePublic:false,
     bio:'Fotografía, montaña y vermú.', followers:96, following:110, ratings:{ default:'publica', publica:'todos', privada:'solo_yo' }, attendedPlanIds:['p5'] },
+  // Cuenta con reportes pendientes: sirve para probar el panel de moderación.
+  { id:'alexv', name:'Álex V.', handle:'@alex.v', initials:'AV', type:'usuario', verified:true, followers:14, following:390, ratings:{ default:'publica', publica:'todos', privada:'solo_yo' }, attendedPlanIds:['p3'] },
 ];
 const ME = USERS[0]; // usuario actual
 
@@ -255,13 +257,15 @@ const ME = USERS[0]; // usuario actual
 const POSTS = [
   { id:'po7',  authorId:'azotea', planId:'p3', trackId:'t2', kind:'video', duration:24, media:['g-grape'], imgs:['1517457373958-b7bdd4587205'], ago:2,
     caption:'Sunset Sessions de anoche. Gracias a los 63 que subisteis #rooftopmadrid', likes:540,
-    comments:[{userId:'sara',text:'Qué noche. Repito el viernes'},{userId:'marco',text:'El DJ, brutal'}] },
+    comments:[{userId:'sara',text:'Qué noche. Repito el viernes'},{userId:'marco',text:'El DJ, brutal'},{id:'cm-a1',userId:'alexv',text:'Menudo DJ más malo, sois todos unos pringados'}] },
   { id:'po8',  authorId:'lucia', planId:'p2', trackId:'t1', kind:'carrusel', media:['g-sunset','g-sunset'], imgs:['1495567720989-cebdbdd97913','1502680390469-be75c86b636f'], ago:3,
     caption:'Debod a las 21:40. Gracias a @marcot y a todos los que os acercasteis #atardecerdebod', likes:118,
     comments:[{userId:'marco',text:'El mejor atardecer de Madrid, sin discusión'},{userId:'ana',text:'La próxima no me lo pierdo'},{userId:'marco',text:'@marina tienes que venir la próxima'}] },
   { id:'po9',  authorId:'marco', planId:'p10', trackId:'t4', kind:'video', duration:31, media:['g-dark'], imgs:['1486218119243-13883505764c'], ago:8,
     caption:'5 km al anochecer con el club. Ritmo de grupo, nadie se queda atrás #runningmadrid', likes:76,
-    comments:[{userId:'ana',text:'¿Vale para principiantes?'},{userId:'marco',text:'@anap sí, hay grupo de ritmo suave'}] },
+    comments:[{userId:'ana',text:'¿Vale para principiantes?'},{userId:'marco',text:'@anap sí, hay grupo de ritmo suave'},
+      // Retirado por moderación (venta de entradas fuera de la app): Marina puede apelar.
+      {id:'cm-m1',userId:'me',text:'Vendo 2 entradas para el rooftop, escríbeme al 600 123 456',removed:true}] },
   { id:'po10', authorId:'sara', planId:'p1', trackId:'t6', kind:'foto', media:['g-wine'], imgs:['1514362545857-3bc16c4c7d1b'], ago:14,
     caption:'El himno de la Victoria no defrauda. Fui sola y salí con plan para el sábado #himnovictoria', likes:203,
     comments:[{userId:'nora',text:'Eso es justo lo que buscaba al llegar a Burgos'}] },
@@ -460,8 +464,30 @@ const CONVERSATIONS = [
     { from:'nora', img:'1474722883778-792e7990302f', min:64 } ] },
 ];
 const getConversation = (id) => CONVERSATIONS.find((c) => c.id === id);
-// Reportes enviados a moderación (el reportado nunca sabe quién reporta).
-const REPORTS = [];
+/* Confianza y seguridad (confianza.js). En la app real todo esto vive en el servidor.
+   REPORTS: reportes de usuarios y avisos del filtro automático (el reportado nunca sabe
+   quién reporta). objectType: usuario | conversacion | publicacion | comentario | mensaje | plan.
+   status: en_cola | resuelto | desestimado. */
+const minsAgo = (m) => Date.now() - m * 60000;
+const REPORTS = [
+  { id:'rp1', reporterId:'lucia', targetUserId:'alexv', objectType:'comentario', postId:'po7', commentId:'cm-a1', reason:'acoso',
+    evidence:'Menudo DJ más malo, sois todos unos pringados', source:'usuario', status:'en_cola', at: minsAgo(50) },
+  { id:'rp2', reporterId:'sara', targetUserId:'alexv', objectType:'conversacion', reason:'spam',
+    evidence:'Gana 300 € a la semana desde casa. Entra en bit.ly/dinero-ya', source:'usuario', status:'en_cola', at: minsAgo(190) },
+  { id:'rp3', reporterId:null, targetUserId:'alexv', objectType:'conversacion', reason:'peligro', autoCategory:'amenaza',
+    evidence:'Sé dónde vives, ya nos veremos', source:'automatico', status:'en_cola', at: minsAgo(12) },
+  { id:'rp4', reporterId:'ana', targetUserId:'david', objectType:'usuario', reason:'otro',
+    evidence:'No me gusta cómo habla en los planes', source:'usuario', status:'en_cola', at: minsAgo(1500) },
+];
+// Decisiones de moderación (con su exposición de motivos) y apelaciones.
+const MOD_ACTIONS = [
+  { id:'ma1', targetUserId:'me', action:'retirar', objectType:'comentario', postId:'po9', commentId:'cm-m1', reason:'spam',
+    evidence:'Vendo 2 entradas para el rooftop, escríbeme al 600 123 456', automated:true, status:'vigente', at: minsAgo(2 * 1440), appeal:null },
+];
+// Estado de moderación de cada cuenta: avisos, suspensión, alcance y si puede organizar.
+const USER_MOD = { alexv: { strikes:1 } };
+// Alertas SOS, planes compartidos con contactos de confianza y avisos de "he llegado bien".
+const SAFETY_EVENTS = [];
 
 /* Notificaciones. type: recordatorio | solicitud | mensaje | cambio | plaza | fiabilidad.
    min: minutos desde que llegó (las nuevas guardan "at"). */
@@ -486,6 +512,7 @@ if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
     STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, FOLLOW_REQUESTS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
+    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }

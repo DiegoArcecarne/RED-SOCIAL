@@ -885,6 +885,50 @@ button.avatar{cursor:pointer;font:inherit;font-weight:700;color:var(--ink)}
 .mention-tx .pl-banner-b{margin-top:4px}
 .mention-tx .link-btn{align-self:flex-start;font-size:12.5px}
 
+/* ======================= Confianza y seguridad ======================= */
+.nudge{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.5;color:var(--ink-soft)}
+.nudge > .ico{font-size:19px;color:var(--ink);flex:none;margin-top:1px}
+.nudge-q{margin:6px 0;padding:8px 11px;border-left:2px solid var(--line);background:var(--surface-2);border-radius:0 10px 10px 0;font-size:13px;color:var(--ink-soft);line-height:1.45;word-break:break-word}
+.held-note{display:flex;align-items:center;gap:6px;padding:8px 14px;font-size:12.5px;color:var(--ink-soft);background:var(--surface-2);border-top:1px solid var(--line)}
+.cm-held{display:flex;align-items:center;gap:5px;margin-top:3px;font-size:11.5px;color:var(--ink-dim)}
+.msg-held{display:flex;align-items:center;gap:5px;margin-top:3px;font-size:11px;color:var(--ink-dim);justify-content:flex-end}
+.ph-btn.ph-more{flex:0 0 40px;display:grid;place-items:center;font-size:17px;padding:6px 0}
+.ph-btn.sm{flex:none;padding:6px 12px}
+.sos-row{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.sos-row p{font-size:12.5px;line-height:1.45;color:var(--ink-soft)}
+.sos-btn{flex:none;width:58px;height:58px;border-radius:50%;border:2px solid var(--live);background:rgba(194,68,76,.12);color:#f0b9bd;font:inherit;font-weight:800;font-size:14px;letter-spacing:.5px;cursor:pointer}
+.sos-chip{border-color:var(--live);color:#f0b9bd;font-weight:800}
+.sos-call{display:flex;align-items:center;justify-content:center;text-decoration:none}
+.safe-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);margin-bottom:10px}
+.safe-row span{flex:1}
+.safe-row .link-btn{font-size:13px}
+#view-detail .block .sh-row{width:100%;margin-bottom:10px}
+#view-detail .block > .link-btn{display:inline-flex;align-items:center;gap:5px;margin-top:12px;font-size:12.5px;text-decoration:none}
+.mod-note{display:flex;gap:6px;align-items:flex-start}
+.mod-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 13px;display:flex;flex-direction:column;gap:6px}
+.mod-card.sev-critica{border-color:var(--live)}
+.mod-card .ph-btn{flex:1}
+.mod-top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13.5px}
+.mod-age{font-size:11.5px;color:var(--ink-dim)}
+.mod-meta{font-size:12.5px;color:var(--ink-soft);line-height:1.45;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.mod-meta.dim{color:var(--ink-dim)}
+.mod-acts{display:flex;gap:6px;margin-top:4px}
+.sev{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-soft)}
+.sev-critica .sev{color:#f0b9bd}
+.sev-alta .sev{color:var(--ink)}
+.st{font-size:11px;font-weight:700;border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:2px 9px;color:var(--ink-soft);white-space:nowrap}
+.st-resuelto,.st-vigente{color:var(--ink)}
+.st-en_cola,.st-en_revision{border-color:var(--accent)}
+.acct-ok{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 13px;font-size:13.5px;line-height:1.45;margin-bottom:12px}
+.acct-ok > .ico{font-size:19px;flex:none;margin-top:1px}
+.acct-ok p{color:var(--ink-soft);margin-top:3px;font-size:12.5px}
+.acct-ok.warn{border-color:var(--accent)}
+.page-body > .mod-card{margin-bottom:10px}
+.mod-card .hint{font-size:12.5px;line-height:1.45;color:var(--ink-soft)}
+a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:center}
+.set-row .sr-l .or-s{display:block;margin-top:2px}
+.mod-tabs button .ico{display:none}
+
   </style>
 </head>
 <body>
@@ -1208,6 +1252,8 @@ const USERS = [
   // Perfil privado: para ver sus publicaciones hay que pedir seguirla.
   { id:'irene', name:'Irene C.', handle:'@irenec', initials:'IC', type:'usuario', verified:true, profilePublic:false,
     bio:'Fotografía, montaña y vermú.', followers:96, following:110, ratings:{ default:'publica', publica:'todos', privada:'solo_yo' }, attendedPlanIds:['p5'] },
+  // Cuenta con reportes pendientes: sirve para probar el panel de moderación.
+  { id:'alexv', name:'Álex V.', handle:'@alex.v', initials:'AV', type:'usuario', verified:true, followers:14, following:390, ratings:{ default:'publica', publica:'todos', privada:'solo_yo' }, attendedPlanIds:['p3'] },
 ];
 const ME = USERS[0]; // usuario actual
 
@@ -1221,13 +1267,15 @@ const ME = USERS[0]; // usuario actual
 const POSTS = [
   { id:'po7',  authorId:'azotea', planId:'p3', trackId:'t2', kind:'video', duration:24, media:['g-grape'], imgs:['1517457373958-b7bdd4587205'], ago:2,
     caption:'Sunset Sessions de anoche. Gracias a los 63 que subisteis #rooftopmadrid', likes:540,
-    comments:[{userId:'sara',text:'Qué noche. Repito el viernes'},{userId:'marco',text:'El DJ, brutal'}] },
+    comments:[{userId:'sara',text:'Qué noche. Repito el viernes'},{userId:'marco',text:'El DJ, brutal'},{id:'cm-a1',userId:'alexv',text:'Menudo DJ más malo, sois todos unos pringados'}] },
   { id:'po8',  authorId:'lucia', planId:'p2', trackId:'t1', kind:'carrusel', media:['g-sunset','g-sunset'], imgs:['1495567720989-cebdbdd97913','1502680390469-be75c86b636f'], ago:3,
     caption:'Debod a las 21:40. Gracias a @marcot y a todos los que os acercasteis #atardecerdebod', likes:118,
     comments:[{userId:'marco',text:'El mejor atardecer de Madrid, sin discusión'},{userId:'ana',text:'La próxima no me lo pierdo'},{userId:'marco',text:'@marina tienes que venir la próxima'}] },
   { id:'po9',  authorId:'marco', planId:'p10', trackId:'t4', kind:'video', duration:31, media:['g-dark'], imgs:['1486218119243-13883505764c'], ago:8,
     caption:'5 km al anochecer con el club. Ritmo de grupo, nadie se queda atrás #runningmadrid', likes:76,
-    comments:[{userId:'ana',text:'¿Vale para principiantes?'},{userId:'marco',text:'@anap sí, hay grupo de ritmo suave'}] },
+    comments:[{userId:'ana',text:'¿Vale para principiantes?'},{userId:'marco',text:'@anap sí, hay grupo de ritmo suave'},
+      // Retirado por moderación (venta de entradas fuera de la app): Marina puede apelar.
+      {id:'cm-m1',userId:'me',text:'Vendo 2 entradas para el rooftop, escríbeme al 600 123 456',removed:true}] },
   { id:'po10', authorId:'sara', planId:'p1', trackId:'t6', kind:'foto', media:['g-wine'], imgs:['1514362545857-3bc16c4c7d1b'], ago:14,
     caption:'El himno de la Victoria no defrauda. Fui sola y salí con plan para el sábado #himnovictoria', likes:203,
     comments:[{userId:'nora',text:'Eso es justo lo que buscaba al llegar a Burgos'}] },
@@ -1426,8 +1474,30 @@ const CONVERSATIONS = [
     { from:'nora', img:'1474722883778-792e7990302f', min:64 } ] },
 ];
 const getConversation = (id) => CONVERSATIONS.find((c) => c.id === id);
-// Reportes enviados a moderación (el reportado nunca sabe quién reporta).
-const REPORTS = [];
+/* Confianza y seguridad (confianza.js). En la app real todo esto vive en el servidor.
+   REPORTS: reportes de usuarios y avisos del filtro automático (el reportado nunca sabe
+   quién reporta). objectType: usuario | conversacion | publicacion | comentario | mensaje | plan.
+   status: en_cola | resuelto | desestimado. */
+const minsAgo = (m) => Date.now() - m * 60000;
+const REPORTS = [
+  { id:'rp1', reporterId:'lucia', targetUserId:'alexv', objectType:'comentario', postId:'po7', commentId:'cm-a1', reason:'acoso',
+    evidence:'Menudo DJ más malo, sois todos unos pringados', source:'usuario', status:'en_cola', at: minsAgo(50) },
+  { id:'rp2', reporterId:'sara', targetUserId:'alexv', objectType:'conversacion', reason:'spam',
+    evidence:'Gana 300 € a la semana desde casa. Entra en bit.ly/dinero-ya', source:'usuario', status:'en_cola', at: minsAgo(190) },
+  { id:'rp3', reporterId:null, targetUserId:'alexv', objectType:'conversacion', reason:'peligro', autoCategory:'amenaza',
+    evidence:'Sé dónde vives, ya nos veremos', source:'automatico', status:'en_cola', at: minsAgo(12) },
+  { id:'rp4', reporterId:'ana', targetUserId:'david', objectType:'usuario', reason:'otro',
+    evidence:'No me gusta cómo habla en los planes', source:'usuario', status:'en_cola', at: minsAgo(1500) },
+];
+// Decisiones de moderación (con su exposición de motivos) y apelaciones.
+const MOD_ACTIONS = [
+  { id:'ma1', targetUserId:'me', action:'retirar', objectType:'comentario', postId:'po9', commentId:'cm-m1', reason:'spam',
+    evidence:'Vendo 2 entradas para el rooftop, escríbeme al 600 123 456', automated:true, status:'vigente', at: minsAgo(2 * 1440), appeal:null },
+];
+// Estado de moderación de cada cuenta: avisos, suspensión, alcance y si puede organizar.
+const USER_MOD = { alexv: { strikes:1 } };
+// Alertas SOS, planes compartidos con contactos de confianza y avisos de "he llegado bien".
+const SAFETY_EVENTS = [];
 
 /* Notificaciones. type: recordatorio | solicitud | mensaje | cambio | plaza | fiabilidad.
    min: minutos desde que llegó (las nuevas guardan "at"). */
@@ -1452,6 +1522,7 @@ if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
     STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, FOLLOW_REQUESTS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
+    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }
@@ -1735,12 +1806,14 @@ function freshWorld(){
   POSTS.forEach(p => { p.comments = (p.comments || []).filter(c => c.userId !== 'me'); p.likedByMe = false; p.savedByMe = false; });
   drop(STORIES, s => s.userId === 'me'); drop(LIVES, l => l.userId === 'me');
   drop(RATINGS, r => r.userId === 'me'); drop(FOLLOWS, f => f[0] === 'me' || f[1] === 'me');
-  drop(CONVERSATIONS, () => true); drop(REQUESTS, r => r.userId === 'me'); drop(REPORTS, () => true);
+  drop(CONVERSATIONS, () => true); drop(REQUESTS, r => r.userId === 'me'); drop(REPORTS, r => r.reporterId === 'me' || r.reporterId === undefined || r.targetUserId === 'me');
   drop(USERS, u => u.managedBy === 'me');
   GROUPS.forEach(g => { g.members = g.members.filter(m => m.userId !== 'me'); });
   state.joined = new Set(); state.attended = new Set(); state.requested = new Set(); state.reconfirmed = new Set(); state.presencePublic = true;
   drop(NOTIFICATIONS, () => true); drop(FOLLOW_REQUESTS, () => true);
   ME.mentions = {}; ME.mentionPolicy = 'todos'; ME.recentSearches = []; ME.stats = { noShows:0, lateCancels:0 }; ME.joinedPlanIds = []; ME.notifPrefs = undefined;
+  ME.trustedContacts = []; ME.shareTrips = false; ME.safeCheck = false; ME.consents = undefined; ME.consentLog = [];
+  drop(MOD_ACTIONS, a => a.targetUserId === 'me'); drop(SAFETY_EVENTS, () => true); delete USER_MOD.me;
   PLANS.forEach(p => { p.waitlist = (p.waitlist || []).filter(x => x !== 'me'); });
 }
 
@@ -1969,6 +2042,7 @@ function openDeleteAccount(){
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Eliminar cuenta">
     <div class="sheet-h"><span>Eliminar cuenta</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list form"><p class="hint">Se borrarán tu perfil, tus publicaciones, mensajes y perfiles profesionales. Las reseñas que hayas recibido se anonimizan. Si tienes planes de pago pendientes, se cancelan con su política. Esta acción no se puede deshacer.</p>
+      <button class="link-btn" onclick="closeOverlay();exportMyData()">${ico('download')} Antes, descarga una copia de tus datos</button>
       <div class="field"><label for="f-del">Escribe ELIMINAR para confirmar</label><input id="f-del" autocapitalize="characters" /></div>
       <button class="btn-primary danger-btn" onclick="deleteAccount()">Eliminar mi cuenta</button></div></div>`);
 }
@@ -2395,8 +2469,9 @@ const NOTIF_TYPES = {
   mencion:      ['at','Menciones','Cuando te mencionan o te etiquetan'],
 };
 function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true, seguidor:true, mencion:true }, ME.notifPrefs || {}); }
+// "seguridad" (SOS, decisiones de moderación, resultado de tus reportes) no se puede desactivar.
 function notify(type, text, ref){
-  if (!notifPrefs()[type]) return null;
+  if (type !== 'seguridad' && !notifPrefs()[type]) return null;
   const n = Object.assign({ id:'n' + Date.now() + Math.random().toString(36).slice(2, 5), type, text, at: Date.now(), read:false }, ref || {});
   NOTIFICATIONS.unshift(n);
   if (NOTIFICATIONS.length > 60) NOTIFICATIONS.length = 60;
@@ -2424,7 +2499,7 @@ function askNotifPermission(){
 function renderNotifications(){
   const view = document.getElementById('view-page');
   const perm = typeof Notification === 'undefined' ? 'no' : Notification.permission;
-  const item = (n) => { const [icon] = NOTIF_TYPES[n.type] || ['bell'];
+  const item = (n) => { const [icon] = NOTIF_TYPES[n.type] || [n.type === 'seguridad' ? 'shield' : 'bell'];
     return `<button class="notif ${n.read ? '' : 'unread'}" onclick="openNotif('${n.id}')"><span class="notif-ic">${ico(icon)}</span>
       <span class="notif-t">${escapeHtml(n.text)}<span>${minLabel(notifAge(n))}</span></span>${n.read ? '' : '<i class="conv-dot sm"></i>'}</button>`; };
   const fresh = NOTIFICATIONS.filter(n => !n.read), old = NOTIFICATIONS.filter(n => n.read);
@@ -2453,7 +2528,7 @@ function openNotifPrefs(){
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Preferencias de notificaciones">
     <div class="sheet-h"><span>Qué te avisamos</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list">${Object.entries(NOTIF_TYPES).map(([k, [icon, l, sub]]) => `<div class="opt-row" onclick="toggleNotifPref('${k}')"><span class="or-ic">${ico(icon)}</span><span class="or-l">${l}<span class="or-s">${sub}</span></span><span class="switch ${pr[k] ? 'on' : ''}"><span class="knob"></span></span></div>`).join('')}
-      <p class="hint">Los avisos de seguridad (SOS, cambios de última hora en un plan al que vas) no se pueden desactivar.</p></div></div>`);
+      <p class="hint">Los avisos de seguridad (SOS, decisiones de moderación y el resultado de tus reportes) no se pueden desactivar.</p></div></div>`);
 }
 function toggleNotifPref(k){ ME.notifPrefs = Object.assign(notifPrefs(), { [k]: !notifPrefs()[k] }); saveState(); openNotifPrefs(); }
 
@@ -2623,7 +2698,7 @@ function openPostMenu(id){
       ${mine ? `<button class="sh-row" onclick="openEditCaption('${id}')">${ico('doc')}<span>Editar el pie</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openDeletePost('${id}')">${ico('close')}<span>Eliminar publicación</span>${ico('chevR')}</button>`
       : `<button class="sh-row" onclick="closeOverlay();toggleFollowQuiet('${u.id}')">${ico('user')}<span>${follows('me', u.id) ? 'Dejar de seguir' : 'Seguir'} a ${escapeHtml(u.name)}</span>${ico('chevR')}</button>
-        <button class="sh-row danger" onclick="openReport('${u.id}', null)">${ico('alert')}<span>Reportar</span>${ico('chevR')}</button>`}
+        <button class="sh-row danger" onclick="openReport('${u.id}', null, { objectType:'publicacion', postId:'${id}' })">${ico('alert')}<span>Reportar</span>${ico('chevR')}</button>`}
       <button class="sh-row" onclick="closeOverlay();copyShareLink('${id}')">${ico('link')}<span>Copiar enlace</span>${ico('chevR')}</button>
     </div></div>`);
 }
@@ -2638,7 +2713,15 @@ function openEditCaption(id){
 }
 function saveCaption(id){
   const po = POSTS.find(p => p.id === id); if (!po) return;
-  po.caption = clip(val('f-ecap'), 'caption') || po.caption;
+  const cap = clip(val('f-ecap'), 'caption') || po.caption;
+  guardText(cap, { kind:'publicacion', onEdit: () => openEditCaption(id) }, flag => {
+    po.caption = cap; if (flag) po.held = true;
+    commitCaption(po);
+    return { objectType:'publicacion', postId:id };
+  });
+}
+function commitCaption(po){
+  const id = po.id;
   po.mentions = po.caption.match(MENTION_RE) || []; po.hashtags = po.caption.match(/#[\wáéíóúñ]+/gi) || []; po.edited = true;
   saveState(); closeOverlay(); rerenderPost(id); toast('Pie actualizado');
 }
@@ -2667,7 +2750,9 @@ function deleteComment(postId, idx){
 const isPrivate = (u) => !!u && u.id !== 'me' && u.profilePublic === false;
 function canSeeProfile(u){ return !!u && (u.id === 'me' || !isPrivate(u) || follows('me', u.id)); }
 function canSeePost(po){
-  if (po.authorId === 'me') return true;
+  if (po.removed) return false;                       // retirada por moderación
+  if (po.authorId === 'me') return true;              // las tuyas en revisión las ves tú
+  if (po.held || isSanctioned(po.authorId)) return false;
   const u = getUser(po.authorId);
   if (!canSeeProfile(u)) return false;
   if ((ME.blocked || []).includes(po.authorId)) return false;
@@ -2764,7 +2849,7 @@ function allHashtags(){
 function searchAll(q){
   const n = norm(q).replace(/^[#@]/, '').trim();
   if (!n) return { people: [], plans: [], tags: [] };
-  const people = USERS.filter(u => u.id !== 'me' && !(ME.blocked || []).includes(u.id) && [u.name, u.handle, u.bio, u.business && u.business.category].some(f => norm(f).includes(n)));
+  const people = USERS.filter(u => u.id !== 'me' && !(ME.blocked || []).includes(u.id) && userMod(u.id).status !== 'expulsada' && [u.name, u.handle, u.bio, u.business && u.business.category].some(f => norm(f).includes(n)));
   const plans = PLANS.filter(p => !isCancelled(p) && [p.title, p.summary, (getPlace(p.placeId) || {}).name, (getCategory(p.category) || {}).label, (p.host || {}).name].some(f => norm(f).includes(n)));
   const tags = allHashtags().filter(t => norm(t.tag).includes(n));
   return { people, plans, tags };
@@ -2877,6 +2962,553 @@ function renderMentionsTab(){
   </div>`;
 }
 function setMentionPolicy(v){ ME.mentionPolicy = v; saveState(); renderSettings(); }
+
+
+/* =========================================================================
+   Confianza y seguridad (simulado en el navegador). En la app real todo esto lo
+   decide y lo guarda el servidor: ver docs/confianza-y-seguridad.md.
+   - Filtros automáticos de contenido: avisan antes de publicar o retienen.
+   - Reportes y bloqueos, "Tus reportes", "Estado de tu cuenta" y apelaciones.
+   - Panel interno de moderación: cola, SOS, apelaciones e historial.
+   - Contactos de confianza y botón SOS.
+   - Tus datos (RGPD): descargar una copia, consentimientos y borrar la cuenta.
+   ========================================================================= */
+
+// Id único aunque se creen varios en el mismo milisegundo.
+function newId(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+/* ---------- filtros automáticos de contenido ----------
+   Normaliza el texto (minúsculas, sin tildes, números por letras, sin letras repetidas,
+   letras sueltas unidas) para que "1d10t4", "idiotaaa" o "i d i o t a" también cuenten.
+   En la app real: clasificadores en el servidor (texto e imagen) + listas mantenidas por
+   el equipo; esto es solo una muestra de las reglas. */
+const FILTER_CATS = {
+  amenaza: { level:'retener', label:'una amenaza', reason:'peligro' },
+  odio:    { level:'retener', label:'discurso de odio', reason:'acoso' },
+  spam:    { level:'retener', label:'spam o un intento de estafa', reason:'spam' },
+  insulto: { level:'aviso',   label:'un insulto', reason:'acoso' },
+  contacto:{ level:'aviso',   label:'tus datos de contacto', reason:null },
+};
+const FILTER_RULES = {
+  amenaza: [/\bte voy a (matar|reventar|partir la cara|encontrar|buscar)\b/, /\b(te|os) mato\b/, /\bse donde vives\b/, /\bojala te mueras\b/, /\bmatate\b/, /\bvas a pagarlo\b/, /\bte vas a enterar\b/],
+  odio:    [/\bsudacas?\b/, /\bmaricon(es)?\b/, /\bpanchit[oa]s?\b/, /\bnegrat[ao]s?\b/],
+  insulto: [/\bidiot[ao]s?\b/, /\bimbecil(es)?\b/, /\bgilipol(a)?s\b/, /\bsubnormal(es)?\b/, /\bestupid[ao]s?\b/, /\bpringa(d[ao]|o)s?\b/, /\bcapul[oa]s?\b/, /\bcabron(a|es|as)?\b/, /\bput[ao]s?\b/, /\bzoras?\b/, /\bretrasad[ao]s?\b/, /\basco de gente\b/],
+};
+const SPAM_BAIT = /(gana(r)?\s+\d+|dinero (facil|rapido)|€\s*(a|al|por)\s*(la\s+)?(semana|dia|mes)|euros?\s*(a|al|por)\s*(la\s+)?(semana|dia|mes)|cripto|bitcoin|apuestas|inversion|trabaja desde casa|desde casa)/;
+const LINK_RE = /(https?:\/\/|www\.|bit\.ly|\b[a-z0-9-]+\.(com|net|io|xyz|link|ly|top|click)\b)/i;
+const PHONE_RE = /(\+?\d[\d\s.-]{7,}\d)/;
+const EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.]+/;
+
+function normText(s){
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[0134578@$]/g, c => ({ '0':'o', '1':'i', '3':'e', '4':'a', '5':'s', '7':'t', '8':'b', '@':'a', '$':'s' }[c]))
+    .replace(/\b(?:[a-z][\s.\-_*]){2,}[a-z]\b/g, m => m.replace(/[\s.\-_*]/g, ''))   // "i d i o t a" → "idiota"
+    .replace(/([a-z])\1+/g, '$1')                                                     // "idiotaaa" → "idiota"
+    .replace(/\s+/g, ' ');
+}
+// ctx.kind: comentario | publicacion | mensaje | plan | bio. ctx.known: en mensajes, si conoces a la persona.
+function moderateText(text, ctx){
+  ctx = ctx || {};
+  const raw = String(text || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const t = normText(text);
+  const hit = (cat) => ({ cat, ...FILTER_CATS[cat] });
+  if (FILTER_RULES.amenaza.some(re => re.test(t))) return hit('amenaza');
+  if (FILTER_RULES.odio.some(re => re.test(t))) return hit('odio');
+  if ((LINK_RE.test(raw) && SPAM_BAIT.test(raw)) || (raw.match(new RegExp(SPAM_BAIT.source, 'g')) || []).length >= 2) return hit('spam');
+  if (FILTER_RULES.insulto.some(re => re.test(t))) return hit('insulto');
+  const digits = ((raw.match(PHONE_RE) || [''])[0].match(/\d/g) || []).length;
+  if (ctx.kind !== 'bio' && !ctx.known && (digits >= 9 || EMAIL_RE.test(raw))) return hit('contacto');
+  return { level:'ok' };
+}
+
+// Pasa el texto por el filtro antes de publicarlo. commit(flag) crea el contenido (retenido
+// si flag.level === 'retener') y devuelve su referencia para la cola de moderación.
+function guardText(text, ctx, commit){
+  const r = moderateText(text, ctx);
+  if (r.level === 'aviso'){ state.guard = { r, ctx, commit, text }; return openNudge(); }
+  if (r.level === 'retener' && ctx.kind === 'bio'){ toast('La descripción no se ha guardado: parece ' + r.label); return; }
+  const ref = commit(r.level === 'retener' ? r : null);
+  if (r.level === 'retener' && ref) holdForReview(r, ref, text);
+}
+function openNudge(){
+  const g = state.guard; if (!g) return;
+  const contact = g.r.cat === 'contacto';
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="nudgeEdit()"></div><div class="sheet" role="dialog" aria-label="Antes de publicar">
+    <div class="sheet-h"><span>${contact ? 'Cuidado con tus datos' : '¿Seguro que quieres publicarlo?'}</span><button class="sv-x" onclick="nudgeEdit()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list form"><div class="nudge">${ico(contact ? 'lock' : 'alert')}<p>${contact
+      ? 'Estás compartiendo un teléfono o un email. Hasta que conozcas a la persona en un plan, es más seguro hablar por el chat de la app.'
+      : 'Parece que incluye ' + escapeHtml(g.r.label) + '. En planes pedimos respeto: si lo publicas, se mostrará a menos gente y cualquiera podrá reportarlo.'}</p></div>
+      <blockquote class="nudge-q">${escapeHtml(g.text)}</blockquote>
+      <button class="btn-primary" onclick="nudgeEdit()">Editar</button>
+      <button class="btn-ghost" onclick="nudgeGo()">${contact ? 'Enviar igualmente' : 'Publicar igualmente'}</button></div></div>`);
+}
+function nudgeEdit(){ const g = state.guard; state.guard = null; closeOverlay(); if (g && g.ctx.onEdit) g.ctx.onEdit(g.text); }
+function nudgeGo(){
+  const g = state.guard; if (!g) return; state.guard = null; closeOverlay();
+  const ref = g.commit(null);
+  // Un insulto publicado tras el aviso va a la cola con prioridad baja y se muestra a menos gente.
+  if (ref && g.r.cat === 'insulto'){
+    const c = contentOf(ref); if (c) c.flagged = 'insulto';
+    REPORTS.push(Object.assign({ id:newId('rp'), reporterId:null, targetUserId:'me', reason:'acoso', autoCategory:'insulto', evidence:g.text, source:'automatico', status:'en_cola', at:Date.now() }, ref));
+    saveState();
+  }
+}
+// Retenido: no lo ve nadie más hasta que lo revisa una persona del equipo. Se puede apelar.
+function holdForReview(r, ref, text){
+  const a = Object.assign({ id:newId('ma'), targetUserId:'me', action:'retener', reason:r.reason, autoCategory:r.cat, evidence:text, automated:true, status:'en_revision', at:Date.now(), appeal:null }, ref);
+  MOD_ACTIONS.unshift(a);
+  REPORTS.push(Object.assign({ id:newId('rp'), reporterId:null, targetUserId:'me', reason:r.reason, autoCategory:r.cat, evidence:text, source:'automatico', status:'en_cola', at:Date.now(), modActionId:a.id }, ref));
+  saveState();
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="En revisión">
+    <div class="sheet-h"><span>En revisión</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list form"><div class="nudge">${ico('shield')}<p>Nuestro filtro automático cree que puede ser ${escapeHtml(r.label)}, así que de momento solo lo ves tú. Lo revisará una persona del equipo, normalmente en menos de 24 horas.</p></div>
+      <p class="hint">Si crees que es un error, puedes apelar desde Ajustes ▸ Estado de tu cuenta.</p>
+      <button class="btn-primary" onclick="closeOverlay();go('estado-cuenta')">Ver el estado de mi cuenta</button>
+      <button class="btn-ghost" onclick="closeOverlay()">Entendido</button></div></div>`);
+}
+
+/* ---------- contenido referenciado por reportes y decisiones ---------- */
+function contentOf(x){
+  if (!x) return null;
+  if (x.objectType === 'publicacion') return POSTS.find(p => p.id === x.postId) || null;
+  if (x.objectType === 'comentario'){ const po = POSTS.find(p => p.id === x.postId); return (po && (po.comments || []).find(c => c.id === x.commentId)) || null; }
+  if (x.objectType === 'mensaje'){ const c = getConversation(x.convId); return (c && c.messages.find(m => m.id === x.msgId)) || null; }
+  if (x.objectType === 'plan') return getPlan(x.planId) || null;
+  return null;
+}
+const OBJECT_LABEL = { usuario:'Perfil', conversacion:'Mensajes', publicacion:'Publicación', comentario:'Comentario', mensaje:'Mensaje', plan:'Plan' };
+function ensureCommentIds(po){ (po.comments || []).forEach((c, i) => { if (!c.id) c.id = po.id + '-c' + i; }); }
+// Comentarios que ves: sin los retirados, los retenidos de otros, los de cuentas bloqueadas o suspendidas.
+function commentVisible(c){
+  if (c.removed) return false;
+  if (c.userId === 'me') return true;
+  if (c.held || (ME.blocked || []).includes(c.userId) || isSanctioned(c.userId)) return false;
+  return true;
+}
+function visibleComments(po){ return (po.comments || []).filter(commentVisible); }
+
+/* ---------- estado de moderación de cada cuenta ---------- */
+function userMod(uid){ return Object.assign({ strikes:0, status:'activa', until:null, reach:'normal', canHost:true }, USER_MOD[uid] || {}); }
+function setUserMod(uid, patch){ USER_MOD[uid] = Object.assign(userMod(uid), patch); }
+function isSanctioned(uid){ const m = userMod(uid); return m.status === 'expulsada' || (m.status === 'suspendida' && (!m.until || m.until > Date.now())); }
+function sanctionNote(u){
+  const m = userMod(u.id);
+  if (m.status === 'expulsada') return 'Esta cuenta ya no está disponible.';
+  if (isSanctioned(u.id)) return 'Cuenta suspendida temporalmente por incumplir las normas.';
+  return '';
+}
+
+/* ---------- reportes ---------- */
+const SEVERITY = { peligro:'critica', menor:'critica', acoso:'alta', sexual:'alta', estafa:'media', suplantacion:'media', spam:'baja', otro:'baja' };
+const SEVERITY_INFO = { critica:['Crítica', '1 h', 0], alta:['Alta', '24 h', 1], media:['Media', '48 h', 2], baja:['Baja', '72 h', 3] };
+const REASON_RULE = {
+  spam:'Spam, publicidad no pedida y ventas fuera de la app', acoso:'Respeto: sin acoso, insultos ni odio', sexual:'Contenido sexual solo con consentimiento',
+  suplantacion:'Identidad real: no hacerse pasar por otra persona', estafa:'Pagos y estafas', menor:'Solo mayores de 18 años',
+  peligro:'Seguridad: sin amenazas ni violencia', otro:'Normas de la comunidad',
+};
+const reasonLabel = (r) => ((REPORT_REASONS.find(([v]) => v === r) || [null, 'Otro motivo'])[1]);
+function severityOf(rp){ return rp.autoCategory === 'amenaza' ? 'critica' : (SEVERITY[rp.reason] || 'baja'); }
+function myReports(){ return REPORTS.filter(r => (r.reporterId === undefined || r.reporterId === 'me') && r.source !== 'automatico'); }
+// Pruebas que se guardan con el reporte: el texto del contenido o los últimos mensajes.
+function reportEvidence(r){
+  const obj = r.obj || {};
+  const c = contentOf(obj);
+  if (c) return c.text || c.caption || [c.title, c.summary].filter(Boolean).join(' · ') || '';
+  if (r.convId){ const conv = getConversation(r.convId); return conv ? conv.messages.filter(m => m.from === r.uid && m.text).slice(-3).map(m => m.text).join(' / ') : ''; }
+  return '';
+}
+function reportComment(postId, commentId){
+  const po = POSTS.find(p => p.id === postId); const c = po && (po.comments || []).find(x => x.id === commentId); if (!c) return;
+  openReport(c.userId, null, { objectType:'comentario', postId, commentId });
+}
+function reportPlan(planId){
+  const p = getPlan(planId); if (!p) return;
+  openReport(p.hostId || (p.host.business ? 'azotea' : null), null, { objectType:'plan', planId });
+}
+function openUserMenu(uid){
+  const u = getUser(uid); if (!u) return;
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Opciones">
+    <div class="sheet-h"><span>${escapeHtml(u.name)}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list">
+      <button class="sh-row" onclick="openReport('${u.id}', null, { objectType:'usuario' })">${ico('alert')}<span>Reportar</span>${ico('chevR')}</button>
+      ${(ME.blocked || []).includes(u.id) ? `<button class="sh-row" onclick="closeOverlay();unblockUser('${u.id}')">${ico('lock')}<span>Desbloquear</span>${ico('chevR')}</button>`
+        : `<button class="sh-row danger" onclick="blockUser('${u.id}')">${ico('lock')}<span>Bloquear</span>${ico('chevR')}</button>`}
+    </div></div>`);
+}
+const REPORT_STATUS = { en_cola:'En revisión', resuelto:'Resuelto', desestimado:'Sin infracción' };
+function renderMyReports(){
+  const view = document.getElementById('view-page');
+  const list = myReports().slice().sort((a, b) => (b.at || 0) - (a.at || 0));
+  view.innerHTML = pageHead('Tus reportes') + `<div class="page-body">
+    <p class="hint">Quien es reportado nunca sabe quién le ha reportado. Te avisamos cuando revisamos cada reporte.</p>
+    ${list.map(r => { const u = getUser(r.targetUserId) || { name:'Cuenta eliminada' };
+      return `<div class="mod-card mine"><div class="mod-top"><b>${escapeHtml(u.name)}</b><span class="st st-${r.status}">${REPORT_STATUS[r.status] || r.status}</span></div>
+        <div class="mod-meta">${OBJECT_LABEL[r.objectType] || 'Perfil'} · ${escapeHtml(reasonLabel(r.reason))}${r.at ? ' · ' + dayLabel(r.at) : ''}</div>
+        ${r.resolution ? `<p class="hint">${escapeHtml(resolutionText(r))}</p>` : ''}
+        ${r.status === 'desestimado' && !r.appeal ? `<button class="link-btn" onclick="openAppeal('report:${r.id}')">No estoy de acuerdo: pedir otra revisión</button>` : ''}
+        ${r.appeal ? `<p class="hint">${ico('clock')} Revisión pedida · ${APPEAL_STATUS[r.appeal.status]}</p>` : ''}</div>`; }).join('')
+      || `<div class="empty-tab"><span class="empty-ic">${ico('shield')}</span><p>No has reportado nada.</p></div>`}
+  </div>`;
+}
+function resolutionText(r){ return r.status === 'desestimado' ? 'Lo hemos revisado y no incumple las normas.' : 'Lo hemos revisado y hemos actuado: ' + (MOD_ACTION_TYPES[r.resolution] || ['', ''])[1].toLowerCase() + '.'; }
+function dayLabel(at){ const m = Math.max(0, Math.floor((Date.now() - at) / 60000)); return m < 1440 ? minLabel(m) : `hace ${Math.round(m / 1440)} d`; }
+
+/* ---------- cuentas bloqueadas ---------- */
+function renderBlocked(){
+  const view = document.getElementById('view-page');
+  const list = (ME.blocked || []).map(getUser).filter(Boolean);
+  view.innerHTML = pageHead('Cuentas bloqueadas') + `<div class="page-body">
+    <p class="hint">No ven tu perfil ni tus publicaciones, no pueden escribirte ni unirse a tus planes. No se les avisa.</p>
+    ${list.map(u => `<div class="conv"><span class="avatar conv-av">${escapeHtml(u.initials || initials(u.name))}</span>
+      <span class="conv-main"><b>${escapeHtml(u.name)}</b><span>${escapeHtml(u.handle)}</span></span>
+      <button class="ph-btn sm" onclick="unblockUser('${u.id}')">Desbloquear</button></div>`).join('')
+      || `<div class="empty-tab"><span class="empty-ic">${ico('lock')}</span><p>No has bloqueado a nadie.</p></div>`}
+  </div>`;
+}
+
+/* ---------- decisiones de moderación ---------- */
+const MOD_ACTION_TYPES = {
+  desestimar: ['close', 'Desestimar: no incumple las normas'],
+  publicar:   ['check', 'Publicar: el filtro se equivocó'],
+  retirar:    ['close', 'Retirar el contenido'],
+  aviso:      ['alert', 'Retirar y dar un aviso a la cuenta'],
+  alcance:    ['eye', 'Reducir el alcance de la cuenta'],
+  organizar:  ['ticket', 'Quitarle la opción de organizar planes'],
+  suspender7: ['clock', 'Suspender la cuenta 7 días'],
+  suspender30:['clock', 'Suspender la cuenta 30 días'],
+  expulsar:   ['lock', 'Cerrar la cuenta para siempre'],
+  autoridades:['shield', 'Escalar a las autoridades'],
+  retener:    ['clock', 'Retenido por el filtro automático'],
+};
+// Exposición de motivos (art. 17 de la Ley de Servicios Digitales): qué, por qué, con qué
+// norma, si fue automático y cómo recurrir.
+function statementFor(a){
+  return `${MOD_ACTION_TYPES[a.action][1]}. Motivo: ${reasonLabel(a.reason)}. Norma: ${REASON_RULE[a.reason] || REASON_RULE.otro}. `
+    + (a.automated ? 'Decisión tomada por un sistema automático.' : 'Decisión tomada por una persona del equipo.')
+    + ' Puedes apelar en los próximos 6 meses.';
+}
+function applyModAction(reportId, action){
+  const rp = REPORTS.find(r => r.id === reportId); if (!rp) return;
+  const uid = rp.targetUserId, c = contentOf(rp), days = { suspender7:7, suspender30:30 }[action];
+  if (action === 'publicar' || (action === 'desestimar' && c && c.held)) { if (c) c.held = false; }
+  if (['retirar','aviso','suspender7','suspender30','expulsar'].includes(action) && c){ c.removed = true; c.held = false; }
+  if (action === 'aviso') setUserMod(uid, { strikes: userMod(uid).strikes + 1 });
+  if (action === 'alcance') setUserMod(uid, { reach:'reducido' });
+  if (action === 'organizar') setUserMod(uid, { canHost:false });
+  if (days) setUserMod(uid, { status:'suspendida', until: Date.now() + days * 86400000, strikes: userMod(uid).strikes + 1 });
+  if (action === 'expulsar') setUserMod(uid, { status:'expulsada', until:null });
+  if (action === 'autoridades') rp.escalated = true;
+  const dismissed = action === 'desestimar' || action === 'publicar';
+  rp.status = dismissed ? 'desestimado' : 'resuelto'; rp.resolution = action; rp.resolvedAt = Date.now();
+  // Lo retenido por el filtro: la decisión del equipo sustituye a la automática.
+  const held = rp.modActionId && MOD_ACTIONS.find(a => a.id === rp.modActionId);
+  if (held){ held.status = dismissed ? 'revocada' : 'vigente'; held.action = dismissed ? 'retener' : action; held.automated = false; held.decidedAt = Date.now(); }
+  else if (!dismissed) MOD_ACTIONS.unshift({ id:newId('ma'), reportId, targetUserId:uid, action, objectType:rp.objectType, postId:rp.postId, commentId:rp.commentId, convId:rp.convId, msgId:rp.msgId, planId:rp.planId,
+    reason:rp.reason, evidence:rp.evidence, automated:false, status:'vigente', at:Date.now(), appeal:null });
+  const who = (getUser(uid) || { name:'' }).name;
+  if (rp.reporterId === 'me' || rp.reporterId === undefined) notify('seguridad', `Hemos revisado tu reporte sobre ${who}. ${resolutionText(rp)}`, { route:'mis-reportes' });
+  if (uid === 'me') notify('seguridad', dismissed ? 'Lo que estaba en revisión ya está publicado: no incumple las normas.' : 'Hemos retirado contenido tuyo por incumplir las normas. Puedes apelar.', { route:'estado-cuenta' });
+  saveState(); closeOverlay(); toast('Decisión aplicada: ' + MOD_ACTION_TYPES[action][1].toLowerCase());
+  renderModeration(state.modTab);
+}
+
+/* ---------- apelaciones ---------- */
+const APPEAL_STATUS = { pendiente:'en revisión', estimada:'te damos la razón', desestimada:'se mantiene la decisión' };
+// key: "action:<id>" (una decisión sobre ti) o "report:<id>" (un reporte tuyo desestimado).
+function openAppeal(key){
+  state.appealKey = key;
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Apelar">
+    <div class="sheet-h"><span>Apelar</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list form"><p class="hint">Lo revisará una persona distinta de la que decidió. Te contestamos en unos días.</p>
+      <div class="field"><label for="f-appeal">Cuéntanos por qué no estás de acuerdo ${counter('f-appeal','message','')}</label>
+        <textarea ${lim('f-appeal','message')} rows="4"></textarea></div>
+      <button class="btn-primary" onclick="submitAppeal()">Enviar apelación</button></div></div>`);
+}
+function submitAppeal(){
+  const key = state.appealKey || '', text = clip(val('f-appeal'), 'message');
+  if (!text){ toast('Escribe por qué no estás de acuerdo'); return; }
+  const [kind, id] = key.split(':');
+  const target = kind === 'report' ? REPORTS.find(r => r.id === id) : MOD_ACTIONS.find(a => a.id === id);
+  if (!target || target.appeal) return;
+  target.appeal = { text, status:'pendiente', at:Date.now() };
+  saveState(); closeOverlay(); toast('Apelación enviada');
+  if (kind === 'report') renderMyReports(); else renderAccountStatus();
+}
+function resolveAppeal(key, accept){
+  const [kind, id] = key.split(':');
+  if (kind === 'report'){
+    const rp = REPORTS.find(r => r.id === id); if (!rp || !rp.appeal) return;
+    rp.appeal.status = accept ? 'estimada' : 'desestimada';
+    if (accept){ rp.status = 'en_cola'; rp.resolution = null; }   // vuelve a la cola
+    notify('seguridad', accept ? 'Vamos a revisar de nuevo tu reporte.' : 'Hemos revisado tu petición: el reporte no incumple las normas.', { route:'mis-reportes' });
+  } else {
+    const a = MOD_ACTIONS.find(x => x.id === id); if (!a || !a.appeal) return;
+    a.appeal.status = accept ? 'estimada' : 'desestimada';
+    if (accept){
+      const c = contentOf(a); if (c){ c.removed = false; c.held = false; }
+      if (['suspender7','suspender30','expulsar'].includes(a.action)) setUserMod(a.targetUserId, { status:'activa', until:null });
+      if (a.action === 'organizar') setUserMod(a.targetUserId, { canHost:true });
+      if (a.action === 'alcance') setUserMod(a.targetUserId, { reach:'normal' });
+      a.status = 'revocada';
+      REPORTS.filter(r => r.modActionId === a.id && r.status === 'en_cola').forEach(r => { r.status = 'desestimado'; r.resolution = 'publicar'; });
+    }
+    if (a.targetUserId === 'me') notify('seguridad', accept ? 'Te damos la razón: hemos anulado la decisión y tu contenido vuelve a estar visible.'
+      : 'Hemos revisado tu apelación y mantenemos la decisión. Si no estás de acuerdo, puedes acudir a un órgano de resolución extrajudicial.', { route:'estado-cuenta' });
+  }
+  saveState(); toast(accept ? 'Apelación estimada' : 'Decisión mantenida'); renderModeration('apelaciones');
+}
+
+/* ---------- estado de tu cuenta ---------- */
+function renderAccountStatus(){
+  const view = document.getElementById('view-page');
+  const mine = MOD_ACTIONS.filter(a => a.targetUserId === 'me').sort((a, b) => (b.at || 0) - (a.at || 0));
+  const live = mine.filter(a => a.status !== 'revocada'), m = userMod('me');
+  view.innerHTML = pageHead('Estado de tu cuenta') + `<div class="page-body">
+    <div class="acct-ok ${live.length ? 'warn' : ''}">${ico(live.length ? 'alert' : 'shield')}<div><b>${live.length ? `${live.length} ${live.length === 1 ? 'decisión' : 'decisiones'} sobre tu contenido` : 'Tu cuenta está en regla'}</b>
+      <p>${m.canHost ? 'Puedes organizar planes.' : 'Ahora mismo no puedes organizar planes.'} ${m.strikes ? `Avisos: ${m.strikes}.` : 'Sin avisos.'} Con avisos repetidos la cuenta se puede suspender.</p></div></div>
+    ${mine.map(a => `<div class="mod-card mine"><div class="mod-top"><b>${escapeHtml(MOD_ACTION_TYPES[a.action][1])}</b><span class="st st-${a.status}">${{ vigente:'Vigente', en_revision:'En revisión', revocada:'Anulada' }[a.status]}</span></div>
+      <div class="mod-meta">${OBJECT_LABEL[a.objectType] || 'Cuenta'} · ${dayLabel(a.at)}</div>
+      ${a.evidence ? `<blockquote class="nudge-q">${escapeHtml(a.evidence)}</blockquote>` : ''}
+      <p class="hint">${escapeHtml(a.status === 'en_revision' ? 'Solo lo ves tú hasta que lo revise una persona del equipo. ' + statementFor(a) : statementFor(a))}</p>
+      ${a.appeal ? `<p class="hint">${ico('clock')} Apelación: ${APPEAL_STATUS[a.appeal.status]}</p>` : (a.status !== 'revocada' ? `<button class="ph-btn" onclick="openAppeal('action:${a.id}')">Apelar</button>` : '')}</div>`).join('')}
+    <p class="hint">Normas de la comunidad: respeto, identidad real, sin spam ni ventas fuera de la app, sin amenazas. Las decisiones automáticas siempre las puede revisar una persona.</p>
+  </div>`;
+}
+
+/* ---------- panel interno de moderación (equipo de planes) ----------
+   En la app real es una web aparte, con acceso por roles y registro de quién hace qué. */
+function renderModeration(tab){
+  state.modTab = tab || state.modTab || 'cola';
+  const t = state.modTab, view = document.getElementById('view-page');
+  const queue = REPORTS.filter(r => r.status === 'en_cola').sort((a, b) => (SEVERITY_INFO[severityOf(a)][2] - SEVERITY_INFO[severityOf(b)][2]) || ((a.at || 0) - (b.at || 0)));
+  const sos = SAFETY_EVENTS.filter(e => e.type === 'sos').sort((a, b) => (a.status === 'activa' ? 0 : 1) - (b.status === 'activa' ? 0 : 1) || b.at - a.at);
+  const appeals = [...MOD_ACTIONS.filter(a => a.appeal && a.appeal.status === 'pendiente').map(a => ({ key:'action:' + a.id, a })),
+                   ...REPORTS.filter(r => r.appeal && r.appeal.status === 'pendiente').map(r => ({ key:'report:' + r.id, r }))];
+  const history = MOD_ACTIONS.slice().sort((a, b) => (b.decidedAt || b.at || 0) - (a.decidedAt || a.at || 0));
+  const tabs = [['cola', 'Cola', 'layers', queue.length], ['sos', 'SOS', 'alert', sos.filter(e => e.status === 'activa').length], ['apelaciones', 'Apelaciones', 'repeat', appeals.length], ['historial', 'Historial', 'clock', 0]];
+  const body = {
+    cola: () => queue.map(modCard).join('') || `<div class="empty-tab"><span class="empty-ic">${ico('check')}</span><p>No hay reportes pendientes.</p></div>`,
+    sos: () => sos.map(sosCard).join('') || `<div class="empty-tab"><span class="empty-ic">${ico('alert')}</span><p>No hay alertas SOS. Pulsa SOS en la ficha de un plan para probarlo.</p></div>`,
+    apelaciones: () => appeals.map(appealCard).join('') || `<div class="empty-tab"><span class="empty-ic">${ico('repeat')}</span><p>No hay apelaciones. Apela una decisión desde Ajustes ▸ Estado de tu cuenta.</p></div>`,
+    historial: () => history.map(a => { const u = getUser(a.targetUserId) || { name:'' };
+      return `<div class="mod-card"><div class="mod-top"><b>${escapeHtml(u.name)}</b><span class="st st-${a.status}">${{ vigente:'Vigente', en_revision:'En revisión', revocada:'Anulada' }[a.status]}</span></div>
+        <div class="mod-meta">${escapeHtml(MOD_ACTION_TYPES[a.action][1])} · ${dayLabel(a.decidedAt || a.at)}</div><p class="hint">${escapeHtml(statementFor(a))}</p></div>`; }).join(''),
+  }[t];
+  view.innerHTML = pageHead('Moderación') + `<div class="page-body inbox">
+    <p class="hint mod-note">${ico('lock')} Herramienta interna del equipo de planes. En la app real es una web aparte con acceso por roles; aquí se simula para probar el circuito completo.</p>
+    <div class="iseg origin-seg mod-tabs">${tabs.map(([v, l, n, c]) => `<button class="${t === v ? 'active' : ''}" onclick="renderModeration('${v}')">${ico(n)}<span>${l}</span>${c ? `<em>${c}</em>` : ''}</button>`).join('')}</div>
+    ${body()}</div>`;
+}
+function modCard(rp){
+  const u = getUser(rp.targetUserId) || { name:'Cuenta eliminada', handle:'' }, sev = severityOf(rp), [sl, sla] = SEVERITY_INFO[sev];
+  const reps = REPORTS.filter(r => r.targetUserId === rp.targetUserId).length, prior = MOD_ACTIONS.filter(a => a.targetUserId === rp.targetUserId && a.status === 'vigente').length;
+  const reporter = rp.source === 'automatico' ? `Filtro automático${rp.autoCategory ? ' · ' + escapeHtml((FILTER_CATS[rp.autoCategory] || {}).label || rp.autoCategory) : ''}` : `Reportado por ${escapeHtml((getUser(rp.reporterId || 'me') || { name:'' }).name)} (nunca se le dice a la otra persona)`;
+  const c = contentOf(rp), held = c && c.held;
+  return `<div class="mod-card sev-${sev}">
+    <div class="mod-top"><span class="sev">${sl} · responder en ${sla}</span><span class="mod-age">${dayLabel(rp.at || Date.now())}</span></div>
+    <div class="mod-meta"><b>${escapeHtml(reasonLabel(rp.reason))}</b> · ${OBJECT_LABEL[rp.objectType] || 'Perfil'}${held ? ' · retenido, sin publicar' : ''}</div>
+    ${rp.evidence ? `<blockquote class="nudge-q">${escapeHtml(rp.evidence)}</blockquote>` : ''}
+    <div class="mod-meta">${escapeHtml(u.name)} ${escapeHtml(u.handle || '')} · ${reps} ${reps === 1 ? 'reporte' : 'reportes'} · ${prior} ${prior === 1 ? 'sanción vigente' : 'sanciones vigentes'}${userMod(rp.targetUserId).strikes ? ' · ' + userMod(rp.targetUserId).strikes + (userMod(rp.targetUserId).strikes === 1 ? ' aviso' : ' avisos') : ''}</div>
+    <div class="mod-meta dim">${reporter}</div>
+    <div class="mod-acts">${held ? `<button class="ph-btn" onclick="applyModAction('${rp.id}','publicar')">Publicar</button>` : `<button class="ph-btn" onclick="applyModAction('${rp.id}','desestimar')">Desestimar</button>`}
+      ${c ? `<button class="ph-btn" onclick="applyModAction('${rp.id}','retirar')">Retirar</button>` : ''}
+      <button class="ph-btn primary" onclick="openModActions('${rp.id}')">Más acciones</button></div></div>`;
+}
+function openModActions(reportId){
+  const rp = REPORTS.find(r => r.id === reportId); if (!rp) return;
+  const c = contentOf(rp);
+  const opts = ['desestimar', c && c.held ? 'publicar' : null, c ? 'retirar' : null, 'aviso', 'alcance', 'organizar', 'suspender7', 'suspender30', 'expulsar', 'autoridades'].filter(Boolean);
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Decidir">
+    <div class="sheet-h"><span>Decidir</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list">${opts.map(k => `<button class="sh-row ${['expulsar','suspender30'].includes(k) ? 'danger' : ''}" onclick="applyModAction('${reportId}','${k}')">${ico(MOD_ACTION_TYPES[k][0])}<span>${MOD_ACTION_TYPES[k][1]}</span>${ico('chevR')}</button>`).join('')}
+      <p class="hint">Cada decisión se comunica a la persona afectada con sus motivos y se puede apelar. Quien reportó recibe el resultado.</p></div></div>`);
+}
+function appealCard({ key, a, r }){
+  if (r){ const u = getUser(r.targetUserId) || { name:'' };
+    return `<div class="mod-card"><div class="mod-top"><b>Reporte desestimado</b><span class="mod-age">${dayLabel(r.appeal.at)}</span></div>
+      <div class="mod-meta">Quien reportó a ${escapeHtml(u.name)} (${escapeHtml(reasonLabel(r.reason))}) pide otra revisión</div>
+      <blockquote class="nudge-q">${escapeHtml(r.appeal.text)}</blockquote>
+      <div class="mod-acts"><button class="ph-btn" onclick="resolveAppeal('${key}', false)">Mantener</button><button class="ph-btn primary" onclick="resolveAppeal('${key}', true)">Volver a revisar</button></div></div>`; }
+  const u = getUser(a.targetUserId) || { name:'' };
+  return `<div class="mod-card"><div class="mod-top"><b>${escapeHtml(u.name)} apela</b><span class="mod-age">${dayLabel(a.appeal.at)}</span></div>
+    <div class="mod-meta">${escapeHtml(MOD_ACTION_TYPES[a.action][1])} · ${OBJECT_LABEL[a.objectType] || 'Cuenta'} · ${a.automated ? 'decisión automática' : 'decisión del equipo'}</div>
+    ${a.evidence ? `<blockquote class="nudge-q">${escapeHtml(a.evidence)}</blockquote>` : ''}
+    <p class="hint">Su motivo: ${escapeHtml(a.appeal.text)}</p>
+    <div class="mod-acts"><button class="ph-btn" onclick="resolveAppeal('${key}', false)">Mantener la decisión</button><button class="ph-btn primary" onclick="resolveAppeal('${key}', true)">Anular la decisión</button></div></div>`;
+}
+function sosCard(e){
+  const p = getPlan(e.planId), place = p && getPlace(p.placeId), active = e.status === 'activa';
+  const loc = e.location ? `${e.location.lat.toFixed(4)}, ${e.location.lng.toFixed(4)} (±${Math.round(e.location.accuracy || 0)} m)` : (place ? place.name + ' · ' + place.city + ' (lugar del plan)' : 'Sin ubicación');
+  return `<div class="mod-card ${active ? 'sev-critica' : ''}"><div class="mod-top"><span class="sev">${active ? 'SOS activo' : 'Cerrada'}</span><span class="mod-age">${dayLabel(e.at)}</span></div>
+    <div class="mod-meta"><b>${escapeHtml(ME.name || 'Tú')}</b> · ${escapeHtml(p ? p.title : 'Sin plan')}</div>
+    <div class="mod-meta">${ico('pin')} ${escapeHtml(loc)}</div>
+    <div class="mod-meta dim">Contactos avisados: ${e.contacts && e.contacts.length ? escapeHtml(e.contacts.join(', ')) : 'ninguno'}${e.escalated ? ' · avisado el 112' : ''}${e.closedBy ? ' · cerrada por ' + (e.closedBy === 'usuario' ? 'la persona' : 'el equipo') : ''}</div>
+    ${active ? `<div class="mod-acts"><button class="ph-btn" onclick="toast('Llamaría a ${escapeHtml(ME.name || '')} desde la centralita de seguridad')">Llamar</button>
+      <button class="ph-btn" onclick="escalateSos('${e.id}')">Avisar al 112</button><button class="ph-btn primary" onclick="closeSos('${e.id}','equipo')">Cerrar</button></div>` : ''}</div>`;
+}
+
+/* ---------- contactos de confianza y SOS ---------- */
+const MAX_TRUSTED = 3;
+function trustedContacts(){ return ME.trustedContacts || []; }
+function renderTrusted(){
+  const view = document.getElementById('view-page'), list = trustedContacts();
+  view.innerHTML = pageHead('Contactos de confianza') + `<div class="page-body form">
+    <p class="hint">Hasta ${MAX_TRUSTED} personas, aunque no usen planes. Les llega un SMS con el plan, el sitio y la hora cuando lo compartes, y tu ubicación si pulsas SOS.</p>
+    ${list.map(c => `<div class="conv"><span class="avatar conv-av">${escapeHtml(initials(c.name))}</span>
+      <span class="conv-main"><b>${escapeHtml(c.name)}</b><span>${escapeHtml(c.phone)} · ${c.status === 'aceptado' ? 'Ha aceptado' : 'Invitación enviada'}</span></span>
+      <button class="ph-btn sm" onclick="removeTrusted('${c.id}')">Quitar</button></div>`).join('')}
+    ${list.length < MAX_TRUSTED ? `<div class="field"><label for="f-tname">Nombre ${counter('f-tname','name','')}</label><input ${lim('f-tname','name')} autocomplete="name" /></div>
+      <div class="field"><label for="f-tphone">Teléfono</label><input id="f-tphone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+34 600 000 000" /></div>
+      <button class="btn-primary" onclick="addTrusted()">${ico('plus')} Añadir contacto</button>` : `<p class="hint">Ya tienes ${MAX_TRUSTED} contactos.</p>`}
+    <div class="opt-list" style="margin-top:16px">
+      <div class="opt-row" onclick="toggleTrustPref('shareTrips')"><span class="or-ic">${ico('send')}</span><span class="or-l">Compartir cada plan al que vaya<span class="or-s">qué plan, dónde y a qué hora</span></span><span class="switch ${ME.shareTrips ? 'on' : ''}"><span class="knob"></span></span></div>
+      <div class="opt-row" onclick="toggleTrustPref('safeCheck')"><span class="or-ic">${ico('clock')}</span><span class="or-l">Preguntarme si estoy bien al acabar<span class="or-s">si no respondes en 1 hora, avisamos a tus contactos</span></span><span class="switch ${ME.safeCheck ? 'on' : ''}"><span class="knob"></span></span></div>
+    </div>
+    <p class="hint">El botón SOS está en la ficha y en el chat de cada plan. Si estás en peligro, llama siempre al 112.</p>
+  </div>`;
+}
+function addTrusted(){
+  const name = clip(val('f-tname'), 'name'), phone = val('f-tphone').trim();
+  if (!name){ toast('Escribe un nombre'); return; }
+  if ((phone.match(/\d/g) || []).length < 9 || !/^\+?[\d\s.-]+$/.test(phone)){ toast('Escribe un teléfono válido'); return; }
+  if (trustedContacts().length >= MAX_TRUSTED) return;
+  const c = { id:newId('tc'), name, phone, status:'pendiente' };
+  ME.trustedContacts = [...trustedContacts(), c]; saveState();
+  toast(`Le hemos enviado un SMS a ${name.split(' ')[0]} para que acepte`); renderTrusted();
+  setTimeout(() => { const x = trustedContacts().find(t => t.id === c.id); if (x){ x.status = 'aceptado'; saveState(); if (location.hash === '#/contactos-confianza') renderTrusted(); } }, 3000);   // demo: acepta
+}
+function removeTrusted(id){ ME.trustedContacts = trustedContacts().filter(c => c.id !== id); saveState(); renderTrusted(); }
+function toggleTrustPref(k){ ME[k] = !ME[k]; saveState(); renderTrusted(); }
+const contactNames = () => trustedContacts().map(c => c.name.split(' ')[0]);
+function planShared(planId){ return (ME.shareTrips && state.joined.has(planId)) || SAFETY_EVENTS.some(e => e.type === 'compartir' && e.planId === planId); }
+function activeSos(planId){ return SAFETY_EVENTS.find(e => e.type === 'sos' && e.status === 'activa' && (!planId || e.planId === planId)); }
+function shareWithContacts(planId){
+  if (!trustedContacts().length){ go('contactos-confianza'); return; }
+  SAFETY_EVENTS.unshift({ id:newId('se'), type:'compartir', planId, at:Date.now(), contacts:contactNames() }); saveState();
+  toast('Compartido con ' + contactNames().join(' y ') + ' por SMS'); rerenderSafety(planId);
+}
+function arrivedSafe(planId){
+  SAFETY_EVENTS.unshift({ id:newId('se'), type:'llegada', planId, at:Date.now(), contacts:contactNames() }); saveState();
+  toast(trustedContacts().length ? 'Avisado: ' + contactNames().join(' y ') + ' saben que estás bien' : 'Anotado');
+}
+// Bloque "Seguridad" de la ficha del plan.
+function safetyBlock(p){
+  const sos = activeSos(p.id), list = trustedContacts();
+  return `<div class="block" id="safety-${p.id}"><h4>Seguridad</h4>
+    ${sos ? `<div class="pl-banner bad">${ico('alert')}<div><b>Alerta SOS enviada</b><p>El equipo de seguridad la está atendiendo${sos.contacts.length ? (sos.contacts.length === 1 ? ' y lo sabe ' : ' y lo saben ') + escapeHtml(sos.contacts.join(' y ')) : ''}. Si estás en peligro, llama al 112.</p>
+      <div class="pl-banner-b"><a class="ph-btn primary" href="tel:112">Llamar al 112</a><button class="ph-btn" onclick="closeSos('${sos.id}','usuario')">Estoy bien</button></div></div></div>` : ''}
+    <div class="sos-row"><button class="sos-btn" onclick="openSos('${p.id}')" aria-label="SOS: pedir ayuda">SOS</button>
+      <p>Si te sientes en peligro: llama al 112 y avisa a tus contactos y al equipo de seguridad con tu ubicación.</p></div>
+    ${list.length ? (planShared(p.id) ? `<div class="safe-row">${ico('check')}<span>Compartido con ${escapeHtml(contactNames().join(' y '))}</span><button class="link-btn" onclick="arrivedSafe('${p.id}')">He llegado bien</button></div>`
+        : `<button class="sh-row" onclick="shareWithContacts('${p.id}')">${ico('send')}<span>Compartir el plan con mis contactos de confianza</span>${ico('chevR')}</button>`)
+      : `<button class="sh-row" onclick="go('contactos-confianza')">${ico('user')}<span>Añade un contacto de confianza</span>${ico('chevR')}</button>`}
+    <div class="trust-row"><span class="trust">${ico('pin')} Punto de encuentro en la app</span><span class="trust">${ico('chat')} Sin dar tu teléfono</span></div>
+    <button class="link-btn dim" onclick="reportPlan('${p.id}')">${ico('alert')} Reportar este plan</button>
+  </div>`;
+}
+function rerenderSafety(planId){ if (location.hash === '#/plan/' + planId) renderDetail(planId); }
+function openSos(planId){
+  const list = trustedContacts();
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="SOS">
+    <div class="sheet-h"><span>SOS</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list form">
+      <a class="btn-primary danger-btn sos-call" href="tel:112">Llamar al 112</a>
+      <button class="btn-ghost" onclick="sendSos('${planId}')">${ico('alert')} Enviar alerta con mi ubicación</button>
+      <p class="hint">Avisamos al equipo de seguridad de planes (atiende las 24 horas y puede llamarte)${list.length ? ' y a ' + escapeHtml(contactNames().join(' y ')) + ' por SMS' : ''}, con el plan y tu ubicación.${list.length ? '' : ' Añade contactos de confianza para avisarles también.'}</p>
+    </div></div>`);
+}
+function sendSos(planId){
+  const ev = { id:newId('se'), type:'sos', planId, at:Date.now(), status:'activa', contacts:contactNames(), location:null };
+  SAFETY_EVENTS.unshift(ev); saveState(); closeOverlay();
+  notify('seguridad', 'Alerta SOS enviada. El equipo de seguridad la está atendiendo.', { planId });
+  toast('Alerta enviada' + (ev.contacts.length ? ' a ' + ev.contacts.join(' y ') + ' y' : '') + ' al equipo de seguridad');
+  // Ubicación precisa si el navegador la da; si no, la del plan.
+  try {
+    if (typeof navigator !== 'undefined' && navigator.geolocation) navigator.geolocation.getCurrentPosition(
+      pos => { ev.location = { lat:pos.coords.latitude, lng:pos.coords.longitude, accuracy:pos.coords.accuracy }; saveState(); }, () => {}, { enableHighAccuracy:true, timeout:8000 });
+  } catch (e) {}
+  rerenderSafety(planId);
+}
+function closeSos(id, by){
+  const e = SAFETY_EVENTS.find(x => x.id === id); if (!e) return;
+  e.status = 'cerrada'; e.closedBy = by; e.closedAt = Date.now(); saveState();
+  toast(by === 'usuario' ? 'Alerta cerrada. Avisamos de que estás bien' : 'Alerta cerrada');
+  if (location.hash.startsWith('#/moderacion')) renderModeration('sos'); else rerenderSafety(e.planId);
+}
+function escalateSos(id){ const e = SAFETY_EVENTS.find(x => x.id === id); if (!e) return; e.escalated = true; saveState(); toast('Datos enviados al 112: persona, plan y ubicación'); renderModeration('sos'); }
+
+/* ---------- tus datos (RGPD) ---------- */
+const CONSENTS = [
+  ['marketing', 'Novedades y planes destacados por email', 'Consentimiento. Opcional.'],
+  ['ubicacion', 'Ubicación para planes cerca de ti', 'Permiso del móvil. Sin él, eliges la ciudad a mano.'],
+  ['analitica', 'Estadísticas de uso para mejorar la app', 'Consentimiento. Opcional.'],
+  ['personalizacion', 'Recomendaciones según tu actividad', 'Interés legítimo: puedes oponerte.'],
+];
+function consentValue(k){
+  if (k === 'marketing'){ const a = currentAccount(); return !!(a && a.consents && a.consents.marketing); }
+  if (k === 'ubicacion') return !!ME.locationAllowed;
+  const c = ME.consents || {}; return k === 'personalizacion' ? c[k] !== false : !!c[k];
+}
+function toggleConsent(k){
+  const v = !consentValue(k);
+  if (k === 'marketing'){ const a = currentAccount(); if (a) updateAccount(a.id, { consents: Object.assign({}, a.consents, { marketing:v }) }); }
+  else if (k === 'ubicacion') ME.locationAllowed = v;
+  else ME.consents = Object.assign({}, ME.consents, { [k]: v });
+  ME.consentLog = [...(ME.consentLog || []), { key:k, value:v, at:new Date().toISOString() }].slice(-50);   // registro de cambios
+  saveState(); renderMyData();
+}
+function renderMyData(){
+  const view = document.getElementById('view-page'), a = currentAccount() || {};
+  const n = exportCounts();
+  view.innerHTML = pageHead('Tus datos') + `<div class="page-body">
+    <div class="set-group"><div class="set-title">Descargar una copia</div>
+      <div class="set-box"><p class="hint">Un archivo con tu cuenta, tu perfil, ${n.posts} publicaciones, ${n.comments} comentarios, ${n.ratings} valoraciones, ${n.messages} mensajes, a quién sigues, tus planes, notificaciones, reportes, decisiones de moderación y consentimientos. En la app real las fotos y los vídeos van en el mismo ZIP.</p>
+        <button class="btn-primary" onclick="exportMyData()">${ico('download')} Descargar mis datos</button></div></div>
+    <div class="set-group"><div class="set-title">Consentimientos</div>
+      ${CONSENTS.map(([k, l, s]) => `<div class="toggle-row set" onclick="toggleConsent('${k}')"><span class="tg-info"><span class="tg-n">${l}</span><span class="tg-s">${s}</span></span><span class="switch ${consentValue(k) ? 'on' : ''}"><span class="knob"></span></span></div>`).join('')}
+      <div class="set-row static"><span class="sr-ic">${ico('doc')}</span><span class="sr-l">Términos y privacidad<span class="or-s">Versión ${escapeHtml((a.consents && a.consents.version) || LEGAL_VERSION)}${a.consents && a.consents.at ? ' · aceptados el ' + new Date(a.consents.at).toLocaleDateString('es-ES') : ''}</span></span></div>
+      <div class="set-row static"><span class="sr-ic">${ico('check')}</span><span class="sr-l">Mayor de 18 años<span class="or-s">Confirmado al registrarte</span></span></div></div>
+    <div class="set-group"><div class="set-title">Tus derechos</div>
+      <button class="set-row" onclick="go('editar-perfil')"><span class="sr-ic">${ico('user')}</span><span class="sr-l">Corregir tus datos</span><span class="pl-arrow">${ico('chevR')}</span></button>
+      <div class="set-row static"><span class="sr-ic">${ico('doc')}</span><span class="sr-l">Oposición, limitación y otras peticiones<span class="or-s">privacidad@planes.app · te respondemos en menos de un mes</span></span></div>
+      <button class="set-row danger" onclick="openDeleteAccount()"><span class="sr-ic">${ico('alert')}</span><span class="sr-l">Eliminar cuenta</span></button></div>
+  </div>`;
+}
+function exportCounts(){
+  const mine = POSTS.filter(p => p.authorId === 'me');
+  return { posts: mine.length, comments: POSTS.reduce((s, p) => s + (p.comments || []).filter(c => c.userId === 'me').length, 0),
+    ratings: RATINGS.filter(r => r.userId === 'me').length, messages: CONVERSATIONS.reduce((s, c) => s + c.messages.filter(m => m.from === 'me').length, 0) };
+}
+// Copia de tus datos (art. 15 y 20 del RGPD) en JSON legible por máquina.
+function buildExport(){
+  const a = currentAccount() || {};
+  const strip = ({ hash, salt, ...rest }) => rest;   // la contraseña (cifrada) no se exporta
+  return {
+    generado: new Date().toISOString(), formato: 'planes-export-v1',
+    cuenta: strip(a),
+    perfil: { nombre:ME.name, usuario:ME.handle, descripcion:ME.bio, ciudad:ME.city, idiomas:ME.languages, intereses:ME.interests, perfilPublico:ME.profilePublic, presenciaPublica:ME.presencePublic, verificado:!!ME.verified, negocio:ME.business || null },
+    perfilesProfesionales: USERS.filter(u => u.managedBy === 'me'),
+    publicaciones: POSTS.filter(p => p.authorId === 'me'),
+    comentarios: POSTS.flatMap(p => (p.comments || []).filter(c => c.userId === 'me').map(c => ({ publicacion:p.id, ...c }))),
+    meGusta: POSTS.filter(p => p.likedByMe).map(p => p.id), guardados: POSTS.filter(p => p.savedByMe).map(p => p.id),
+    valoraciones: RATINGS.filter(r => r.userId === 'me'),
+    sigues: FOLLOWS.filter(f => f[0] === 'me').map(f => f[1]), teSiguen: FOLLOWS.filter(f => f[1] === 'me').map(f => f[0]),
+    planes: { apuntado:[...state.joined], asistidos:ME.attendedPlanIds || [], organizados:PLANS.filter(p => p.hostId === 'me').map(p => ({ ...p, when: p.when instanceof Date ? p.when.toISOString() : p.when })) },
+    mensajes: CONVERSATIONS.map(c => ({ id:c.id, tipo:c.type, con:c.with || null, plan:c.planId || null, mios:c.messages.filter(m => m.from === 'me') })),
+    notificaciones: NOTIFICATIONS, bloqueados: ME.blocked || [],
+    reportesEnviados: myReports().map(({ reporterId, ...r }) => r),
+    decisionesSobreTi: MOD_ACTIONS.filter(x => x.targetUserId === 'me'),
+    seguridad: { contactosDeConfianza: trustedContacts(), eventos: SAFETY_EVENTS },
+    consentimientos: { marketing: consentValue('marketing'), ubicacion: consentValue('ubicacion'), analitica: consentValue('analitica'), personalizacion: consentValue('personalizacion'), registro: ME.consentLog || [] },
+  };
+}
+function exportMyData(){
+  const json = JSON.stringify(buildExport(), null, 2);
+  if (typeof Blob === 'undefined'){ toast('Este navegador no puede generar el archivo'); return; }
+  saveFile(new Blob([json], { type:'application/json' }), `planes-mis-datos-${new Date().toISOString().slice(0, 10)}.json`).then(r => {
+    if (r === 'saved') toast('Copia de tus datos descargada'); else if (r !== 'declined') toast('No se ha podido guardar el archivo');
+  });
+}
 
 
 /* =========================================================================
@@ -3061,7 +3693,9 @@ function saveState(){
       posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES, ratings: RATINGS, follows: FOLLOWS, conversations: CONVERSATIONS, reports: REPORTS, followRequests: FOLLOW_REQUESTS,
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
-            city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom },
+            city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom,
+            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog },
+      modActions: MOD_ACTIONS, userMod: USER_MOD, safety: SAFETY_EVENTS,
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
       notifications: NOTIFICATIONS,
@@ -3090,6 +3724,9 @@ function loadState(){
   if (Array.isArray(snap.reports)) REPORTS.splice(0, REPORTS.length, ...snap.reports);
   if (Array.isArray(snap.followRequests)) FOLLOW_REQUESTS.splice(0, FOLLOW_REQUESTS.length, ...snap.followRequests);
   if (Array.isArray(snap.notifications)) NOTIFICATIONS.splice(0, NOTIFICATIONS.length, ...snap.notifications);
+  if (Array.isArray(snap.modActions)) MOD_ACTIONS.splice(0, MOD_ACTIONS.length, ...snap.modActions);
+  if (Array.isArray(snap.safety)) SAFETY_EVENTS.splice(0, SAFETY_EVENTS.length, ...snap.safety);
+  if (snap.userMod){ Object.keys(USER_MOD).forEach(k => delete USER_MOD[k]); Object.assign(USER_MOD, snap.userMod); }
   if (snap.me) Object.assign(ME, snap.me);
   (snap.extraProfiles || []).forEach(x => { if (!USERS.some(u => u.id === x.id)) USERS.push(x); });
   if (snap.sets) {
@@ -3116,6 +3753,7 @@ function filteredPlans(){
     if (state.price==='pago' && !p.paid) return false;
     if (!matchesWhen(p, state.when)) return false;
     if (isCancelled(p)) return false;
+    if (p.removed || p.held) return false;   // retirado o en revisión (el anfitrión lo ve en su ficha)
     return true;
   });
 }
@@ -3197,7 +3835,7 @@ function postCard(po){
   const place = plan ? getPlace(plan.placeId) : (po.placeId ? getPlace(po.placeId) : null);
   const placeName = plan && plan.secret ? 'Zona aproximada' : (place ? place.name : '');
   const liked = !!po.likedByMe;
-  const comments = po.comments || [];
+  const comments = visibleComments(po);
   const commentsOff = po.commentsEnabled === false;
   const likesHidden = po.hideLikes && po.authorId !== 'me';
   return `<article class="post" data-post="${po.id}">
@@ -3210,6 +3848,7 @@ function postCard(po){
       </div>
       <button class="post-kind" onclick="openPostMenu('${po.id}')" aria-label="Opciones de la publicación">${ico('dots')}</button>
     </header>
+    ${po.held ? `<div class="held-note">${ico('clock')} En revisión: de momento solo la ves tú</div>` : ''}
     ${postMedia(po)}
     <div class="post-actions">
       <button class="pa ${liked?'liked':''}" onclick="likePost('${po.id}')" aria-label="Me gusta" aria-pressed="${liked}">${ico(liked?'heart':'heartO')}</button>
@@ -3609,16 +4248,18 @@ function renderChat(id){
     ${u ? `<button class="pb-back" onclick="openChatMenu('${c.id}')" aria-label="Opciones">${ico('dots')}</button>` : '<span style="width:34px"></span>'}</div>`;
   const place = plan && getPlace(plan.placeId);
   const pinned = plan ? `<div class="chat-pin">${ico('pin')}<span><b>Punto de encuentro</b> ${escapeHtml(plan.secret ? 'se desvela el día del plan' : (place ? place.name : 'Madrid'))} · ${fmtWhen(plan.when)}</span>
-      <button class="vis-chip ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'solid' : ''}" onclick="confirmDay('${plan.id}','${c.id}')">${ico('check')} ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'Confirmado' : 'Confirmo que voy'}</button></div>` : '';
+      <button class="vis-chip ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'solid' : ''}" onclick="confirmDay('${plan.id}','${c.id}')">${ico('check')} ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'Confirmado' : 'Confirmo que voy'}</button>
+      <button class="vis-chip sos-chip" onclick="openSos('${plan.id}')" aria-label="SOS: pedir ayuda">SOS</button></div>` : '';
   let prev = null;
   const bubbles = c.messages.map((m, i) => {
     if (m.from === 'system'){ prev = null; return `<div class="msg-sys">${escapeHtml(m.text)}</div>`; }
+    if (m.removed || (m.held && m.from !== 'me')) return '';
     const mine = m.from === 'me';
     const who = (!mine && c.type === 'plan' && prev !== m.from) ? `<span class="msg-who">${escapeHtml((getUser(m.from) || { name:'' }).name)}</span>` : '';
     prev = m.from;
     const blurred = m.img && !mine && (st === 'solicitud' || !knows('me', m.from)) && !m.revealed;
     const img = m.img ? `<span class="msg-img ${blurred ? 'blur' : ''}">${coverImg(m.img, 500)}${blurred ? `<button class="msg-reveal" onclick="revealImg('${c.id}',${i})">${ico('eye')} Foto de alguien que no conoces · Ver</button>` : ''}</span>` : '';
-    return `<div class="msg ${mine ? 'me' : ''}">${who}${m.share ? msgShareCard(m.share) : ''}${img}${m.text ? `<span class="bubble">${escapeHtml(m.text)}</span>` : ''}</div>`;
+    return `<div class="msg ${mine ? 'me' : ''}">${who}${m.share ? msgShareCard(m.share) : ''}${img}${m.text ? `<span class="bubble">${escapeHtml(m.text)}</span>` : ''}${m.held ? `<span class="msg-held">${ico('clock')} No entregado: en revisión</span>` : ''}</div>`;
   }).join('');
   const first = c.messages.find(m => m.from !== 'system') || c.messages[0];
   let foot;
@@ -3635,8 +4276,20 @@ function renderChat(id){
 function sendMsg(id){
   const c = getConversation(id); if (!c || !canWrite(c)) return;
   const text = clip(val('msg-input'), 'message'); if (!text) return;
-  c.messages.push({ from:'me', text, min:0 });
+  // Filtro automático: avisa antes de enviar un insulto o tu teléfono a quien no conoces; retiene amenazas y spam.
+  guardText(text, { kind:'mensaje', known: c.type === 'plan' || knows(c.with, 'me'),
+    onEdit: (t) => { renderChat(id); const el = document.getElementById('msg-input'); if (el) el.value = t; } }, flag => deliverMsg(id, text, flag));
+}
+function deliverMsg(id, text, flag){
+  const c = getConversation(id); if (!c) return null;
+  const msg = { id:newId('m'), from:'me', text, min:0 };
+  if (flag) msg.held = true;
+  c.messages.push(msg);
   saveState(); renderChat(id);
+  if (!flag) autoReply(c, id);   // lo retenido no se entrega
+  return { objectType:'mensaje', convId:id, msgId:msg.id };
+}
+function autoReply(c, id){
   // Respuesta simulada para que la demo se sienta viva (no en solicitudes enviadas).
   if (c.status === 'aceptada' || c.type === 'plan'){
     const others = c.type === 'plan' ? c.members.filter(x => x !== 'me') : [c.with];
@@ -3675,37 +4328,43 @@ function rejectAllRequests(){
 }
 
 /* Reportar (a moderación, dentro de la app) y, si hay peligro, cómo denunciar ante las
-   autoridades. Quien es reportado nunca sabe quién le ha reportado. */
-function openReport(uid, convId){
-  state.report = { uid, convId: convId || null, reason: null, block: true };
+   autoridades. Quien es reportado nunca sabe quién le ha reportado. Se puede reportar a una
+   persona, una conversación, una publicación, un comentario o un plan (obj); el reporte
+   guarda el texto como prueba y va a la cola del panel de moderación. */
+function openReport(uid, convId, obj){
+  // Bloquear viene marcado al reportar a una persona o una conversación; no al reportar un contenido suelto.
+  state.report = { uid, convId: convId || null, obj: obj || null, reason: null, block: !!uid && (!obj || ['usuario','conversacion'].includes(obj.objectType)) };
   renderReport();
 }
 function renderReport(){
   const r = state.report, u = getUser(r.uid) || { name:'' };
+  const what = r.obj && r.obj.objectType !== 'usuario' ? { publicacion:'la publicación', comentario:'el comentario', plan:'el plan' }[r.obj.objectType] : null;
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Reportar">
-    <div class="sheet-h"><span>Reportar a ${escapeHtml(u.name)}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-h"><span>Reportar ${what || 'a ' + escapeHtml(u.name)}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list rep">
-      <p class="hint">¿Qué está pasando? ${escapeHtml(u.name.split(' ')[0])} no sabrá quién lo ha reportado.</p>
+      <p class="hint">¿Qué está pasando? ${u.name ? escapeHtml(u.name.split(' ')[0]) + ' no sabrá quién lo ha reportado.' : 'Nadie sabrá quién lo ha reportado.'}</p>
       <div class="rep-list" role="radiogroup">${REPORT_REASONS.map(([v,l]) => `<button class="rep-opt ${r.reason===v?'on':''}" role="radio" aria-checked="${r.reason===v}" onclick="setReportField('reason','${v}')"><span class="rep-dot"></span>${l}</button>`).join('')}</div>
       ${r.reason === 'peligro' ? `<div class="rep-danger">${ico('alert')}<div><b>Si estás en peligro ahora, llama al 112.</b>
         <p>También puedes denunciarlo ante la Policía Nacional, la Guardia Civil o la policía autonómica. Guardamos esta conversación como prueba y colaboramos con las autoridades cuando nos lo piden.</p>
         <a class="ph-btn primary rep-call" href="tel:112">Llamar al 112</a></div></div>` : ''}
-      <div class="opt-row" onclick="setReportField('block', ${!r.block})"><span class="or-ic">${ico('lock')}</span><span class="or-l">Bloquear también<span class="or-s">no te verá ni podrá escribirte</span></span><span class="switch ${r.block?'on':''}"><span class="knob"></span></span></div>
-      ${r.convId ? '<p class="hint">Se adjuntan los mensajes de esta conversación para que moderación pueda revisarlos.</p>' : ''}
+      ${u.id && u.id !== 'me' ? `<div class="opt-row" onclick="setReportField('block', ${!r.block})"><span class="or-ic">${ico('lock')}</span><span class="or-l">Bloquear también<span class="or-s">no te verá ni podrá escribirte</span></span><span class="switch ${r.block?'on':''}"><span class="knob"></span></span></div>` : ''}
+      ${r.convId ? '<p class="hint">Se adjuntan los mensajes de esta conversación para que moderación pueda revisarlos.</p>' : (what ? `<p class="hint">Se adjunta ${what} para que moderación pueda revisarlo.</p>` : '')}
       <button class="btn-primary" ${r.reason ? '' : 'disabled'} onclick="submitReport()">Enviar reporte</button>
     </div></div>`);
 }
 function setReportField(k, v){ state.report[k] = v; renderReport(); }
 function submitReport(){
   const r = state.report; if (!r || !r.reason) return;
-  REPORTS.push({ id:'rp'+Date.now(), targetUserId:r.uid, conversationId:r.convId, reason:r.reason, withMessages: !!r.convId, status:'en_cola' });
+  const obj = r.obj || { objectType: r.convId ? 'conversacion' : 'usuario' };
+  REPORTS.push(Object.assign({ id:newId('rp'), reporterId:'me', targetUserId:r.uid, convId:r.convId, reason:r.reason, evidence: reportEvidence(r),
+    source:'usuario', status:'en_cola', at:Date.now() }, obj));
   const u = getUser(r.uid) || { name:'' };
   const c = r.convId && getConversation(r.convId);
   if (c && c.status === 'solicitud') CONVERSATIONS.splice(CONVERSATIONS.indexOf(c), 1);   // una solicitud reportada sale de la bandeja
   saveState(); closeOverlay();
-  if (r.block) blockUser(r.uid, true);
-  toast('Gracias. Moderación revisará el reporte' + (r.block ? ' y has bloqueado a ' + u.name.split(' ')[0] : ''));
-  if (!r.block) go('mensajes/' + (state.inboxTab || 'chats'));
+  if (r.block && r.uid) blockUser(r.uid, true);
+  toast('Gracias. Moderación revisará el reporte' + (r.block && r.uid ? ' y has bloqueado a ' + u.name.split(' ')[0] : ''));
+  if (!r.block && r.convId) go('mensajes/' + (state.inboxTab || 'chats'));
 }
 function deleteConv(id){ const i = CONVERSATIONS.findIndex(c => c.id === id); if (i >= 0) CONVERSATIONS.splice(i, 1); saveState(); updateDmBadge(); toast('Conversación eliminada'); go('mensajes/' + (state.inboxTab || 'chats')); }
 function revealImg(id, i){ const c = getConversation(id); if (c && c.messages[i]){ c.messages[i].revealed = true; saveState(); renderChat(id); } }
@@ -3718,9 +4377,9 @@ function blockUser(uid, quiet){
   for (let i = FOLLOWS.length - 1; i >= 0; i--) if ((FOLLOWS[i][0] === uid && FOLLOWS[i][1] === 'me') || (FOLLOWS[i][0] === 'me' && FOLLOWS[i][1] === uid)) FOLLOWS.splice(i, 1);
   saveState(); updateDmBadge(); closeOverlay();
   if (!quiet) toast('Has bloqueado a ' + u.name);
-  go('mensajes/' + (state.inboxTab || 'chats'));
+  if (/^#\/(chat|mensajes)/.test(location.hash)) go('mensajes/' + (state.inboxTab || 'chats')); else router();
 }
-function unblockUser(uid){ ME.blocked = (ME.blocked || []).filter(x => x !== uid); saveState(); toast('Desbloqueado'); renderProfile(uid); }
+function unblockUser(uid){ ME.blocked = (ME.blocked || []).filter(x => x !== uid); saveState(); toast('Desbloqueado'); if (location.hash === '#/bloqueados') renderBlocked(); else renderProfile(uid); }
 function openChatMenu(id){
   const c = getConversation(id); if (!c) return; const u = getUser(c.with) || { name:'' };
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Opciones">
@@ -3735,6 +4394,7 @@ function openChatMenu(id){
 function openDm(uid){
   const u = getUser(uid) || { name:'' };
   if ((ME.blocked || []).includes(uid)){ toast('Has bloqueado a ' + u.name); return; }
+  if (isSanctioned(uid)){ toast(sanctionNote(u)); return; }
   if (u.dmMode === 'cerrado' && !knows(uid, 'me')){ toast(u.name + ' no recibe mensajes de quien no conoce'); return; }
   if (!knows(uid, 'me') && !requireVerified('Verifica tu identidad para escribir a quien no te conoce', () => openDm(uid))) return;
   const c = dmWith(uid, true); saveState(); closeOverlay(); go('chat/' + c.id);
@@ -3966,8 +4626,10 @@ function openPost(id){
 function openComments(id){
   const po = POSTS.find(p=>p.id===id); if (!po) return;
   if (!overlayEl().hidden && overlayEl().className.includes('ov-post')) state.sheetReturn = id;
-  const list = (po.comments||[]).map((c, i) => { const u = c.userId === 'me' ? ME : (getUser(c.userId) || { name:c.userId, initials:'?' });
-    return `<div class="cm"><span class="post-av sm">${escapeHtml(u.initials||'')}</span><p><b>${escapeHtml(u.handle||u.name)}</b> ${highlightCaption(c.text)}</p>${c.userId === 'me' ? `<button class="cm-del" onclick="deleteComment('${id}', ${i})" aria-label="Borrar mi comentario">${ico('close')}</button>` : ''}</div>`; }).join('')
+  ensureCommentIds(po);
+  // Los tuyos se pueden borrar; los de otros, reportar. Los retirados o de cuentas bloqueadas no salen.
+  const list = (po.comments||[]).map((c, i) => { if (!commentVisible(c)) return ''; const u = c.userId === 'me' ? ME : (getUser(c.userId) || { name:c.userId, initials:'?' });
+    return `<div class="cm"><span class="post-av sm">${escapeHtml(u.initials||'')}</span><p><b>${escapeHtml(u.handle||u.name)}</b> ${highlightCaption(c.text)}${c.held ? `<span class="cm-held">${ico('clock')} En revisión: solo lo ves tú</span>` : ''}</p>${c.userId === 'me' ? `<button class="cm-del" onclick="deleteComment('${id}', ${i})" aria-label="Borrar mi comentario">${ico('close')}</button>` : `<button class="cm-del" onclick="reportComment('${id}','${c.id}')" aria-label="Reportar comentario">${ico('alert')}</button>`}</div>`; }).join('')
     || '<p class="hint">Aún no hay comentarios. Escribe el primero.</p>';
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeSheet()"></div>
     <div class="sheet" role="dialog" aria-label="Comentarios">
@@ -3980,8 +4642,13 @@ function closeSheet(){ const back = state.sheetReturn; state.sheetReturn = null;
 function addComment(id){
   const text = clip(val('cm-input'), 'comment'); if (!text) return;
   const po = POSTS.find(p=>p.id===id); if (!po) return;
-  (po.comments = po.comments || []).push({ userId:'me', text });
-  saveState(); openComments(id); rerenderPost(id);
+  guardText(text, { kind:'comentario', onEdit: (t) => { openComments(id); const el = document.getElementById('cm-input'); if (el) el.value = t; } }, flag => {
+    const c = { id:newId('cm'), userId:'me', text };
+    if (flag) c.held = true;
+    (po.comments = po.comments || []).push(c);
+    saveState(); openComments(id); rerenderPost(id);
+    return { objectType:'comentario', postId:id, commentId:c.id };
+  });
 }
 
 // Visor de stories: 5 s por story, toque a la izquierda o a la derecha para navegar.
@@ -4317,6 +4984,7 @@ function renderDetail(id){
       <div class="block"><h4>El plan</h4><p>${escapeHtml(p.summary)}</p>
         <p class="hint">${manual?'Plan con aprobación: envía una solicitud; el creador o los admins la aceptan o rechazan.':(libre?'Plan libre: no hace falta apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.':'Plan apuntado: hay que apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.')}</p>
       </div>
+      ${p.held ? `<div class="pl-banner">${ico('clock')}<div><b>En revisión</b><p>El filtro automático ha retenido este plan: solo lo ves tú hasta que lo revise una persona del equipo. Puedes apelar en Ajustes ▸ Estado de tu cuenta.</p></div></div>` : ''}
       ${cancelBanner}${reconfirmBanner}
       ${myBlock}
       ${hostBlock}
@@ -4339,9 +5007,7 @@ function renderDetail(id){
             <span class="pl-s">${place?place.city+' · '+(place.kind==='negocio'?'Negocio verificado':'Lugar público')+' · '+place.hashtag:''}</span></span>
           <span class="pl-arrow">${ico('chevR')}</span></button>
       </div>
-      <div class="block"><h4>Seguridad</h4>
-        <div class="trust-row"><span class="trust">${ico('pin')} Punto de encuentro in-app</span><span class="trust">${ico('alert')} Botón SOS</span><span class="trust">${ico('user')} Contacto de confianza</span></div>
-      </div>
+      ${safetyBlock(p)}
       <div class="block"><h4>Reseñas de ediciones anteriores</h4>
         ${REVIEWS.map(r=>`<div class="review"><div class="top"><span>${r.author}</span><span class="st">${Array(r.stars).fill(ico('star')).join('')}</span></div><p>${r.text}</p></div>`).join('')}
       </div>
@@ -4468,7 +5134,8 @@ function renderProfile(uid){
     ${me ? `<div class="ph-actions"><button class="ph-btn" onclick="go('editar-perfil')">Editar perfil</button><button class="ph-btn" onclick="toast('Compartir perfil estará disponible en la app')">Compartir perfil</button></div>`
       : (u.managedBy === 'me' ? `<div class="ph-actions"><span class="hint">${ico('briefcase')} Gestionas este perfil desde tu cuenta personal.</span><button class="ph-btn" onclick="openProfileSwitcher()">Tus perfiles</button></div>`
       : (ME.blocked || []).includes(u.id) ? `<div class="ph-actions"><span class="hint">Has bloqueado a ${escapeHtml(u.name)}.</span><button class="ph-btn" onclick="unblockUser('${u.id}')">Desbloquear</button></div>`
-        : `<div class="ph-actions">${followButton(u)}<button class="ph-btn" onclick="openDm('${u.id}')">Mensaje</button></div>`)}
+        : sanctionNote(u) ? `<div class="ph-actions"><span class="hint">${escapeHtml(sanctionNote(u))}</span><button class="ph-btn ph-more" onclick="openUserMenu('${u.id}')" aria-label="Más opciones">${ico('dots')}</button></div>`
+        : `<div class="ph-actions">${followButton(u)}<button class="ph-btn" onclick="openDm('${u.id}')">Mensaje</button><button class="ph-btn ph-more" onclick="openUserMenu('${u.id}')" aria-label="Más opciones">${ico('dots')}</button></div>`)}
     ${(me && !u.profilePublic)?`<div class="priv-banner">${ico('lock')} Perfil privado: solo tus seguidores aprobados ven tu actividad.</div>`:''}
     ${!canSeeProfile(u) ? `<div class="empty-tab priv-block"><span class="empty-ic">${ico('lock')}</span><h3>Esta cuenta es privada</h3><p>Sigue a ${escapeHtml(u.name)} para ver sus publicaciones, planes y valoraciones.</p></div>` : `
     <div class="prof-tabs" role="tablist">${[['posts','grid','Publicaciones'],['vividas','play','Vividas'],['valoraciones','star','Valoraciones'],['etiquetadas','tag','Etiquetadas']].concat(me ? [['guardados','bookmark','Guardados']] : []).map(([t,i,l])=>
@@ -4718,8 +5385,10 @@ function saveProfile(){
   const user = val('f-puser').trim().toLowerCase();
   const err = usernameError(user, ME.id);
   if (err){ checkUsername(); toast(err); return; }
+  const bio = clip(val('f-pbio'), 'bio');
+  if (moderateText(bio, { kind:'bio' }).level === 'retener'){ guardText(bio, { kind:'bio' }, () => null); return; }
   ME.name = name; ME.handle = '@' + user; ME.initials = initials(name);
-  ME.bio = clip(val('f-pbio'), 'bio');
+  ME.bio = bio;
   if (ME.type === 'profesional'){
     ME.business = { ...(ME.business||{}), category: val('f-pcat') || (ME.business||{}).category,
       web: clip(val('f-pweb'), 'web'), address: clip(val('f-paddr'), 'address') };
@@ -4772,11 +5441,17 @@ function renderSettings(){
             <span class="sb-l">Quién ve las privadas</span>${seg('privada', AUD_OPTIONS.privada.map(v=>[v,AUD_LABEL[v],audIco[v]]))}
             <p class="hint">Seguidores: quien te sigue. Amigos: quien te sigue y a quien sigues (tienes ${nFriends}). En cada plan puedes hacer una valoración pública o privada desde tu perfil ▸ Valoraciones.</p></div>`; })()}
       </div>
+      <div class="set-group"><div class="set-title">Tu seguridad</div>
+        <button class="set-row" onclick="go('contactos-confianza')"><span class="sr-ic">${ico('user')}</span><span class="sr-l">Contactos de confianza y SOS</span><span class="soon">${trustedContacts().length || 'Ninguno'}</span><span class="pl-arrow">${ico('chevR')}</span></button>
+        <button class="set-row" onclick="go('bloqueados')"><span class="sr-ic">${ico('lock')}</span><span class="sr-l">Cuentas bloqueadas</span><span class="soon">${(ME.blocked || []).length}</span><span class="pl-arrow">${ico('chevR')}</span></button>
+        <button class="set-row" onclick="go('mis-reportes')"><span class="sr-ic">${ico('alert')}</span><span class="sr-l">Tus reportes</span><span class="pl-arrow">${ico('chevR')}</span></button>
+        <button class="set-row" onclick="go('estado-cuenta')"><span class="sr-ic">${ico('shield')}</span><span class="sr-l">Estado de tu cuenta</span><span class="soon">${MOD_ACTIONS.some(a => a.targetUserId === 'me' && a.status !== 'revocada') ? 'Con avisos' : 'En regla'}</span><span class="pl-arrow">${ico('chevR')}</span></button>
+      </div>
       <div class="set-group"><div class="set-title">General</div>
         <button class="set-row" onclick="go('notificaciones')"><span class="sr-ic">${ico('bell')}</span><span class="sr-l">Notificaciones</span><span class="pl-arrow">${ico('chevR')}</span></button>
         <button class="set-row" onclick="go('seguridad')"><span class="sr-ic">${ico('shield')}</span><span class="sr-l">Seguridad y acceso</span><span class="pl-arrow">${ico('chevR')}</span></button>
+        <button class="set-row" onclick="go('mis-datos')"><span class="sr-ic">${ico('doc')}</span><span class="sr-l">Tus datos y privacidad</span><span class="pl-arrow">${ico('chevR')}</span></button>
         ${row('card','Pagos y reembolsos')}
-        ${row('doc','Datos y legal')}
       </div>
       <div class="set-group"><div class="set-title">Prototipo</div>
         <div class="set-row static"><span class="sr-ic">${ico('image')}</span><span class="sr-l">Fotos de Unsplash (licencia Unsplash)</span></div>
@@ -4784,6 +5459,7 @@ function renderSettings(){
           <span class="tg-ic">${ico('shield')}</span>
           <span class="tg-info"><span class="tg-n">Simular cuenta sin verificar</span><span class="tg-s">Para ver qué cambia antes de verificarse</span></span>
           <span class="switch ${ME.verified?'':'on'}"><span class="knob"></span></span></div>
+        <button class="set-row" onclick="go('moderacion')"><span class="sr-ic">${ico('shield')}</span><span class="sr-l">Panel de moderación<span class="or-s">equipo interno</span></span><span class="soon">${REPORTS.filter(r => r.status === 'en_cola').length} en cola</span><span class="pl-arrow">${ico('chevR')}</span></button>
         <button class="set-row" onclick="openInstallHelp()"><span class="sr-ic">${ico('phone')}</span><span class="sr-l">Instalar en el móvil</span><span class="pl-arrow">${ico('chevR')}</span></button>
         <button class="set-row" onclick="resetDemo()"><span class="sr-ic">${ico('repeat')}</span><span class="sr-l">Restablecer demo</span><span class="soon">borra cuentas y lo creado</span></button>
       </div>
@@ -4934,9 +5610,13 @@ function setDraft(key,v){
 }
 function publishPlan(){
   if (!requireVerified('Verifica tu identidad para organizar un plan', () => publishPlan())) return;
-  const d = state.draft;
+  if (!userMod('me').canHost){ toast('Moderación te ha retirado la opción de organizar planes. Mira Ajustes ▸ Estado de tu cuenta'); return; }
   const title = clip(val('f-title'), 'planTitle') || 'Plan sin título';
   const desc = clip(val('f-desc'), 'planDesc') || 'Plan creado desde el prototipo.';
+  guardText(title + '\n' + desc, { kind:'plan' }, flag => commitPlan(title, desc, flag));
+}
+function commitPlan(title, desc, flag){
+  const d = state.draft;
   const placeId = val('f-place') || PLACES[0].id;
   const dateRaw = val('f-date');
   const when = dateRaw ? new Date(dateRaw) : new Date(Date.now()+24*3600*1000);
@@ -4953,15 +5633,17 @@ function publishPlan(){
     when, groupMin:ranges[0], groupMax:ranges[1], joined:0, attended:0, publicAttendees:[], attendedPrivate:0,
     joinType: access==='libre' ? 'libre' : 'apuntado',
     approval: access==='aprobacion' ? 'manual' : (access==='libre' ? 'libre' : 'automatica'),
-    groupId,
+    groupId, held: !!flag || undefined,
   };
   PLANS.unshift(plan);
   if (groupId){ const g=getGroup(groupId); if(g) g.planIds.unshift(plan.id); }
   state.pendingGroup = null; d.photo = null;
   ensurePlanChat(plan.id);
   saveState();
-  if (plan.approval === 'manual') setTimeout(() => simulateIncomingRequest(plan.id), 5000);   // demo: llega una solicitud
-  toast('Plan publicado'); go('plan/'+plan.id);
+  if (plan.approval === 'manual' && !flag) setTimeout(() => simulateIncomingRequest(plan.id), 5000);   // demo: llega una solicitud
+  if (!flag) toast('Plan publicado');
+  go('plan/'+plan.id);
+  return { objectType:'plan', planId:plan.id };
 }
 function freshPostDraft(){ return { items:[], origin:'plan', kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' }; }
 function capturePostInputs(){
@@ -5054,8 +5736,11 @@ function togglePostTag(uid){ capturePostInputs(); const t=state.draftPost.tags; 
 function togglePostOpt(key){ capturePostInputs(); state.draftPost[key]=!state.draftPost[key]; renderCreatePost(); }
 function publishPost(){
   capturePostInputs();
+  const caption = clip(state.draftPost.caption, 'caption') || 'Nueva publicación';
+  guardText(caption, { kind:'publicacion' }, flag => commitPost(caption, flag));
+}
+function commitPost(caption, flag){
   const d = state.draftPost, k = d.kind;
-  const caption = clip(d.caption, 'caption') || 'Nueva publicación';
   const media = k==='carrusel' ? ['g-grape','g-sunset','g-forest'] : [k==='video'?'g-grape':'g-sunset'];
   const mentions = (caption.match(MENTION_RE)||[]);
   const hashtags = (caption.match(/#[\wáéíóúñ]+/gi)||[]);
@@ -5069,16 +5754,17 @@ function publishPost(){
     id, authorId:'me', kind: up ? up.kind : k, media: up ? imgs.map(() => 'g-dark') : media, imgs, video: up && up.video ? up.video : undefined, caption, likes:0, ago:0, comments:[], duration: up && up.duration ? up.duration : (k==='video' ? 15 : undefined),
     placeId:d.place||null, taggedUserIds:[...d.tags], planId, altText:clip(d.alt, 'alt'),
     mentions, hashtags, audience:d.audience, commentsEnabled:d.comments, hideLikes:d.hideLikes, sharedToStory:d.alsoStory,
-    trackId:d.trackId||null,
+    trackId:d.trackId||null, held: !!flag || undefined,
   });
-  const story = d.alsoStory;
+  const story = d.alsoStory && !flag;
   if (story) STORIES.unshift({ id:'s'+id, userId:'me', planId, img:imgs[0], minAgo:0, trackId:d.trackId||null, text:caption });
   state.draftPost = freshPostDraft();
   saveState();
-  toast(story ? 'Publicación creada · compartida en Stories' : 'Publicación creada');
+  if (!flag) toast(story ? 'Publicación creada · compartida en Stories' : 'Publicación creada');
   // Tu perfil se abre en el apartado donde ha quedado la publicación.
   state.profileTab='posts'; state.profileFilterUid='me'; state.profileFilter = planId ? 'plan' : 'vida';
   go('perfil');
+  return { objectType:'publicacion', postId:id };
 }
 
 /* ---------- helpers de página ---------- */
@@ -5134,6 +5820,12 @@ function router(){
     case 'notificaciones': renderNotifications(); showView('page'); scrollTop('page'); break;
     case 'editar-plan': renderEditPlan(arg); showView('page'); scrollTop('page'); break;
     case 'seguridad': renderSecurity(); showView('page'); scrollTop('page'); break;
+    case 'contactos-confianza': renderTrusted(); showView('page'); scrollTop('page'); break;
+    case 'bloqueados': renderBlocked(); showView('page'); scrollTop('page'); break;
+    case 'mis-reportes': renderMyReports(); showView('page'); scrollTop('page'); break;
+    case 'estado-cuenta': renderAccountStatus(); showView('page'); scrollTop('page'); break;
+    case 'mis-datos': renderMyData(); showView('page'); scrollTop('page'); break;
+    case 'moderacion': renderModeration(arg); showView('page'); scrollTop('page'); break;
     case 'nuevo-perfil': renderNewProfile(); showView('page'); scrollTop('page'); break;
     case 'editar-perfil': renderEditProfile(); showView('page'); scrollTop('page'); break;
     case 'ajustes': renderSettings(); showView('page'); scrollTop('page'); break;

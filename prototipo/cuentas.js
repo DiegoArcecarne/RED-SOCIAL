@@ -276,12 +276,14 @@ function freshWorld(){
   POSTS.forEach(p => { p.comments = (p.comments || []).filter(c => c.userId !== 'me'); p.likedByMe = false; p.savedByMe = false; });
   drop(STORIES, s => s.userId === 'me'); drop(LIVES, l => l.userId === 'me');
   drop(RATINGS, r => r.userId === 'me'); drop(FOLLOWS, f => f[0] === 'me' || f[1] === 'me');
-  drop(CONVERSATIONS, () => true); drop(REQUESTS, r => r.userId === 'me'); drop(REPORTS, () => true);
+  drop(CONVERSATIONS, () => true); drop(REQUESTS, r => r.userId === 'me'); drop(REPORTS, r => r.reporterId === 'me' || r.reporterId === undefined || r.targetUserId === 'me');
   drop(USERS, u => u.managedBy === 'me');
   GROUPS.forEach(g => { g.members = g.members.filter(m => m.userId !== 'me'); });
   state.joined = new Set(); state.attended = new Set(); state.requested = new Set(); state.reconfirmed = new Set(); state.presencePublic = true;
   drop(NOTIFICATIONS, () => true); drop(FOLLOW_REQUESTS, () => true);
   ME.mentions = {}; ME.mentionPolicy = 'todos'; ME.recentSearches = []; ME.stats = { noShows:0, lateCancels:0 }; ME.joinedPlanIds = []; ME.notifPrefs = undefined;
+  ME.trustedContacts = []; ME.shareTrips = false; ME.safeCheck = false; ME.consents = undefined; ME.consentLog = [];
+  drop(MOD_ACTIONS, a => a.targetUserId === 'me'); drop(SAFETY_EVENTS, () => true); delete USER_MOD.me;
   PLANS.forEach(p => { p.waitlist = (p.waitlist || []).filter(x => x !== 'me'); });
 }
 
@@ -510,6 +512,7 @@ function openDeleteAccount(){
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Eliminar cuenta">
     <div class="sheet-h"><span>Eliminar cuenta</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list form"><p class="hint">Se borrarán tu perfil, tus publicaciones, mensajes y perfiles profesionales. Las reseñas que hayas recibido se anonimizan. Si tienes planes de pago pendientes, se cancelan con su política. Esta acción no se puede deshacer.</p>
+      <button class="link-btn" onclick="closeOverlay();exportMyData()">${ico('download')} Antes, descarga una copia de tus datos</button>
       <div class="field"><label for="f-del">Escribe ELIMINAR para confirmar</label><input id="f-del" autocapitalize="characters" /></div>
       <button class="btn-primary danger-btn" onclick="deleteAccount()">Eliminar mi cuenta</button></div></div>`);
 }

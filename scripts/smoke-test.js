@@ -372,7 +372,8 @@ a.run('setReportField("reason","peligro")'); h = a.html('overlay');
 check('reportar "me siento en peligro": 112 y cómo denunciar', h.includes('llama al 112') && h.includes('href="tel:112"') && h.includes('denunciarlo ante la Policía'));
 const nRep = a.run('REPORTS.length');
 a.run('submitReport()');
-check('enviar reporte: llega a moderación con los mensajes, bloquea y quita la solicitud', a.run('REPORTS.length') === nRep + 1 && a.run('REPORTS[REPORTS.length-1].withMessages') === true
+check('enviar reporte: llega a moderación con los mensajes, bloquea y quita la solicitud', a.run('REPORTS.length') === nRep + 1 && a.run('REPORTS[REPORTS.length-1].objectType') === 'conversacion'
+  && a.run('REPORTS[REPORTS.length-1].evidence').length > 0 && a.run('REPORTS[REPORTS.length-1].reporterId') === 'me' && a.run('severityOf(REPORTS[REPORTS.length-1])') === 'critica'
   && a.run('ME.blocked.includes("sara")') && !a.run('getConversation("rq3")'));
 a.run('unblockUser("sara"); FOLLOWS.push(["me","sara"], ["sara","me"])');
 a.run('CONVERSATIONS.push({ id:"rq4", type:"dm", with:"azotea", status:"solicitud", unread:1, messages:[{ from:"azotea", text:"a", min:1 }] }, { id:"rq5", type:"dm", with:"ana", status:"solicitud", unread:1, messages:[{ from:"ana", text:"b", min:2 }] })');
@@ -753,6 +754,147 @@ e6.run("showAuth('registro', {})"); set(e6, 'f-id', 'joven@correo.es'); set(e6, 
 set(e6, 'f-otp', e6.run('state.otp.code')); e6.run('submitCode()'); e6.run("showAuth('edad')");
 set(e6, 'f-birth', `${new Date().getFullYear() - 16}-01-01`); e6.run('document.getElementById("f-legal").checked = true; submitAge()');
 check('menor de 18: no se crea la cuenta', step(e6) === 'menor' && e6.run('accounts().length') === 1 && !e6.run('sessionId()'));
+// --- Confianza y seguridad: filtros, reportes, bloqueos, moderación, apelaciones, SOS y RGPD ---
+const tst = {};
+const t = createEnv(tst);
+const lvl = (txt, ctx) => t.run(`moderateText(${JSON.stringify(txt)}, ${JSON.stringify(ctx || {})})`);
+check('filtro: insulto disfrazado ("1d10t4", "i d i o t a") avisa antes de publicar', lvl('Eres un 1d10t4').cat === 'insulto' && lvl('eres un i d i o t a').level === 'aviso' && lvl('IMBÉCILLL').cat === 'insulto');
+check('filtro: amenazas y odio se retienen', lvl('Te voy a matar').level === 'retener' && lvl('Sé dónde vives').cat === 'amenaza' && lvl('vaya sudacas').cat === 'odio');
+check('filtro: spam con enlace y dinero se retiene', lvl('Gana 300 € a la semana en bit.ly/ya').cat === 'spam' && lvl('Mirad la web del bar: www.bar.com').level === 'ok');
+check('filtro: teléfono a quien no conoces avisa; a quien conoces, no', lvl('llámame al 600 123 456', { kind:'mensaje' }).cat === 'contacto' && lvl('llámame al 600 123 456', { kind:'mensaje', known:true }).level === 'ok');
+check('filtro: sin falsos positivos en frases normales', ['Qué buen plan, repetimos', 'Un montón todo el rato', 'La computadora', 'Llegamos a las 21:30'].every((x) => lvl(x).level === 'ok'));
+t.run('openComments("po8")'); set(t, 'cm-input', 'Sois unos imbéciles'); const nC = t.run('getPost = (id) => POSTS.find(p => p.id === id); getPost("po8").comments.length');
+t.run('addComment("po8")'); h = t.html('overlay'); rendered += h;
+check('comentario con insulto: pregunta "¿Seguro?" y no publica aún', h.includes('¿Seguro que quieres publicarlo?') && h.includes('Publicar igualmente') && t.run('getPost("po8").comments.length') === nC);
+t.run('nudgeEdit()');
+check('comentario con insulto: "Editar" no publica y devuelve el texto', t.run('getPost("po8").comments.length') === nC && t.run('document.getElementById("cm-input").value') === 'Sois unos imbéciles');
+t.run('addComment("po8"); nudgeGo()');
+check('comentario con insulto: "Publicar igualmente" publica, marca y avisa a moderación (prioridad baja)', t.run('getPost("po8").comments.length') === nC + 1 && t.run('getPost("po8").comments.slice(-1)[0].flagged') === 'insulto'
+  && t.run('REPORTS.slice(-1)[0].source') === 'automatico' && t.run('severityOf(REPORTS.slice(-1)[0])') === 'alta');
+set(t, 'cm-input', 'Te voy a matar'); t.run('addComment("po8")'); h = t.html('overlay'); rendered += h;
+check('comentario con amenaza: se retiene (solo lo ves tú) y queda en revisión', t.run('getPost("po8").comments.slice(-1)[0].held') === true && h.includes('En revisión')
+  && t.run('MOD_ACTIONS[0].action') === 'retener' && t.run('MOD_ACTIONS[0].status') === 'en_revision' && t.run('MOD_ACTIONS[0].automated') === true);
+check('comentario retenido: tú lo ves marcado; los demás no', t.run('commentVisible(getPost("po8").comments.slice(-1)[0])') === true && t.run('visibleComments(getPost("po8")).length') === nC + 2);
+t.run('openComments("po8")'); check('comentarios: los tuyos retenidos llevan "En revisión" y los ajenos se pueden reportar', t.html('overlay').includes('cm-held') && t.html('overlay').includes('reportComment('));
+t.run('state.draftPost = freshPostDraft(); state.draftPost.alsoStory = true'); t.nav('crear-post'); set(t, 'f-caption', 'Gana 500 € al mes con cripto en www.ganafacil.xyz');
+const nStories5 = t.run('STORIES.length'); t.run('publishPost()');
+check('publicación con spam: retenida, sin Stories, y en tu perfil con el aviso', t.run('POSTS[0].held') === true && t.run('STORIES.length') === nStories5 && t.run('postCard(POSTS[0])').includes('En revisión'));
+const heldPost = t.run('POSTS[0].id');
+check('publicación retenida: fuera del muro de los demás', t.run(`(() => { const p = POSTS.find(x => x.id === "${heldPost}"); p.authorId = "lucia"; const v = canSeePost(p); p.authorId = "me"; return v; })()`) === false);
+t.run('openChat = (id) => { location.hash = "#/chat/" + id; renderChat(id); }; openChat("c1")'); set(t, 'msg-input', 'Mi número es 600 123 456');
+const nMsg = t.run('getConversation("c1").messages.length'); t.run('sendMsg("c1")');
+check('mensaje a alguien que conoces: sin aviso', t.run('getConversation("c1").messages.length') === nMsg + 1 && !t.html('overlay').includes('Cuidado con tus datos'));
+t.run('const cx = dmWith("ana", true); openChat(cx.id)'); set(t, 'msg-input', 'Escríbeme a ana.fan@correo.es');
+t.run('sendMsg(dmWith("ana").id)'); h = t.html('overlay'); rendered += h;
+check('mensaje con tus datos a quien no conoces: avisa y deja enviarlo igualmente', h.includes('Cuidado con tus datos') && h.includes('Enviar igualmente') && t.run('dmWith("ana").messages.length') === 0);
+t.run('nudgeGo()'); check('enviar igualmente: se entrega', t.run('dmWith("ana").messages.length') === 1);
+set(t, 'msg-input', 'Sé dónde vives'); t.run('openChat("c1"); sendMsg("c1")');
+check('mensaje con amenaza: no se entrega, queda retenido', t.run('getConversation("c1").messages.slice(-1)[0].held') === true && t.run('renderChat("c1"); document.getElementById("view-page").innerHTML').includes('No entregado'));
+
+// Reportes de contenido, perfiles y planes; bloqueo y desbloqueo
+t.run('openPostMenu("po9")'); check('menú de publicación ajena: reportar la publicación', t.html('overlay').includes("objectType:'publicacion'"));
+t.run('openReport("marco", null, { objectType:"publicacion", postId:"po9" })'); h = t.html('overlay'); rendered += h;
+check('reportar publicación: título, prueba adjunta y sin bloquear por defecto', h.includes('Reportar la publicación') && h.includes('Se adjunta la publicación') && t.run('state.report.block') === false);
+t.run('setReportField("reason","spam"); submitReport()');
+check('reporte de publicación: guarda tipo, prueba y quién reporta', t.run('REPORTS.slice(-1)[0].objectType') === 'publicacion' && t.run('REPORTS.slice(-1)[0].evidence').includes('5 km') && !t.run('(ME.blocked||[]).includes("marco")'));
+const myRep = t.run('REPORTS.slice(-1)[0].id');
+t.run('reportComment("po7","cm-a1")'); check('reportar un comentario', t.html('overlay').includes('Reportar el comentario'));
+t.run('reportPlan("p3")'); check('reportar un plan (al anfitrión)', t.html('overlay').includes('Reportar el plan') && t.run('state.report.uid') === 'azotea');
+t.run('closeOverlay()'); t.nav('u/alexv'); h = t.html('view-page'); rendered += h;
+check('perfil ajeno: botón de más opciones', h.includes('openUserMenu(\'alexv\')'));
+t.run('openUserMenu("alexv")'); h = t.html('overlay'); check('más opciones: reportar y bloquear', h.includes('Reportar') && h.includes('Bloquear'));
+t.run('location.hash = "#/u/alexv"; blockUser("alexv")'); h = t.html('view-page');
+check('bloquear desde el perfil: se queda en el perfil y lo muestra', h.includes('Has bloqueado a Álex V.') && t.run('ME.blocked.includes("alexv")'));
+check('bloqueado: sus comentarios dejan de verse', !t.run('visibleComments(getPost("po7")).some(c => c.userId === "alexv")'));
+t.nav('bloqueados'); h = t.html('view-page'); rendered += h;
+check('cuentas bloqueadas: lista con desbloquear', h.includes('Álex V.') && h.includes('Desbloquear'));
+t.run('unblockUser("alexv")'); check('desbloquear desde la lista', !t.run('ME.blocked.includes("alexv")') && !t.html('view-page').includes('Álex V.'));
+t.nav('mis-reportes'); h = t.html('view-page'); rendered += h;
+check('tus reportes: estado de cada uno', h.includes('Marco T.') && h.includes('En revisión'));
+
+// Panel de moderación
+t.nav('moderacion'); h = t.html('view-page'); rendered += h;
+check('panel: cola ordenada por gravedad (crítica primero) con plazos', h.indexOf('Crítica') > -1 && h.indexOf('Crítica') < h.indexOf('Baja') && h.includes('responder en 1 h') && h.includes('Filtro automático'));
+check('panel: prueba, historial de la cuenta y quién reporta', h.includes('Menudo DJ más malo') && h.includes('reportes') && h.includes('nunca se le dice'));
+t.run('openModActions("rp2")'); h = t.html('overlay'); rendered += h;
+check('panel: acciones disponibles', ['Desestimar', 'Reducir el alcance', 'organizar planes', 'Suspender la cuenta 7 días', 'Cerrar la cuenta para siempre', 'autoridades'].every((x) => h.includes(x)));
+t.run('applyModAction("rp1","retirar")');
+check('retirar: el comentario desaparece y queda la decisión con sus motivos', !t.run('visibleComments(getPost("po7")).some(c => c.id === "cm-a1")') && t.run('REPORTS.find(r => r.id === "rp1").status') === 'resuelto'
+  && t.run('statementFor(MOD_ACTIONS[0])').includes('Norma:') && t.run('statementFor(MOD_ACTIONS[0])').includes('persona del equipo'));
+t.run('applyModAction("rp2","suspender7")');
+check('suspender: la cuenta queda suspendida, no se le puede escribir y su perfil lo indica', t.run('isSanctioned("alexv")') && t.run('userMod("alexv").strikes') === 2
+  && (t.run('openDm("alexv")'), t.html('toast').includes('suspendida') || t.run('document.getElementById("toast").textContent').includes('suspendida')) && (t.nav('u/alexv'), t.html('view-page').includes('suspendida')));
+t.run('applyModAction("rp4","desestimar")'); check('desestimar', t.run('REPORTS.find(r => r.id === "rp4").status') === 'desestimado');
+t.run('ME.notifPrefs = Object.fromEntries(Object.keys(NOTIF_TYPES).map(k => [k, false]))');
+t.run(`applyModAction("${myRep}","aviso")`);
+check('quien reporta recibe el resultado (aviso de seguridad, no se puede desactivar)', t.run('NOTIFICATIONS[0].type') === 'seguridad' && t.run('NOTIFICATIONS[0].route') === 'mis-reportes' && t.run('NOTIFICATIONS[0].text').includes('Marco T.'));
+t.run('ME.notifPrefs = undefined');
+const heldRep = t.run('REPORTS.find(r => r.status === "en_cola" && r.objectType === "comentario" && r.targetUserId === "me" && r.modActionId).id');
+t.nav('moderacion'); check('panel: lo retenido por el filtro se puede publicar', t.html('view-page').includes(`applyModAction('${heldRep}','publicar')`));
+t.run(`applyModAction("${heldRep}","publicar")`);
+check('publicar lo retenido: vuelve a verse y la decisión automática queda anulada', t.run('getPost("po8").comments.find(c => c.text === "Te voy a matar").held') === false
+  && t.run(`MOD_ACTIONS.find(a => a.id === REPORTS.find(r => r.id === "${heldRep}").modActionId).status`) === 'revocada');
+// Apelaciones
+t.nav('estado-cuenta'); h = t.html('view-page'); rendered += h;
+check('estado de tu cuenta: decisiones con motivos y botón de apelar', h.includes('Retirar el contenido') && h.includes('Vendo 2 entradas') && h.includes('sistema automático') && h.includes("openAppeal('action:ma1')"));
+t.run('openAppeal("action:ma1")'); t.run('submitAppeal()'); check('apelar: pide el motivo', !t.run('MOD_ACTIONS.find(a => a.id === "ma1").appeal'));
+set(t, 'f-appeal', 'Eran entradas mías y no sabía que no se podía'); t.run('submitAppeal()');
+check('apelación enviada', t.run('MOD_ACTIONS.find(a => a.id === "ma1").appeal.status') === 'pendiente');
+t.nav('moderacion'); t.run('renderModeration("apelaciones")'); h = t.html('view-page'); rendered += h;
+check('panel: apelaciones pendientes con su motivo', h.includes('Marina apela') && h.includes('Eran entradas mías'));
+t.run('resolveAppeal("action:ma1", true)');
+check('apelación estimada: el comentario vuelve y se avisa', t.run('getPost("po9").comments.find(c => c.id === "cm-m1").removed') === false && t.run('MOD_ACTIONS.find(a => a.id === "ma1").status') === 'revocada'
+  && t.run('NOTIFICATIONS[0].text').includes('Te damos la razón'));
+t.run(`REPORTS.find(r => r.id === "${myRep}").status = "desestimado"`); t.run(`openAppeal("report:${myRep}")`); set(t, 'f-appeal', 'Es spam de verdad'); t.run('submitAppeal()');
+t.run(`resolveAppeal("report:${myRep}", true)`);
+check('quien reporta también puede pedir otra revisión: vuelve a la cola', t.run(`REPORTS.find(r => r.id === "${myRep}").status`) === 'en_cola');
+t.run('renderModeration("historial")'); check('panel: historial de decisiones', t.html('view-page').includes('Anulada') && t.html('view-page').includes('Vigente'));
+// Bio y planes
+t.nav('editar-perfil'); set(t, 'f-pbio', 'Te voy a matar'); const bio0 = t.run('ME.bio'); t.run('saveProfile()');
+check('descripción con amenaza: no se guarda', t.run('ME.bio') === bio0);
+t.nav('crear-plan'); set(t, 'f-title', 'Quedada'); set(t, 'f-desc', 'Os mato a todos'); t.run('publishPlan()');
+check('plan con amenaza: retenido, fuera del feed, con aviso en la ficha', t.run('PLANS[0].held') === true && !t.run('filteredPlans().some(p => p.id === PLANS[0].id)') && (t.run('renderDetail(PLANS[0].id)'), t.html('view-detail').includes('En revisión')));
+t.run('setUserMod("me", { canHost:false })'); const nPl = t.run('PLANS.length'); t.nav('crear-plan'); set(t, 'f-title', 'Paseo'); t.run('publishPlan()');
+check('sin permiso para organizar: no se publica', t.run('PLANS.length') === nPl);
+t.run('setUserMod("me", { canHost:true })');
+// Contactos de confianza y SOS
+t.nav('plan/p9'); h = t.html('view-detail'); rendered += h;
+check('ficha: botón SOS y propuesta de añadir contacto de confianza', h.includes('class="sos-btn"') && h.includes('Añade un contacto de confianza') && h.includes('Reportar este plan'));
+t.nav('contactos-confianza'); h = t.html('view-page'); rendered += h;
+check('contactos de confianza: explicación y formulario', h.includes('Hasta 3 personas') && h.includes('f-tphone'));
+set(t, 'f-tname', 'Luis'); set(t, 'f-tphone', '12'); t.run('addTrusted()'); check('teléfono no válido: no se añade', t.run('trustedContacts().length') === 0);
+set(t, 'f-tphone', '+34 611 222 333'); t.run('addTrusted()'); set(t, 'f-tname', 'Carmen'); set(t, 'f-tphone', '622 333 444'); t.run('addTrusted()');
+check('añadir contactos (invitación por SMS)', t.run('trustedContacts().length') === 2 && t.run('trustedContacts()[0].status') === 'pendiente');
+t.nav('plan/p9'); t.run('shareWithContacts("p9")'); h = t.html('view-detail');
+check('compartir el plan con los contactos', t.run('SAFETY_EVENTS[0].type') === 'compartir' && h.includes('Compartido con Luis y Carmen') && h.includes('He llegado bien'));
+t.run('arrivedSafe("p9")'); check('he llegado bien', t.run('SAFETY_EVENTS[0].type') === 'llegada');
+t.run('openSos("p9")'); h = t.html('overlay'); rendered += h;
+check('SOS: llamar al 112 y enviar alerta con ubicación', h.includes('href="tel:112"') && h.includes('Enviar alerta con mi ubicación') && h.includes('Luis y Carmen'));
+t.run('sendSos("p9")'); h = t.html('view-detail');
+check('SOS enviado: alerta activa, aviso y "Estoy bien"', t.run('activeSos("p9").status') === 'activa' && h.includes('Alerta SOS enviada') && h.includes('Estoy bien') && t.run('NOTIFICATIONS[0].type') === 'seguridad');
+t.nav('moderacion'); t.run('renderModeration("sos")'); h = t.html('view-page'); rendered += h;
+check('panel: la alerta SOS aparece con el plan, la ubicación y los contactos avisados', h.includes('SOS activo') && h.includes('Cata de vinos') && h.includes('Luis, Carmen'));
+t.run('escalateSos(SAFETY_EVENTS[0].id); closeSos(SAFETY_EVENTS[0].id, "equipo")');
+check('panel: avisar al 112 y cerrar la alerta', t.run('SAFETY_EVENTS[0].escalated') === true && t.run('SAFETY_EVENTS[0].status') === 'cerrada' && !t.run('activeSos("p9")'));
+t.run('location.hash = "#/chat/c2"; renderChat("c2")'); check('chat del plan: botón SOS', t.html('view-page').includes('sos-chip'));
+// Tus datos (RGPD)
+t.nav('ajustes'); h = t.html('view-page'); rendered += h;
+check('ajustes: tu seguridad, tus datos y panel de moderación', ['Contactos de confianza y SOS', 'Cuentas bloqueadas', 'Tus reportes', 'Estado de tu cuenta', 'Tus datos y privacidad', 'Panel de moderación'].every((x) => h.includes(x)));
+t.nav('mis-datos'); h = t.html('view-page'); rendered += h;
+check('tus datos: descargar, consentimientos, derechos y eliminar', ['Descargar mis datos', 'Consentimientos', 'Novedades y planes destacados', 'Interés legítimo', 'Términos y privacidad', 'Corregir tus datos', 'Eliminar cuenta'].every((x) => h.includes(x)));
+const exp = t.run('JSON.parse(JSON.stringify(buildExport()))');
+check('exportación: todo lo tuyo y sin la contraseña', ['cuenta', 'perfil', 'publicaciones', 'comentarios', 'valoraciones', 'sigues', 'teSiguen', 'planes', 'mensajes', 'notificaciones', 'bloqueados', 'reportesEnviados', 'decisionesSobreTi', 'seguridad', 'consentimientos'].every((k) => k in exp)
+  && exp.cuenta.email === 'marina@planes.app' && !('hash' in exp.cuenta) && !('salt' in exp.cuenta) && exp.publicaciones.every((p) => p.authorId === 'me') && exp.seguridad.contactosDeConfianza.length === 2);
+check('exportación: los reportes no incluyen datos de terceros que reportan', exp.reportesEnviados.every((r) => !('reporterId' in r)));
+t.run('toggleConsent("analitica"); toggleConsent("marketing")');
+check('consentimientos: se cambian y queda registro con fecha', t.run('consentValue("analitica")') === true && t.run('currentAccount().consents.marketing') === true && t.run('ME.consentLog.length') === 2 && !!t.run('ME.consentLog[0].at'));
+t.run('openDeleteAccount()'); check('eliminar cuenta: ofrece descargar antes tus datos', t.html('overlay').includes('descarga una copia de tus datos'));
+// Persistencia
+const t2 = createEnv(tst);
+check('persisten decisiones, apelaciones, sanciones, SOS, contactos y consentimientos', t2.run('MOD_ACTIONS.find(a => a.id === "ma1").status') === 'revocada' && t2.run('isSanctioned("alexv")')
+  && t2.run('SAFETY_EVENTS.some(e => e.type === "sos")') && t2.run('trustedContacts().length') === 2 && t2.run('consentValue("analitica")') === true && t2.run('REPORTS.some(r => r.reporterId === "me")'));
+check('persisten los comentarios retirados y retenidos', !t2.run('visibleComments(POSTS.find(p => p.id === "po7")).some(c => c.id === "cm-a1")'));
+
 // --- Web instalable (PWA) ---
 const pdir = path.join(__dirname, '..', 'prototipo');
 let man = null; try { man = JSON.parse(fs.readFileSync(path.join(pdir, 'manifest.webmanifest'), 'utf8')); } catch (err) {}
