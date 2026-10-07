@@ -1782,6 +1782,7 @@ function renderShareSheet(){
           </div>`
         : `<p class="hint sh-lock">${ico('lock')} Esta publicación no es pública: solo se puede enviar dentro de planes a quien ya puede verla.</p>`}
       </div></div>`);
+  if (pub) showShareImage(po);
 }
 function toggleShareTo(uid){
   const msg = val('sh-msg'), t = state.share.to, i = t.indexOf(uid);
@@ -1821,6 +1822,13 @@ function copyShareLink(id){
   } catch (e) { toast(url); }
 }
 // Imagen para compartir (og:image): 1200×630 con la foto, el pie, el autor y la marca.
+const shareImageCache = {};
+// En la vista previa del enlace se ve la imagen generada, que es la que mostraría WhatsApp.
+function showShareImage(po){
+  const put = (url) => { const el = document.querySelector('.og-img'); if (el && state.share && state.share.id === po.id) el.innerHTML = `<img class="cover-img" src="${url}" alt="Imagen que se compartirá">`; };
+  if (shareImageCache[po.id]) return put(shareImageCache[po.id]);
+  shareImage(po).then(b => { if (b && typeof URL !== 'undefined' && URL.createObjectURL){ shareImageCache[po.id] = URL.createObjectURL(b); put(shareImageCache[po.id]); } });
+}
 function shareImage(po){
   return new Promise(resolve => {
     const c = document.createElement && document.createElement('canvas');
@@ -1849,13 +1857,26 @@ function shareImage(po){
     img.src = uimg(m.image, 1200);
   });
 }
+// Guardar un archivo: con la capacidad "downloads" si la página corre en el visor de
+// artefactos de Claude (pide confirmación); si no, con un enlace de descarga normal.
+function saveFile(blob, filename){
+  const viaLink = () => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    return Promise.resolve('saved');
+  };
+  const c = typeof window !== 'undefined' && window.claude;
+  if (!c || typeof c.use !== 'function') return viaLink();
+  return c.use('downloads').then(d => d ? d.save({ filename, data: blob }).then(() => 'saved', e => (e && e.code) || 'error') : viaLink(), viaLink);
+}
 function downloadShareImage(id){
   const po = POSTS.find(p => p.id === id); if (!po) return;
   shareImage(po).then(b => {
     if (!b){ toast('Este navegador no puede generar la imagen'); return; }
-    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `planes-${po.id}.jpg`;
-    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    logShare(id, 'imagen'); toast('Imagen descargada');
+    saveFile(b, `planes-${po.id}.jpg`).then(r => {
+      if (r === 'saved'){ logShare(id, 'imagen'); toast('Imagen guardada'); }
+      else if (r !== 'declined') toast('No se ha podido guardar la imagen');
+    });
   });
 }
 // Hoja de compartir del sistema (móvil): imagen + texto + enlace, si el navegador lo permite.
