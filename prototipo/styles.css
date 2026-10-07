@@ -540,6 +540,31 @@ body{background:#000;color:var(--ink);display:flex;justify-content:center;-webki
 .set-box .iseg button span{font-size:12px}
 .set-box .iseg button .ico{font-size:15px}
 
+/* Compartir */
+.sheet.sh{max-height:86%}
+.sh .sheet-list{gap:10px}
+.sh .sheet-list > *{flex:none}
+.sh .hint{font-size:12px;color:var(--ink-soft);line-height:1.45}
+.sh-sec{font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px;margin-top:4px}
+.sh-people{display:flex;gap:14px;padding-top:3px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.sh-person{flex:none;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;color:var(--ink);font:inherit;font-size:11.5px;cursor:pointer;width:58px}
+.sh-person .avatar{position:relative;width:52px;height:52px}
+.sh-person.on .avatar{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.sh-ok{position:absolute;right:-3px;bottom:-3px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:12px;border:2px solid var(--surface)}
+.sh-msg{padding:0;border:none}
+.btn-primary.sm{width:auto;flex:none;padding:10px 16px;font-size:13.5px}
+.sh-row{display:flex;align-items:center;gap:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;color:var(--ink);font:inherit;font-size:14px;font-weight:600;cursor:pointer;text-align:left}
+.sh-row span{flex:1}
+.og-card{display:flex;flex-direction:column;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.og-img{position:relative;display:block;aspect-ratio:1.91/1;overflow:hidden}
+.og-txt{display:flex;flex-direction:column;gap:2px;padding:9px 11px 11px;font-size:12.5px;color:var(--ink-soft);line-height:1.35}
+.og-txt b{color:var(--ink);font-size:13.5px}
+.og-d{font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--ink-dim)}
+.sh-apps{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.sh-app{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:none;color:var(--ink);font:inherit;font-size:11px;text-decoration:none;cursor:pointer;padding:4px 0}
+.sh-ic{width:46px;height:46px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center;font-size:19px}
+.sh-lock{display:flex;gap:8px;align-items:flex-start}
+
 /* Filtro por origen: planes o vida */
 .wall-filter{padding:10px 12px 4px}
 .prof-filter{padding:10px 12px 8px}

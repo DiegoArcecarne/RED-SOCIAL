@@ -40,6 +40,8 @@ erDiagram
     USUARIO ||--o{ PUBLICACION : crea
     PLAN ||--o{ PUBLICACION : "vinculada a"
     LUGAR ||--o{ PUBLICACION : ubica
+    PUBLICACION ||--o{ COMPARTIDO : "se comparte"
+    USUARIO ||--o{ COMPARTIDO : comparte
     PUBLICACION ||--o{ COMENTARIO : recibe
     USUARIO ||--o{ COMENTARIO : escribe
     PUBLICACION ||--o{ ME_GUSTA : recibe
@@ -275,6 +277,14 @@ erDiagram
         string estado "en_curso|finalizado"
         datetime inicio
         datetime fin
+    }
+    COMPARTIDO {
+        uuid id PK
+        uuid publicacion_id FK "o plan_id"
+        uuid usuario_id FK
+        string destino "chat|story|whatsapp|telegram|copiar|imagen|sistema"
+        string destinatarios "si es chat"
+        datetime fecha
     }
     COMENTARIO {
         uuid id PK

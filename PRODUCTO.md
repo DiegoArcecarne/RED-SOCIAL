@@ -227,6 +227,33 @@ Al entrar en el perfil de alguien, sus publicaciones se pueden filtrar en Todo, 
 
 El flujo de creación incluye las opciones habituales de una red social, adaptadas a esta app: ubicación, etiquetado de personas, pie con menciones y hashtags, texto alternativo para accesibilidad, control de comentarios, ocultar el número de "me gusta", compartir además en stories y audiencia (público / solo seguidores / amigos). La opción propia y diferencial es vincular la publicación a un plan existente —al que se asistió o que se creó—, de modo que la publicación queda ligada a ese plan y refuerza su prueba social.
 
+## Compartir publicaciones
+
+Cualquier publicación, propia o ajena, se puede compartir desde el botón de compartir. Lo mismo vale, con el mismo mecanismo, para los planes; en ese caso la imagen es la portada del plan.
+
+Dentro de la app:
+
+- Enviar a personas que sigues: se eligen una o varias y se añade un mensaje opcional (máximo 500). Llega como mensaje directo, así que depende de la mensajería.
+- Añadir a tu story: la publicación aparece en tu story con su foto, su música y el crédito del autor ("Publicación de @usuario"), y enlaza a la original.
+
+Fuera de la app (WhatsApp, Telegram, SMS, correo…):
+
+- Se comparte un enlace público a la publicación (planes.app/p/…, dominio provisional como la marca). Ese enlace lleva una vista previa con imagen, igual que la imagen destacada de WordPress. Para ello, la página pública incluye etiquetas Open Graph:
+  - og:title: "Autor en planes · Plan" (si la publicación está ligada a un plan).
+  - og:description: el pie, recortado a unos 120 caracteres.
+  - og:image: una imagen de 1200×630 generada a partir de la primera foto de la publicación, con el pie, el autor y la marca encima. Recomendado: JPEG de menos de 300 KB, para que WhatsApp la muestre siempre.
+  - og:url y twitter:card = summary_large_image.
+- Botones directos para WhatsApp y Telegram, "Copiar enlace", "Imagen" (descarga la imagen 1200×630) y "Más", que abre la hoja de compartir del móvil. Si el móvil lo permite, esa hoja envía la imagen como archivo junto al texto y el enlace.
+- La página pública enseña la publicación y un botón para abrirla en la app o descargarla. Con enlaces universales (iOS) y App Links (Android), si la app está instalada se abre directamente.
+
+Privacidad al compartir:
+
+- Fuera solo se comparten publicaciones públicas: audiencia "Público" y perfil público. Si una publicación es para seguidores o amigos, o el perfil es privado, solo se puede enviar dentro de la app a quien ya puede verla.
+- Si un enlace llega a quien no tiene permiso para verla, la vista previa sale genérica, sin foto ni texto.
+- Propuesta: un ajuste para que cada persona decida si otros pueden compartir sus publicaciones fuera y en sus stories, como hace Instagram.
+
+Cada vez que se comparte se registra el destino (chat, story, WhatsApp, Telegram, copiar enlace, imagen, hoja del sistema). Sirve para medir el crecimiento por recomendación.
+
 ## Stories: el "ahora mismo"
 
 Stories y aftermovies son dos formatos con funciones distintas y complementarias, y van en pestañas separadas.
@@ -454,6 +481,7 @@ Dentro del MVP:
 - Chat de grupo de cada plan.
 - Aftermovie: subir fotos de un plan pasado a su hashtag.
 - Locales: publican sus anclas como cualquier anfitrión, con el distintivo de negocio verificado concedido a mano.
+- Compartir fuera de la app: enlace público con vista previa e imagen (Open Graph) para WhatsApp y similares. Es barato y es el principal canal de crecimiento en el piloto.
 
 Fuera del MVP (fase 2 o posterior): mensajes directos, stories, directos, música en publicaciones y stories, menciones, grupos con roles, opciones avanzadas de publicación, mapa de lugares y "reclamar tu local", monetización de cuentas de negocio (CPA, suscripción, panel), publicidad y boost, micropago de desvelo, geolocalización automática y capa de ligar.
 
@@ -548,6 +576,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Story. Efímera (24 h). id, autor_id, plan_id (opcional), media, pista_id (música, opcional), visibilidad (público / privado / mejores amigos), fecha de expiración. Vive en la pestaña Stories y puede aflorar destacada en Vividas.
 - Directo. id, emisor_id, plan_id (plan en marcha), título, estado (en curso o finalizado), inicio, fin. Derivado: espectadores. Su chat reutiliza la mensajería y la moderación.
 - Pista. Canción de la biblioteca de música. id, título, artista, ambiente, duración, origen de la licencia (libre de derechos / proveedor / catálogo comercial), países donde se puede usar, apta para cuentas profesionales (bool), estado (activa o retirada). Publicaciones y stories la referencian por pista_id; si se retira, la publicación se queda sin música pero no se borra.
+- Compartido. id, publicación_id (o plan_id), usuario_id (quien comparte), destino (chat, story, whatsapp, telegram, copiar, imagen, sistema), destinatarios (si es un chat), fecha. Mide la difusión. La imagen para compartir (og:image) se genera y se guarda en caché por publicación, y se regenera si cambian el pie o la primera foto.
 - Comentario. id, publicación_id, autor_id, texto, fecha. Solo cuando la publicación tiene los comentarios activos.
 - Me gusta. usuario_id, publicación_id, fecha. El contador de la publicación se deriva de aquí; "ocultar likes" solo cambia lo que ven los demás.
 - Guardado. usuario_id, publicación_id, fecha. Colección privada de cada usuario.
@@ -608,4 +637,5 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Valoraciones: confirmar las audiencias propuestas (públicas para todos, seguidores o amigos; privadas para seguidores, amigos o solo yo) y si una asistencia privada debe forzar la valoración privada.
 - Amigos = seguimiento mutuo: confirmar o añadir más adelante una lista de "amigos cercanos" elegida a mano (como en Instagram), además de los mutuos.
 - Longitud de los textos: confirmar los límites propuestos (nombre 30, usuario 3–30, descripción 150, título de plan 60…) y la frecuencia permitida para cambiar el nombre de usuario.
+- Compartir: confirmar el ajuste "permitir que compartan mis publicaciones" y el dominio de los enlaces públicos (va con la marca).
 - Objetivos numéricos de las métricas y criterios para continuar o parar tras el piloto (propuesta en el plan de validación).

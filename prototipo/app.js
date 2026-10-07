@@ -82,6 +82,9 @@ const SVG = {
   playS:'<svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
   pause:'<svg viewBox="0 0 24 24"><path d="M8.5 5.5v13M15.5 5.5v13"/></svg>',
   search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.4"/><path d="M15.7 15.7 20 20"/></svg>',
+  dots:'<svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4" class="fill"/><circle cx="12" cy="12" r="1.4" class="fill"/><circle cx="18.5" cy="12" r="1.4" class="fill"/></svg>',
+  download:'<svg viewBox="0 0 24 24"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5"/><path d="M5 19.5h14"/></svg>',
+  phone:'<svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.4"/><path d="M11 17.5h2"/></svg>',
 };
 function ico(name){ return `<i class="ico">${SVG[name]||''}</i>`; }
 const ICON_FOR_CAT = { outdoor:'mountain', fiesta:'music', gastro:'food', cultura:'landmark', deporte:'flag', bienestar:'leaf', social:'chat', viajeros:'compass' };
@@ -303,7 +306,7 @@ function postCard(po){
     <div class="post-actions">
       <button class="pa ${liked?'liked':''}" onclick="likePost('${po.id}')" aria-label="Me gusta" aria-pressed="${liked}">${ico(liked?'heart':'heartO')}</button>
       ${commentsOff ? '' : `<button class="pa" onclick="openComments('${po.id}')" aria-label="Comentarios">${ico('chat')}</button>`}
-      <button class="pa" onclick="toast('Compartir estará disponible en la app')" aria-label="Compartir">${ico('send')}</button>
+      <button class="pa" onclick="openShare('${po.id}')" aria-label="Compartir">${ico('send')}</button>
       <span class="pa-sp"></span>
       <button class="pa ${po.savedByMe?'saved':''}" onclick="savePost('${po.id}')" aria-label="Guardar" aria-pressed="${!!po.savedByMe}">${ico(po.savedByMe?'bookmarkF':'bookmark')}</button>
     </div>
@@ -580,6 +583,156 @@ function carouselDots(track, id){
   if (dots) Array.from(dots.children).forEach((d,k)=>d.classList.toggle('on', k===i));
   const c = document.getElementById('cc-'+id);
   if (c && dots) c.textContent = (i+1) + '/' + dots.children.length;
+}
+
+/* ---------- compartir: dentro de la app y en otras apps ----------
+   Fuera de la app se comparte un enlace público a la publicación. Esa página lleva
+   etiquetas Open Graph (og:title, og:description, og:image) y por eso WhatsApp,
+   Telegram, etc. enseñan la vista previa con la imagen, igual que la imagen
+   destacada de WordPress. og:image es una imagen 1200×630 generada a partir de la
+   foto de la publicación (shareImage). Solo las publicaciones públicas se comparten
+   fuera; dentro, se envían a personas que sigues o se añaden a tu story. */
+const PUBLIC_BASE = 'https://planes.app';   // dominio provisional, como la marca
+function postUrl(po){ return `${PUBLIC_BASE}/p/${po.id}`; }
+function postIsPublic(po){
+  const author = getUser(po.authorId) || {};
+  return (po.audience || 'publico') === 'publico' && author.profilePublic !== false;
+}
+// Metadatos Open Graph de la página pública de la publicación.
+function shareMeta(po){
+  const u = getUser(po.authorId) || { name:'' };
+  const plan = po.planId && getPlan(po.planId);
+  const cap = (po.caption || '').replace(/\s+/g, ' ').trim();
+  return {
+    title: `${u.name} en planes${plan ? ' · ' + plan.title : ''}`,
+    description: cap.length > 120 ? cap.slice(0, 117).trimEnd() + '…' : cap,
+    image: (po.imgs || [])[0] || '', url: postUrl(po), domain: PUBLIC_BASE.replace(/^https?:\/\//, ''),
+  };
+}
+function shareText(po){ const m = shareMeta(po); return `${m.description ? m.description + ' ' : ''}${m.url}`; }
+function externalShareUrl(po, app){
+  const m = shareMeta(po), t = encodeURIComponent(shareText(po));
+  return { whatsapp: `https://wa.me/?text=${t}`, telegram: `https://t.me/share/url?url=${encodeURIComponent(m.url)}&text=${encodeURIComponent(m.description)}` }[app];
+}
+function shareTargets(){ return USERS.filter(u => u.id !== 'me' && follows('me', u.id)); }
+function openShare(id){
+  const po = POSTS.find(p => p.id === id); if (!po) return;
+  stopMusic();
+  state.share = { id, to: [] };
+  renderShareSheet();
+}
+function renderShareSheet(){
+  const po = POSTS.find(p => p.id === state.share.id); if (!po) return;
+  const m = shareMeta(po), pub = postIsPublic(po), sel = state.share.to;
+  const people = shareTargets().map(u => `<button class="sh-person ${sel.includes(u.id)?'on':''}" onclick="toggleShareTo('${u.id}')" aria-pressed="${sel.includes(u.id)}">
+      <span class="avatar">${escapeHtml(u.initials||initials(u.name))}${sel.includes(u.id)?`<i class="sh-ok">${ico('check')}</i>`:''}</span><span>${escapeHtml(u.name.split(' ')[0])}</span></button>`).join('');
+  const ext = (app, icon, label) => `<a class="sh-app" href="${externalShareUrl(po, app)}" target="_blank" rel="noopener" onclick="logShare('${po.id}','${app}')"><span class="sh-ic">${ico(icon)}</span><span>${label}</span></a>`;
+  const btn = (fn, icon, label) => `<button class="sh-app" onclick="${fn}"><span class="sh-ic">${ico(icon)}</span><span>${label}</span></button>`;
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div>
+    <div class="sheet sh" role="dialog" aria-label="Compartir">
+      <div class="sheet-h"><span>Compartir</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+      <div class="sheet-list">
+        <div class="sh-sec">Enviar en planes</div>
+        <div class="sh-people">${people || '<p class="hint">Aún no sigues a nadie.</p>'}</div>
+        ${sel.length ? `<div class="sheet-in sh-msg"><input id="sh-msg" maxlength="${LIMITS.comment}" placeholder="Escribe un mensaje…"><button class="btn-primary sm" onclick="sendShareInApp()">Enviar</button></div>` : ''}
+        ${pub || po.authorId === 'me' ? `<button class="sh-row" onclick="shareToStory('${po.id}')">${ico('live')}<span>Añadir a tu story</span>${ico('chevR')}</button>` : ''}
+        <div class="sh-sec">Compartir fuera</div>
+        ${pub ? `<div class="og-card" aria-label="Vista previa del enlace">
+            <span class="og-img ${(po.media||[])[0]||'g-dark'}">${coverImg(m.image, 700)}</span>
+            <span class="og-txt"><span class="og-d">${escapeHtml(m.domain)}</span><b>${escapeHtml(m.title)}</b><span>${escapeHtml(m.description)}</span></span></div>
+          <p class="hint">Así se ve el enlace en WhatsApp, Telegram o un SMS: con la imagen de la publicación.</p>
+          <div class="sh-apps">
+            ${ext('whatsapp', 'chat', 'WhatsApp')}${ext('telegram', 'send', 'Telegram')}
+            ${btn(`copyShareLink('${po.id}')`, 'link', 'Copiar enlace')}${btn(`downloadShareImage('${po.id}')`, 'download', 'Imagen')}${btn(`systemShare('${po.id}')`, 'dots', 'Más')}
+          </div>`
+        : `<p class="hint sh-lock">${ico('lock')} Esta publicación no es pública: solo se puede enviar dentro de planes a quien ya puede verla.</p>`}
+      </div></div>`);
+}
+function toggleShareTo(uid){
+  const msg = val('sh-msg'), t = state.share.to, i = t.indexOf(uid);
+  if (i >= 0) t.splice(i, 1); else t.push(uid);
+  renderShareSheet();
+  const el = document.getElementById('sh-msg'); if (el && msg) el.value = msg;
+}
+function logShare(id, dest, to){
+  const po = POSTS.find(p => p.id === id); if (!po) return;
+  po.shares = (po.shares || 0) + 1;
+  (po.shareLog = po.shareLog || []).push({ dest, to: to || null });
+  saveState();
+}
+function sendShareInApp(){
+  const to = state.share.to.slice(); if (!to.length) return;
+  clip(val('sh-msg'), 'comment');   // el mensaje viajaría con el envío (mensajería: fuera del MVP)
+  logShare(state.share.id, 'chat', to);
+  const names = to.map(id => (getUser(id) || {}).name || '').map(n => n.split(' ')[0]);
+  closeOverlay();
+  toast('Enviada a ' + (names.length > 2 ? names.slice(0, 2).join(', ') + ' y ' + (names.length - 2) + ' más' : names.join(' y ')));
+}
+function shareToStory(id){
+  const po = POSTS.find(p => p.id === id); if (!po) return;
+  const u = getUser(po.authorId) || { handle:'' };
+  STORIES.unshift({ id:'ss'+Date.now(), userId:'me', planId:po.planId||null, img:(po.imgs||[])[0]||'', minAgo:0,
+    trackId:po.trackId||null, sharedPostId:po.id, text: po.authorId === 'me' ? (po.caption||'') : 'Publicación de ' + u.handle });
+  logShare(id, 'story');
+  closeOverlay(); toast('Añadida a tu story');
+}
+function copyShareLink(id){
+  const po = POSTS.find(p => p.id === id); if (!po) return;
+  const url = postUrl(po);
+  const done = () => { logShare(id, 'copiar'); toast('Enlace copiado'); };
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, () => toast(url));
+    else toast(url);
+  } catch (e) { toast(url); }
+}
+// Imagen para compartir (og:image): 1200×630 con la foto, el pie, el autor y la marca.
+function shareImage(po){
+  return new Promise(resolve => {
+    const c = document.createElement && document.createElement('canvas');
+    const g = c && c.getContext && c.getContext('2d');
+    if (!g) return resolve(null);
+    c.width = 1200; c.height = 630;
+    const m = shareMeta(po), u = getUser(po.authorId) || { name:'' };
+    const finish = (img) => {
+      g.fillStyle = '#16141c'; g.fillRect(0, 0, 1200, 630);
+      if (img){ const r = Math.max(1200 / img.width, 630 / img.height), w = img.width * r, h = img.height * r; g.drawImage(img, (1200 - w) / 2, (630 - h) / 2, w, h); }
+      const grd = g.createLinearGradient(0, 260, 0, 630); grd.addColorStop(0, 'rgba(0,0,0,0)'); grd.addColorStop(1, 'rgba(0,0,0,.85)');
+      g.fillStyle = grd; g.fillRect(0, 0, 1200, 630);
+      g.fillStyle = '#fff'; g.font = '700 44px system-ui, -apple-system, Segoe UI, sans-serif';
+      const words = (m.description || m.title).split(' '); const lines = ['']; 
+      words.forEach(w => { const l = lines[lines.length - 1]; if (g.measureText(l + w).width > 1080 && l) lines.push(w + ' '); else lines[lines.length - 1] = l + w + ' '; });
+      lines.slice(0, 2).forEach((l, i) => g.fillText(i === 1 && lines.length > 2 ? l.trim() + '…' : l.trim(), 60, 500 + i * 54 - (lines.length > 1 ? 54 : 0)));
+      g.font = '500 28px system-ui, -apple-system, Segoe UI, sans-serif'; g.fillStyle = 'rgba(255,255,255,.8)';
+      g.fillText(`${u.name} · ${m.domain}`, 60, 580);
+      g.font = '800 34px system-ui, -apple-system, Segoe UI, sans-serif'; g.fillStyle = '#fff'; g.textAlign = 'right';
+      g.fillText('planes', 1140, 580);
+      c.toBlob(b => resolve(b), 'image/jpeg', 0.85);
+    };
+    if (!m.image) return finish(null);
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.onload = () => finish(img); img.onerror = () => finish(null);
+    img.src = uimg(m.image, 1200);
+  });
+}
+function downloadShareImage(id){
+  const po = POSTS.find(p => p.id === id); if (!po) return;
+  shareImage(po).then(b => {
+    if (!b){ toast('Este navegador no puede generar la imagen'); return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `planes-${po.id}.jpg`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    logShare(id, 'imagen'); toast('Imagen descargada');
+  });
+}
+// Hoja de compartir del sistema (móvil): imagen + texto + enlace, si el navegador lo permite.
+function systemShare(id){
+  const po = POSTS.find(p => p.id === id); if (!po) return;
+  const m = shareMeta(po);
+  if (typeof navigator === 'undefined' || !navigator.share){ copyShareLink(id); return; }
+  shareImage(po).then(b => {
+    const data = { title: m.title, text: m.description, url: m.url };
+    if (b && typeof File !== 'undefined'){ const f = new File([b], `planes-${po.id}.jpg`, { type:'image/jpeg' }); if (navigator.canShare && navigator.canShare({ files:[f] })) data.files = [f]; }
+    navigator.share(data).then(() => logShare(id, 'sistema'), () => {});
+  });
 }
 
 /* ---------- capa superpuesta: publicación, comentarios, stories, directos ---------- */

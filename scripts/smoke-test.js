@@ -231,6 +231,29 @@ check('música: silenciar la story', a.run('musicNow.src') === null);
 a.run('toggleStorySound(); closeOverlay()');
 check('música: cerrar la story para la música', a.run('musicNow.src') === null && a.run('state.storySound') === true);
 
+// --- Compartir: dentro de la app y fuera (WhatsApp, etc.) con imagen de vista previa ---
+a.run('setContentTab("vividas")'); h = a.html('feed-list');
+check('muro: el botón de compartir abre la hoja', h.includes("openShare('po8')"));
+a.run('openShare("po8")'); h = a.html('overlay'); rendered += h;
+check('compartir: personas que sigues, story y apps externas', count(h, /class="sh-person /g) === a.run('shareTargets().length') && h.includes('Añadir a tu story') && h.includes('wa.me') && h.includes('t.me/share') && h.includes('Copiar enlace'));
+check('compartir fuera: vista previa con la imagen de la publicación (og:image)', h.includes('og-card') && h.includes('og-img') && h.includes('1495567720989-cebdbdd97913') && h.includes('planes.app'));
+const meta = a.run('shareMeta(POSTS.find(p => p.id === "po8"))');
+check('Open Graph: título, descripción ≤ 120, imagen y URL pública', meta.title.startsWith('Lucía R. en planes') && meta.description.length <= 120 && meta.image === '1495567720989-cebdbdd97913' && meta.url === 'https://planes.app/p/po8');
+check('WhatsApp: texto con el enlace', decodeURIComponent(a.run('externalShareUrl(POSTS.find(p => p.id === "po8"), "whatsapp")')).includes('https://planes.app/p/po8'));
+a.run('toggleShareTo("lucia"); toggleShareTo("marco")'); h = a.html('overlay');
+check('enviar dentro: seleccionar personas muestra el mensaje y "Enviar"', count(h, /sh-person on/g) === 2 && h.includes('id="sh-msg"'));
+const sh0 = a.run('POSTS.find(p => p.id === "po8").shares || 0');
+a.run('sendShareInApp()');
+check('enviar dentro: cuenta el envío y cierra', a.run('POSTS.find(p => p.id === "po8").shares') === sh0 + 1 && a.run('document.getElementById("overlay").hidden') === true);
+const ns = a.run('STORIES.length');
+a.run('openShare("po8"); shareToStory("po8")');
+check('añadir a tu story una publicación ajena', a.run('STORIES.length') === ns + 1 && a.run('STORIES[0].sharedPostId') === 'po8' && a.run('STORIES[0].text') === 'Publicación de @lucia');
+a.run('openShare("po8"); copyShareLink("po8")');
+check('copiar enlace sin portapapeles no rompe', a.run('POSTS.find(p => p.id === "po8").shareLog.length') >= 2);
+a.run('POSTS.find(p => p.id === "po2").audience = "amigos"; openShare("po2")'); h = a.html('overlay');
+check('publicación no pública: no se comparte fuera', h.includes('sh-lock') && !h.includes('wa.me') && !h.includes('og-card'));
+a.run('POSTS.find(p => p.id === "po2").audience = "publico"; closeOverlay()');
+
 // --- Valoraciones: públicas / privadas y quién las ve; seguidores frente a amigos ---
 check('amigos = seguimiento mutuo', a.run('areFriends("me","lucia")') === true && a.run('areFriends("me","ana")') === false && a.run('areFriends("me","sara")') === false);
 a.run('state.profileTab = "valoraciones"'); a.nav('perfil'); h = a.html('view-perfil'); rendered += h;

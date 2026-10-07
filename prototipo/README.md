@@ -32,7 +32,11 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
 2. **Vividas (el muro)** — lo que la gente publica, tanto de los planes como de su
    vida, con un filtro Todo / Planes / Vida: fotos, carruseles
    que se deslizan y vídeos (simulados con la portada en movimiento). Me gusta
-   (también con doble toque), comentarios, guardar y enlace al plan. Cada 5
+   (también con doble toque), comentarios, guardar y enlace al plan. **Compartir**:
+   enviar a quien sigues, añadir a tu story o compartir fuera (WhatsApp, Telegram,
+   copiar enlace, descargar la imagen o la hoja del móvil), con la vista previa del
+   enlace con la imagen de la publicación (Open Graph, como la imagen destacada de
+   WordPress). Solo las publicaciones públicas se comparten fuera. Cada 5
    publicaciones aparece un plan que puedes hacer tú, y una tira "Ahora mismo" con
    directos y stories.
 3. **Stories y directos** — pestaña propia con los directos en emisión y las
