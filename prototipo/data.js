@@ -445,6 +445,8 @@ const CONVERSATIONS = [
     { from:'nora', img:'1474722883778-792e7990302f', min:64 } ] },
 ];
 const getConversation = (id) => CONVERSATIONS.find((c) => c.id === id);
+// Reportes enviados a moderación (el reportado nunca sabe quién reporta).
+const REPORTS = [];
 
 const getUser  = (id) => USERS.find((u) => u.id === id);
 const getGroup = (id) => GROUPS.find((g) => g.id === id);
@@ -459,7 +461,7 @@ const requestsForPlan = (pid) => REQUESTS.filter((r) => r.planId === pid);
 if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
-    STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation,
+    STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }

@@ -337,7 +337,7 @@ check('modo abierto: no hay solicitudes', a.run('CONVERSATIONS.filter(c => convS
 a.run('CONVERSATIONS.push({ id:"cx", type:"dm", with:"azotea", status:"solicitud", unread:1, messages:[{ from:"sara", text:"Hola", min:3 }] }); setDmMode("cerrado")');
 check('modo cerrado: los mensajes de desconocidos no llegan', a.run('convStatus(getConversation("cx"))') === 'oculta');
 a.run('setDmMode("solicitud")'); a.nav('ajustes'); h = a.html('view-page');
-check('ajustes: quién puede escribirte', h.includes('Quién puede escribirte') && h.includes("setDmMode('cerrado')") && h.includes('Recomendado'));
+check('ajustes: mensajes de quien no conoces (no recibir / como solicitud / directamente)', h.includes('Mensajes de quien no conoces') && h.includes('No recibir') && h.includes('Como solicitud') && h.includes("setDmMode('cerrado')") && h.includes('Recomendado'));
 a.run('blockUser("azotea")');
 check('bloquear: borra el chat, deja de seguir y no deja escribir', !a.run('CONVERSATIONS.some(c => c.with === "azotea")') && !a.run('follows("me","azotea")') && a.run('ME.blocked.includes("azotea")'));
 a.nav('u/azotea'); h = a.html('view-page');
@@ -349,6 +349,35 @@ const c1len = a.run('getConversation("c1").messages.length');
 a.run('openShare("po8"); toggleShareTo("lucia"); toggleShareTo("ana"); sendShareInApp()');
 check('compartir dentro llega como mensaje (y no salta una solicitud pendiente)', a.run('getConversation("c1").messages.length') === c1len + 1 && a.run('lastOf(getConversation("c1")).share') === 'po8'
   && a.run('dmWith("ana").messages.filter(m => m.from === "me").length') === 1);
+
+// --- Solicitudes: aceptar, rechazar, bloquear y reportar ---
+a.run(`CONVERSATIONS.push(
+  { id:"rq1", type:"dm", with:"azotea", status:"solicitud", unread:1, messages:[{ from:"azotea", text:"Hola, ¿te interesa?", min:5 }] },
+  { id:"rq2", type:"dm", with:"nora", status:"solicitud", unread:1, messages:[{ from:"nora", text:"Hey", min:8 }] },
+  { id:"rq3", type:"dm", with:"sara", status:"solicitud", unread:1, messages:[{ from:"sara", text:"Hola", min:9 }] })`);
+a.nav('mensajes/solicitudes'); h = a.html('view-page') + a.html('conv-list'); rendered += h;
+check('solicitudes: aceptar o rechazar desde la lista y "Rechazar todas"', h.includes("rejectRequest('rq1')") && h.includes("acceptRequest('rq1', true)") && h.includes('Rechazar todas'));
+a.nav('chat/rq1'); h = a.html('view-page');
+check('solicitud abierta: Rechazar, Aceptar, Bloquear y Reportar', h.includes('>Rechazar<') && h.includes('>Aceptar<') && h.includes('Bloquear') && h.includes("openReport('azotea','rq1')"));
+a.run('rejectRequest("rq1")');
+check('rechazar: desaparece sin avisar y no puede volver a escribir', !a.run('getConversation("rq1")') && a.run('ME.rejectedFrom.includes("azotea")'));
+a.run('acceptRequest("rq2", true)');
+check('aceptar desde la lista: pasa a Chats', a.run('convStatus(getConversation("rq2"))') === 'aceptada');
+a.run('openReport("sara","rq3")'); h = a.html('overlay'); rendered += h;
+check('reportar: motivos, bloquear también y enviar desactivado hasta elegir', count(h, /class="rep-opt/g) === 8 && h.includes('Bloquear también') && /<button class="btn-primary" disabled/.test(h));
+a.run('setReportField("reason","peligro")'); h = a.html('overlay');
+check('reportar "me siento en peligro": 112 y cómo denunciar', h.includes('llama al 112') && h.includes('href="tel:112"') && h.includes('denunciarlo ante la Policía'));
+const nRep = a.run('REPORTS.length');
+a.run('submitReport()');
+check('enviar reporte: llega a moderación con los mensajes, bloquea y quita la solicitud', a.run('REPORTS.length') === nRep + 1 && a.run('REPORTS[REPORTS.length-1].withMessages') === true
+  && a.run('ME.blocked.includes("sara")') && !a.run('getConversation("rq3")'));
+a.run('unblockUser("sara"); FOLLOWS.push(["me","sara"], ["sara","me"])');
+a.run('CONVERSATIONS.push({ id:"rq4", type:"dm", with:"azotea", status:"solicitud", unread:1, messages:[{ from:"azotea", text:"a", min:1 }] }, { id:"rq5", type:"dm", with:"ana", status:"solicitud", unread:1, messages:[{ from:"ana", text:"b", min:2 }] })');
+a.run('rejectAllRequests()');
+check('rechazar todas', a.run('CONVERSATIONS.filter(c => convStatus(c) === "solicitud").length') === 0);
+a.run('openChatMenu("c1")');
+check('menú de un chat: reportar con motivos', a.html('overlay').includes("openReport('lucia','c1')"));
+a.run('closeOverlay()');
 
 // --- Verificación de identidad: red social sin fricción, planes solo verificados ---
 a.run('setVerifiedSim(false)');

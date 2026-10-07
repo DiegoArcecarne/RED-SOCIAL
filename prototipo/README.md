@@ -74,7 +74,8 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    la persona; su asistencia real se cuenta cuando llega.
 11. **Mensajes** (icono de la barra superior, con los no leídos) — Chats, chats de
    cada plan (con punto de encuentro y "Confirmo que voy") y Solicitudes de gente que
-   no conoces (aceptar, eliminar o bloquear; sus fotos llegan difuminadas). Un solo
+   no conoces (aceptar, rechazar, bloquear o reportar con motivo; si hay peligro, el 112
+   y cómo denunciar; sus fotos llegan difuminadas). Un solo
    mensaje de presentación a quien no te conoce; "Quién puede escribirte" en Ajustes;
    lo que compartes "en planes" llega como mensaje.
 12. **Verificación y varios perfiles** — sin verificar se usa como red social (mirar,

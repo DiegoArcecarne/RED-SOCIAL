@@ -325,9 +325,22 @@ Hay buscador y un botón para escribir un mensaje nuevo; también se escribe des
   - en "bajo solicitud" llega a Solicitudes, y no se marca como leído ni se avisa de la lectura hasta que aceptas;
   - en "abierto" llega directamente;
   - en "cerrado" no llega.
-- Una solicitud muestra el mensaje y tres botones: Aceptar, Eliminar y Bloquear. Las fotos de desconocidos llegan difuminadas, con un botón para verlas si quieres.
+- Una solicitud muestra el mensaje y cuatro acciones: Aceptar (pasa a Chats), Rechazar, Bloquear y Reportar. En la lista de Solicitudes se puede aceptar o rechazar sin abrirla, y hay "Rechazar todas". Las fotos de desconocidos llegan difuminadas, con un botón para verlas si quieres.
+- Rechazar borra la solicitud sin avisar a quien la envió. Como solo se permite un mensaje de presentación, esa persona no puede mandar otra solicitud (propuesta: durante 30 días, o siempre si además se la bloquea).
+- Reportar abre una lista corta de motivos, hecha para que sea rápido y para que moderación pueda priorizar:
+  - spam o publicidad;
+  - acoso, insultos u odio;
+  - contenido sexual que no he pedido;
+  - se hace pasar por otra persona;
+  - estafa o fraude;
+  - puede ser menor de edad;
+  - amenazas, o me siento en peligro;
+  - otro motivo.
+
+  Por defecto se marca también "Bloquear", y se adjuntan los mensajes de la conversación como prueba. La persona reportada nunca sabe quién la ha reportado, y una solicitud reportada sale de la bandeja.
+- Reportar y denunciar no son lo mismo. Reportar es avisar a moderación, dentro de la app. Denunciar es acudir a las autoridades. Si el motivo es "amenazas, o me siento en peligro", la app muestra un aviso: llamar al 112 si el peligro es inmediato, y cómo denunciarlo ante la Policía Nacional, la Guardia Civil o la policía autonómica. Además, se conserva la conversación como prueba y se colabora con las autoridades cuando lo piden (pendiente de revisión legal).
 - Si escribes a alguien que no te conoce, se avisa de que tu mensaje le llegará como solicitud, y después de ese único mensaje la conversación queda en espera hasta que acepte.
-- El modo de recepción se elige en Ajustes ▸ Mensajes ("Quién puede escribirte": Nadie, Bajo solicitud o Todos). Un mensaje admite hasta 1.000 caracteres.
+- El modo de recepción se elige en Ajustes ▸ Mensajes, como "Mensajes de quien no conoces": No recibir, Como solicitud (por defecto y recomendado) o Directamente. También se llega desde la propia pestaña Solicitudes. Un mensaje admite hasta 1.000 caracteres.
 
 Bloqueo y reporte integrados. Bloquear a alguien implica que no te ve, no te escribe y no puede unirse a tus planes. El reporte enlaza con la capa de moderación.
 
@@ -648,7 +661,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 - Contacto de confianza. usuario_id, datos del contacto, plan compartido (opcional). Soporta "compartir tu plan" y los recordatorios.
 - Evento de seguridad. usuario_id, plan_id, tipo (check-in "he llegado bien" o SOS), ubicación, fecha.
-- Reporte. id, reportante_id (anónimo frente al reportado), objeto (tipo: plan / usuario / mensaje / contenido / comportamiento en evento; objeto_id), categoría, detalle, evidencia, gravedad, estado (en cola, en revisión, resuelto, escalado), fecha.
+- Reporte. id, reportante_id (anónimo frente al reportado), objeto (tipo: plan / usuario / mensaje / contenido / comportamiento en evento; objeto_id), categoría (spam, acoso, sexual no pedido, suplantación, estafa, posible menor, peligro, otro), detalle, evidencia (por ejemplo, los mensajes de la conversación), bloqueó también (bool), gravedad (la categoría "peligro" entra con prioridad máxima), estado (en cola, en revisión, resuelto, escalado), fecha.
 - Acción de moderación. id, objeto, tipo (aviso, retirada de contenido, reducción de alcance, suspensión, bloqueo permanente, retirada de capacidad de organizar, retención de escrow), motivo, apelable (bool), fecha.
 
 ### Monetización avanzada (fase 2)

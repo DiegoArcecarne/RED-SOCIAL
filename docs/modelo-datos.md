@@ -335,7 +335,8 @@ erDiagram
         uuid reportante_id FK "anonimo ante reportado"
         string objeto_tipo "plan|usuario|mensaje|contenido|evento"
         uuid objeto_id
-        string categoria
+        string categoria "spam|acoso|sexual|suplantacion|estafa|menor|peligro|otro"
+        string evidencia "p. ej. mensajes de la conversacion"
         string gravedad
         string estado "cola|en_revision|resuelto|escalado"
     }

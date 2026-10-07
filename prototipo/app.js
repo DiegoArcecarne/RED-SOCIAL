@@ -172,7 +172,7 @@ function saveState(){
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
       plans: PLANS.map(p => ({ ...p, when: p.when instanceof Date ? p.when.toISOString() : p.when })),
-      posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES, ratings: RATINGS, follows: FOLLOWS, conversations: CONVERSATIONS,
+      posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES, ratings: RATINGS, follows: FOLLOWS, conversations: CONVERSATIONS, reports: REPORTS,
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles },
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
@@ -197,6 +197,7 @@ function loadState(){
   if (Array.isArray(snap.ratings)) RATINGS.splice(0, RATINGS.length, ...snap.ratings);
   if (Array.isArray(snap.follows)) FOLLOWS.splice(0, FOLLOWS.length, ...snap.follows);
   if (Array.isArray(snap.conversations)) CONVERSATIONS.splice(0, CONVERSATIONS.length, ...snap.conversations);
+  if (Array.isArray(snap.reports)) REPORTS.splice(0, REPORTS.length, ...snap.reports);
   if (snap.me) Object.assign(ME, snap.me);
   (snap.extraProfiles || []).forEach(x => { if (!USERS.some(u => u.id === x.id)) USERS.push(x); });
   if (snap.sets) {
@@ -592,7 +593,13 @@ function carouselDots(track, id){
 /* Chats de plan (grupales, para coordinarse) y mensajes directos, con las capas
    anti-acoso de PRODUCTO.md: modos de recepción (cerrado / bajo solicitud / abierto),
    un solo mensaje de presentación, fotos de desconocidos difuminadas, bloqueo y reporte. */
-const DM_MODES = [['cerrado','Nadie','lock'],['solicitud','Bajo solicitud','shield'],['abierto','Todos','globe']];
+// Mensajes de quien no conoces: no recibirlos, recibirlos como solicitud o directamente.
+const DM_MODES = [['cerrado','No recibir','lock'],['solicitud','Como solicitud','shield'],['abierto','Directamente','globe']];
+const REPORT_REASONS = [
+  ['spam','Spam o publicidad'], ['acoso','Acoso, insultos u odio'], ['sexual','Contenido sexual que no he pedido'],
+  ['suplantacion','Se hace pasar por otra persona'], ['estafa','Estafa o fraude'], ['menor','Puede ser menor de edad'],
+  ['peligro','Amenazas, o me siento en peligro'], ['otro','Otro motivo'],
+];
 const AUTO_REPLIES = ['¡Genial!', 'Me parece perfecto', 'Jajaja, sí', '¿A qué hora quedamos?', 'Te escribo luego', 'Vale, nos vemos allí'];
 function sharePlanChat(a, b){ return CONVERSATIONS.some(c => c.type === 'plan' && c.members.includes(a) && c.members.includes(b)); }
 // ¿Conoce `uid` a `other`? Le sigue o comparten un plan (en ese caso le escribe sin solicitud).
@@ -647,7 +654,8 @@ function renderInbox(tab){
     <div class="page-body inbox">
       <div class="mp-search">${ico('search')}<input id="dm-q" placeholder="Buscar" value="${escapeHtml(state.dmQuery||'')}" oninput="state.dmQuery=this.value;renderConvList()"></div>
       <div class="iseg origin-seg">${tabs.map(([v,l,n]) => `<button class="${t===v?'active':''}" onclick="go('mensajes/${v}')">${ico(n)}<span>${l}</span>${groups[v].length && v==='solicitudes' ? `<em>${groups[v].length}</em>` : ''}${groups[v].some(c=>c.unread) && v!=='solicitudes' ? '<i class="tab-dot"></i>' : ''}</button>`).join('')}</div>
-      ${t==='solicitudes' ? `<p class="hint">${ME.dmMode==='cerrado' ? 'Tienes los mensajes directos cerrados: quien no conoces no puede escribirte.' : (ME.dmMode==='abierto' ? 'Tienes los mensajes abiertos: cualquiera te escribe directamente.' : 'Mensajes de gente que no conoces. No sabrán que los has leído hasta que aceptes.')} <button class="link-btn" onclick="go('ajustes')">Cambiar</button></p>` : ''}
+      ${t==='solicitudes' ? `<p class="hint">${ME.dmMode==='cerrado' ? 'No recibes mensajes de quien no conoces.' : (ME.dmMode==='abierto' ? 'Recibes directamente los mensajes de quien no conoces.' : 'Mensajes de gente que no conoces. No sabrán que los has leído hasta que aceptes, y si rechazas no reciben ningún aviso.')} <button class="link-btn" onclick="go('ajustes')">Cambiar</button></p>
+        ${groups.solicitudes.length > 1 ? `<button class="link-btn req-all" onclick="rejectAllRequests()">Rechazar todas (${groups.solicitudes.length})</button>` : ''}` : ''}
       ${t==='planes' ? '<p class="hint">Al unirte a un plan entras en su chat para coordinaros sin dar tu teléfono.</p>' : ''}
       <div id="conv-list"></div>
     </div>`;
@@ -659,10 +667,12 @@ function renderConvList(){
   const q = (state.dmQuery || '').trim().toLowerCase();
   const list = (state.inboxList || []).filter(c => !q || convTitle(c).toLowerCase().includes(q))
     .slice().sort((a,b) => ((lastOf(a)||{min:1e9}).min) - ((lastOf(b)||{min:1e9}).min));
-  el.innerHTML = list.map(c => { const m = lastOf(c);
-    return `<button class="conv ${c.unread?'unread':''}" onclick="go('chat/${c.id}')">${convAvatar(c)}
+  el.innerHTML = list.map(c => { const m = lastOf(c), req = convStatus(c) === 'solicitud';
+    const row = `<button class="conv ${c.unread?'unread':''}" onclick="go('chat/${c.id}')">${convAvatar(c)}
       <span class="conv-main"><b>${escapeHtml(convTitle(c))}</b><span>${escapeHtml(msgPreview(m, c))}</span></span>
-      <span class="conv-side"><span>${m ? minLabel(m.min).replace('hace ','') : ''}</span>${c.unread ? `<i class="conv-dot">${c.unread}</i>` : ''}</span></button>`; }).join('')
+      <span class="conv-side"><span>${m ? minLabel(m.min).replace('hace ','') : ''}</span>${c.unread && !req ? `<i class="conv-dot">${c.unread}</i>` : ''}</span></button>`;
+    // En Solicitudes, aceptar o rechazar sin abrir la conversación.
+    return req ? `<div class="conv-wrap">${row}<span class="req-q"><button class="ico-btn no" onclick="rejectRequest('${c.id}')" aria-label="Rechazar">${ico('close')}</button><button class="ico-btn ok" onclick="acceptRequest('${c.id}', true)" aria-label="Aceptar">${ico('check')}</button></span></div>` : row; }).join('')
     || `<div class="empty-tab"><span class="empty-ic">${ico('chat')}</span><p>${q ? 'Sin resultados.' : 'No hay conversaciones aquí.'}</p></div>`;
 }
 
@@ -708,7 +718,8 @@ function renderChat(id){
   const first = c.messages[0];
   let foot;
   if (st === 'solicitud') foot = `<div class="chat-req"><p><b>${escapeHtml(u.name)}</b> quiere enviarte un mensaje. No sabrá que lo has leído hasta que aceptes.</p>
-      <div class="chat-req-b"><button class="ph-btn" onclick="blockUser('${u.id}')">Bloquear</button><button class="ph-btn" onclick="deleteConv('${c.id}')">Eliminar</button><button class="ph-btn primary" onclick="acceptRequest('${c.id}')">Aceptar</button></div></div>`;
+      <div class="chat-req-b"><button class="ph-btn" onclick="rejectRequest('${c.id}')">Rechazar</button><button class="ph-btn primary" onclick="acceptRequest('${c.id}')">Aceptar</button></div>
+      <div class="chat-req-l"><button class="link-btn" onclick="blockUser('${u.id}')">${ico('lock')} Bloquear</button><button class="link-btn danger" onclick="openReport('${u.id}','${c.id}')">${ico('alert')} Reportar</button></div></div>`;
   else if (!canWrite(c)) foot = `<div class="chat-req"><p>${ico('clock')} Solicitud enviada. Podrás escribir más cuando ${escapeHtml(u.name.split(' ')[0])} la acepte.</p></div>`;
   else foot = `${c.status === 'enviada' ? `<p class="hint chat-note">${escapeHtml(u.name.split(' ')[0])} no te sigue: tu primer mensaje le llegará como solicitud y solo puedes enviar uno.</p>` : ''}
     <div class="chat-in"><input id="msg-input" maxlength="${LIMITS.message}" placeholder="Mensaje…" onkeydown="if(event.key==='Enter')sendMsg('${c.id}')">
@@ -731,18 +742,71 @@ function sendMsg(id){
     }, 1800);
   }
 }
-function acceptRequest(id){ const c = getConversation(id); if (!c) return; c.status = 'aceptada'; c.unread = 0; saveState(); toast('Solicitud aceptada'); renderChat(id); }
+function acceptRequest(id, fromList){
+  const c = getConversation(id); if (!c) return;
+  c.status = 'aceptada'; c.unread = 0; saveState(); updateDmBadge(); toast('Solicitud aceptada: ya está en Chats');
+  if (fromList) renderInbox('solicitudes'); else renderChat(id);
+}
+// Rechazar: se borra sin avisar a quien la envió, que no puede mandar otra (un solo mensaje).
+function rejectRequest(id){
+  const c = getConversation(id); if (!c) return;
+  const u = getUser(c.with) || { name:'' };
+  ME.rejectedFrom = Array.from(new Set([...(ME.rejectedFrom || []), c.with]));
+  CONVERSATIONS.splice(CONVERSATIONS.indexOf(c), 1);
+  saveState(); updateDmBadge(); toast('Solicitud rechazada. ' + u.name.split(' ')[0] + ' no recibe ningún aviso');
+  if (location.hash === '#/mensajes/solicitudes') renderInbox('solicitudes'); else go('mensajes/solicitudes');
+}
+function rejectAllRequests(){
+  const reqs = CONVERSATIONS.filter(c => convStatus(c) === 'solicitud');
+  reqs.forEach(c => { ME.rejectedFrom = Array.from(new Set([...(ME.rejectedFrom || []), c.with])); CONVERSATIONS.splice(CONVERSATIONS.indexOf(c), 1); });
+  saveState(); updateDmBadge(); toast(reqs.length + ' solicitudes rechazadas'); renderInbox('solicitudes');
+}
+
+/* Reportar (a moderación, dentro de la app) y, si hay peligro, cómo denunciar ante las
+   autoridades. Quien es reportado nunca sabe quién le ha reportado. */
+function openReport(uid, convId){
+  state.report = { uid, convId: convId || null, reason: null, block: true };
+  renderReport();
+}
+function renderReport(){
+  const r = state.report, u = getUser(r.uid) || { name:'' };
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Reportar">
+    <div class="sheet-h"><span>Reportar a ${escapeHtml(u.name)}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list rep">
+      <p class="hint">¿Qué está pasando? ${escapeHtml(u.name.split(' ')[0])} no sabrá quién lo ha reportado.</p>
+      <div class="rep-list" role="radiogroup">${REPORT_REASONS.map(([v,l]) => `<button class="rep-opt ${r.reason===v?'on':''}" role="radio" aria-checked="${r.reason===v}" onclick="setReportField('reason','${v}')"><span class="rep-dot"></span>${l}</button>`).join('')}</div>
+      ${r.reason === 'peligro' ? `<div class="rep-danger">${ico('alert')}<div><b>Si estás en peligro ahora, llama al 112.</b>
+        <p>También puedes denunciarlo ante la Policía Nacional, la Guardia Civil o la policía autonómica. Guardamos esta conversación como prueba y colaboramos con las autoridades cuando nos lo piden.</p>
+        <a class="ph-btn primary rep-call" href="tel:112">Llamar al 112</a></div></div>` : ''}
+      <div class="opt-row" onclick="setReportField('block', ${!r.block})"><span class="or-ic">${ico('lock')}</span><span class="or-l">Bloquear también<span class="or-s">no te verá ni podrá escribirte</span></span><span class="switch ${r.block?'on':''}"><span class="knob"></span></span></div>
+      ${r.convId ? '<p class="hint">Se adjuntan los mensajes de esta conversación para que moderación pueda revisarlos.</p>' : ''}
+      <button class="btn-primary" ${r.reason ? '' : 'disabled'} onclick="submitReport()">Enviar reporte</button>
+    </div></div>`);
+}
+function setReportField(k, v){ state.report[k] = v; renderReport(); }
+function submitReport(){
+  const r = state.report; if (!r || !r.reason) return;
+  REPORTS.push({ id:'rp'+Date.now(), targetUserId:r.uid, conversationId:r.convId, reason:r.reason, withMessages: !!r.convId, status:'en_cola' });
+  const u = getUser(r.uid) || { name:'' };
+  const c = r.convId && getConversation(r.convId);
+  if (c && c.status === 'solicitud') CONVERSATIONS.splice(CONVERSATIONS.indexOf(c), 1);   // una solicitud reportada sale de la bandeja
+  saveState(); closeOverlay();
+  if (r.block) blockUser(r.uid, true);
+  toast('Gracias. Moderación revisará el reporte' + (r.block ? ' y has bloqueado a ' + u.name.split(' ')[0] : ''));
+  if (!r.block) go('mensajes/' + (state.inboxTab || 'chats'));
+}
 function deleteConv(id){ const i = CONVERSATIONS.findIndex(c => c.id === id); if (i >= 0) CONVERSATIONS.splice(i, 1); saveState(); updateDmBadge(); toast('Conversación eliminada'); go('mensajes/' + (state.inboxTab || 'chats')); }
 function revealImg(id, i){ const c = getConversation(id); if (c && c.messages[i]){ c.messages[i].revealed = true; saveState(); renderChat(id); } }
 function confirmDay(planId, convId){ state.dayConfirmed = state.dayConfirmed || {}; state.dayConfirmed[planId] = !state.dayConfirmed[planId]; toast(state.dayConfirmed[planId] ? 'Confirmado: el grupo sabe que vas' : 'Confirmación retirada'); renderChat(convId); }
 // Bloquear: no te ve, no te escribe y no puede unirse a tus planes.
-function blockUser(uid){
+function blockUser(uid, quiet){
   const u = getUser(uid) || { name:'' };
   ME.blocked = Array.from(new Set([...(ME.blocked || []), uid]));
   for (let i = CONVERSATIONS.length - 1; i >= 0; i--) if (CONVERSATIONS[i].type === 'dm' && CONVERSATIONS[i].with === uid) CONVERSATIONS.splice(i, 1);
   for (let i = FOLLOWS.length - 1; i >= 0; i--) if ((FOLLOWS[i][0] === uid && FOLLOWS[i][1] === 'me') || (FOLLOWS[i][0] === 'me' && FOLLOWS[i][1] === uid)) FOLLOWS.splice(i, 1);
   saveState(); updateDmBadge(); closeOverlay();
-  toast('Has bloqueado a ' + u.name); go('mensajes/' + (state.inboxTab || 'chats'));
+  if (!quiet) toast('Has bloqueado a ' + u.name);
+  go('mensajes/' + (state.inboxTab || 'chats'));
 }
 function unblockUser(uid){ ME.blocked = (ME.blocked || []).filter(x => x !== uid); saveState(); toast('Desbloqueado'); renderProfile(uid); }
 function openChatMenu(id){
@@ -751,7 +815,7 @@ function openChatMenu(id){
     <div class="sheet-h"><span>${escapeHtml(u.name)}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list">
       <button class="sh-row" onclick="closeOverlay();go('u/${u.id}')">${ico('user')}<span>Ver perfil</span>${ico('chevR')}</button>
-      <button class="sh-row" onclick="closeOverlay();toast('Reporte enviado. Lo revisará moderación; ${escapeHtml(u.name)} no sabrá quién lo ha enviado.')">${ico('alert')}<span>Reportar</span>${ico('chevR')}</button>
+      <button class="sh-row" onclick="openReport('${u.id}','${c.id}')">${ico('alert')}<span>Reportar</span>${ico('chevR')}</button>
       <button class="sh-row danger" onclick="blockUser('${u.id}')">${ico('lock')}<span>Bloquear</span>${ico('chevR')}</button>
     </div></div>`);
 }
@@ -1742,9 +1806,9 @@ function renderSettings(){
           <span class="switch ${ME.presencePublic?'on':''}"><span class="knob"></span></span></div>
       </div>
       <div class="set-group"><div class="set-title">Mensajes</div>
-        <div class="set-box"><span class="sb-l">Quién puede escribirte</span>
+        <div class="set-box"><span class="sb-l">Mensajes de quien no conoces</span>
           <div class="iseg">${DM_MODES.map(([v,l,n])=>`<button class="${(ME.dmMode||'solicitud')===v?'active':''}" onclick="setDmMode('${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div>
-          <p class="hint">${{ cerrado:'Nadie que no conozcas puede escribirte. Los chats de tus planes siguen funcionando.', solicitud:'Quien no conoces te escribe un único mensaje, que llega a Solicitudes; tú decides si aceptas. Recomendado.', abierto:'Cualquiera puede escribirte directamente.' }[ME.dmMode||'solicitud']} "Conocer" es que le sigas o compartáis un plan.</p></div>
+          <p class="hint">${{ cerrado:'No te llegan. Los chats de tus planes y quien ya conoces siguen igual.', solicitud:'Llegan a Solicitudes: un único mensaje que puedes aceptar, rechazar, bloquear o reportar. Recomendado.', abierto:'Te llegan directamente a Chats.' }[ME.dmMode||'solicitud']} "Conocer" a alguien es que le sigas o compartáis un plan.</p></div>
       </div>
       <div class="set-group"><div class="set-title">Valoraciones de planes</div>
         ${(() => { const pr = ratingPrefs(ME); const seg = (k, opts) => `<div class="iseg">${opts.map(([v,l,n])=>`<button class="${pr[k]===v?'active':''}" onclick="setRatingPref('${k}','${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div>`;
