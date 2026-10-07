@@ -128,7 +128,8 @@ check('aceptar solicitud inscribe sin sumar asistencia real', after.att === befo
 
 // --- Muro (Vividas) ---
 a.run('setContentTab("vividas")'); h = a.html('feed-list'); rendered += h;
-const nPosts = a.run('POSTS.length');
+const nPosts = a.run('wallPosts().length');   // las de cuentas privadas que no sigues no salen
+check('muro: no muestra publicaciones de cuentas privadas que no sigues', nPosts === a.run('POSTS.length') - a.run('POSTS.filter(p => p.authorId === "irene").length'));
 check('muro: todas las publicaciones', count(h, /class="post"/g) === nPosts, count(h, /class="post"/g) + ' de ' + nPosts);
 check('muro: fotos, carruseles y vídeos', /class="pm g-[a-z]+"/.test(h) && h.includes('car-track') && h.includes('pm-video'));
 check('muro: un plan inyectado cada 5 publicaciones', count(h, /class="inject /g) === Math.floor(nPosts / 5));
@@ -171,7 +172,7 @@ a.run('state.draftPost.alsoStory = true; publishPost()');
 check('publicar con "compartir en stories" crea una story', a.run('STORIES.length') === nStories + 1);
 
 // --- Publicaciones de planes y de la vida de cada uno ---
-const nVida = a.run('POSTS.filter(p => !p.planId).length'), nPlan = a.run('POSTS.filter(p => p.planId).length');
+const nVida = a.run('wallPosts().filter(p => !p.planId).length'), nPlan = a.run('wallPosts().filter(p => p.planId).length');
 check('vida: hay publicaciones de planes y de la vida', nVida > 0 && nPlan > 0);
 a.run('setContentTab("vividas"); setWallFilter("vida")'); h = a.html('feed-list'); rendered += h;
 check('muro: filtro "Vida" muestra solo publicaciones sin plan', count(h, /class="post"/g) === nVida && !h.includes('post-plan'));
@@ -491,7 +492,7 @@ check('abrir una notificación la marca y lleva al plan', pl.run('NOTIFICATIONS.
 pl.run('markAllNotifs()');
 check('marcar todo como leído', pl.run('document.getElementById("notif-badge").hidden') === true);
 pl.run('openNotifPrefs()');
-check('preferencias: un interruptor por tipo', count(pl.html('overlay'), /class="opt-row"/g) === 6);
+check('preferencias: un interruptor por tipo', count(pl.html('overlay'), /class="opt-row"/g) === pl.run('Object.keys(NOTIF_TYPES).length'));
 pl.run('toggleNotifPref("mensaje"); closeOverlay()');
 check('sin avisos de mensajes no se crea la notificación', pl.run('notify("mensaje", "x")') === null);
 pl.nav('plan/p9'); h = pl.html('view-detail'); rendered += h;
@@ -556,6 +557,89 @@ pl.nav('perfil');
 check('perfil: fiabilidad agregada (sin decir a qué planes)', pl.html('view-perfil').includes('Fiabilidad') && pl.html('view-perfil').includes('1 no presentado'));
 const pl2 = createEnv(pst);
 check('persistencia: reconfirmaciones, notificaciones y fiabilidad', pl2.run('NOTIFICATIONS.length') > 4 && pl2.run('reliability().noShows') === 1 && pl2.run('state.joined.has("p7")'));
+
+// --- Social: subir fotos y vídeos, menú de publicación, privados, seguidores, búsqueda, temas y menciones ---
+const sst = {};
+const so = createEnv(sst);
+so.nav('crear-post'); h = so.html('view-page'); rendered += h;
+check('crear publicación: subir fotos o vídeo de la cámara o la galería', h.includes('accept="image/*,video/*"') && h.includes('multiple'));
+so.run('addDraftItem({ type:"image", url:"data:image/jpeg;base64,QQ==" }); addDraftItem({ type:"image", url:"data:image/jpeg;base64,Qg==" }); renderCreatePost()');
+h = so.html('view-page');
+check('dos fotos: carrusel con vista previa y quitar', so.run('state.draftPost.kind') === 'carrusel' && h.includes('Carrusel de 2 fotos') && count(h, /removeDraftItem/g) === 2);
+so.run('state.draftPost.origin = "vida"; publishPost()');
+check('publicar el carrusel subido', so.run('POSTS[0].kind') === 'carrusel' && so.run('POSTS[0].imgs.every(r => r.startsWith("m:"))') && so.run('POSTS[0].imgs.length') === 2);
+so.run('state.draftPost = freshPostDraft(); addDraftItem({ type:"video", url:"blob:v", posterUrl:"data:image/jpeg;base64,QQ==", duration:12 }); state.draftPost.origin = "vida"; publishPost()');
+check('publicar un vídeo subido: se reproduce de verdad', so.run('POSTS[0].kind') === 'video' && !!so.run('POSTS[0].video') && so.run('POSTS[0].duration') === 12);
+so.run('setContentTab("vividas")'); h = so.html('feed-list');
+check('muro: vídeo real con su control de sonido', h.includes('pm-video real') && h.includes('<video') && h.includes('toggleVideoSound'));
+so.run('openPostMenu(POSTS[0].id)'); h = so.html('overlay'); rendered += h;
+check('menú de una publicación propia: editar pie y eliminar', h.includes('Editar el pie') && h.includes('Eliminar publicación'));
+so.run('openEditCaption(POSTS[0].id); document.getElementById("f-ecap").value = "Paseo con @lucia #domingo"; saveCaption(POSTS[0].id)');
+check('editar el pie: menciones y temas', so.run('POSTS[0].caption') === 'Paseo con @lucia #domingo' && so.run('POSTS[0].edited') === true && so.run('POSTS[0].hashtags[0]') === '#domingo');
+const nP0 = so.run('POSTS.length'); so.run('deletePost(POSTS[0].id)');
+check('eliminar una publicación', so.run('POSTS.length') === nP0 - 1);
+so.run('openPostMenu("po8")');
+check('menú de una publicación ajena: seguir y reportar', so.html('overlay').includes('Reportar') && so.html('overlay').includes('Lucía R.'));
+so.run('closeOverlay(); openComments("po8"); document.getElementById("cm-input").value = "¡Qué bonito!"; addComment("po8")');
+check('borrar tu propio comentario', so.html('overlay').includes('deleteComment'));
+const nc = so.run('POSTS.find(p => p.id === "po8").comments.length'); so.run(`deleteComment("po8", ${nc - 1})`);
+check('comentario borrado', so.run('POSTS.find(p => p.id === "po8").comments.length') === nc - 1);
+so.run('closeOverlay()');
+check('pies con @menciones y #temas tocables', so.run('highlightCaption("Con @marcot en #retiro")').includes("openHandle('@marcot')") && so.run('highlightCaption("x #Retiro")').includes("tema/retiro"));
+so.run('savePost("po10")'); so.run('state.profileTab = "guardados"'); so.nav('perfil'); h = so.html('view-perfil'); rendered += h;
+check('perfil: guardados (solo tú los ves)', h.includes('Solo tú ves lo que guardas') && h.includes("openPost('po10')"));
+so.run('state.profileTab = "posts"');
+so.nav('u/irene'); h = so.html('view-page'); rendered += h;
+check('perfil privado: se ve la cabecera, no el contenido', h.includes('Esta cuenta es privada') && !h.includes('profile-grid') && h.includes('Solicitar seguir'));
+check('perfil privado: sus valoraciones tampoco', so.run('canSeeRating(RATINGS.find(r => r.id === "ra16"), "me")') === false);
+so.run('toggleFollow("irene")');
+check('solicitar seguir: queda pendiente', so.run('hasRequested("irene")') && so.html('view-page').includes('Solicitado') && !so.run('follows("me","irene")'));
+so.run('simulateFollowAccepted("irene")');
+check('aceptan tu solicitud: ves sus publicaciones y te avisan', so.run('follows("me","irene")') && so.run('wallPosts().some(p => p.authorId === "irene")') && so.run('NOTIFICATIONS[0].type') === 'seguidor');
+so.nav('u/irene');
+check('ya se ve su perfil', so.html('view-page').includes('profile-grid'));
+so.run('toggleProfilePrivacy()');
+check('tu perfil privado', so.run('ME.profilePublic') === false);
+so.run('simulateIncomingFollow()');
+const reqFrom = so.run('incomingRequests()[0]');
+so.nav('notificaciones'); h = so.html('view-page'); rendered += h;
+check('te piden seguirte: confirmar o eliminar en notificaciones', !!reqFrom && h.includes('Solicitudes para seguirte') && h.includes(`answerFollowRequest('${reqFrom}', true)`));
+so.run(`answerFollowRequest("${reqFrom}", true)`);
+check('confirmar: pasa a seguirte', so.run(`follows("${reqFrom}","me")`) && so.run('incomingRequests().length') === 0);
+so.run('toggleProfilePrivacy()');
+so.nav('perfil');
+check('perfil: seguidores desde el grafo y tocables', so.html('view-perfil').includes("go('seguidores/me')") && so.html('view-perfil').includes(`<b>${so.run('followersOf("me").length')}</b> seguidores`));
+so.nav('seguidores/me'); h = so.html('view-page'); rendered += h;
+check('lista de seguidores con "Eliminar"', count(h, /class="au-person"/g) === so.run('followersOf("me").length') && h.includes('removeFollower'));
+so.nav('seguidos/me'); h = so.html('view-page');
+check('lista de seguidos', count(h, /class="au-person"/g) === so.run('followingOf("me").length'));
+so.nav('feed');
+check('Descubrir: entrada al buscador', so.html('feed-filters').includes("go('buscar')"));
+so.nav('buscar'); h = so.html('view-page'); rendered += h + so.html('sr-res');
+check('buscador vacío: temas populares', so.html('sr-res').includes('Temas populares'));
+so.run('state.search.q = "lucia"; renderSearchResults()');
+check('buscar personas sin tildes', so.html('sr-res').includes('Lucía R.'));
+so.run('state.search.q = "vino"; renderSearchResults()');
+check('buscar planes', so.html('sr-res').includes('Cata de vinos naturales'));
+so.run('state.search.q = "#atardecer"; renderSearchResults()');
+check('buscar temas', so.html('sr-res').includes('#atardecerdebod'));
+so.run('setSearchTab("personas"); state.search.q = "irene"; renderSearchResults()');
+check('búsqueda por pestañas', so.html('sr-res').includes('Irene C.') && !so.html('sr-res').includes('Cata de vinos'));
+so.run('saveRecentSearch("vino")');
+check('búsquedas recientes', so.run('ME.recentSearches[0]') === 'vino');
+so.nav('tema/atardecerdebod'); h = so.html('view-page'); rendered += h;
+check('página de un tema: publicaciones y planes', h.includes('#atardecerdebod') && h.includes("openPost('po8')") && h.includes('Planes aquí'));
+so.run('setContentTab("menciones")'); h = so.html('feed-list'); rendered += h;
+const mm = so.run('myMentions().map(m => m.key)');
+check('menciones: etiqueta, mención en publicación y en comentario', mm.includes('tag:pv7') && mm.includes('post:po11') && mm.some(k => k.startsWith('com:po8')) && h.includes('Pendientes'));
+so.run('answerMention("tag:pv7", true)');
+check('aceptar una etiqueta: sale en tu perfil (Etiquetadas)', so.run('taggedPosts("me").some(p => p.id === "pv7")'));
+so.run('answerMention("post:po11", false)');
+check('quitar una mención: deja de aparecer', !so.run('myMentions().some(m => m.key === "post:po11")'));
+so.run('setMentionPolicy("nadie")');
+check('quién puede mencionarte: nadie', so.run('myMentions().length') === 0);
+const so2 = createEnv(sst);
+check('persistencia: seguir, privacidad, menciones y búsquedas', so2.run('follows("me","irene")') && so2.run('ME.mentionPolicy') === 'nadie' && so2.run('ME.recentSearches[0]') === 'vino');
 
 // --- Cuentas: bienvenida, registro con código, 2FA, 18+, onboarding, entrar, recuperar, seguridad ---
 const ast = {};

@@ -60,7 +60,6 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    stories del día. Visor de stories a pantalla completa (avanza solo; toca a los
    lados para navegar) y vista de directo con espectadores y chat en vivo. Desde
    *Crear ▸ Directo* puedes emitir el tuyo.
-   La pestaña *Menciones* sigue siendo de muestra.
 4. **Música** — fotos, carruseles, vídeos y stories con canción, como en Instagram.
    Toca la canción bajo el nombre o el altavoz sobre la imagen para escucharla; las stories
    suenan solas y se pueden silenciar. Al crear una publicación, *Música* abre un
@@ -107,6 +106,14 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    notificaciones** con preferencias (y avisos del sistema si das permiso). Pruébalo con
    *Cata de vinos naturales* (mañana: reconfirma) o *Jazz íntimo en Clamores* (completo).
    Especificación del servidor: [`../docs/bucle-de-planes.md`](../docs/bucle-de-planes.md).
+14. **Social** — publicar **fotos, carruseles (hasta 10) y vídeos (hasta 60 s) de verdad**
+   desde la cámara o la galería (se guardan en tu navegador y siguen al recargar; se
+   quita la ubicación GPS de las fotos); menú ⋯ para editar el pie o eliminar; borrar tus
+   comentarios; Guardados y Etiquetadas en el perfil; listas de seguidores y seguidos;
+   **perfiles privados** con solicitudes (prueba con *Irene C.*, o pon tu perfil privado
+   en Ajustes); **buscador** de personas, planes y #temas (en Descubrir); página de cada
+   tema; y la pestaña **Menciones** para aceptar o quitar menciones y etiquetas.
+   Especificación del servidor: [`../docs/social.md`](../docs/social.md).
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.
@@ -116,7 +123,7 @@ condiciones de las cuentas profesionales están pendientes de decidir.
 
 ## Para desarrollar
 
-Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `app.js`).
+Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `app.js`).
 `standalone.html` se genera; no lo edites a mano. Desde la raíz del repositorio:
 
 ```bash

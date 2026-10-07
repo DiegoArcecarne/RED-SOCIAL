@@ -358,8 +358,10 @@ const NOTIF_TYPES = {
   cambio:       ['alert','Cambios en planes','Hora, lugar o cancelaciones'],
   plaza:        ['ticket','Lista de espera','Cuando quede una plaza para ti'],
   fiabilidad:   ['check','Después del plan','Llegadas, no presentados y valoraciones'],
+  seguidor:     ['user','Seguidores','Solicitudes para seguirte y respuestas a las tuyas'],
+  mencion:      ['at','Menciones','Cuando te mencionan o te etiquetan'],
 };
-function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true }, ME.notifPrefs || {}); }
+function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true, seguidor:true, mencion:true }, ME.notifPrefs || {}); }
 function notify(type, text, ref){
   if (!notifPrefs()[type]) return null;
   const n = Object.assign({ id:'n' + Date.now() + Math.random().toString(36).slice(2, 5), type, text, at: Date.now(), read:false }, ref || {});
@@ -396,6 +398,7 @@ function renderNotifications(){
   view.innerHTML = `<div class="page-bar"><button class="pb-back" onclick="history.back()" aria-label="Atrás">${ico('chevL')}</button>
       <span class="pb-title">Notificaciones</span><button class="pb-back" onclick="openNotifPrefs()" aria-label="Preferencias">${ico('gear')}</button></div>
     <div class="page-body inbox">
+      ${followRequestsHtml()}
       ${perm === 'default' ? `<button class="vg-inline" onclick="askNotifPermission()">${ico('bell')} Activa los avisos en este dispositivo para enterarte aunque no tengas la app abierta.</button>` : ''}
       ${fresh.length ? `<div class="notif-h"><span>Nuevas</span><button class="link-btn" onclick="markAllNotifs()">Marcar todo como leído</button></div>${fresh.map(item).join('')}` : ''}
       ${old.length ? `<div class="notif-h"><span>Anteriores</span></div>${old.map(item).join('')}` : ''}

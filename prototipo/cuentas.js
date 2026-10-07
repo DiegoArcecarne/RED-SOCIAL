@@ -280,7 +280,8 @@ function freshWorld(){
   drop(USERS, u => u.managedBy === 'me');
   GROUPS.forEach(g => { g.members = g.members.filter(m => m.userId !== 'me'); });
   state.joined = new Set(); state.attended = new Set(); state.requested = new Set(); state.reconfirmed = new Set(); state.presencePublic = true;
-  drop(NOTIFICATIONS, () => true); ME.stats = { noShows:0, lateCancels:0 }; ME.joinedPlanIds = []; ME.notifPrefs = undefined;
+  drop(NOTIFICATIONS, () => true); drop(FOLLOW_REQUESTS, () => true);
+  ME.mentions = {}; ME.mentionPolicy = 'todos'; ME.recentSearches = []; ME.stats = { noShows:0, lateCancels:0 }; ME.joinedPlanIds = []; ME.notifPrefs = undefined;
   PLANS.forEach(p => { p.waitlist = (p.waitlist || []).filter(x => x !== 'me'); });
 }
 

@@ -137,7 +137,7 @@ erDiagram
         uuid id PK
         uuid seguidor_id FK
         uuid seguido_id FK
-        string estado "activo|pendiente"
+        string estado "activo|pendiente (perfil privado)"
         datetime fecha "amigos = seguimiento mutuo"
     }
     BLOQUEO {
@@ -220,7 +220,7 @@ erDiagram
         uuid id PK
         uuid autor_id FK
         string formato "foto|video|carrusel"
-        string media "una o varias imagenes"
+        string media "1 foto, 2-10 fotos o 1 video (max 60 s) con miniatura"
         string pie_texto "con @menciones y #hashtags"
         uuid ubicacion_lugar_id FK "nullable"
         string usuarios_etiquetados "lista de usuario_id"
@@ -316,8 +316,10 @@ erDiagram
     }
     MENCION {
         uuid id PK
-        string contenido_tipo "plan|story|aftermovie"
+        string tipo "etiqueta|pie|comentario"
+        string contenido_tipo "publicacion|plan|story"
         uuid contenido_id
+        uuid autor_id FK
         uuid usuario_mencionado_id FK
         string estado "pendiente|aceptada|rechazada"
     }

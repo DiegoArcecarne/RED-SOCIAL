@@ -855,6 +855,36 @@ label.add-media{cursor:pointer}
 .brand .dm-btn + .dm-btn{margin-left:10px}
 @media (prefers-reduced-motion: reduce){ .typing{animation:none} }
 
+/* ======================= Social ======================= */
+button.post-kind{background:none;border:none;color:var(--ink);font-size:20px;padding:4px;cursor:pointer;display:inline-flex}
+.field label.add-media{text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;color:var(--ink-soft);margin:10px 0 0;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer}
+.pp-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:14px;background:#000}
+.pp-n{position:absolute;left:8px;top:8px;z-index:2;background:rgba(0,0,0,.6);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px}
+.post-prev .pp .pv-x{z-index:3}
+.pm-video.real video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.pm-video.real.playing .pm-play{opacity:0}
+.ph-stats .ph-stat{background:none;border:none;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+.ph-stats .ph-stat b{color:var(--ink)}
+.search-entry{width:100%;display:flex;align-items:center;gap:9px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--ink-dim);font:inherit;font-size:13.5px;cursor:pointer;text-align:left}
+.search-entry .ico{font-size:17px;color:var(--ink-soft)}
+.sr-in{flex:1;margin:0}
+.tag-av{display:grid;place-items:center;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);font-size:20px}
+.conv-main.lnk{background:none;border:none;padding:0;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+button.avatar{cursor:pointer;font:inherit;font-weight:700;color:var(--ink)}
+.cm{position:relative}
+.cm-del{margin-left:auto;flex:none;background:none;border:none;color:var(--ink-dim);font-size:14px;padding:4px;cursor:pointer}
+.saved-note{display:flex;gap:6px;align-items:center;padding:10px 14px;font-size:12.5px;color:var(--ink-soft)}
+.priv-block h3{font-size:16px;margin-top:6px}
+.content-tabs button.has-dot .ico{position:relative;overflow:visible}
+.content-tabs button.has-dot .ico::after{content:"";position:absolute;top:-2px;right:-6px;width:7px;height:7px;border-radius:50%;background:var(--live)}
+.mentions{gap:12px}
+.mention-it{display:flex;gap:12px;align-items:flex-start}
+.mention-th{position:relative;flex:none;width:56px;height:56px;border-radius:10px;overflow:hidden;border:none;padding:0;cursor:pointer}
+.mention-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;font-size:13.5px;line-height:1.4}
+.mention-tx .hint{font-size:12.5px;color:var(--ink-soft)}
+.mention-tx .pl-banner-b{margin-top:4px}
+.mention-tx .link-btn{align-self:flex-start;font-size:12.5px}
+
   </style>
 </head>
 <body>
@@ -1175,6 +1205,9 @@ const USERS = [
   { id:'sara',  name:'Sara M.', handle:'@saram',  initials:'SM', type:'usuario', verified:true, followers:210, following:190, ratings:{ default:'publica', publica:'amigos', privada:'solo_yo' }, attendedPlanIds:['p1'] },
   { id:'david', name:'David L.', handle:'@davidl', initials:'DL', type:'usuario', verified:true, followers:75, following:98, ratings:{ default:'privada', publica:'seguidores', privada:'solo_yo' }, attendedPlanIds:['p7','p5'] },
   { id:'nora',  name:'Nora V.', handle:'@norav',  initials:'NV', type:'usuario', verified:true, followers:330, following:240, ratings:{ default:'publica', publica:'todos', privada:'solo_yo' }, attendedPlanIds:['p9'] },
+  // Perfil privado: para ver sus publicaciones hay que pedir seguirla.
+  { id:'irene', name:'Irene C.', handle:'@irenec', initials:'IC', type:'usuario', verified:true, profilePublic:false,
+    bio:'Fotografía, montaña y vermú.', followers:96, following:110, ratings:{ default:'publica', publica:'todos', privada:'solo_yo' }, attendedPlanIds:['p5'] },
 ];
 const ME = USERS[0]; // usuario actual
 
@@ -1191,7 +1224,7 @@ const POSTS = [
     comments:[{userId:'sara',text:'Qué noche. Repito el viernes'},{userId:'marco',text:'El DJ, brutal'}] },
   { id:'po8',  authorId:'lucia', planId:'p2', trackId:'t1', kind:'carrusel', media:['g-sunset','g-sunset'], imgs:['1495567720989-cebdbdd97913','1502680390469-be75c86b636f'], ago:3,
     caption:'Debod a las 21:40. Gracias a @marcot y a todos los que os acercasteis #atardecerdebod', likes:118,
-    comments:[{userId:'marco',text:'El mejor atardecer de Madrid, sin discusión'},{userId:'ana',text:'La próxima no me lo pierdo'}] },
+    comments:[{userId:'marco',text:'El mejor atardecer de Madrid, sin discusión'},{userId:'ana',text:'La próxima no me lo pierdo'},{userId:'marco',text:'@marina tienes que venir la próxima'}] },
   { id:'po9',  authorId:'marco', planId:'p10', trackId:'t4', kind:'video', duration:31, media:['g-dark'], imgs:['1486218119243-13883505764c'], ago:8,
     caption:'5 km al anochecer con el club. Ritmo de grupo, nadie se queda atrás #runningmadrid', likes:76,
     comments:[{userId:'ana',text:'¿Vale para principiantes?'},{userId:'marco',text:'@anap sí, hay grupo de ritmo suave'}] },
@@ -1199,7 +1232,7 @@ const POSTS = [
     caption:'El himno de la Victoria no defrauda. Fui sola y salí con plan para el sábado #himnovictoria', likes:203,
     comments:[{userId:'nora',text:'Eso es justo lo que buscaba al llegar a Burgos'}] },
   { id:'po11', authorId:'david', planId:'p7', trackId:'t3', kind:'carrusel', media:['g-grape','g-grape'], imgs:['1511192336575-5a79af67a629','1493225457124-a3eb161ffa5f'], ago:20,
-    caption:'Jazz en Clamores. Sala pequeña, sonido enorme #clamoresjazz', likes:89,
+    caption:'Jazz en Clamores. Sala pequeña, sonido enorme. Gracias @marina por la recomendación #clamoresjazz', likes:89,
     comments:[{userId:'lucia',text:'¿Hay pase el jueves que viene?'}] },
   { id:'po12', authorId:'ana', planId:'p8', trackId:'t5', kind:'foto', media:['g-forest'], imgs:['1545205597-3d9d02c29597'], ago:26,
     caption:'Primera sesión de yoga al sol en el Retiro. Repetimos el sábado #retiromorning', likes:61,
@@ -1245,8 +1278,10 @@ const POSTS = [
   { id:'pv6', authorId:'me', trackId:'t1', kind:'carrusel', media:['g-sunset','g-dark'], imgs:['1500530855697-b586d89ba3ee','1519681393784-d120267933ba'], ago:36,
     caption:'Road trip con mis padres. De noche, estrellas y cero cobertura', likes:87,
     comments:[{userId:'david',text:'Ese cielo no es real'}] },
-  { id:'pv7', authorId:'david', trackId:'t6', kind:'foto', media:['g-sunset'], imgs:['1529156069898-49953e39b3ac'], ago:50,
+  { id:'pv7', authorId:'david', trackId:'t6', kind:'foto', media:['g-sunset'], imgs:['1529156069898-49953e39b3ac'], ago:50, taggedUserIds:['me','marco'],
     caption:'Los de siempre, desde el colegio', likes:132, comments:[] },
+  { id:'pv9', authorId:'irene', kind:'foto', media:['g-forest'], imgs:['1507525428034-b723cf961d3e'], ago:16,
+    caption:'Cala escondida, nadie a la vista #escapadas', likes:71, comments:[] },
   { id:'pv8', authorId:'me', kind:'foto', media:['g-dark'], imgs:['1513475382585-d06e58bcb0e0'], ago:80,
     caption:'Domingo de sofá y libro', likes:41, comments:[] },
 ];
@@ -1333,6 +1368,8 @@ const FOLLOWS = [
   ['me','ana'], ['me','azotea'], ['sara','me'], ['nora','me'],
 ];
 const follows  = (a, b) => FOLLOWS.some(([x, y]) => x === a && y === b);
+// Solicitudes para seguir perfiles privados: [quien pide, a quién].
+const FOLLOW_REQUESTS = [];
 const areFriends = (a, b) => follows(a, b) && follows(b, a);
 
 /* Valoraciones que cada persona hace de los planes a los que asistió.
@@ -1353,6 +1390,7 @@ const RATINGS = [
   { id:'ra12', userId:'sara', planId:'p1', stars:5, visibility:null, daysAgo:6, text:'Ambientazo. Fui sola y volví con amigos.' },
   { id:'ra13', userId:'david', planId:'p7', stars:5, visibility:'publica', daysAgo:4, text:'Sala pequeña, sonido enorme.' },
   { id:'ra14', userId:'david', planId:'p5', stars:4, visibility:null, daysAgo:9, text:'Bien organizado, pero salimos con retraso.' },
+  { id:'ra16', userId:'irene', planId:'p5', stars:5, visibility:null, daysAgo:9, text:'El amanecer desde arriba, de lo mejor del año.' },
   { id:'ra15', userId:'nora', planId:'p9', stars:5, visibility:null, daysAgo:7, text:'Seis vinos y una mesa de desconocidos que ya no lo son.' },
 ];
 
@@ -1413,7 +1451,7 @@ const requestsForPlan = (pid) => REQUESTS.filter((r) => r.planId === pid);
 if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
-    STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
+    STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, FOLLOW_REQUESTS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }
@@ -1701,7 +1739,8 @@ function freshWorld(){
   drop(USERS, u => u.managedBy === 'me');
   GROUPS.forEach(g => { g.members = g.members.filter(m => m.userId !== 'me'); });
   state.joined = new Set(); state.attended = new Set(); state.requested = new Set(); state.reconfirmed = new Set(); state.presencePublic = true;
-  drop(NOTIFICATIONS, () => true); ME.stats = { noShows:0, lateCancels:0 }; ME.joinedPlanIds = []; ME.notifPrefs = undefined;
+  drop(NOTIFICATIONS, () => true); drop(FOLLOW_REQUESTS, () => true);
+  ME.mentions = {}; ME.mentionPolicy = 'todos'; ME.recentSearches = []; ME.stats = { noShows:0, lateCancels:0 }; ME.joinedPlanIds = []; ME.notifPrefs = undefined;
   PLANS.forEach(p => { p.waitlist = (p.waitlist || []).filter(x => x !== 'me'); });
 }
 
@@ -2352,8 +2391,10 @@ const NOTIF_TYPES = {
   cambio:       ['alert','Cambios en planes','Hora, lugar o cancelaciones'],
   plaza:        ['ticket','Lista de espera','Cuando quede una plaza para ti'],
   fiabilidad:   ['check','Después del plan','Llegadas, no presentados y valoraciones'],
+  seguidor:     ['user','Seguidores','Solicitudes para seguirte y respuestas a las tuyas'],
+  mencion:      ['at','Menciones','Cuando te mencionan o te etiquetan'],
 };
-function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true }, ME.notifPrefs || {}); }
+function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true, seguidor:true, mencion:true }, ME.notifPrefs || {}); }
 function notify(type, text, ref){
   if (!notifPrefs()[type]) return null;
   const n = Object.assign({ id:'n' + Date.now() + Math.random().toString(36).slice(2, 5), type, text, at: Date.now(), read:false }, ref || {});
@@ -2390,6 +2431,7 @@ function renderNotifications(){
   view.innerHTML = `<div class="page-bar"><button class="pb-back" onclick="history.back()" aria-label="Atrás">${ico('chevL')}</button>
       <span class="pb-title">Notificaciones</span><button class="pb-back" onclick="openNotifPrefs()" aria-label="Preferencias">${ico('gear')}</button></div>
     <div class="page-body inbox">
+      ${followRequestsHtml()}
       ${perm === 'default' ? `<button class="vg-inline" onclick="askNotifPermission()">${ico('bell')} Activa los avisos en este dispositivo para enterarte aunque no tengas la app abierta.</button>` : ''}
       ${fresh.length ? `<div class="notif-h"><span>Nuevas</span><button class="link-btn" onclick="markAllNotifs()">Marcar todo como leído</button></div>${fresh.map(item).join('')}` : ''}
       ${old.length ? `<div class="notif-h"><span>Anteriores</span></div>${old.map(item).join('')}` : ''}
@@ -2434,6 +2476,407 @@ function simulateIncomingRequest(planId){
   notify('solicitud', `${who.name} quiere ir a ${p.title}.`, { planId, route:'solicitudes/' + planId });
   saveState();
 }
+
+
+/* =========================================================================
+   Social (simulado en el navegador): fotos, carruseles y vídeos de verdad desde la
+   cámara o la galería; menú de cada publicación (editar el pie, eliminar, reportar);
+   guardados y etiquetadas en el perfil; seguidores y seguidos; perfiles privados con
+   solicitudes de seguimiento; búsqueda de personas, planes y #temas; página de cada
+   tema; y la pestaña de Menciones con aceptar o quitar.
+   Lo que hará el servidor de verdad: docs/social.md.
+   ========================================================================= */
+const MAX_ITEMS = 10;                 // fotos por carrusel
+const MAX_VIDEO_S = 60, MAX_VIDEO_MB = 50;
+const PHOTO_MAX_PX = 1350;
+
+/* ---------- almacén de fotos y vídeos (IndexedDB) ----------
+   Las publicaciones guardan "m:<id>"; el archivo vive en IndexedDB (admite vídeos,
+   que no caben en localStorage) y se sirve con una URL de objeto. */
+const MEDIA = {};
+function idbOpen(){
+  return new Promise((res, rej) => {
+    if (typeof indexedDB === 'undefined') return rej(new Error('sin IndexedDB'));
+    const r = indexedDB.open('planes-media', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('m');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+}
+function objUrl(blob){ try { return URL.createObjectURL(blob); } catch (e) { return ''; } }
+function putMedia(id, blob){
+  MEDIA[id] = objUrl(blob);
+  return idbOpen().then(db => new Promise(res => { const tx = db.transaction('m', 'readwrite'); tx.objectStore('m').put(blob, id); tx.oncomplete = res; tx.onerror = res; }), () => {});
+}
+function deleteMedia(id){
+  delete MEDIA[id];
+  return idbOpen().then(db => new Promise(res => { const tx = db.transaction('m', 'readwrite'); tx.objectStore('m').delete(id); tx.oncomplete = res; tx.onerror = res; }), () => {});
+}
+function loadAllMedia(){
+  return idbOpen().then(db => new Promise(res => {
+    const req = db.transaction('m').objectStore('m').openCursor();
+    req.onsuccess = () => { const c = req.result; if (c){ if (!MEDIA[c.key]) MEDIA[c.key] = objUrl(c.value); c.continue(); } else res(Object.keys(MEDIA).length); };
+    req.onerror = () => res(0);
+  }), () => 0);
+}
+const mediaUrl = (ref) => (ref && ref.startsWith('m:')) ? (MEDIA[ref.slice(2)] || '') : '';
+
+/* ---------- subir fotos y vídeos al crear una publicación ---------- */
+function canvasBlob(canvas, quality){ return new Promise(res => canvas.toBlob(b => res(b), 'image/jpeg', quality)); }
+// Reduce la foto y la vuelve a codificar: así también se quita la ubicación GPS (EXIF).
+function photoToBlob(file){
+  return new Promise((resolve, reject) => {
+    const url = objUrl(file), img = new Image();
+    img.onerror = reject;
+    img.onload = () => {
+      const k = Math.min(1, PHOTO_MAX_PX / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      canvasBlob(c, 0.85).then(resolve, reject);
+    };
+    img.src = url;
+  });
+}
+// Duración y miniatura (primer fotograma) de un vídeo.
+function videoInfo(file){
+  return new Promise((resolve, reject) => {
+    const v = document.createElement('video'); v.preload = 'metadata'; v.muted = true; v.playsInline = true;
+    v.onerror = () => reject(new Error('vídeo no válido'));
+    v.onloadedmetadata = () => { v.currentTime = Math.min(0.5, (v.duration || 1) / 2); };
+    v.onseeked = () => {
+      const k = Math.min(1, 720 / Math.max(v.videoWidth || 720, v.videoHeight || 720));
+      const c = document.createElement('canvas'); c.width = Math.round((v.videoWidth || 720) * k); c.height = Math.round((v.videoHeight || 720) * k);
+      try { c.getContext('2d').drawImage(v, 0, 0, c.width, c.height); } catch (e) {}
+      canvasBlob(c, 0.8).then(poster => resolve({ duration: Math.round(v.duration || 0), poster }), reject);
+    };
+    v.src = objUrl(file);
+  });
+}
+function draftItems(){ return state.draftPost.items || (state.draftPost.items = []); }
+// Añade un elemento al borrador (también lo usan las pruebas).
+function addDraftItem(item){ const items = draftItems(); items.push(Object.assign({ id: 'd' + Date.now() + items.length }, item)); syncDraftKind(); }
+function syncDraftKind(){
+  const items = draftItems();
+  if (!items.length) return;
+  state.draftPost.kind = items.some(i => i.type === 'video') ? 'video' : (items.length > 1 ? 'carrusel' : 'foto');
+}
+function removeDraftItem(id){ capturePostInputs(); state.draftPost.items = draftItems().filter(i => i.id !== id); syncDraftKind(); if (!draftItems().length) state.draftPost.kind = 'foto'; renderCreatePost(); }
+function pickPostMedia(input){
+  const files = Array.from((input && input.files) || []); if (!files.length) return;
+  capturePostInputs();
+  const videos = files.filter(f => /^video\//.test(f.type)), photos = files.filter(f => /^image\//.test(f.type));
+  const items = draftItems();
+  if (videos.length){
+    if (videos.length > 1 || photos.length || items.length){ toast('Un vídeo va solo: sube un vídeo, o hasta 10 fotos'); return; }
+    const f = videos[0];
+    if (f.size > MAX_VIDEO_MB * 1024 * 1024){ toast(`El vídeo pesa demasiado (máximo ${MAX_VIDEO_MB} MB en la demo)`); return; }
+    toast('Preparando el vídeo…');
+    videoInfo(f).then(info => {
+      if (info.duration > MAX_VIDEO_S){ toast(`El vídeo dura ${info.duration} s: el máximo es ${MAX_VIDEO_S} s`); return; }
+      addDraftItem({ type:'video', blob:f, url:objUrl(f), poster:info.poster, posterUrl:objUrl(info.poster), duration:info.duration });
+      renderCreatePost();
+    }, () => toast('No se ha podido leer el vídeo'));
+    return;
+  }
+  if (items.some(i => i.type === 'video')){ toast('Ya hay un vídeo: quítalo para subir fotos'); return; }
+  const room = MAX_ITEMS - items.length;
+  if (room <= 0){ toast(`Máximo ${MAX_ITEMS} fotos por carrusel`); return; }
+  if (photos.length > room) toast(`Solo caben ${room} fotos más (máximo ${MAX_ITEMS})`);
+  Promise.all(photos.slice(0, room).map(photoToBlob)).then(blobs => {
+    blobs.forEach(b => addDraftItem({ type:'image', blob:b, url:objUrl(b) }));
+    renderCreatePost();
+  }, () => toast('No se ha podido leer alguna foto'));
+}
+// Vista previa de lo subido, con botón para quitar cada elemento.
+function draftPreviewHtml(sticker){
+  const items = draftItems();
+  if (!items.length) return '';
+  if (items[0].type === 'video') return `<div class="post-prev"><span class="pp g-dark"><video class="pp-video" src="${items[0].url || ''}" poster="${items[0].posterUrl || ''}" playsinline muted loop controls></video>
+    <button class="sv-x pv-x" onclick="removeDraftItem('${items[0].id}')" aria-label="Quitar el vídeo">${ico('close')}</button>${sticker}</span></div>
+    <p class="hint">${items[0].duration || 0} s · máximo ${MAX_VIDEO_S} s.</p>`;
+  return `<div class="post-prev ${items.length > 1 ? 'carrusel' : ''}">${items.map((it, i) => `<span class="pp g-dark"><img class="cover-img" src="${it.url}" alt="">
+      ${items.length > 1 ? `<span class="pp-n">${i + 1}</span>` : ''}<button class="sv-x pv-x" onclick="removeDraftItem('${it.id}')" aria-label="Quitar la foto ${i + 1}">${ico('close')}</button></span>`).join('')}${sticker}</div>
+    <p class="hint">${items.length} de ${MAX_ITEMS} fotos. Quitamos la ubicación GPS que guardan las fotos.</p>`;
+}
+// Al publicar: guarda los archivos y devuelve las referencias para la publicación.
+function commitDraftMedia(){
+  const items = draftItems(); if (!items.length) return null;
+  const stamp = Date.now();
+  if (items[0].type === 'video'){
+    const vid = 'v' + stamp, pid = 'p' + stamp;
+    if (items[0].blob) putMedia(vid, items[0].blob); else if (items[0].url) MEDIA[vid] = items[0].url;
+    if (items[0].poster) putMedia(pid, items[0].poster); else if (items[0].posterUrl) MEDIA[pid] = items[0].posterUrl;
+    return { kind:'video', video:'m:' + vid, imgs:['m:' + pid], duration: items[0].duration || 15 };
+  }
+  const imgs = items.map((it, i) => { const id = 'i' + stamp + '_' + i; if (it.blob) putMedia(id, it.blob); else if (it.url) MEDIA[id] = it.url; return 'm:' + id; });
+  return { kind: imgs.length > 1 ? 'carrusel' : 'foto', imgs };
+}
+function toggleRealVideo(el){ const v = el.querySelector('video'); if (!v) return; if (v.paused){ v.play(); el.classList.add('playing'); } else { v.pause(); el.classList.remove('playing'); } }
+function toggleVideoSound(ev, el){ if (ev && ev.stopPropagation) ev.stopPropagation(); const v = el.closest('.pm').querySelector('video'); if (!v) return; v.muted = !v.muted; el.classList.toggle('on', !v.muted); }
+
+/* ---------- menú de cada publicación ---------- */
+function openPostMenu(id){
+  const po = POSTS.find(p => p.id === id); if (!po) return;
+  const mine = po.authorId === 'me', u = getUser(po.authorId) || { name:'' };
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Opciones de la publicación">
+    <div class="sheet-h"><span>Publicación</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list">
+      ${mine ? `<button class="sh-row" onclick="openEditCaption('${id}')">${ico('doc')}<span>Editar el pie</span>${ico('chevR')}</button>
+        <button class="sh-row danger" onclick="openDeletePost('${id}')">${ico('close')}<span>Eliminar publicación</span>${ico('chevR')}</button>`
+      : `<button class="sh-row" onclick="closeOverlay();toggleFollowQuiet('${u.id}')">${ico('user')}<span>${follows('me', u.id) ? 'Dejar de seguir' : 'Seguir'} a ${escapeHtml(u.name)}</span>${ico('chevR')}</button>
+        <button class="sh-row danger" onclick="openReport('${u.id}', null)">${ico('alert')}<span>Reportar</span>${ico('chevR')}</button>`}
+      <button class="sh-row" onclick="closeOverlay();copyShareLink('${id}')">${ico('link')}<span>Copiar enlace</span>${ico('chevR')}</button>
+    </div></div>`);
+}
+function toggleFollowQuiet(uid){ toggleFollow(uid, true); if (state.contentTab === 'vividas' && location.hash.startsWith('#/feed')) renderContent(); }
+function openEditCaption(id){
+  const po = POSTS.find(p => p.id === id); if (!po) return;
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Editar el pie">
+    <div class="sheet-h"><span>Editar el pie</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list form"><div class="field"><label for="f-ecap">Pie ${counter('f-ecap','caption',po.caption)}</label>
+      <textarea ${lim('f-ecap','caption')} rows="4">${escapeHtml(po.caption || '')}</textarea></div>
+      <button class="btn-primary" onclick="saveCaption('${id}')">${ico('check')} Guardar</button></div></div>`);
+}
+function saveCaption(id){
+  const po = POSTS.find(p => p.id === id); if (!po) return;
+  po.caption = clip(val('f-ecap'), 'caption') || po.caption;
+  po.mentions = po.caption.match(MENTION_RE) || []; po.hashtags = po.caption.match(/#[\wáéíóúñ]+/gi) || []; po.edited = true;
+  saveState(); closeOverlay(); rerenderPost(id); toast('Pie actualizado');
+}
+function openDeletePost(id){
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Eliminar publicación">
+    <div class="sheet-h"><span>¿Eliminar la publicación?</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list"><p class="hint">Se borran también sus me gusta y comentarios. No se puede deshacer.</p>
+      <button class="btn-primary danger-btn" onclick="deletePost('${id}')">Eliminar</button>
+      <button class="btn-ghost" onclick="closeOverlay()">Cancelar</button></div></div>`);
+}
+function deletePost(id){
+  const i = POSTS.findIndex(p => p.id === id); if (i < 0) return;
+  const po = POSTS[i];
+  [].concat(po.imgs || [], po.video ? [po.video] : []).filter(r => String(r).startsWith('m:')).forEach(r => deleteMedia(r.slice(2)));
+  POSTS.splice(i, 1);
+  for (let k = STORIES.length - 1; k >= 0; k--) if (STORIES[k].sharedPostId === id || STORIES[k].id === 's' + id) STORIES.splice(k, 1);
+  saveState(); closeOverlay(); toast('Publicación eliminada');
+  router();
+}
+function deleteComment(postId, idx){
+  const po = POSTS.find(p => p.id === postId); if (!po || !po.comments[idx] || po.comments[idx].userId !== 'me') return;
+  po.comments.splice(idx, 1); saveState(); openComments(postId); rerenderPost(postId);
+}
+
+/* ---------- quién ve qué: perfiles privados y audiencia ---------- */
+const isPrivate = (u) => !!u && u.id !== 'me' && u.profilePublic === false;
+function canSeeProfile(u){ return !!u && (u.id === 'me' || !isPrivate(u) || follows('me', u.id)); }
+function canSeePost(po){
+  if (po.authorId === 'me') return true;
+  const u = getUser(po.authorId);
+  if (!canSeeProfile(u)) return false;
+  if ((ME.blocked || []).includes(po.authorId)) return false;
+  const aud = po.audience || 'publico';
+  if (aud === 'seguidores') return follows('me', po.authorId);
+  if (aud === 'amigos') return areFriends('me', po.authorId);
+  return true;
+}
+const hasRequested = (uid) => FOLLOW_REQUESTS.some(([a, b]) => a === 'me' && b === uid);
+// Pedir seguir a un perfil privado. En la demo, la persona acepta a los 4 segundos.
+function requestFollow(uid){
+  const u = getUser(uid) || { name:'' };
+  if (hasRequested(uid)){ FOLLOW_REQUESTS.splice(FOLLOW_REQUESTS.findIndex(([a, b]) => a === 'me' && b === uid), 1); toast('Solicitud retirada'); }
+  else { FOLLOW_REQUESTS.push(['me', uid]); toast(`Solicitud enviada a ${u.name}`); setTimeout(() => simulateFollowAccepted(uid), 4000); }
+  saveState();
+}
+function simulateFollowAccepted(uid){
+  const i = FOLLOW_REQUESTS.findIndex(([a, b]) => a === 'me' && b === uid); if (i < 0) return;
+  FOLLOW_REQUESTS.splice(i, 1); FOLLOWS.push(['me', uid]);
+  const u = getUser(uid) || { name:'' };
+  notify('seguidor', `${u.name} ha aceptado tu solicitud. Ya ves sus publicaciones.`, { route:'u/' + uid });
+  saveState();
+  if (location.hash === '#/u/' + uid) renderProfile(uid);
+}
+// Te piden seguirte (si tu perfil es privado).
+const incomingRequests = () => FOLLOW_REQUESTS.filter(([, b]) => b === 'me').map(([a]) => a);
+function simulateIncomingFollow(){
+  if (ME.profilePublic !== false) return;
+  const who = USERS.find(u => u.id !== 'me' && !u.managedBy && !follows(u.id, 'me') && !FOLLOW_REQUESTS.some(([a, b]) => a === u.id && b === 'me'));
+  if (!who) return;
+  FOLLOW_REQUESTS.push([who.id, 'me']);
+  notify('seguidor', `${who.name} quiere seguirte.`, { route:'notificaciones' });
+  saveState();
+}
+function answerFollowRequest(uid, accept){
+  const i = FOLLOW_REQUESTS.findIndex(([a, b]) => a === uid && b === 'me'); if (i < 0) return;
+  FOLLOW_REQUESTS.splice(i, 1);
+  if (accept && !follows(uid, 'me')) FOLLOWS.push([uid, 'me']);
+  saveState(); toast(accept ? 'Solicitud aceptada' : 'Solicitud eliminada');
+  if (location.hash === '#/notificaciones') renderNotifications();
+}
+// Al pasar el perfil a público, las solicitudes pendientes se aceptan.
+function acceptAllIncoming(){ incomingRequests().forEach(uid => { if (!follows(uid, 'me')) FOLLOWS.push([uid, 'me']); }); for (let i = FOLLOW_REQUESTS.length - 1; i >= 0; i--) if (FOLLOW_REQUESTS[i][1] === 'me') FOLLOW_REQUESTS.splice(i, 1); }
+function followRequestsHtml(){
+  const reqs = incomingRequests(); if (!reqs.length) return '';
+  return `<div class="notif-h"><span>Solicitudes para seguirte</span></div>${reqs.map(uid => { const u = getUser(uid) || { name:'', handle:'' };
+    return `<div class="au-person"><span class="avatar conv-av">${escapeHtml(u.initials || initials(u.name))}</span><span class="conv-main"><b>${escapeHtml(u.name)}</b><span>${escapeHtml(u.handle)}</span></span>
+      <button class="ph-btn primary au-fbtn" onclick="answerFollowRequest('${uid}', true)">Confirmar</button><button class="ph-btn au-fbtn" onclick="answerFollowRequest('${uid}', false)">Eliminar</button></div>`; }).join('')}`;
+}
+
+/* ---------- seguidores y seguidos ---------- */
+const followersOf = (uid) => FOLLOWS.filter(([, b]) => b === uid).map(([a]) => a);
+const followingOf = (uid) => FOLLOWS.filter(([a]) => a === uid).map(([, b]) => b);
+function followerCount(u){ const n = followersOf(u.id).length; return u.id === 'me' ? n : Math.max(n, u.followers || 0); }
+function followingCount(u){ const n = followingOf(u.id).length; return u.id === 'me' ? n : Math.max(n, u.following || 0); }
+function renderFollowList(kind, uid){
+  const u = uid === 'me' ? ME : getUser(uid), view = document.getElementById('view-page');
+  if (!u){ view.innerHTML = pageHead('Seguidores') + '<div class="empty-tab"><p>Perfil no encontrado.</p></div>'; return; }
+  const ids = (kind === 'seguidores' ? followersOf(u.id) : followingOf(u.id)).filter(id => !(ME.blocked || []).includes(id));
+  const total = kind === 'seguidores' ? followerCount(u) : followingCount(u);
+  const rows = ids.map(id => { const x = id === 'me' ? ME : getUser(id); if (!x) return '';
+    const btn = id === 'me' ? '' : (uid === 'me' && kind === 'seguidores' ? `<button class="ph-btn au-fbtn" onclick="removeFollower('${id}')">Eliminar</button>` : smallFollowBtn(x));
+    return `<div class="au-person"><button class="avatar conv-av" onclick="go('${id === 'me' ? 'perfil' : 'u/' + id}')">${escapeHtml(x.initials || initials(x.name))}</button>
+      <button class="conv-main lnk" onclick="go('${id === 'me' ? 'perfil' : 'u/' + id}')"><b>${escapeHtml(x.name)}</b><span>${escapeHtml(x.handle || '')}${id !== 'me' && areFriends('me', id) ? ' · Amigos' : ''}</span></button>${btn}</div>`; }).join('');
+  view.innerHTML = pageHead(`${kind === 'seguidores' ? 'Seguidores' : 'Seguidos'} · ${u.name}`) + `<div class="page-body inbox">
+    <div class="iseg origin-seg">${['seguidores','seguidos'].map(k => `<button class="${k === kind ? 'active' : ''}" onclick="go('${k}/${uid}')"><span>${k === 'seguidores' ? 'Seguidores' : 'Seguidos'}</span><em>${k === 'seguidores' ? followerCount(u) : followingCount(u)}</em></button>`).join('')}</div>
+    ${!canSeeProfile(u) ? `<div class="empty-tab"><span class="empty-ic">${ico('lock')}</span><p>Cuenta privada: sigue a ${escapeHtml(u.name)} para ver su lista.</p></div>`
+      : (rows || `<div class="empty-tab"><p>Nadie todavía.</p></div>`) + (total > ids.length ? `<p class="hint">Y ${total - ids.length} personas más que no conoces.</p>` : '')}
+  </div>`;
+}
+function smallFollowBtn(x){
+  const on = follows('me', x.id), req = hasRequested(x.id);
+  return `<button class="ph-btn ${on || req ? '' : 'primary'} au-fbtn" onclick="toggleFollow('${x.id}', true);router()">${on ? 'Siguiendo' : (req ? 'Solicitado' : (isPrivate(x) ? 'Solicitar' : 'Seguir'))}</button>`;
+}
+function removeFollower(uid){ const i = FOLLOWS.findIndex(([a, b]) => a === uid && b === 'me'); if (i >= 0) FOLLOWS.splice(i, 1); saveState(); toast('Ya no te sigue (no se le avisa)'); router(); }
+
+/* ---------- etiquetadas y guardados en el perfil ---------- */
+function taggedPosts(uid){ return POSTS.filter(p => (p.taggedUserIds || []).includes(uid) && canSeePost(p) && (uid !== 'me' || mentionStatus(mentionKey('tag', p.id)) === 'aceptada')); }
+function postGrid(list, empty){
+  if (!list.length) return `<div class="empty-tab"><span class="empty-ic">${ico('image')}</span><p>${empty}</p></div>`;
+  return `<div class="grid">${list.map(po => `<button class="cell ${(po.media || [])[0] || 'g-dark'}" onclick="openPost('${po.id}')" aria-label="${escapeHtml(po.caption || '')}">
+    ${coverImg((po.imgs || [])[0], 500)}<span class="cell-scrim"></span><span class="cell-corner">${ico(POST_ICON[po.kind] || 'image')}</span>
+    <span class="cell-info"><span class="cell-meta">${ico('heart')} ${po.likes || 0}</span></span></button>`).join('')}</div>`;
+}
+
+/* ---------- búsqueda de personas, planes y #temas ---------- */
+const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+function allHashtags(){
+  const count = {};
+  POSTS.filter(canSeePost).forEach(p => (String(p.caption || '').match(/#[\wáéíóúñ]+/gi) || []).forEach(t => { const k = t.slice(1).toLowerCase(); count[k] = (count[k] || 0) + 1; }));
+  PLACES.forEach(pl => { if (pl.hashtag){ const k = pl.hashtag.replace(/^#/, '').toLowerCase(); count[k] = count[k] || 0; } });
+  return Object.entries(count).map(([tag, n]) => ({ tag, n })).sort((a, b) => b.n - a.n);
+}
+function searchAll(q){
+  const n = norm(q).replace(/^[#@]/, '').trim();
+  if (!n) return { people: [], plans: [], tags: [] };
+  const people = USERS.filter(u => u.id !== 'me' && !(ME.blocked || []).includes(u.id) && [u.name, u.handle, u.bio, u.business && u.business.category].some(f => norm(f).includes(n)));
+  const plans = PLANS.filter(p => !isCancelled(p) && [p.title, p.summary, (getPlace(p.placeId) || {}).name, (getCategory(p.category) || {}).label, (p.host || {}).name].some(f => norm(f).includes(n)));
+  const tags = allHashtags().filter(t => norm(t.tag).includes(n));
+  return { people, plans, tags };
+}
+function renderSearch(q){
+  state.search = { q: q != null ? q : ((state.search || {}).q || ''), tab: (state.search || {}).tab || 'todo' };
+  const view = document.getElementById('view-page');
+  view.innerHTML = `<div class="page-bar"><button class="pb-back" onclick="history.back()" aria-label="Atrás">${ico('chevL')}</button>
+      <div class="mp-search sr-in">${ico('search')}<input id="sr-q" type="search" placeholder="Busca planes, personas o #temas" value="${escapeHtml(state.search.q)}" oninput="state.search.q=this.value;renderSearchResults()" onkeydown="if(event.key==='Enter')saveRecentSearch(this.value)" autocomplete="off"></div></div>
+    <div class="page-body inbox">
+      <div class="iseg origin-seg" id="sr-tabs"></div>
+      <div id="sr-res"></div>
+    </div>`;
+  renderSearchResults();
+}
+function setSearchTab(t){ state.search.tab = t; renderSearchResults(); }
+function renderSearchResults(){
+  const box = document.getElementById('sr-res'), tabsEl = document.getElementById('sr-tabs'); if (!box) return;
+  const q = state.search.q, t = state.search.tab, r = searchAll(q);
+  if (tabsEl) tabsEl.innerHTML = [['todo','Todo'],['personas','Personas'],['planes','Planes'],['temas','Temas']].map(([v, l]) =>
+    `<button class="${t === v ? 'active' : ''}" onclick="setSearchTab('${v}')"><span>${l}</span>${q.trim() ? `<em>${v === 'todo' ? r.people.length + r.plans.length + r.tags.length : (v === 'personas' ? r.people.length : v === 'planes' ? r.plans.length : r.tags.length)}</em>` : ''}</button>`).join('');
+  if (!q.trim()){
+    const recent = ME.recentSearches || [];
+    box.innerHTML = `${recent.length ? `<div class="notif-h"><span>Recientes</span><button class="link-btn" onclick="clearRecentSearches()">Borrar</button></div>
+        <div class="tag-chips">${recent.map(s => `<button class="tag-chip" onclick="state.search.q=${escapeHtml(JSON.stringify(s))};renderSearch()">${ico('clock')} ${escapeHtml(s)}</button>`).join('')}</div>` : ''}
+      <div class="notif-h"><span>Temas populares</span></div>
+      <div class="tag-chips">${allHashtags().slice(0, 8).map(x => `<button class="tag-chip" onclick="go('tema/${encodeURIComponent(x.tag)}')">#${escapeHtml(x.tag)}</button>`).join('')}</div>`;
+    return;
+  }
+  const person = (u) => `<button class="conv" onclick="saveRecentSearch(state.search.q);go('u/${u.id}')"><span class="avatar conv-av">${escapeHtml(u.initials || initials(u.name))}</span>
+    <span class="conv-main"><b>${escapeHtml(u.name)} ${u.verified ? `<span class="vchk">${ico('check')}</span>` : ''}${typeBadge(u)}</b><span>${escapeHtml(u.handle)}${isPrivate(u) ? ' · Cuenta privada' : ''}${follows('me', u.id) ? ' · Le sigues' : ''}</span></span></button>`;
+  const plan = (p) => { const pl = getPlace(p.placeId);
+    return `<button class="conv" onclick="saveRecentSearch(state.search.q);go('plan/${p.id}')"><span class="conv-av plan ${p.gradient}">${coverImg(p.photo, 120)}</span>
+      <span class="conv-main"><b>${escapeHtml(p.title)}</b><span>${fmtWhen(new Date(p.when))} · ${escapeHtml(p.secret ? 'Zona aproximada' : (pl ? pl.name : 'Madrid'))}${p.paid ? ' · ' + p.price + ' €' : ' · Gratis'}</span></span></button>`; };
+  const tag = (x) => `<button class="conv" onclick="saveRecentSearch(state.search.q);go('tema/${encodeURIComponent(x.tag)}')"><span class="conv-av tag-av">${ico('hash')}</span>
+    <span class="conv-main"><b>#${escapeHtml(x.tag)}</b><span>${x.n} ${x.n === 1 ? 'publicación' : 'publicaciones'}</span></span></button>`;
+  const sec = (title, list, fn, k) => list.length ? `${t === 'todo' ? `<div class="notif-h"><span>${title}</span>${list.length > 3 ? `<button class="link-btn" onclick="setSearchTab('${k}')">Ver todo</button>` : ''}</div>` : ''}${(t === 'todo' ? list.slice(0, 3) : list).map(fn).join('')}` : '';
+  const html = (t === 'todo' || t === 'personas' ? sec('Personas', r.people, person, 'personas') : '')
+    + (t === 'todo' || t === 'planes' ? sec('Planes', r.plans, plan, 'planes') : '')
+    + (t === 'todo' || t === 'temas' ? sec('Temas', r.tags, tag, 'temas') : '');
+  box.innerHTML = html || `<div class="empty-tab"><span class="empty-ic">${ico('search')}</span><p>Sin resultados para «${escapeHtml(q)}».</p></div>`;
+}
+function saveRecentSearch(q){ q = String(q || '').trim(); if (!q) return; ME.recentSearches = [q].concat((ME.recentSearches || []).filter(x => x !== q)).slice(0, 8); saveState(); }
+function clearRecentSearches(){ ME.recentSearches = []; saveState(); renderSearchResults(); }
+// Página de un tema: publicaciones con ese hashtag y planes en su lugar.
+function renderTag(tag){
+  tag = decodeURIComponent(String(tag || '')).replace(/^#/, '').toLowerCase();
+  const posts = POSTS.filter(p => canSeePost(p) && (String(p.caption || '').match(/#[\wáéíóúñ]+/gi) || []).some(t => t.slice(1).toLowerCase() === tag));
+  const places = PLACES.filter(pl => (pl.hashtag || '').replace(/^#/, '').toLowerCase() === tag);
+  const plans = PLANS.filter(p => !isCancelled(p) && places.some(pl => pl.id === p.placeId));
+  document.getElementById('view-page').innerHTML = pageHead('#' + tag) + `<div class="page-body"><p class="hint">${posts.length} ${posts.length === 1 ? 'publicación' : 'publicaciones'}${places.length ? ` · tema de ${escapeHtml(places[0].name)}` : ''}</p></div>
+    ${plans.length ? `<div class="page-body"><div class="notif-h"><span>Planes aquí</span></div>${plans.map(p => `<button class="conv" onclick="go('plan/${p.id}')"><span class="conv-av plan ${p.gradient}">${coverImg(p.photo, 120)}</span><span class="conv-main"><b>${escapeHtml(p.title)}</b><span>${fmtWhen(new Date(p.when))}</span></span></button>`).join('')}</div>` : ''}
+    ${postGrid(posts, 'Aún no hay publicaciones con este tema.')}`;
+}
+// Menciones y temas en los textos: tocables.
+const MENTION_RE = /@[\wáéíóúñ](?:[\w.áéíóúñ]*[\wáéíóúñ])?/gi;
+function openHandle(h){
+  const t = String(h || '').toLowerCase();
+  if (ME.handle && ME.handle.toLowerCase() === t) return go('perfil');
+  const u = USERS.find(x => (x.handle || '').toLowerCase() === t);
+  if (u) go('u/' + u.id); else toast('No hay nadie con ese usuario');
+}
+
+/* ---------- menciones y etiquetas ----------
+   Una mención o etiqueta no se asocia a tu perfil hasta que la aceptas. */
+const mentionKey = (kind, postId, idx) => `${kind}:${postId}${idx != null ? ':' + idx : ''}`;
+function mentionStatus(key){ return ((ME.mentions || {})[key]) || 'pendiente'; }
+function mentionAllowed(authorId){
+  const pol = ME.mentionPolicy || 'todos';
+  if ((ME.blocked || []).includes(authorId)) return false;
+  return pol === 'todos' || (pol === 'seguidos' && follows('me', authorId));
+}
+function myMentions(){
+  const h = (ME.handle || '').toLowerCase(); const out = [];
+  if (!h) return out;
+  const hasMe = (text) => (String(text || '').match(MENTION_RE) || []).some(m => m.toLowerCase() === h);
+  POSTS.forEach(p => {
+    if (p.authorId === 'me' || !canSeePost(p)) return;
+    if ((p.taggedUserIds || []).includes('me') && mentionAllowed(p.authorId)) out.push({ key: mentionKey('tag', p.id), kind:'tag', post:p, by:p.authorId });
+    if (hasMe(p.caption) && mentionAllowed(p.authorId)) out.push({ key: mentionKey('post', p.id), kind:'post', post:p, by:p.authorId });
+    (p.comments || []).forEach((c, i) => { if (c.userId !== 'me' && hasMe(c.text) && mentionAllowed(c.userId)) out.push({ key: mentionKey('com', p.id, i), kind:'com', post:p, by:c.userId, text:c.text }); });
+  });
+  return out.filter(m => mentionStatus(m.key) !== 'rechazada');
+}
+// Recorta sin partir palabras (ni #temas).
+function snippet(t, n){ t = String(t || ''); return t.length > n ? t.slice(0, n).replace(/\s+\S*$/, '') + '…' : t; }
+const pendingMentions = () => myMentions().filter(m => mentionStatus(m.key) === 'pendiente');
+function answerMention(key, ok){
+  ME.mentions = Object.assign({}, ME.mentions || {}, { [key]: ok ? 'aceptada' : 'rechazada' });
+  if (!ok && key.startsWith('tag:')){ const po = POSTS.find(p => p.id === key.split(':')[1]); if (po) po.taggedUserIds = (po.taggedUserIds || []).filter(x => x !== 'me'); }
+  saveState(); toast(ok ? 'Aceptada: aparece en tu perfil' : 'Quitada: no se asocia a tu perfil'); updateMentionsDot(); renderContent();
+}
+function updateMentionsDot(){
+  const b = document.querySelector && document.querySelector('.content-tabs button[data-tab="menciones"]');
+  if (b && b.classList) b.classList.toggle('has-dot', pendingMentions().length > 0);
+}
+function renderMentionsTab(){
+  const all = myMentions(), pend = all.filter(m => mentionStatus(m.key) === 'pendiente'), done = all.filter(m => mentionStatus(m.key) === 'aceptada');
+  const what = { tag:'te ha etiquetado en una publicación', post:'te ha mencionado en una publicación', com:'te ha mencionado en un comentario' };
+  const item = (m, pending) => { const u = getUser(m.by) || { name:'' };
+    return `<div class="mention-it"><button class="mention-th ${(m.post.media || [])[0] || 'g-dark'}" onclick="openPost('${m.post.id}')" aria-label="Ver la publicación">${coverImg((m.post.imgs || [])[0], 200)}</button>
+      <div class="mention-tx"><p><b>${escapeHtml(u.name)}</b> ${what[m.kind]}</p><p class="hint">${highlightCaption(snippet(m.kind === 'com' ? m.text : m.post.caption, 90))}</p>
+      ${pending ? `<div class="pl-banner-b"><button class="ph-btn primary" onclick="answerMention('${m.key}', true)">Aceptar</button><button class="ph-btn" onclick="answerMention('${m.key}', false)">Quitar</button></div>`
+        : `<button class="link-btn dim" onclick="answerMention('${m.key}', false)">Quitar de mi perfil</button>`}</div></div>`; };
+  return `<div class="page-body inbox mentions">
+    <p class="hint">Cuando alguien te menciona o te etiqueta, no se asocia a tu perfil hasta que lo aceptas. <button class="link-btn" onclick="go('ajustes')">Quién puede mencionarte</button></p>
+    ${pend.length ? `<div class="notif-h"><span>Pendientes</span></div>${pend.map(m => item(m, true)).join('')}` : ''}
+    ${done.length ? `<div class="notif-h"><span>Aceptadas</span></div>${done.map(m => item(m, false)).join('')}` : ''}
+    ${all.length ? '' : `<div class="empty-tab"><span class="empty-ic">${ico('at')}</span><p>Aún nadie te ha mencionado.</p></div>`}
+  </div>`;
+}
+function setMentionPolicy(v){ ME.mentionPolicy = v; saveState(); renderSettings(); }
 
 
 /* =========================================================================
@@ -2550,8 +2993,8 @@ function freeIcon(p){ return p.secret ? ico('lock') : (p.paid ? ico('euro') : ic
 function uimg(slug,s){ s=s||500; return `https://images.unsplash.com/photo-${slug}?w=${s}&h=${s}&fit=crop&q=60`; }
 // Imagen de portada sobre el degradado; si no carga se elimina y queda el degradado (fallback).
 // Foto subida (data:/blob:/http) o slug de Unsplash.
-function imgSrc(slug,s){ return /^(data:|blob:|https?:)/.test(slug) ? slug : uimg(slug,s); }
-function coverImg(slug,s){ return slug ? `<img class="cover-img" src="${imgSrc(slug,s)}" alt="" loading="lazy" onerror="this.remove()">` : ''; }
+function imgSrc(slug,s){ if (String(slug).startsWith('m:')) return mediaUrl(slug); return /^(data:|blob:|https?:)/.test(slug) ? slug : uimg(slug,s); }
+function coverImg(slug,s){ const src = slug ? imgSrc(slug,s) : ''; return src ? `<img class="cover-img" src="${src}" alt="" loading="lazy" onerror="this.remove()">` : ''; }
 function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function val(id){ const el=document.getElementById(id); return el?el.value:''; }
 function toast(msg){
@@ -2615,10 +3058,10 @@ function saveState(){
   try {
     localStorage.setItem(storeKey(), JSON.stringify({
       plans: PLANS.map(p => ({ ...p, when: p.when instanceof Date ? p.when.toISOString() : p.when })),
-      posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES, ratings: RATINGS, follows: FOLLOWS, conversations: CONVERSATIONS, reports: REPORTS,
+      posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES, ratings: RATINGS, follows: FOLLOWS, conversations: CONVERSATIONS, reports: REPORTS, followRequests: FOLLOW_REQUESTS,
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
-            city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom },
+            city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom },
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
       notifications: NOTIFICATIONS,
@@ -2645,6 +3088,7 @@ function loadState(){
   if (Array.isArray(snap.follows)) FOLLOWS.splice(0, FOLLOWS.length, ...snap.follows);
   if (Array.isArray(snap.conversations)) CONVERSATIONS.splice(0, CONVERSATIONS.length, ...snap.conversations);
   if (Array.isArray(snap.reports)) REPORTS.splice(0, REPORTS.length, ...snap.reports);
+  if (Array.isArray(snap.followRequests)) FOLLOW_REQUESTS.splice(0, FOLLOW_REQUESTS.length, ...snap.followRequests);
   if (Array.isArray(snap.notifications)) NOTIFICATIONS.splice(0, NOTIFICATIONS.length, ...snap.notifications);
   if (snap.me) Object.assign(ME, snap.me);
   (snap.extraProfiles || []).forEach(x => { if (!USERS.some(u => u.id === x.id)) USERS.push(x); });
@@ -2701,7 +3145,7 @@ function minLabel(m){ return m < 1 ? 'ahora' : (m < 60 ? `hace ${m} min` : `hace
 function setContentTab(t){ stopMusic(); state.contentTab = t; renderContent(); scrollTop('feed'); }
 
 // Publicaciones del muro, de la más reciente a la más antigua.
-function wallPosts(){ return POSTS.slice().sort((a,b)=>(a.ago||0)-(b.ago||0)); }
+function wallPosts(){ return POSTS.filter(canSeePost).sort((a,b)=>(a.ago||0)-(b.ago||0)); }
 
 // Filtro por origen: experiencias de planes o momentos de la vida de cada uno.
 function byOrigin(posts, f){ return f === 'todo' ? posts : posts.filter(po => postOrigin(po) === f); }
@@ -2725,6 +3169,14 @@ function postMedia(po){
       <div class="car-track" onscroll="carouselDots(this,'${po.id}')">${imgs.map((s,i)=>`<div class="car-slide ${grad(i)}" ondblclick="likePost('${po.id}',true)">${coverImg(s,700)}</div>`).join('')}</div>
       <span class="pm-count" id="cc-${po.id}">1/${imgs.length}</span>
       <div class="car-dots" id="cd-${po.id}">${imgs.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>${soundBtn(po)}${burst}</div>`;
+  }
+  if (po.kind==='video' && po.video){
+    // Vídeo subido: se reproduce de verdad (sin sonido hasta que lo actives).
+    return `<div class="pm pm-video real ${grad(0)}" onclick="toggleRealVideo(this)" ondblclick="likePost('${po.id}',true)">
+      <video src="${mediaUrl(po.video)}" poster="${imgSrc(imgs[0])}" playsinline muted loop preload="metadata"></video>
+      <span class="pm-play">${ico('play')}</span>
+      <span class="pm-dur">0:${String(po.duration || 0).padStart(2,'0')}</span>
+      <button class="pm-mute" onclick="toggleVideoSound(event, this)" aria-label="Activar o silenciar el sonido">${ico('mute')}${ico('volume')}</button>${burst}</div>`;
   }
   if (po.kind==='video'){
     const d = po.duration || 20;
@@ -2756,7 +3208,7 @@ function postCard(po){
         <span class="post-sub">${placeName?escapeHtml(placeName)+' · ':''}${agoLabel(po.ago||0)}</span>
         ${postMusicLine(po)}
       </div>
-      <span class="post-kind" title="${po.kind}">${ico(POST_ICON[po.kind]||'image')}</span>
+      <button class="post-kind" onclick="openPostMenu('${po.id}')" aria-label="Opciones de la publicación">${ico('dots')}</button>
     </header>
     ${postMedia(po)}
     <div class="post-actions">
@@ -3514,8 +3966,8 @@ function openPost(id){
 function openComments(id){
   const po = POSTS.find(p=>p.id===id); if (!po) return;
   if (!overlayEl().hidden && overlayEl().className.includes('ov-post')) state.sheetReturn = id;
-  const list = (po.comments||[]).map(c => { const u = getUser(c.userId) || { name:c.userId, initials:'?' };
-    return `<div class="cm"><span class="post-av sm">${escapeHtml(u.initials||'')}</span><p><b>${escapeHtml(u.handle||u.name)}</b> ${highlightCaption(c.text)}</p></div>`; }).join('')
+  const list = (po.comments||[]).map((c, i) => { const u = c.userId === 'me' ? ME : (getUser(c.userId) || { name:c.userId, initials:'?' });
+    return `<div class="cm"><span class="post-av sm">${escapeHtml(u.initials||'')}</span><p><b>${escapeHtml(u.handle||u.name)}</b> ${highlightCaption(c.text)}</p>${c.userId === 'me' ? `<button class="cm-del" onclick="deleteComment('${id}', ${i})" aria-label="Borrar mi comentario">${ico('close')}</button>` : ''}</div>`; }).join('')
     || '<p class="hint">Aún no hay comentarios. Escribe el primero.</p>';
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeSheet()"></div>
     <div class="sheet" role="dialog" aria-label="Comentarios">
@@ -3671,8 +4123,9 @@ function renderContent(){
     filters.style.display='none';
     if (state.contentTab==='vividas') list.innerHTML = renderWall();
     else if (state.contentTab==='stories') list.innerHTML = renderStoriesTab();
-    else list.innerHTML = emptyTab('at','Menciones','Aquí llegan los planes y stories donde te etiquetan. Una mención no se asocia a tu perfil hasta que la aceptas.');
+    else list.innerHTML = renderMentionsTab();
   }
+  updateMentionsDot();
 }
 
 /* ---------- mapa ---------- */
@@ -4006,7 +4459,7 @@ function renderProfile(uid){
         <div class="ph-stats">
           <span><b>${nPosts}</b> ${nPosts===1?'publicación':'publicaciones'}</span>
           <span><b>${nAtt}</b> ${nAtt===1?'asistido':'asistidos'}</span>
-          <span><b>${u.followers||0}</b> seguidores</span>
+          <button class="ph-stat" onclick="go('seguidores/${me ? 'me' : u.id}')"><b>${followerCount(u)}</b> seguidores</button>
         </div>
         ${me ? (() => { const r = reliability(); return `<div class="ph-rel">${ico('check')} Fiabilidad ${r.pct} % · ${r.noShows} ${r.noShows === 1 ? 'no presentado' : 'no presentados'}${r.late ? ` · ${r.late} ${r.late === 1 ? 'cancelación tardía' : 'cancelaciones tardías'}` : ''}</div>`; })() : ''}
       </div>
@@ -4017,10 +4470,11 @@ function renderProfile(uid){
       : (ME.blocked || []).includes(u.id) ? `<div class="ph-actions"><span class="hint">Has bloqueado a ${escapeHtml(u.name)}.</span><button class="ph-btn" onclick="unblockUser('${u.id}')">Desbloquear</button></div>`
         : `<div class="ph-actions">${followButton(u)}<button class="ph-btn" onclick="openDm('${u.id}')">Mensaje</button></div>`)}
     ${(me && !u.profilePublic)?`<div class="priv-banner">${ico('lock')} Perfil privado: solo tus seguidores aprobados ven tu actividad.</div>`:''}
-    <div class="prof-tabs" role="tablist">${[['posts','grid','Publicaciones'],['vividas','play','Vividas'],['valoraciones','star','Valoraciones']].map(([t,i,l])=>
+    ${!canSeeProfile(u) ? `<div class="empty-tab priv-block"><span class="empty-ic">${ico('lock')}</span><h3>Esta cuenta es privada</h3><p>Sigue a ${escapeHtml(u.name)} para ver sus publicaciones, planes y valoraciones.</p></div>` : `
+    <div class="prof-tabs" role="tablist">${[['posts','grid','Publicaciones'],['vividas','play','Vividas'],['valoraciones','star','Valoraciones'],['etiquetadas','tag','Etiquetadas']].concat(me ? [['guardados','bookmark','Guardados']] : []).map(([t,i,l])=>
       `<button class="${tab===t?'active':''}" role="tab" aria-selected="${tab===t}" aria-label="${l}" title="${l}" onclick="setProfileTab('${t}','${u.id}')">${ico(i)}<span class="pt-l">${l}</span></button>`).join('')}
     </div>
-    <div id="profile-grid">${tab==='posts'?profileGridPosts(me?'me':u.id):(tab==='vividas'?profileGridVividas(u):profileRatings(u, me))}</div>`;
+    <div id="profile-grid">${tab==='posts'?profileGridPosts(me?'me':u.id):(tab==='vividas'?profileGridVividas(u):(tab==='etiquetadas'?postGrid(taggedPosts(me?'me':u.id), me?'Aquí salen las publicaciones en las que te etiquetan y aceptas.':'Nadie le ha etiquetado todavía.'):(tab==='guardados'&&me?`<p class="hint saved-note">${ico('lock')} Solo tú ves lo que guardas.</p>`+postGrid(POSTS.filter(p=>p.savedByMe&&canSeePost(p)), 'Guarda publicaciones con el marcador para verlas aquí.'):profileRatings(u, me))))}</div>`}`;
 }
 function setProfileTab(t, uid){ state.profileTab=t; renderProfile(uid==='me'?'me':uid); }
 
@@ -4043,6 +4497,8 @@ function relation(ownerId, viewerId){
 function canSeeRating(r, viewerId){
   const rel = relation(r.userId, viewerId || 'me'), aud = ratingAudience(r);
   if (rel === 'yo') return true;
+  const owner = getUser(r.userId);
+  if (owner && owner.profilePublic === false && !follows(viewerId || 'me', r.userId)) return false;   // perfil privado: solo seguidores
   if (aud === 'todos') return true;
   if (aud === 'seguidores') return rel === 'seguidor' || rel === 'amigo';
   if (aud === 'amigos') return rel === 'amigo';
@@ -4122,17 +4578,18 @@ function saveRating(){
 function setRatingPref(k, v){ ME.ratings = Object.assign(ratingPrefs(ME), { [k]: v }); saveState(); renderSettings(); }
 
 /* ---------- seguir / amigos ---------- */
-function toggleFollow(uid){
+function toggleFollow(uid, quiet){
   const i = FOLLOWS.findIndex(([a,b]) => a === 'me' && b === uid);
   const u = getUser(uid) || { name:'' };
+  if (i < 0 && isPrivate(u)){ requestFollow(uid); if (!quiet) renderProfile(uid); return; }   // perfil privado: se pide
   if (i >= 0){ FOLLOWS.splice(i, 1); toast('Has dejado de seguir a ' + u.name); }
   else { FOLLOWS.push(['me', uid]); toast(areFriends('me', uid) ? 'Ahora sois amigos: os seguís los dos' : 'Siguiendo a ' + u.name); }
-  saveState(); renderProfile(uid);
+  saveState(); if (!quiet) renderProfile(uid);
 }
 function followButton(u){
   const iFollow = follows('me', u.id), theyFollow = follows(u.id, 'me');
-  const label = iFollow ? (theyFollow ? `${ico('check')} Amigos` : 'Siguiendo') : (theyFollow ? 'Seguir también' : 'Seguir');
-  return `<button class="ph-btn ${iFollow?'':'primary'}" onclick="toggleFollow('${u.id}')">${label}</button>`;
+  const label = iFollow ? (theyFollow ? `${ico('check')} Amigos` : 'Siguiendo') : (hasRequested(u.id) ? 'Solicitado' : (isPrivate(u) ? 'Solicitar seguir' : (theyFollow ? 'Seguir también' : 'Seguir')));
+  return `<button class="ph-btn ${iFollow || hasRequested(u.id) ? '' : 'primary'}" onclick="toggleFollow('${u.id}')">${label}</button>`;
 }
 
 /* ---------- verificación de identidad y varios perfiles ----------
@@ -4295,6 +4752,11 @@ function renderSettings(){
           <span class="tg-info"><span class="tg-n">Presencia por defecto: ${ME.presencePublic?'pública':'privada'}</span><span class="tg-s">Cómo apareces al registrar tu llegada</span></span>
           <span class="switch ${ME.presencePublic?'on':''}"><span class="knob"></span></span></div>
       </div>
+      <div class="set-group"><div class="set-title">Menciones y etiquetas</div>
+        <div class="set-box"><span class="sb-l">Quién puede mencionarte o etiquetarte</span>
+          <div class="iseg">${[['todos','Todos','globe'],['seguidos','A quien sigo','users'],['nadie','Nadie','lock']].map(([v,l,n])=>`<button class="${(ME.mentionPolicy||'todos')===v?'active':''}" onclick="setMentionPolicy('${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div>
+          <p class="hint">Aunque te mencionen, no se asocia a tu perfil hasta que lo aceptas en la pestaña Menciones.</p></div>
+      </div>
       <div class="set-group"><div class="set-title">Mensajes</div>
         <div class="set-box"><span class="sb-l">Mensajes de quien no conoces</span>
           <div class="iseg">${DM_MODES.map(([v,l,n])=>`<button class="${(ME.dmMode||'solicitud')===v?'active':''}" onclick="setDmMode('${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div>
@@ -4330,7 +4792,12 @@ function renderSettings(){
       </div>
     </div>`;
 }
-function toggleProfilePrivacy(){ ME.profilePublic = !ME.profilePublic; saveState(); renderSettings(); }
+function toggleProfilePrivacy(){
+  ME.profilePublic = !ME.profilePublic;
+  if (ME.profilePublic){ const n = incomingRequests().length; acceptAllIncoming(); if (n) toast(`Perfil público: ${n} solicitudes aceptadas`); }
+  else { toast('Perfil privado: quien quiera seguirte tendrá que pedirlo'); setTimeout(simulateIncomingFollow, 4000); }   // demo: llega una solicitud
+  saveState(); renderSettings();
+}
 function togglePresenceDefault(){ ME.presencePublic = !ME.presencePublic; state.presencePublic = ME.presencePublic; saveState(); renderSettings(); }
 
 /* ---------- grupos ---------- */
@@ -4496,16 +4963,17 @@ function publishPlan(){
   if (plan.approval === 'manual') setTimeout(() => simulateIncomingRequest(plan.id), 5000);   // demo: llega una solicitud
   toast('Plan publicado'); go('plan/'+plan.id);
 }
-function freshPostDraft(){ return { origin:'plan', kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' }; }
+function freshPostDraft(){ return { items:[], origin:'plan', kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' }; }
 function capturePostInputs(){
   const d=state.draftPost;
   d.caption=val('f-caption'); d.alt=val('f-alt');
   d.place=val('f-postplace'); d.planId=val('f-postplan');
 }
+// @menciones y #temas tocables (llevan al perfil o a la página del tema).
 function highlightCaption(text){
   return escapeHtml(text)
-    .replace(/(^|\s)(@[\wáéíóúñ]+)/gi,'$1<span class="mention">$2</span>')
-    .replace(/(^|\s)(#[\wáéíóúñ]+)/gi,'$1<span class="hash">$2</span>');
+    .replace(/(^|\s)(@[\wáéíóúñ](?:[\w.áéíóúñ]*[\wáéíóúñ])?)/gi,(m,a,h)=>`${a}<span class="mention" role="link" tabindex="0" onclick="event.stopPropagation();openHandle('${h}')">${h}</span>`)
+    .replace(/(^|\s)#([\wáéíóúñ]+)/gi,(m,a,t)=>`${a}<span class="hash" role="link" tabindex="0" onclick="event.stopPropagation();go('tema/${encodeURIComponent(t.toLowerCase())}')">#${t}</span>`);
 }
 function updateCaptionPreview(){
   const el=document.getElementById('cap-preview'); if(!el) return;
@@ -4538,12 +5006,13 @@ function renderCreatePost(){
         ${fromPlan ? `<select id="f-postplan" class="or-sel wide" aria-label="Plan del que compartes la experiencia">${linkable.map(p=>`<option value="${p.id}" ${d.planId===p.id?'selected':''}>${escapeHtml(p.title)}</option>`).join('')}</select>
           <p class="hint">Queda ligada al plan y cuenta como prueba social; en tu perfil sale dentro de "Planes".</p>`
         : `<p class="hint">${linkable.length ? 'Un momento tuyo, sin plan: sale en tu perfil, dentro de "Tu vida".' : 'Aún no has asistido a ningún plan; puedes compartir momentos de tu vida.'}</p>`}</div>
-      <div class="field"><label>Formato</label>
+      ${draftItems().length ? `<div class="field"><label>Formato</label><p class="hint">${{ foto:'Foto', carrusel:`Carrusel de ${draftItems().length} fotos`, video:'Vídeo' }[k]} · depende de lo que subas.</p></div>` : `<div class="field"><label>Formato</label>
         <div class="iseg" id="d-postkind">
           <button class="${k==='foto'?'active':''}" onclick="setPostField('kind','foto')">${ico('image')}<span>Foto</span></button>
           <button class="${k==='video'?'active':''}" onclick="setPostField('kind','video')">${ico('video')}<span>Vídeo</span></button>
-          <button class="${k==='carrusel'?'active':''}" onclick="setPostField('kind','carrusel')">${ico('stack')}<span>Carrusel</span></button></div></div>
-      <div class="field"><label>Vista previa</label>${preview}<span class="add-media center">${ico('image')} Añadir desde galería</span></div>
+          <button class="${k==='carrusel'?'active':''}" onclick="setPostField('kind','carrusel')">${ico('stack')}<span>Carrusel</span></button></div></div>`}
+      <div class="field"><label>Vista previa</label>${draftItems().length ? draftPreviewHtml(musicSticker) : preview + '<p class="hint">Sube tus fotos o un vídeo. Si no eliges nada, la demo usa fotos de muestra.</p>'}
+        <label class="add-media center">${ico('image')} ${draftItems().length ? 'Añadir más' : 'Hacer foto o elegir de la galería'}<input type="file" accept="image/*,video/*" multiple hidden onchange="pickPostMedia(this)"></label></div>
 
       <div class="field"><label for="f-caption">Pie de texto ${counter('f-caption','caption',d.caption)}</label>
         <textarea id="f-caption" maxlength="${LIMITS.caption}" rows="3" placeholder="Escribe un pie… usa @ para mencionar y # para temas" oninput="updateCaptionPreview();countChars(this,'caption')">${escapeHtml(d.caption||'')}</textarea>
@@ -4588,15 +5057,16 @@ function publishPost(){
   const d = state.draftPost, k = d.kind;
   const caption = clip(d.caption, 'caption') || 'Nueva publicación';
   const media = k==='carrusel' ? ['g-grape','g-sunset','g-forest'] : [k==='video'?'g-grape':'g-sunset'];
-  const mentions = (caption.match(/@[\wáéíóúñ]+/gi)||[]);
+  const mentions = (caption.match(MENTION_RE)||[]);
   const hashtags = (caption.match(/#[\wáéíóúñ]+/gi)||[]);
   const sample = ['1566737236500-c8ac43014a67','1495567720989-cebdbdd97913','1551632811-561732d1e306'];
-  const imgs = k==='carrusel' ? sample : [sample[0]];
+  const up = commitDraftMedia();   // fotos o vídeo subidos; si no hay, fotos de muestra
+  const imgs = up ? up.imgs : (k==='carrusel' ? sample : [sample[0]]);
   const id = 'npo'+Date.now();
   const linkable = linkablePlans();
   const planId = (d.origin === 'plan' && linkable.length) ? (linkable.some(p => p.id === d.planId) ? d.planId : linkable[0].id) : null;
   POSTS.unshift({
-    id, authorId:'me', kind:k, media, imgs, caption, likes:0, ago:0, comments:[], duration: k==='video' ? 15 : undefined,
+    id, authorId:'me', kind: up ? up.kind : k, media: up ? imgs.map(() => 'g-dark') : media, imgs, video: up && up.video ? up.video : undefined, caption, likes:0, ago:0, comments:[], duration: up && up.duration ? up.duration : (k==='video' ? 15 : undefined),
     placeId:d.place||null, taggedUserIds:[...d.tags], planId, altText:clip(d.alt, 'alt'),
     mentions, hashtags, audience:d.audience, commentsEnabled:d.comments, hideLikes:d.hideLikes, sharedToStory:d.alsoStory,
     trackId:d.trackId||null,
@@ -4621,6 +5091,7 @@ function buildFilters(){
   const prices=[['todos','Todo','layers'],['gratis','Gratis','ticket'],['pago','Pago','euro']];
   const ichip=(v,l,name,act)=>`<button data-v="${v}" class="${act?'active':''}">${ico(name)}<span>${l}</span></button>`;
   cont.innerHTML = `
+    <button class="search-entry" onclick="go('buscar')">${ico('search')}<span>Busca planes, personas o #temas</span></button>
     <div class="chips" id="chips-cat">${ichip('todas','Todos','hash',true)}${CATEGORIES.map(c=>ichip(c.id,c.label,ICON_FOR_CAT[c.id]||'hash',false)).join('')}</div>
     <div class="seg-row">
       <div class="iseg" id="seg-size">${sizes.map(([v,l,n])=>ichip(v,l,n,v==='todos')).join('')}</div>
@@ -4657,6 +5128,9 @@ function router(){
     case 'grupo':   renderGroupDetail(arg); showView('page'); scrollTop('page'); break;
     case 'mensajes': renderInbox(arg); showView('page'); scrollTop('page'); break;
     case 'chat':     renderChat(arg); showView('page'); { const v = document.getElementById('view-page'); v.scrollTop = v.scrollHeight || 0; } break;
+    case 'buscar':  renderSearch(arg != null ? decodeURIComponent(arg) : null); showView('page'); scrollTop('page'); break;
+    case 'tema':    renderTag(arg); showView('page'); scrollTop('page'); break;
+    case 'seguidores': case 'seguidos': renderFollowList(route, arg || 'me'); showView('page'); scrollTop('page'); break;
     case 'notificaciones': renderNotifications(); showView('page'); scrollTop('page'); break;
     case 'editar-plan': renderEditPlan(arg); showView('page'); scrollTop('page'); break;
     case 'seguridad': renderSecurity(); showView('page'); scrollTop('page'); break;
@@ -4689,6 +5163,7 @@ function init(){
   window.addEventListener('hashchange', router);
   updateDmBadge();
   router();
+  loadAllMedia().then(n => { if (n) router(); });   // fotos y vídeos subidos (IndexedDB)
   if (!acc) showAuth('bienvenida', {});
   else if (!acc.onboarded) showAuth(acc.step || 'perfil', {});
 }

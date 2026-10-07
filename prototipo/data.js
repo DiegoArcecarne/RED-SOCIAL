@@ -239,6 +239,9 @@ const USERS = [
   { id:'sara',  name:'Sara M.', handle:'@saram',  initials:'SM', type:'usuario', verified:true, followers:210, following:190, ratings:{ default:'publica', publica:'amigos', privada:'solo_yo' }, attendedPlanIds:['p1'] },
   { id:'david', name:'David L.', handle:'@davidl', initials:'DL', type:'usuario', verified:true, followers:75, following:98, ratings:{ default:'privada', publica:'seguidores', privada:'solo_yo' }, attendedPlanIds:['p7','p5'] },
   { id:'nora',  name:'Nora V.', handle:'@norav',  initials:'NV', type:'usuario', verified:true, followers:330, following:240, ratings:{ default:'publica', publica:'todos', privada:'solo_yo' }, attendedPlanIds:['p9'] },
+  // Perfil privado: para ver sus publicaciones hay que pedir seguirla.
+  { id:'irene', name:'Irene C.', handle:'@irenec', initials:'IC', type:'usuario', verified:true, profilePublic:false,
+    bio:'Fotografía, montaña y vermú.', followers:96, following:110, ratings:{ default:'publica', publica:'todos', privada:'solo_yo' }, attendedPlanIds:['p5'] },
 ];
 const ME = USERS[0]; // usuario actual
 
@@ -255,7 +258,7 @@ const POSTS = [
     comments:[{userId:'sara',text:'Qué noche. Repito el viernes'},{userId:'marco',text:'El DJ, brutal'}] },
   { id:'po8',  authorId:'lucia', planId:'p2', trackId:'t1', kind:'carrusel', media:['g-sunset','g-sunset'], imgs:['1495567720989-cebdbdd97913','1502680390469-be75c86b636f'], ago:3,
     caption:'Debod a las 21:40. Gracias a @marcot y a todos los que os acercasteis #atardecerdebod', likes:118,
-    comments:[{userId:'marco',text:'El mejor atardecer de Madrid, sin discusión'},{userId:'ana',text:'La próxima no me lo pierdo'}] },
+    comments:[{userId:'marco',text:'El mejor atardecer de Madrid, sin discusión'},{userId:'ana',text:'La próxima no me lo pierdo'},{userId:'marco',text:'@marina tienes que venir la próxima'}] },
   { id:'po9',  authorId:'marco', planId:'p10', trackId:'t4', kind:'video', duration:31, media:['g-dark'], imgs:['1486218119243-13883505764c'], ago:8,
     caption:'5 km al anochecer con el club. Ritmo de grupo, nadie se queda atrás #runningmadrid', likes:76,
     comments:[{userId:'ana',text:'¿Vale para principiantes?'},{userId:'marco',text:'@anap sí, hay grupo de ritmo suave'}] },
@@ -263,7 +266,7 @@ const POSTS = [
     caption:'El himno de la Victoria no defrauda. Fui sola y salí con plan para el sábado #himnovictoria', likes:203,
     comments:[{userId:'nora',text:'Eso es justo lo que buscaba al llegar a Burgos'}] },
   { id:'po11', authorId:'david', planId:'p7', trackId:'t3', kind:'carrusel', media:['g-grape','g-grape'], imgs:['1511192336575-5a79af67a629','1493225457124-a3eb161ffa5f'], ago:20,
-    caption:'Jazz en Clamores. Sala pequeña, sonido enorme #clamoresjazz', likes:89,
+    caption:'Jazz en Clamores. Sala pequeña, sonido enorme. Gracias @marina por la recomendación #clamoresjazz', likes:89,
     comments:[{userId:'lucia',text:'¿Hay pase el jueves que viene?'}] },
   { id:'po12', authorId:'ana', planId:'p8', trackId:'t5', kind:'foto', media:['g-forest'], imgs:['1545205597-3d9d02c29597'], ago:26,
     caption:'Primera sesión de yoga al sol en el Retiro. Repetimos el sábado #retiromorning', likes:61,
@@ -309,8 +312,10 @@ const POSTS = [
   { id:'pv6', authorId:'me', trackId:'t1', kind:'carrusel', media:['g-sunset','g-dark'], imgs:['1500530855697-b586d89ba3ee','1519681393784-d120267933ba'], ago:36,
     caption:'Road trip con mis padres. De noche, estrellas y cero cobertura', likes:87,
     comments:[{userId:'david',text:'Ese cielo no es real'}] },
-  { id:'pv7', authorId:'david', trackId:'t6', kind:'foto', media:['g-sunset'], imgs:['1529156069898-49953e39b3ac'], ago:50,
+  { id:'pv7', authorId:'david', trackId:'t6', kind:'foto', media:['g-sunset'], imgs:['1529156069898-49953e39b3ac'], ago:50, taggedUserIds:['me','marco'],
     caption:'Los de siempre, desde el colegio', likes:132, comments:[] },
+  { id:'pv9', authorId:'irene', kind:'foto', media:['g-forest'], imgs:['1507525428034-b723cf961d3e'], ago:16,
+    caption:'Cala escondida, nadie a la vista #escapadas', likes:71, comments:[] },
   { id:'pv8', authorId:'me', kind:'foto', media:['g-dark'], imgs:['1513475382585-d06e58bcb0e0'], ago:80,
     caption:'Domingo de sofá y libro', likes:41, comments:[] },
 ];
@@ -397,6 +402,8 @@ const FOLLOWS = [
   ['me','ana'], ['me','azotea'], ['sara','me'], ['nora','me'],
 ];
 const follows  = (a, b) => FOLLOWS.some(([x, y]) => x === a && y === b);
+// Solicitudes para seguir perfiles privados: [quien pide, a quién].
+const FOLLOW_REQUESTS = [];
 const areFriends = (a, b) => follows(a, b) && follows(b, a);
 
 /* Valoraciones que cada persona hace de los planes a los que asistió.
@@ -417,6 +424,7 @@ const RATINGS = [
   { id:'ra12', userId:'sara', planId:'p1', stars:5, visibility:null, daysAgo:6, text:'Ambientazo. Fui sola y volví con amigos.' },
   { id:'ra13', userId:'david', planId:'p7', stars:5, visibility:'publica', daysAgo:4, text:'Sala pequeña, sonido enorme.' },
   { id:'ra14', userId:'david', planId:'p5', stars:4, visibility:null, daysAgo:9, text:'Bien organizado, pero salimos con retraso.' },
+  { id:'ra16', userId:'irene', planId:'p5', stars:5, visibility:null, daysAgo:9, text:'El amanecer desde arriba, de lo mejor del año.' },
   { id:'ra15', userId:'nora', planId:'p9', stars:5, visibility:null, daysAgo:7, text:'Seis vinos y una mesa de desconocidos que ya no lo son.' },
 ];
 
@@ -477,7 +485,7 @@ const requestsForPlan = (pid) => REQUESTS.filter((r) => r.planId === pid);
 if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
-    STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
+    STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, FOLLOW_REQUESTS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }

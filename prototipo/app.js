@@ -112,8 +112,8 @@ function freeIcon(p){ return p.secret ? ico('lock') : (p.paid ? ico('euro') : ic
 function uimg(slug,s){ s=s||500; return `https://images.unsplash.com/photo-${slug}?w=${s}&h=${s}&fit=crop&q=60`; }
 // Imagen de portada sobre el degradado; si no carga se elimina y queda el degradado (fallback).
 // Foto subida (data:/blob:/http) o slug de Unsplash.
-function imgSrc(slug,s){ return /^(data:|blob:|https?:)/.test(slug) ? slug : uimg(slug,s); }
-function coverImg(slug,s){ return slug ? `<img class="cover-img" src="${imgSrc(slug,s)}" alt="" loading="lazy" onerror="this.remove()">` : ''; }
+function imgSrc(slug,s){ if (String(slug).startsWith('m:')) return mediaUrl(slug); return /^(data:|blob:|https?:)/.test(slug) ? slug : uimg(slug,s); }
+function coverImg(slug,s){ const src = slug ? imgSrc(slug,s) : ''; return src ? `<img class="cover-img" src="${src}" alt="" loading="lazy" onerror="this.remove()">` : ''; }
 function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function val(id){ const el=document.getElementById(id); return el?el.value:''; }
 function toast(msg){
@@ -177,10 +177,10 @@ function saveState(){
   try {
     localStorage.setItem(storeKey(), JSON.stringify({
       plans: PLANS.map(p => ({ ...p, when: p.when instanceof Date ? p.when.toISOString() : p.when })),
-      posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES, ratings: RATINGS, follows: FOLLOWS, conversations: CONVERSATIONS, reports: REPORTS,
+      posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES, ratings: RATINGS, follows: FOLLOWS, conversations: CONVERSATIONS, reports: REPORTS, followRequests: FOLLOW_REQUESTS,
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
-            city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom },
+            city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom },
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
       notifications: NOTIFICATIONS,
@@ -207,6 +207,7 @@ function loadState(){
   if (Array.isArray(snap.follows)) FOLLOWS.splice(0, FOLLOWS.length, ...snap.follows);
   if (Array.isArray(snap.conversations)) CONVERSATIONS.splice(0, CONVERSATIONS.length, ...snap.conversations);
   if (Array.isArray(snap.reports)) REPORTS.splice(0, REPORTS.length, ...snap.reports);
+  if (Array.isArray(snap.followRequests)) FOLLOW_REQUESTS.splice(0, FOLLOW_REQUESTS.length, ...snap.followRequests);
   if (Array.isArray(snap.notifications)) NOTIFICATIONS.splice(0, NOTIFICATIONS.length, ...snap.notifications);
   if (snap.me) Object.assign(ME, snap.me);
   (snap.extraProfiles || []).forEach(x => { if (!USERS.some(u => u.id === x.id)) USERS.push(x); });
@@ -263,7 +264,7 @@ function minLabel(m){ return m < 1 ? 'ahora' : (m < 60 ? `hace ${m} min` : `hace
 function setContentTab(t){ stopMusic(); state.contentTab = t; renderContent(); scrollTop('feed'); }
 
 // Publicaciones del muro, de la más reciente a la más antigua.
-function wallPosts(){ return POSTS.slice().sort((a,b)=>(a.ago||0)-(b.ago||0)); }
+function wallPosts(){ return POSTS.filter(canSeePost).sort((a,b)=>(a.ago||0)-(b.ago||0)); }
 
 // Filtro por origen: experiencias de planes o momentos de la vida de cada uno.
 function byOrigin(posts, f){ return f === 'todo' ? posts : posts.filter(po => postOrigin(po) === f); }
@@ -287,6 +288,14 @@ function postMedia(po){
       <div class="car-track" onscroll="carouselDots(this,'${po.id}')">${imgs.map((s,i)=>`<div class="car-slide ${grad(i)}" ondblclick="likePost('${po.id}',true)">${coverImg(s,700)}</div>`).join('')}</div>
       <span class="pm-count" id="cc-${po.id}">1/${imgs.length}</span>
       <div class="car-dots" id="cd-${po.id}">${imgs.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>${soundBtn(po)}${burst}</div>`;
+  }
+  if (po.kind==='video' && po.video){
+    // Vídeo subido: se reproduce de verdad (sin sonido hasta que lo actives).
+    return `<div class="pm pm-video real ${grad(0)}" onclick="toggleRealVideo(this)" ondblclick="likePost('${po.id}',true)">
+      <video src="${mediaUrl(po.video)}" poster="${imgSrc(imgs[0])}" playsinline muted loop preload="metadata"></video>
+      <span class="pm-play">${ico('play')}</span>
+      <span class="pm-dur">0:${String(po.duration || 0).padStart(2,'0')}</span>
+      <button class="pm-mute" onclick="toggleVideoSound(event, this)" aria-label="Activar o silenciar el sonido">${ico('mute')}${ico('volume')}</button>${burst}</div>`;
   }
   if (po.kind==='video'){
     const d = po.duration || 20;
@@ -318,7 +327,7 @@ function postCard(po){
         <span class="post-sub">${placeName?escapeHtml(placeName)+' · ':''}${agoLabel(po.ago||0)}</span>
         ${postMusicLine(po)}
       </div>
-      <span class="post-kind" title="${po.kind}">${ico(POST_ICON[po.kind]||'image')}</span>
+      <button class="post-kind" onclick="openPostMenu('${po.id}')" aria-label="Opciones de la publicación">${ico('dots')}</button>
     </header>
     ${postMedia(po)}
     <div class="post-actions">
@@ -1076,8 +1085,8 @@ function openPost(id){
 function openComments(id){
   const po = POSTS.find(p=>p.id===id); if (!po) return;
   if (!overlayEl().hidden && overlayEl().className.includes('ov-post')) state.sheetReturn = id;
-  const list = (po.comments||[]).map(c => { const u = getUser(c.userId) || { name:c.userId, initials:'?' };
-    return `<div class="cm"><span class="post-av sm">${escapeHtml(u.initials||'')}</span><p><b>${escapeHtml(u.handle||u.name)}</b> ${highlightCaption(c.text)}</p></div>`; }).join('')
+  const list = (po.comments||[]).map((c, i) => { const u = c.userId === 'me' ? ME : (getUser(c.userId) || { name:c.userId, initials:'?' });
+    return `<div class="cm"><span class="post-av sm">${escapeHtml(u.initials||'')}</span><p><b>${escapeHtml(u.handle||u.name)}</b> ${highlightCaption(c.text)}</p>${c.userId === 'me' ? `<button class="cm-del" onclick="deleteComment('${id}', ${i})" aria-label="Borrar mi comentario">${ico('close')}</button>` : ''}</div>`; }).join('')
     || '<p class="hint">Aún no hay comentarios. Escribe el primero.</p>';
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeSheet()"></div>
     <div class="sheet" role="dialog" aria-label="Comentarios">
@@ -1233,8 +1242,9 @@ function renderContent(){
     filters.style.display='none';
     if (state.contentTab==='vividas') list.innerHTML = renderWall();
     else if (state.contentTab==='stories') list.innerHTML = renderStoriesTab();
-    else list.innerHTML = emptyTab('at','Menciones','Aquí llegan los planes y stories donde te etiquetan. Una mención no se asocia a tu perfil hasta que la aceptas.');
+    else list.innerHTML = renderMentionsTab();
   }
+  updateMentionsDot();
 }
 
 /* ---------- mapa ---------- */
@@ -1568,7 +1578,7 @@ function renderProfile(uid){
         <div class="ph-stats">
           <span><b>${nPosts}</b> ${nPosts===1?'publicación':'publicaciones'}</span>
           <span><b>${nAtt}</b> ${nAtt===1?'asistido':'asistidos'}</span>
-          <span><b>${u.followers||0}</b> seguidores</span>
+          <button class="ph-stat" onclick="go('seguidores/${me ? 'me' : u.id}')"><b>${followerCount(u)}</b> seguidores</button>
         </div>
         ${me ? (() => { const r = reliability(); return `<div class="ph-rel">${ico('check')} Fiabilidad ${r.pct} % · ${r.noShows} ${r.noShows === 1 ? 'no presentado' : 'no presentados'}${r.late ? ` · ${r.late} ${r.late === 1 ? 'cancelación tardía' : 'cancelaciones tardías'}` : ''}</div>`; })() : ''}
       </div>
@@ -1579,10 +1589,11 @@ function renderProfile(uid){
       : (ME.blocked || []).includes(u.id) ? `<div class="ph-actions"><span class="hint">Has bloqueado a ${escapeHtml(u.name)}.</span><button class="ph-btn" onclick="unblockUser('${u.id}')">Desbloquear</button></div>`
         : `<div class="ph-actions">${followButton(u)}<button class="ph-btn" onclick="openDm('${u.id}')">Mensaje</button></div>`)}
     ${(me && !u.profilePublic)?`<div class="priv-banner">${ico('lock')} Perfil privado: solo tus seguidores aprobados ven tu actividad.</div>`:''}
-    <div class="prof-tabs" role="tablist">${[['posts','grid','Publicaciones'],['vividas','play','Vividas'],['valoraciones','star','Valoraciones']].map(([t,i,l])=>
+    ${!canSeeProfile(u) ? `<div class="empty-tab priv-block"><span class="empty-ic">${ico('lock')}</span><h3>Esta cuenta es privada</h3><p>Sigue a ${escapeHtml(u.name)} para ver sus publicaciones, planes y valoraciones.</p></div>` : `
+    <div class="prof-tabs" role="tablist">${[['posts','grid','Publicaciones'],['vividas','play','Vividas'],['valoraciones','star','Valoraciones'],['etiquetadas','tag','Etiquetadas']].concat(me ? [['guardados','bookmark','Guardados']] : []).map(([t,i,l])=>
       `<button class="${tab===t?'active':''}" role="tab" aria-selected="${tab===t}" aria-label="${l}" title="${l}" onclick="setProfileTab('${t}','${u.id}')">${ico(i)}<span class="pt-l">${l}</span></button>`).join('')}
     </div>
-    <div id="profile-grid">${tab==='posts'?profileGridPosts(me?'me':u.id):(tab==='vividas'?profileGridVividas(u):profileRatings(u, me))}</div>`;
+    <div id="profile-grid">${tab==='posts'?profileGridPosts(me?'me':u.id):(tab==='vividas'?profileGridVividas(u):(tab==='etiquetadas'?postGrid(taggedPosts(me?'me':u.id), me?'Aquí salen las publicaciones en las que te etiquetan y aceptas.':'Nadie le ha etiquetado todavía.'):(tab==='guardados'&&me?`<p class="hint saved-note">${ico('lock')} Solo tú ves lo que guardas.</p>`+postGrid(POSTS.filter(p=>p.savedByMe&&canSeePost(p)), 'Guarda publicaciones con el marcador para verlas aquí.'):profileRatings(u, me))))}</div>`}`;
 }
 function setProfileTab(t, uid){ state.profileTab=t; renderProfile(uid==='me'?'me':uid); }
 
@@ -1605,6 +1616,8 @@ function relation(ownerId, viewerId){
 function canSeeRating(r, viewerId){
   const rel = relation(r.userId, viewerId || 'me'), aud = ratingAudience(r);
   if (rel === 'yo') return true;
+  const owner = getUser(r.userId);
+  if (owner && owner.profilePublic === false && !follows(viewerId || 'me', r.userId)) return false;   // perfil privado: solo seguidores
   if (aud === 'todos') return true;
   if (aud === 'seguidores') return rel === 'seguidor' || rel === 'amigo';
   if (aud === 'amigos') return rel === 'amigo';
@@ -1684,17 +1697,18 @@ function saveRating(){
 function setRatingPref(k, v){ ME.ratings = Object.assign(ratingPrefs(ME), { [k]: v }); saveState(); renderSettings(); }
 
 /* ---------- seguir / amigos ---------- */
-function toggleFollow(uid){
+function toggleFollow(uid, quiet){
   const i = FOLLOWS.findIndex(([a,b]) => a === 'me' && b === uid);
   const u = getUser(uid) || { name:'' };
+  if (i < 0 && isPrivate(u)){ requestFollow(uid); if (!quiet) renderProfile(uid); return; }   // perfil privado: se pide
   if (i >= 0){ FOLLOWS.splice(i, 1); toast('Has dejado de seguir a ' + u.name); }
   else { FOLLOWS.push(['me', uid]); toast(areFriends('me', uid) ? 'Ahora sois amigos: os seguís los dos' : 'Siguiendo a ' + u.name); }
-  saveState(); renderProfile(uid);
+  saveState(); if (!quiet) renderProfile(uid);
 }
 function followButton(u){
   const iFollow = follows('me', u.id), theyFollow = follows(u.id, 'me');
-  const label = iFollow ? (theyFollow ? `${ico('check')} Amigos` : 'Siguiendo') : (theyFollow ? 'Seguir también' : 'Seguir');
-  return `<button class="ph-btn ${iFollow?'':'primary'}" onclick="toggleFollow('${u.id}')">${label}</button>`;
+  const label = iFollow ? (theyFollow ? `${ico('check')} Amigos` : 'Siguiendo') : (hasRequested(u.id) ? 'Solicitado' : (isPrivate(u) ? 'Solicitar seguir' : (theyFollow ? 'Seguir también' : 'Seguir')));
+  return `<button class="ph-btn ${iFollow || hasRequested(u.id) ? '' : 'primary'}" onclick="toggleFollow('${u.id}')">${label}</button>`;
 }
 
 /* ---------- verificación de identidad y varios perfiles ----------
@@ -1857,6 +1871,11 @@ function renderSettings(){
           <span class="tg-info"><span class="tg-n">Presencia por defecto: ${ME.presencePublic?'pública':'privada'}</span><span class="tg-s">Cómo apareces al registrar tu llegada</span></span>
           <span class="switch ${ME.presencePublic?'on':''}"><span class="knob"></span></span></div>
       </div>
+      <div class="set-group"><div class="set-title">Menciones y etiquetas</div>
+        <div class="set-box"><span class="sb-l">Quién puede mencionarte o etiquetarte</span>
+          <div class="iseg">${[['todos','Todos','globe'],['seguidos','A quien sigo','users'],['nadie','Nadie','lock']].map(([v,l,n])=>`<button class="${(ME.mentionPolicy||'todos')===v?'active':''}" onclick="setMentionPolicy('${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div>
+          <p class="hint">Aunque te mencionen, no se asocia a tu perfil hasta que lo aceptas en la pestaña Menciones.</p></div>
+      </div>
       <div class="set-group"><div class="set-title">Mensajes</div>
         <div class="set-box"><span class="sb-l">Mensajes de quien no conoces</span>
           <div class="iseg">${DM_MODES.map(([v,l,n])=>`<button class="${(ME.dmMode||'solicitud')===v?'active':''}" onclick="setDmMode('${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div>
@@ -1892,7 +1911,12 @@ function renderSettings(){
       </div>
     </div>`;
 }
-function toggleProfilePrivacy(){ ME.profilePublic = !ME.profilePublic; saveState(); renderSettings(); }
+function toggleProfilePrivacy(){
+  ME.profilePublic = !ME.profilePublic;
+  if (ME.profilePublic){ const n = incomingRequests().length; acceptAllIncoming(); if (n) toast(`Perfil público: ${n} solicitudes aceptadas`); }
+  else { toast('Perfil privado: quien quiera seguirte tendrá que pedirlo'); setTimeout(simulateIncomingFollow, 4000); }   // demo: llega una solicitud
+  saveState(); renderSettings();
+}
 function togglePresenceDefault(){ ME.presencePublic = !ME.presencePublic; state.presencePublic = ME.presencePublic; saveState(); renderSettings(); }
 
 /* ---------- grupos ---------- */
@@ -2058,16 +2082,17 @@ function publishPlan(){
   if (plan.approval === 'manual') setTimeout(() => simulateIncomingRequest(plan.id), 5000);   // demo: llega una solicitud
   toast('Plan publicado'); go('plan/'+plan.id);
 }
-function freshPostDraft(){ return { origin:'plan', kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' }; }
+function freshPostDraft(){ return { items:[], origin:'plan', kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' }; }
 function capturePostInputs(){
   const d=state.draftPost;
   d.caption=val('f-caption'); d.alt=val('f-alt');
   d.place=val('f-postplace'); d.planId=val('f-postplan');
 }
+// @menciones y #temas tocables (llevan al perfil o a la página del tema).
 function highlightCaption(text){
   return escapeHtml(text)
-    .replace(/(^|\s)(@[\wáéíóúñ]+)/gi,'$1<span class="mention">$2</span>')
-    .replace(/(^|\s)(#[\wáéíóúñ]+)/gi,'$1<span class="hash">$2</span>');
+    .replace(/(^|\s)(@[\wáéíóúñ](?:[\w.áéíóúñ]*[\wáéíóúñ])?)/gi,(m,a,h)=>`${a}<span class="mention" role="link" tabindex="0" onclick="event.stopPropagation();openHandle('${h}')">${h}</span>`)
+    .replace(/(^|\s)#([\wáéíóúñ]+)/gi,(m,a,t)=>`${a}<span class="hash" role="link" tabindex="0" onclick="event.stopPropagation();go('tema/${encodeURIComponent(t.toLowerCase())}')">#${t}</span>`);
 }
 function updateCaptionPreview(){
   const el=document.getElementById('cap-preview'); if(!el) return;
@@ -2100,12 +2125,13 @@ function renderCreatePost(){
         ${fromPlan ? `<select id="f-postplan" class="or-sel wide" aria-label="Plan del que compartes la experiencia">${linkable.map(p=>`<option value="${p.id}" ${d.planId===p.id?'selected':''}>${escapeHtml(p.title)}</option>`).join('')}</select>
           <p class="hint">Queda ligada al plan y cuenta como prueba social; en tu perfil sale dentro de "Planes".</p>`
         : `<p class="hint">${linkable.length ? 'Un momento tuyo, sin plan: sale en tu perfil, dentro de "Tu vida".' : 'Aún no has asistido a ningún plan; puedes compartir momentos de tu vida.'}</p>`}</div>
-      <div class="field"><label>Formato</label>
+      ${draftItems().length ? `<div class="field"><label>Formato</label><p class="hint">${{ foto:'Foto', carrusel:`Carrusel de ${draftItems().length} fotos`, video:'Vídeo' }[k]} · depende de lo que subas.</p></div>` : `<div class="field"><label>Formato</label>
         <div class="iseg" id="d-postkind">
           <button class="${k==='foto'?'active':''}" onclick="setPostField('kind','foto')">${ico('image')}<span>Foto</span></button>
           <button class="${k==='video'?'active':''}" onclick="setPostField('kind','video')">${ico('video')}<span>Vídeo</span></button>
-          <button class="${k==='carrusel'?'active':''}" onclick="setPostField('kind','carrusel')">${ico('stack')}<span>Carrusel</span></button></div></div>
-      <div class="field"><label>Vista previa</label>${preview}<span class="add-media center">${ico('image')} Añadir desde galería</span></div>
+          <button class="${k==='carrusel'?'active':''}" onclick="setPostField('kind','carrusel')">${ico('stack')}<span>Carrusel</span></button></div></div>`}
+      <div class="field"><label>Vista previa</label>${draftItems().length ? draftPreviewHtml(musicSticker) : preview + '<p class="hint">Sube tus fotos o un vídeo. Si no eliges nada, la demo usa fotos de muestra.</p>'}
+        <label class="add-media center">${ico('image')} ${draftItems().length ? 'Añadir más' : 'Hacer foto o elegir de la galería'}<input type="file" accept="image/*,video/*" multiple hidden onchange="pickPostMedia(this)"></label></div>
 
       <div class="field"><label for="f-caption">Pie de texto ${counter('f-caption','caption',d.caption)}</label>
         <textarea id="f-caption" maxlength="${LIMITS.caption}" rows="3" placeholder="Escribe un pie… usa @ para mencionar y # para temas" oninput="updateCaptionPreview();countChars(this,'caption')">${escapeHtml(d.caption||'')}</textarea>
@@ -2150,15 +2176,16 @@ function publishPost(){
   const d = state.draftPost, k = d.kind;
   const caption = clip(d.caption, 'caption') || 'Nueva publicación';
   const media = k==='carrusel' ? ['g-grape','g-sunset','g-forest'] : [k==='video'?'g-grape':'g-sunset'];
-  const mentions = (caption.match(/@[\wáéíóúñ]+/gi)||[]);
+  const mentions = (caption.match(MENTION_RE)||[]);
   const hashtags = (caption.match(/#[\wáéíóúñ]+/gi)||[]);
   const sample = ['1566737236500-c8ac43014a67','1495567720989-cebdbdd97913','1551632811-561732d1e306'];
-  const imgs = k==='carrusel' ? sample : [sample[0]];
+  const up = commitDraftMedia();   // fotos o vídeo subidos; si no hay, fotos de muestra
+  const imgs = up ? up.imgs : (k==='carrusel' ? sample : [sample[0]]);
   const id = 'npo'+Date.now();
   const linkable = linkablePlans();
   const planId = (d.origin === 'plan' && linkable.length) ? (linkable.some(p => p.id === d.planId) ? d.planId : linkable[0].id) : null;
   POSTS.unshift({
-    id, authorId:'me', kind:k, media, imgs, caption, likes:0, ago:0, comments:[], duration: k==='video' ? 15 : undefined,
+    id, authorId:'me', kind: up ? up.kind : k, media: up ? imgs.map(() => 'g-dark') : media, imgs, video: up && up.video ? up.video : undefined, caption, likes:0, ago:0, comments:[], duration: up && up.duration ? up.duration : (k==='video' ? 15 : undefined),
     placeId:d.place||null, taggedUserIds:[...d.tags], planId, altText:clip(d.alt, 'alt'),
     mentions, hashtags, audience:d.audience, commentsEnabled:d.comments, hideLikes:d.hideLikes, sharedToStory:d.alsoStory,
     trackId:d.trackId||null,
@@ -2183,6 +2210,7 @@ function buildFilters(){
   const prices=[['todos','Todo','layers'],['gratis','Gratis','ticket'],['pago','Pago','euro']];
   const ichip=(v,l,name,act)=>`<button data-v="${v}" class="${act?'active':''}">${ico(name)}<span>${l}</span></button>`;
   cont.innerHTML = `
+    <button class="search-entry" onclick="go('buscar')">${ico('search')}<span>Busca planes, personas o #temas</span></button>
     <div class="chips" id="chips-cat">${ichip('todas','Todos','hash',true)}${CATEGORIES.map(c=>ichip(c.id,c.label,ICON_FOR_CAT[c.id]||'hash',false)).join('')}</div>
     <div class="seg-row">
       <div class="iseg" id="seg-size">${sizes.map(([v,l,n])=>ichip(v,l,n,v==='todos')).join('')}</div>
@@ -2219,6 +2247,9 @@ function router(){
     case 'grupo':   renderGroupDetail(arg); showView('page'); scrollTop('page'); break;
     case 'mensajes': renderInbox(arg); showView('page'); scrollTop('page'); break;
     case 'chat':     renderChat(arg); showView('page'); { const v = document.getElementById('view-page'); v.scrollTop = v.scrollHeight || 0; } break;
+    case 'buscar':  renderSearch(arg != null ? decodeURIComponent(arg) : null); showView('page'); scrollTop('page'); break;
+    case 'tema':    renderTag(arg); showView('page'); scrollTop('page'); break;
+    case 'seguidores': case 'seguidos': renderFollowList(route, arg || 'me'); showView('page'); scrollTop('page'); break;
     case 'notificaciones': renderNotifications(); showView('page'); scrollTop('page'); break;
     case 'editar-plan': renderEditPlan(arg); showView('page'); scrollTop('page'); break;
     case 'seguridad': renderSecurity(); showView('page'); scrollTop('page'); break;
@@ -2251,6 +2282,7 @@ function init(){
   window.addEventListener('hashchange', router);
   updateDmBadge();
   router();
+  loadAllMedia().then(n => { if (n) router(); });   // fotos y vídeos subidos (IndexedDB)
   if (!acc) showAuth('bienvenida', {});
   else if (!acc.onboarded) showAuth(acc.step || 'perfil', {});
 }

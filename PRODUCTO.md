@@ -219,6 +219,8 @@ Relación con el resto del modelo. La asistencia real verificada refuerza el rec
 
 ## Publicaciones
 
+El detalle de subir fotos y vídeos, el menú de cada publicación, los perfiles privados con solicitudes de seguimiento, la búsqueda, los #temas y las menciones, y lo que debe hacer el servidor, está en [docs/social.md](docs/social.md).
+
 Además de los aftermovies (planes pasados) y las stories, el usuario crea publicaciones de perfil en tres formatos: foto, vídeo o carrusel (varias imágenes). Comparten un mismo flujo de subida —selección de tipo, vista previa, pie de texto y publicar— y la capa de moderación en la subida. Las publicaciones viven en el grid del perfil; cuando proceden de un plan, alimentan también las Vividas. Su visibilidad la rige el perfil (público o privado), como el resto del contenido.
 
 Dos tipos de publicación, según su origen. Al crearla se elige qué se comparte:
@@ -644,7 +646,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Contenido
 
-- Publicación. Post de perfil. id, autor_id, formato (foto / vídeo / carrusel), media (una o varias imágenes), pie de texto (con menciones @usuario y hashtags #tema), ubicación (lugar_id, opcional), usuarios etiquetados, plan vinculado (plan_id opcional; liga la publicación a un plan al que se asistió o que se creó, para que aparezca ligada a ese plan; si no lo tiene, es una publicación de la vida del usuario, y de ahí sale el filtro Planes / Su vida del perfil), texto alternativo (accesibilidad), audiencia (público / solo seguidores / amigos —seguimiento mutuo—, coherente con perfil público o privado), comentarios activos (bool), ocultar likes (bool), compartir en stories (bool), pista_id (música, opcional), likes, visibilidad, fecha. El aftermovie es una publicación especializada, ligada a un plan, que vive además en Vividas.
+- Publicación. Post de perfil. id, autor_id, formato (foto / vídeo / carrusel), media (una foto, de 2 a 10 fotos, o un vídeo de hasta 60 s con su miniatura; sin metadatos de ubicación), pie de texto (con menciones @usuario y hashtags #tema), ubicación (lugar_id, opcional), usuarios etiquetados, plan vinculado (plan_id opcional; liga la publicación a un plan al que se asistió o que se creó, para que aparezca ligada a ese plan; si no lo tiene, es una publicación de la vida del usuario, y de ahí sale el filtro Planes / Su vida del perfil), texto alternativo (accesibilidad), audiencia (público / solo seguidores / amigos —seguimiento mutuo—, coherente con perfil público o privado), comentarios activos (bool), ocultar likes (bool), compartir en stories (bool), pista_id (música, opcional), likes, visibilidad, fecha. El aftermovie es una publicación especializada, ligada a un plan, que vive además en Vividas.
 - Aftermovie. Post permanente. id, plan_id de origen, autor_id, media, hashtag(s), visibilidad (según perfil), fecha. Vive en la pestaña Vividas.
 - Story. Efímera (24 h). id, autor_id, plan_id (opcional), media, pista_id (música, opcional), visibilidad (público / privado / mejores amigos), fecha de expiración. Vive en la pestaña Stories y puede aflorar destacada en Vividas.
 - Directo. id, emisor_id, plan_id (plan en marcha), título, estado (en curso o finalizado), inicio, fin. Derivado: espectadores. Su chat reutiliza la mensajería y la moderación.
@@ -653,7 +655,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Comentario. id, publicación_id, autor_id, texto, fecha. Solo cuando la publicación tiene los comentarios activos.
 - Me gusta. usuario_id, publicación_id, fecha. El contador de la publicación se deriva de aquí; "ocultar likes" solo cambia lo que ven los demás.
 - Guardado. usuario_id, publicación_id, fecha. Colección privada de cada usuario.
-- Mención. id, contenido_id (plan, story o aftermovie), usuario_mencionado_id, estado (pendiente, aceptada, rechazada). No se vincula al perfil hasta aceptarse; alimenta la pestaña Menciones.
+- Mención. id, tipo (etiqueta en una publicación, mención en el pie o en un comentario), contenido_id, autor_id, usuario_mencionado_id, estado (pendiente, aceptada, rechazada). No se asocia al perfil hasta aceptarse; aceptada, la publicación sale en el perfil ▸ Etiquetadas. Quién puede mencionar a cada usuario (todos, a quien sigue, nadie) vive en sus ajustes. Alimenta la pestaña Menciones.
 - Hashtag. id, texto, lugar_id o ancla asociada (opcional). Agrupa aftermovies y organiza el histórico.
 
 ### Mensajería
