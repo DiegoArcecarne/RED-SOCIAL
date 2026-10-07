@@ -23,11 +23,29 @@ function makeEl() {
   };
 }
 
+// AudioContext falso: registra cuántas notas se programan, sin sonar.
+function makeAudio(counter) {
+  const param = () => ({ value: 0, setValueAtTime() {}, exponentialRampToValueAtTime() {}, linearRampToValueAtTime() {}, setTargetAtTime() {} });
+  const node = (extra) => Object.assign({ connect() {}, disconnect() {} }, extra);
+  return class FakeAudioContext {
+    constructor() { this.currentTime = 0; this.sampleRate = 8000; this.destination = node(); }
+    resume() {}
+    createGain() { return node({ gain: param() }); }
+    createBiquadFilter() { return node({ type: '', frequency: param() }); }
+    createDynamicsCompressor() { return node(); }
+    createOscillator() { return node({ type: '', frequency: param(), start() { counter.notes++; }, stop() {} }); }
+    createBuffer(ch, len) { const d = new Float32Array(len); return { getChannelData: () => d }; }
+    createBufferSource() { return node({ buffer: null, start() { counter.notes++; }, stop() {} }); }
+  };
+}
+
 // Crea un entorno aislado; `store` hace de localStorage y se comparte entre entornos
 // para simular una recarga de la página.
 function createEnv(store) {
   const reg = {};
+  const audio = { notes: 0 };
   const ctx = {
+    AudioContext: makeAudio(audio),
     console, setTimeout, clearTimeout, setInterval, clearInterval,
     document: { getElementById: (id) => reg[id] || (reg[id] = makeEl()), querySelectorAll: () => [], addEventListener() {}, readyState: 'complete' },
     location: { hash: '', reload() {} },
@@ -46,6 +64,7 @@ function createEnv(store) {
     run: (expr) => vm.runInContext(expr, ctx),
     nav: (hash) => { ctx.location.hash = '#/' + hash; ctx.router(); },
     html: (id) => (reg[id] ? reg[id]._html : ''),
+    audio,
   };
 }
 
@@ -87,7 +106,7 @@ check('crear: selector plan / publicación / grupo', ['crear-plan', 'crear-post'
 a.nav('crear-plan'); h = a.html('view-page'); rendered += h;
 check('crear plan: tipo de asistencia', h.includes('Tipo de asistencia'));
 a.nav('crear-post'); h = a.html('view-page'); rendered += h;
-check('crear publicación: 9 opciones', ['Vincular a un plan', 'Ubicación', 'Etiquetar personas', 'Texto alternativo', 'Audiencia',
+check('crear publicación: opciones', ['Vincular a un plan', 'Música', 'Ubicación', 'Etiquetar personas', 'Texto alternativo', 'Audiencia',
   'Comentarios activos', 'Ocultar el número de Me gusta', 'Compartir también en Stories', 'cap-preview'].every((t) => h.includes(t)));
 a.nav('crear-grupo'); h = a.html('view-page'); rendered += h;
 check('crear grupo: miembros y roles', h.includes('Miembros y roles'));
@@ -148,6 +167,38 @@ const nStories = a.run('STORIES.length');
 a.run('state.draftPost.alsoStory = true; publishPost()');
 check('publicar con "compartir en stories" crea una story', a.run('STORIES.length') === nStories + 1);
 
+// --- Música ---
+a.nav('crear-post'); a.run('state.draftPost = freshPostDraft()');
+a.run('openMusicPicker()'); h = a.html('mp-list'); rendered += a.html('overlay') + h;
+check('música: el selector lista toda la biblioteca', count(h, /class="mp-row"/g) === a.run('TRACKS.length'));
+a.run('setMusicMood("Fiesta")');
+check('música: filtro por ambiente', count(a.html('mp-list'), /class="mp-row"/g) === a.run('TRACKS.filter(t => t.mood === "Fiesta").length'));
+a.run('state.musicMood = "todas"; state.musicQuery = "lavapiés"; renderMusicList()');
+check('música: búsqueda por artista', count(a.html('mp-list'), /class="mp-row"/g) === 1 && a.html('mp-list').includes('Clamores'));
+const notes0 = a.audio.notes;
+a.run('previewTrack("t2")');
+check('música: la escucha previa suena (programa notas)', a.run('musicNow.src') === 'pv:t2' && a.audio.notes > notes0);
+a.run('chooseTrack("t2")'); h = a.html('view-page'); rendered += h;
+check('música: elegir pista la añade al borrador y para la escucha', a.run('state.draftPost.trackId') === 't2' && a.run('musicNow.src') === null && h.includes('pp-music') && h.includes('Neón Cálido · Azotea'));
+a.run('ME.type = "profesional"');
+check('música: cuentas profesionales solo ven música libre', a.run('availableTracks().every(t => t.free) && availableTracks().length < TRACKS.length'));
+a.run('ME.type = "particular"');
+const nStories2 = a.run('STORIES.length');
+a.run('state.draftPost.alsoStory = true; publishPost()');
+check('música: la publicación y su story guardan la pista', a.run('POSTS[0].trackId') === 't2' && a.run('STORIES.length') === nStories2 + 1 && a.run('STORIES[0].trackId') === 't2');
+a.run('setContentTab("vividas")'); h = a.html('feed-list');
+check('música: el muro muestra la canción de cada publicación', count(h, /class="post-music /g) === a.run('POSTS.filter(p => p.trackId).length'));
+a.run('togglePostMusic("po8")');
+check('música: tocar la canción de una publicación la reproduce', a.run('musicNow.src') === 'po8' && a.run('musicNow.trackId') === 't1');
+a.run('togglePostMusic("po8")');
+check('música: tocar otra vez la para', a.run('musicNow.src') === null);
+a.run('openStory(storyGroups().findIndex(g => g.userId === "azotea"))'); h = a.html('overlay'); rendered += h;
+check('música: las stories suenan con su pista', a.run('musicNow.src') === 'story' && a.run('musicNow.trackId') === 't2' && h.includes('sv-music') && h.includes('sv-sound'));
+a.run('toggleStorySound()');
+check('música: silenciar la story', a.run('musicNow.src') === null);
+a.run('toggleStorySound(); closeOverlay()');
+check('música: cerrar la story para la música', a.run('musicNow.src') === null && a.run('state.storySound') === true);
+
 // --- Creación + persistencia tras "recargar" ---
 const nPlans = a.run('PLANS.length');
 a.run('publishPlan()');
@@ -158,6 +209,7 @@ const b = createEnv(store);   // misma "memoria" del navegador, entorno nuevo
 check('persistencia: el plan creado sobrevive a recargar', b.run(`PLANS.some(p => p.id === "${newId}")`));
 check('persistencia: la asistencia registrada sobrevive', b.run('state.attended.has("p2")'));
 check('persistencia: el me gusta y el comentario sobreviven', b.run('POSTS.find(p => p.id === "po8").likedByMe === true && POSTS.find(p => p.id === "po8").comments.some(c => c.userId === "me")'));
+check('persistencia: la música de las publicaciones sobrevive', b.run('POSTS.some(p => p.authorId === "me" && p.trackId === "t2" && p.id.startsWith("npo"))'));
 check('persistencia: los planes base conservan fecha futura', b.run('getPlan("p1").when > new Date()'));
 const c = createEnv({ [a.run('STORE_KEY')]: '{corrupto' });
 check('persistencia: datos corruptos no rompen la demo', c.run('PLANS.length') === 12);

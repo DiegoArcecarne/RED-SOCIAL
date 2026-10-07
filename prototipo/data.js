@@ -238,22 +238,22 @@ const ME = USERS[0]; // usuario actual
    de respaldo por foto. planId: plan al que está vinculada. ago: horas desde que
    se publicó. duration: segundos, solo en vídeos (simulados con la portada). */
 const POSTS = [
-  { id:'po7',  authorId:'azotea', planId:'p3', kind:'video', duration:24, media:['g-grape'], imgs:['1517457373958-b7bdd4587205'], ago:2,
+  { id:'po7',  authorId:'azotea', planId:'p3', trackId:'t2', kind:'video', duration:24, media:['g-grape'], imgs:['1517457373958-b7bdd4587205'], ago:2,
     caption:'Sunset Sessions de anoche. Gracias a los 63 que subisteis #rooftopmadrid', likes:540,
     comments:[{userId:'sara',text:'Qué noche. Repito el viernes'},{userId:'marco',text:'El DJ, brutal'}] },
-  { id:'po8',  authorId:'lucia', planId:'p2', kind:'carrusel', media:['g-sunset','g-sunset'], imgs:['1495567720989-cebdbdd97913','1502680390469-be75c86b636f'], ago:3,
+  { id:'po8',  authorId:'lucia', planId:'p2', trackId:'t1', kind:'carrusel', media:['g-sunset','g-sunset'], imgs:['1495567720989-cebdbdd97913','1502680390469-be75c86b636f'], ago:3,
     caption:'Debod a las 21:40. Gracias a @marcot y a todos los que os acercasteis #atardecerdebod', likes:118,
     comments:[{userId:'marco',text:'El mejor atardecer de Madrid, sin discusión'},{userId:'ana',text:'La próxima no me lo pierdo'}] },
-  { id:'po9',  authorId:'marco', planId:'p10', kind:'video', duration:31, media:['g-dark'], imgs:['1486218119243-13883505764c'], ago:8,
+  { id:'po9',  authorId:'marco', planId:'p10', trackId:'t4', kind:'video', duration:31, media:['g-dark'], imgs:['1486218119243-13883505764c'], ago:8,
     caption:'5 km al anochecer con el club. Ritmo de grupo, nadie se queda atrás #runningmadrid', likes:76,
     comments:[{userId:'ana',text:'¿Vale para principiantes?'},{userId:'marco',text:'@anap sí, hay grupo de ritmo suave'}] },
-  { id:'po10', authorId:'sara', planId:'p1', kind:'foto', media:['g-wine'], imgs:['1514362545857-3bc16c4c7d1b'], ago:14,
+  { id:'po10', authorId:'sara', planId:'p1', trackId:'t6', kind:'foto', media:['g-wine'], imgs:['1514362545857-3bc16c4c7d1b'], ago:14,
     caption:'El himno de la Victoria no defrauda. Fui sola y salí con plan para el sábado #himnovictoria', likes:203,
     comments:[{userId:'nora',text:'Eso es justo lo que buscaba al llegar a Burgos'}] },
-  { id:'po11', authorId:'david', planId:'p7', kind:'carrusel', media:['g-grape','g-grape'], imgs:['1511192336575-5a79af67a629','1493225457124-a3eb161ffa5f'], ago:20,
+  { id:'po11', authorId:'david', planId:'p7', trackId:'t3', kind:'carrusel', media:['g-grape','g-grape'], imgs:['1511192336575-5a79af67a629','1493225457124-a3eb161ffa5f'], ago:20,
     caption:'Jazz en Clamores. Sala pequeña, sonido enorme #clamoresjazz', likes:89,
     comments:[{userId:'lucia',text:'¿Hay pase el jueves que viene?'}] },
-  { id:'po12', authorId:'ana', planId:'p8', kind:'foto', media:['g-forest'], imgs:['1545205597-3d9d02c29597'], ago:26,
+  { id:'po12', authorId:'ana', planId:'p8', trackId:'t5', kind:'foto', media:['g-forest'], imgs:['1545205597-3d9d02c29597'], ago:26,
     caption:'Primera sesión de yoga al sol en el Retiro. Repetimos el sábado #retiromorning', likes:61,
     comments:[] },
   { id:'po1',  authorId:'me', planId:'p5', kind:'carrusel', media:['g-forest','g-forest','g-sunset'], imgs:['1551632811-561732d1e306','1454496522488-7a8e488e8606','1495567720989-cebdbdd97913'], ago:30,
@@ -262,10 +262,10 @@ const POSTS = [
   { id:'po13', authorId:'nora', planId:'p9', kind:'carrusel', media:['g-wine','g-wine'], imgs:['1510812431401-41d2bd2722f3','1474722883778-792e7990302f'], ago:40,
     caption:'Seis vinos naturales y una mesa de desconocidos que ya no lo son #catadevinos', likes:132,
     comments:[{userId:'sara',text:'Apuntadísima a la próxima'}] },
-  { id:'po15', authorId:'david', planId:'p5', kind:'video', duration:15, media:['g-forest'], imgs:['1454496522488-7a8e488e8606'], ago:44,
+  { id:'po15', authorId:'david', planId:'p5', trackId:'t4', kind:'video', duration:15, media:['g-forest'], imgs:['1454496522488-7a8e488e8606'], ago:44,
     caption:'Subida al mirador al amanecer. Merece cada paso #trailamanecer', likes:58,
     comments:[] },
-  { id:'po3',  authorId:'me', planId:'p3', kind:'video', duration:18, media:['g-grape'], imgs:['1566737236500-c8ac43014a67'], ago:52,
+  { id:'po3',  authorId:'me', planId:'p3', trackId:'t2', kind:'video', duration:18, media:['g-grape'], imgs:['1566737236500-c8ac43014a67'], ago:52,
     caption:'Rooftop al atardecer #rooftopmadrid', likes:120,
     comments:[{userId:'azotea',text:'Gracias por venir, Marina'}] },
   { id:'po14', authorId:'marco', planId:'p12', kind:'foto', media:['g-sunset'], imgs:['1505686994434-e3cc5abf1330'], ago:60,
@@ -285,13 +285,39 @@ const POSTS = [
 /* Stories (24 h): el "ahora mismo" de los planes. minAgo: minutos desde que se
    publicó; dentro de cada usuario se reproducen de la más antigua a la más nueva. */
 const STORIES = [
-  { id:'s1', userId:'azotea', planId:'p3', img:'1517457373958-b7bdd4587205', minAgo:12, text:'La azotea está a tope. Quedan 10 plazas para esta noche' },
-  { id:'s2', userId:'azotea', planId:'p3', img:'1566737236500-c8ac43014a67', minAgo:4,  text:'Empieza el DJ set' },
-  { id:'s3', userId:'lucia',  planId:'p2', img:'1495567720989-cebdbdd97913', minAgo:25, text:'Somos 9 en Debod. Aún llegáis' },
-  { id:'s4', userId:'marco',  planId:'p10', img:'1486218119243-13883505764c', minAgo:40, text:'Salimos en 15 minutos desde la Puerta de Alcalá' },
-  { id:'s5', userId:'sara',   planId:'p1', img:'1510812431401-41d2bd2722f3', minAgo:65, text:'Brindis antes del himno' },
-  { id:'s6', userId:'sara',   planId:'p1', img:'1514362545857-3bc16c4c7d1b', minAgo:50, text:'Calentando voces' },
+  { id:'s1', userId:'azotea', planId:'p3', img:'1517457373958-b7bdd4587205', minAgo:12, trackId:'t2', text:'La azotea está a tope. Quedan 10 plazas para esta noche' },
+  { id:'s2', userId:'azotea', planId:'p3', img:'1566737236500-c8ac43014a67', minAgo:4,  trackId:'t2', text:'Empieza el DJ set' },
+  { id:'s3', userId:'lucia',  planId:'p2', img:'1495567720989-cebdbdd97913', minAgo:25, trackId:'t1', text:'Somos 9 en Debod. Aún llegáis' },
+  { id:'s4', userId:'marco',  planId:'p10', img:'1486218119243-13883505764c', minAgo:40, trackId:'t4', text:'Salimos en 15 minutos desde la Puerta de Alcalá' },
+  { id:'s5', userId:'sara',   planId:'p1', img:'1510812431401-41d2bd2722f3', minAgo:65, trackId:'t6', text:'Brindis antes del himno' },
+  { id:'s6', userId:'sara',   planId:'p1', img:'1514362545857-3bc16c4c7d1b', minAgo:50, trackId:'t6', text:'Calentando voces' },
   { id:'s7', userId:'nora',   planId:'p9', img:'1474722883778-792e7990302f', minAgo:180, text:'Últimas plazas para la cata del jueves' },
+];
+
+/* Biblioteca de música (ficticia). Pistas originales de la demo: no son canciones
+   reales, se sintetizan en el navegador a partir de este patrón (sin archivos).
+   free: libre de derechos (la única que podrían usar las cuentas profesionales).
+   Patrón de 16 pasos por compás: chords = acordes en MIDI (uno por compás);
+   kick/hat: 'x' = golpe; bass/lead: dígito = nota del acorde (1 = la primera). */
+const TRACKS = [
+  { id:'t1', title:'Golden hour', artist:'Brisa Norte', mood:'Tranquila', bpm:82, free:true, cover:'g-sunset',
+    chords:[[53,57,60,64],[52,55,59,62],[50,53,57,60],[48,52,55,59]],
+    kick:'x.......x.......', hat:'..x...x...x...x.', bass:'1.....1.....3...', lead:'1...3...2.....4.', pad:'triangle' },
+  { id:'t2', title:'Azotea', artist:'Neón Cálido', mood:'Fiesta', bpm:122, free:false, cover:'g-grape',
+    chords:[[57,60,64],[53,57,60],[48,52,55],[55,59,62]],
+    kick:'x...x...x...x...', hat:'..x...x...x...x.', bass:'1..1..1.1..1..1.', lead:'1.3.2.3.1.3.2.3.', pad:'sawtooth', leadWave:'square' },
+  { id:'t3', title:'Clamores, 2 a.m.', artist:'Trío Lavapiés', mood:'Jazz', bpm:96, free:false, cover:'g-dark', swing:0.3,
+    chords:[[50,53,57,60],[55,59,62,65],[48,52,55,59],[57,61,64,67]],
+    kick:'x.........x.....', hat:'x..x.xx..x.xx..x', bass:'1...3...2...4...', lead:'..4...3.....2...', pad:'sine' },
+  { id:'t4', title:'Primer kilómetro', artist:'Ritmo Urbano', mood:'Energía', bpm:128, free:true, cover:'g-wine',
+    chords:[[52,55,59],[48,52,55],[55,59,62],[50,54,57]],
+    kick:'x...x...x...x...', hat:'x.x.x.x.x.x.x.x.', bass:'1.1.1.1.1.1.1.1.', lead:'1..2..3.1..2..3.', pad:'sawtooth', leadWave:'square' },
+  { id:'t5', title:'Respira', artist:'Luz de Mañana', mood:'Calma', bpm:70, free:true, cover:'g-forest',
+    chords:[[48,52,55,59],[45,48,52,55],[41,45,48,52],[43,47,50,52]],
+    kick:'................', hat:'................', bass:'1...............', lead:'3.......2.......', pad:'sine' },
+  { id:'t6', title:'Vermut y sobremesa', artist:'La Terraza', mood:'Sobremesa', bpm:110, free:false, cover:'g-sunset',
+    chords:[[50,54,57,61],[47,50,54,57],[52,55,59,62],[45,49,52,55]],
+    kick:'x...x...x...x...', hat:'x..x..x...x..x..', bass:'1..3..1.1..3..1.', lead:'..3.2...4..3....', pad:'triangle' },
 ];
 
 /* Directos: emisiones en vivo desde un plan en marcha. */
@@ -333,6 +359,7 @@ const REQUESTS = [
 
 const getUser  = (id) => USERS.find((u) => u.id === id);
 const getGroup = (id) => GROUPS.find((g) => g.id === id);
+const getTrack = (id) => TRACKS.find((t) => t.id === id);
 const postsByUser = (uid) => POSTS.filter((p) => p.authorId === uid);
 const requestsForPlan = (pid) => REQUESTS.filter((r) => r.planId === pid);
 
@@ -341,7 +368,7 @@ const requestsForPlan = (pid) => REQUESTS.filter((r) => r.planId === pid);
 if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
-    STORIES, LIVES, LIVE_CHAT,
-    getPlace, getPlan, getCategory, getUser, getGroup, postsByUser, requestsForPlan,
+    STORIES, LIVES, LIVE_CHAT, TRACKS,
+    getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, requestsForPlan,
   });
 }

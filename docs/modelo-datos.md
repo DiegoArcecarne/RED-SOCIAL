@@ -44,6 +44,8 @@ erDiagram
     USUARIO ||--o{ COMENTARIO : escribe
     PUBLICACION ||--o{ ME_GUSTA : recibe
     USUARIO ||--o{ ME_GUSTA : da
+    PISTA ||--o{ PUBLICACION : "suena en"
+    PISTA ||--o{ STORY : "suena en"
     USUARIO ||--o{ DIRECTO : emite
     PLAN ||--o{ DIRECTO : "se emite desde"
 
@@ -203,6 +205,7 @@ erDiagram
         bool comentarios_activos
         bool ocultar_likes
         bool compartir_en_stories
+        uuid pista_id FK "musica, nullable"
         int likes
         string visibilidad
     }
@@ -233,8 +236,20 @@ erDiagram
         uuid id PK
         uuid autor_id FK
         uuid plan_id FK "opcional"
+        uuid pista_id FK "musica, nullable"
         string visibilidad "publico|privado|mejores_amigos"
         datetime expira_at "24h"
+    }
+    PISTA {
+        uuid id PK
+        string titulo
+        string artista
+        string ambiente
+        int duracion_s
+        string licencia "libre|proveedor|catalogo"
+        string paises "donde se puede usar"
+        bool apta_profesional
+        string estado "activa|retirada"
     }
     DIRECTO {
         uuid id PK

@@ -39,20 +39,26 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    lados para navegar) y vista de directo con espectadores y chat en vivo. Desde
    *Crear ▸ Directo* puedes emitir el tuyo.
    La pestaña *Menciones* sigue siendo de muestra.
-4. **Mapa** — lugares (negocio verificado, público, secreto) con sus planes.
-5. **Ficha de plan** — portada, cuenta atrás, anfitrión y señales de confianza,
+4. **Música** — publicaciones y stories con canción, como en Instagram. Toca la
+   canción bajo el nombre (o el altavoz del vídeo) para escucharla; las stories
+   suenan solas y se pueden silenciar. Al crear una publicación, *Música* abre un
+   selector con buscador, filtros por ambiente y escucha previa. Las pistas son
+   originales y ficticias: se generan en el navegador (sin archivos ni canciones
+   reales), así que suenan también sin conexión. Sube el volumen del dispositivo.
+5. **Mapa** — lugares (negocio verificado, público, secreto) con sus planes.
+6. **Ficha de plan** — portada, cuenta atrás, anfitrión y señales de confianza,
    lugar, seguridad, reseñas y reserva (escrow en los de pago). Distingue plan
    **libre**, **apuntado** y **con aprobación**; muestra los asistentes reales y el
    control de **presencia pública o privada**.
-6. **Perfil y Ajustes** — publicaciones y Vividas en cuadrícula, insignia de cuenta
+7. **Perfil y Ajustes** — publicaciones y Vividas en cuadrícula, insignia de cuenta
    **profesional** y ajustes de privacidad.
-7. **Crear** (botón central) — **plan** (con tipo de asistencia y grupo
-   organizador), **publicación** (foto, vídeo o carrusel, con ubicación, etiquetas,
+8. **Crear** (botón central) — **plan** (con tipo de asistencia y grupo
+   organizador), **publicación** (foto, vídeo o carrusel, con música, ubicación, etiquetas,
    plan vinculado, texto alternativo, audiencia y opción de compartirla en stories),
    **grupo** (miembros con rol de admin o miembro) y **directo**.
-8. **Grupos** — miembros y roles; los admins aprueban las solicitudes de los
+9. **Grupos** — miembros y roles; los admins aprueban las solicitudes de los
    planes del grupo.
-9. **Solicitudes** — el organizador acepta o rechaza cada una. Aceptar inscribe a
+10. **Solicitudes** — el organizador acepta o rechaza cada una. Aceptar inscribe a
    la persona; su asistencia real se cuenta cuando llega.
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los

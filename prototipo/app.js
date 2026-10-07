@@ -13,7 +13,9 @@ const state = {
   presencePublic: (typeof ME !== 'undefined') ? ME.presencePublic : true,
   profileTab: 'posts',                 // posts | vividas
   draft: { cover:'g-grape', size:'mediano', cat:'social', access:'libre', price:'gratis' },
-  draftPost: { kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false },
+  draftPost: { kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' },
+  storySound: true,                    // las stories suenan con su música (se puede silenciar)
+  musicQuery: '', musicMood: 'todas',  // filtros del selector de música
   draftMembers: {},                    // userId -> 'admin' | 'miembro'
   pendingGroup: null,                  // grupo preseleccionado al crear plan
 };
@@ -74,6 +76,10 @@ const SVG = {
   bookmarkF:'<svg viewBox="0 0 24 24" class="fill"><path d="M6.5 3.5h11v17l-5.5-4-5.5 4z"/></svg>',
   mute:'<svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>',
   cast:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.2" class="fill"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.4 5.4a9.3 9.3 0 0 0 0 13.2M18.6 5.4a9.3 9.3 0 0 1 0 13.2"/></svg>',
+  volume:'<svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a8 8 0 0 1 0 11"/></svg>',
+  playS:'<svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
+  pause:'<svg viewBox="0 0 24 24"><path d="M8.5 5.5v13M15.5 5.5v13"/></svg>',
+  search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.4"/><path d="M15.7 15.7 20 20"/></svg>',
 };
 function ico(name){ return `<i class="ico">${SVG[name]||''}</i>`; }
 const ICON_FOR_CAT = { outdoor:'mountain', fiesta:'music', gastro:'food', cultura:'landmark', deporte:'flag', bienestar:'leaf', social:'chat', viajeros:'compass' };
@@ -125,7 +131,7 @@ function attendanceView(p){
    Lo creado en la demo (planes, publicaciones, grupos, solicitudes, asistencias)
    sobrevive a recargar la página. Si el navegador bloquea el almacenamiento,
    la demo sigue funcionando en memoria. "Restablecer demo" en Ajustes lo borra. */
-const STORE_KEY = 'planes-proto-v2';
+const STORE_KEY = 'planes-proto-v3';
 function saveState(){
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
@@ -197,7 +203,7 @@ function renderFeed(){
 /* ======================= MURO (Vividas), STORIES Y DIRECTOS ======================= */
 function agoLabel(h){ if (h < 1) return 'ahora'; if (h < 24) return `hace ${Math.round(h)} h`; return `hace ${Math.round(h/24)} d`; }
 function minLabel(m){ return m < 1 ? 'ahora' : (m < 60 ? `hace ${m} min` : `hace ${Math.round(m/60)} h`); }
-function setContentTab(t){ state.contentTab = t; renderContent(); scrollTop('feed'); }
+function setContentTab(t){ stopMusic(); state.contentTab = t; renderContent(); scrollTop('feed'); }
 
 // Publicaciones del muro, de la más reciente a la más antigua.
 function wallPosts(){ return POSTS.slice().sort((a,b)=>(a.ago||0)-(b.ago||0)); }
@@ -219,7 +225,8 @@ function postMedia(po){
       <div class="kb">${coverImg(imgs[0],700)}</div>
       <span class="pm-play">${ico('play')}</span>
       <span class="pm-dur">0:${String(d).padStart(2,'0')}</span>
-      <span class="pm-mute">${ico('mute')}</span>
+      ${po.trackId ? `<button class="pm-mute ${musicNow.src===po.id?'on':''}" data-music="${po.id}" onclick="event.stopPropagation();togglePostMusic('${po.id}')" aria-label="Activar o silenciar el sonido">${ico('mute')}${ico('volume')}</button>`
+        : `<span class="pm-mute">${ico('mute')}</span>`}
       <span class="pm-bar"><i style="animation-duration:${d}s"></i></span>${burst}</div>`;
   }
   return `<div class="pm ${grad(0)}" ondblclick="likePost('${po.id}',true)">${coverImg(imgs[0],700)}${burst}</div>`;
@@ -240,6 +247,7 @@ function postCard(po){
       <div class="post-who">
         <button class="post-name" onclick="go('u/${u.id}')">${escapeHtml(u.name)} ${u.verified?`<span class="vchk">${ico('check')}</span>`:''}${u.type==='profesional'?' <span class="pro-badge sm">Profesional</span>':''}</button>
         <span class="post-sub">${placeName?escapeHtml(placeName)+' · ':''}${agoLabel(po.ago||0)}</span>
+        ${postMusicLine(po)}
       </div>
       <span class="post-kind" title="${po.kind}">${ico(POST_ICON[po.kind]||'image')}</span>
     </header>
@@ -331,6 +339,169 @@ function renderStoriesTab(){
 }
 function newStory(){ state.draftPost = freshPostDraft(); state.draftPost.alsoStory = true; go('crear-post'); }
 
+/* ======================= MÚSICA ======================= */
+/* Motor de audio: sintetiza en el navegador (Web Audio API) las pistas de TRACKS a
+   partir de su patrón. Sin archivos ni canciones reales, así que no hay derechos
+   de autor en juego y funciona sin conexión. Solo suena tras un toque del usuario. */
+const Music = (() => {
+  let ctx = null, master = null, bus = null, noise = null, timer = null, track = null, step = 0, next = 0;
+  const AC = () => window.AudioContext || window.webkitAudioContext;
+  const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
+  function ensure(){
+    if (ctx) return true;
+    const C = AC(); if (!C) return false;
+    try { ctx = new C(); } catch (e) { return false; }
+    master = ctx.createGain(); master.gain.value = 0.55;
+    const comp = ctx.createDynamicsCompressor ? ctx.createDynamicsCompressor() : null;
+    if (comp){ master.connect(comp); comp.connect(ctx.destination); } else master.connect(ctx.destination);
+    return true;
+  }
+  function env(g, t, attack, peak, dur){
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  }
+  function tone(midi, t, dur, type, peak, cutoff, attack){
+    const o = ctx.createOscillator(), g = ctx.createGain(), f = ctx.createBiquadFilter();
+    o.type = type; o.frequency.setValueAtTime(hz(midi), t);
+    f.type = 'lowpass'; f.frequency.value = cutoff;
+    o.connect(f); f.connect(g); g.connect(bus);
+    env(g, t, attack || 0.01, peak, dur);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+  function kick(t){
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.16);
+    o.connect(g); g.connect(bus); env(g, t, 0.004, 0.9, 0.28);
+    o.start(t); o.stop(t + 0.3);
+  }
+  function hat(t){
+    if (!noise){
+      const len = Math.floor(ctx.sampleRate * 0.1); noise = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = noise.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noise; f.type = 'highpass'; f.frequency.value = 7000;
+    s.connect(f); f.connect(g); g.connect(bus); env(g, t, 0.002, 0.16, 0.05);
+    s.start(t); s.stop(t + 0.08);
+  }
+  // Un paso de semicorchea: acorde de fondo al empezar cada compás, batería, bajo y melodía.
+  function playStep(t){
+    const tr = track, sd = 60 / tr.bpm / 4, i = step % 16;
+    const ch = tr.chords[Math.floor(step / 16) % tr.chords.length];
+    const note = (c) => ch[(parseInt(c, 10) - 1) % ch.length];
+    if (i === 0) ch.forEach(n => tone(n, t, sd * 16 * 0.97, tr.pad || 'triangle', 0.045, 1600, 0.3));
+    if (tr.kick[i] === 'x') kick(t);
+    if (tr.hat[i] === 'x') hat(t);
+    if (/\d/.test(tr.bass[i])) tone(note(tr.bass[i]) - 24, t, sd * 1.8, 'triangle', 0.3, 650);
+    if (/\d/.test(tr.lead[i])) tone(note(tr.lead[i]) + 12, t, sd * 2.6, tr.leadWave || 'sine', 0.09, 2800);
+  }
+  // Programador con margen: agenda los pasos de los próximos 120 ms.
+  function tick(){
+    if (!track) return;
+    const sd = 60 / track.bpm / 4;
+    while (next < ctx.currentTime + 0.12){
+      playStep(next + (step % 2 && track.swing ? track.swing * sd : 0));
+      next += sd; step++;
+    }
+  }
+  function stop(){
+    clearInterval(timer); timer = null; track = null;
+    if (bus){ const old = bus; try { old.gain.setTargetAtTime(0, ctx.currentTime, 0.04); } catch (e) {} setTimeout(() => old.disconnect(), 400); bus = null; }
+  }
+  function play(tr){
+    if (!tr || !ensure()) return false;
+    stop();
+    if (ctx.resume) ctx.resume();
+    bus = ctx.createGain(); bus.gain.value = 1; bus.connect(master);
+    track = tr; step = 0; next = ctx.currentTime + 0.06;
+    tick(); timer = setInterval(tick, 25);
+    return true;
+  }
+  return { play, stop, supported: () => !!AC() };
+})();
+
+// Qué suena ahora y desde dónde: id de publicación, 'story' o 'pv:<pista>' (escucha previa).
+const musicNow = { trackId:null, src:null };
+function trackLabel(t){ return `${t.artist} · ${t.title}`; }
+function playTrack(trackId, src){
+  const t = getTrack(trackId); if (!t) return false;
+  if (!Music.play(t)){ toast('Este navegador no puede reproducir audio'); return false; }
+  musicNow.trackId = trackId; musicNow.src = src;
+  refreshMusicUi(); return true;
+}
+function stopMusic(){
+  if (!musicNow.src) return;
+  Music.stop(); musicNow.trackId = null; musicNow.src = null;
+  refreshMusicUi();
+}
+// Marca como activos los botones de lo que está sonando (data-music = origen).
+function refreshMusicUi(){
+  document.querySelectorAll('[data-music]').forEach(el => el.classList.toggle('on', !!musicNow.src && el.dataset.music === musicNow.src));
+}
+function togglePostMusic(id){
+  const po = POSTS.find(p => p.id === id); if (!po || !po.trackId) return;
+  if (musicNow.src === id) stopMusic(); else playTrack(po.trackId, id);
+}
+// Línea de música bajo el nombre del autor (como en Instagram); toca para escuchar.
+function postMusicLine(po){
+  const t = po.trackId && getTrack(po.trackId); if (!t) return '';
+  return `<button class="post-music ${musicNow.src===po.id?'on':''}" data-music="${po.id}" onclick="togglePostMusic('${po.id}')" aria-label="Escuchar ${escapeHtml(trackLabel(t))}">
+    ${ico('music')}<span class="eq"><i></i><i></i><i></i></span><span class="pmu-t">${escapeHtml(trackLabel(t))}</span></button>`;
+}
+
+/* ---------- selector de música (al crear una publicación o story) ---------- */
+// Las cuentas profesionales solo pueden usar música libre de derechos (ver PRODUCTO.md).
+function availableTracks(){ return ME.type === 'profesional' ? TRACKS.filter(t => t.free) : TRACKS; }
+function openMusicPicker(){
+  capturePostInputs();
+  state.musicQuery = ''; state.musicMood = 'todas';
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeMusicPicker()"></div>
+    <div class="sheet mp" role="dialog" aria-label="Añadir música">
+      <div class="sheet-h"><span>Añadir música</span><button class="sv-x" onclick="closeMusicPicker()" aria-label="Cerrar">${ico('close')}</button></div>
+      <div class="mp-search">${ico('search')}<input id="mp-q" placeholder="Busca por canción, artista o ambiente" oninput="state.musicQuery=this.value;renderMusicList()"></div>
+      <div class="chips mp-moods" id="mp-moods"></div>
+      <div class="sheet-list mp-list" id="mp-list"></div>
+      <p class="mp-note">${ME.type==='profesional' ? 'Como cuenta profesional solo puedes usar música libre de derechos. ' : ''}Pistas originales de la demo, generadas en tu navegador.</p>
+    </div>`);
+  renderMusicList();
+}
+function setMusicMood(m){ state.musicMood = m; renderMusicList(); }
+function renderMusicList(){
+  const moods = ['todas', ...new Set(availableTracks().map(t => t.mood))];
+  const chips = document.getElementById('mp-moods');
+  if (chips) chips.innerHTML = moods.map(m => `<button class="${state.musicMood===m?'active':''}" onclick="setMusicMood('${m}')"><span>${m==='todas'?'Todas':escapeHtml(m)}</span></button>`).join('');
+  const q = (state.musicQuery || '').trim().toLowerCase();
+  const list = availableTracks().filter(t => (state.musicMood === 'todas' || t.mood === state.musicMood)
+    && (!q || [t.title, t.artist, t.mood].some(s => s.toLowerCase().includes(q))));
+  const el = document.getElementById('mp-list'); if (!el) return;
+  el.innerHTML = list.map(t => `<div class="mp-row">
+      <button class="mp-play ${musicNow.src==='pv:'+t.id?'on':''}" data-music="pv:${t.id}" onclick="previewTrack('${t.id}')" aria-label="Escuchar ${escapeHtml(t.title)}"><span class="mp-cover ${t.cover}"></span>${ico('playS')}${ico('pause')}</button>
+      <span class="mp-info"><b>${escapeHtml(t.title)}</b><span>${escapeHtml(t.artist)} · ${escapeHtml(t.mood)} · ${t.bpm} bpm${t.free?' · <em>Libre</em>':''}</span></span>
+      <button class="mp-use ${state.draftPost.trackId===t.id?'active':''}" onclick="chooseTrack('${t.id}')">${state.draftPost.trackId===t.id?'Elegida':'Usar'}</button>
+    </div>`).join('') || '<p class="hint">No hay pistas que coincidan con la búsqueda.</p>';
+}
+function previewTrack(id){ if (musicNow.src === 'pv:' + id) stopMusic(); else playTrack(id, 'pv:' + id); }
+function chooseTrack(id){
+  state.draftPost.trackId = id;
+  closeOverlay();
+  const t = getTrack(id); if (t) toast('Música: ' + trackLabel(t));
+  renderCreatePost();
+}
+function closeMusicPicker(){ closeOverlay(); }
+function clearPostTrack(ev){ if (ev && ev.stopPropagation) ev.stopPropagation(); capturePostInputs(); state.draftPost.trackId = ''; renderCreatePost(); }
+// Activa o silencia la música de las stories (por defecto suenan).
+function toggleStorySound(){
+  state.storySound = !state.storySound;
+  renderStory();
+}
+function syncStoryMusic(){
+  const g = storyGroups()[storyState.g], s = g && g.list[storyState.i];
+  if (!s) return;
+  if (!state.storySound || !s.trackId){ if (musicNow.src === 'story') stopMusic(); return; }
+  if (musicNow.src !== 'story' || musicNow.trackId !== s.trackId) playTrack(s.trackId, 'story');
+}
+
 /* ---------- interacciones con publicaciones ---------- */
 function rerenderPost(id){
   const po = POSTS.find(p=>p.id===id); if (!po) return;
@@ -367,7 +538,9 @@ function overlayEl(){ return document.getElementById('overlay'); }
 function showOverlay(cls, html){ const o = overlayEl(); o.className = 'overlay ' + cls; o.innerHTML = html; o.hidden = false; }
 function closeOverlay(){
   clearInterval(overlayTimer); overlayTimer = null;
-  const o = overlayEl(); o.hidden = true; o.innerHTML = ''; o.className = 'overlay';
+  const o = overlayEl();
+  if (musicNow.src === 'story' || String(musicNow.src).startsWith('pv:') || o.className.includes('ov-post')) stopMusic();
+  o.hidden = true; o.innerHTML = ''; o.className = 'overlay';
 }
 function openPost(id){
   const po = POSTS.find(p=>p.id===id); if (!po) return;
@@ -426,21 +599,27 @@ function renderStory(){
   const s = g.list[storyState.i];
   const u = getUser(g.userId) || { name:'', initials:'?' };
   const p = getPlan(s.planId);
+  const t = s.trackId && getTrack(s.trackId);
+  const soundOn = !!(t && state.storySound);
   showOverlay('ov-story', `<div class="sv-media">${coverImg(s.img,800)}</div><div class="sv-shade"></div>
     <div class="sv-bars">${g.list.map((_,i)=>`<span class="sv-bar"><i ${i===storyState.i?'id="sv-cur"':''} style="width:${i<storyState.i?100:(i===storyState.i?storyState.t/STORY_MS*100:0)}%"></i></span>`).join('')}</div>
     <div class="sv-head"><span class="post-av">${escapeHtml(u.initials||'')}</span>
       <span class="sv-who"><b>${escapeHtml(u.name)}</b><span>${minLabel(s.minAgo)}${p?' · '+escapeHtml(p.title):''}</span></span>
+      ${t ? `<button class="sv-x sv-sound ${soundOn?'on':''}" data-music="story" onclick="toggleStorySound()" aria-label="${soundOn?'Silenciar':'Activar sonido'}">${ico('mute')}${ico('volume')}</button>` : ''}
       <button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    ${t ? `<div class="sv-music ${soundOn?'on':''}" data-music="story">${ico('music')}<span class="eq"><i></i><i></i><i></i></span><span><b>${escapeHtml(t.title)}</b> · ${escapeHtml(t.artist)}</span></div>` : ''}
     <button class="sv-tap prev" onclick="storyPrev()" aria-label="Story anterior"></button>
     <button class="sv-tap next" onclick="storyNext()" aria-label="Story siguiente"></button>
     <p class="sv-text">${escapeHtml(s.text)}</p>
     ${p ? `<button class="sv-cta" onclick="closeOverlay();go('plan/${p.id}')">${ico('pin')} Ver el plan</button>` : ''}`);
+  syncStoryMusic();
 }
 
 // Directo: espectadores y chat simulados que se actualizan solos.
 const liveState = { id:null, host:false, viewers:0, chat:[], idx:0 };
 function openLive(id, host){
   const l = LIVES.find(x=>x.id===id); if (!l) return;
+  stopMusic();
   Object.assign(liveState, { id, host:!!host, viewers:l.viewers, chat:[], idx:0 });
   renderLive();
   clearInterval(overlayTimer); overlayTimer = setInterval(tickLive, 1600);
@@ -1017,7 +1196,7 @@ function publishPlan(){
   saveState();
   toast('Plan publicado'); go('plan/'+plan.id);
 }
-function freshPostDraft(){ return { kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false }; }
+function freshPostDraft(){ return { kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' }; }
 function capturePostInputs(){
   const d=state.draftPost;
   d.caption=val('f-caption'); d.alt=val('f-alt');
@@ -1036,10 +1215,12 @@ function updateCaptionPreview(){
 function renderCreatePost(){
   const view = document.getElementById('view-page');
   const d = state.draftPost, k = d.kind;
+  const tr = d.trackId && getTrack(d.trackId);
+  const musicSticker = tr ? `<span class="pp-music">${ico('music')} ${escapeHtml(trackLabel(tr))}</span>` : '';
   const sample = [['g-grape','1566737236500-c8ac43014a67'],['g-sunset','1495567720989-cebdbdd97913'],['g-forest','1551632811-561732d1e306']];
   const preview = k==='carrusel'
-    ? `<div class="post-prev carrusel">${sample.map(([c,ph])=>`<span class="pp ${c}">${coverImg(ph,500)}</span>`).join('')}<span class="pp-dots">1 / ${sample.length}</span></div>`
-    : `<div class="post-prev"><span class="pp ${sample[0][0]}">${coverImg(sample[0][1],700)}${k==='video'?`<span class="play-ov">${ico('play')}</span>`:''}</span></div>`;
+    ? `<div class="post-prev carrusel">${sample.map(([c,ph])=>`<span class="pp ${c}">${coverImg(ph,500)}</span>`).join('')}<span class="pp-dots">1 / ${sample.length}</span>${musicSticker}</div>`
+    : `<div class="post-prev"><span class="pp ${sample[0][0]}">${coverImg(sample[0][1],700)}${k==='video'?`<span class="play-ov">${ico('play')}</span>`:''}${musicSticker}</span></div>`;
   // planes vinculables: a los que asististe o que creaste
   const linkable = PLANS.filter(p=> (ME.attendedPlanIds||[]).includes(p.id) || p.host.name===ME.name);
   const aud=[['publico','Público','globe'],['seguidores','Seguidores','users'],['cercanos','Cercanos','star']];
@@ -1068,6 +1249,9 @@ function renderCreatePost(){
       <div class="opt-list">
         <div class="opt-row"><span class="or-ic">${ico('link')}</span><span class="or-l">Vincular a un plan<span class="or-s">aparece ligada al plan</span></span>
           <select id="f-postplan" class="or-sel"><option value="">Ninguno</option>${linkable.map(p=>`<option value="${p.id}" ${d.planId===p.id?'selected':''}>${escapeHtml(p.title)}</option>`).join('')}</select></div>
+        <div class="opt-row" onclick="openMusicPicker()"><span class="or-ic">${ico('music')}</span>
+          <span class="or-l">Música<span class="or-s">${tr ? escapeHtml(trackLabel(tr)) : 'Añade una canción a la publicación'}</span></span>
+          ${tr ? `<button class="or-clear" onclick="clearPostTrack(event)" aria-label="Quitar música">${ico('close')}</button>` : `<span class="pl-arrow">${ico('chevR')}</span>`}</div>
         <div class="opt-row"><span class="or-ic">${ico('pin')}</span><span class="or-l">Ubicación</span>
           <select id="f-postplace" class="or-sel"><option value="">Sin ubicación</option>${PLACES.map(pl=>`<option value="${pl.id}" ${d.place===pl.id?'selected':''}>${escapeHtml(pl.name)} · ${pl.city}</option>`).join('')}</select></div>
       </div>
@@ -1105,9 +1289,10 @@ function publishPost(){
     id, authorId:'me', kind:k, media, imgs, caption, likes:0, ago:0, comments:[], duration: k==='video' ? 15 : undefined,
     placeId:d.place||null, taggedUserIds:[...d.tags], planId:d.planId||null, altText:(d.alt||'').trim(),
     mentions, hashtags, audience:d.audience, commentsEnabled:d.comments, hideLikes:d.hideLikes, sharedToStory:d.alsoStory,
+    trackId:d.trackId||null,
   });
   const story = d.alsoStory;
-  if (story) STORIES.unshift({ id:'s'+id, userId:'me', planId:d.planId||null, img:imgs[0], minAgo:0, text:caption });
+  if (story) STORIES.unshift({ id:'s'+id, userId:'me', planId:d.planId||null, img:imgs[0], minAgo:0, trackId:d.trackId||null, text:caption });
   state.draftPost = freshPostDraft();
   saveState();
   toast(story ? 'Publicación creada · compartida en Stories' : 'Publicación creada');
@@ -1146,6 +1331,7 @@ function showView(name){
 }
 function scrollTop(v){ const el=document.getElementById('view-'+v); if(el) el.scrollTop=0; }
 function router(){
+  stopMusic();
   const hash = location.hash.replace(/^#\//,'') || 'feed';
   const [route,arg] = hash.split('/');
   switch(route){
@@ -1170,9 +1356,10 @@ function router(){
 function init(){
   loadState();
   window.addEventListener('pagehide', saveState);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopMusic(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !overlayEl().hidden) (liveState.host ? endLive() : closeOverlay()); });
   buildFilters();
-  document.querySelectorAll('.content-tabs button').forEach(b=>{ b.onclick=()=>{ state.contentTab=b.dataset.tab; renderContent(); }; });
+  document.querySelectorAll('.content-tabs button').forEach(b=>{ b.onclick=()=>setContentTab(b.dataset.tab); });
   document.querySelectorAll('.tabbar button').forEach(b=>{ b.onclick=()=>go(b.dataset.nav==='crear'?'crear':b.dataset.nav); });
   window.addEventListener('hashchange', router);
   router();

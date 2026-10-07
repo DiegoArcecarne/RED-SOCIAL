@@ -193,6 +193,18 @@ Propuesta de reglas:
 - Seguridad presencial: quien emite pide permiso antes de enfocar a alguien, y quien tiene su presencia en privado no debe salir. Un directo se puede reportar y la moderación puede cortarlo mientras se emite.
 - Al terminar no se publica solo: quien emitió puede guardar fragmentos como publicación vinculada al plan.
 
+## Música
+
+Las publicaciones y las stories pueden llevar una canción, como en Instagram: se elige al crearlas desde un selector con buscador (canción, artista o ambiente) y filtros por ambiente, se puede escuchar antes de elegirla, y luego aparece bajo el nombre del autor ("Artista · Canción"). En el muro la música no suena sola: se activa al tocar la canción o el botón de sonido del vídeo. En las stories suena al abrirlas y se puede silenciar. Nunca suena con la app en segundo plano.
+
+La música con derechos no es gratis ni automática. Usar canciones comerciales exige licencias de los titulares (discográficas y editoriales; en España, además, entidades de gestión como SGAE) o un proveedor que las agregue, y suele incluir restricciones por país y por tipo de cuenta. Propuesta, pendiente de revisión legal (esto no es asesoramiento jurídico):
+
+- Empezar con una biblioteca libre de derechos o con licencia de un proveedor de música para redes sociales, y valorar el catálogo comercial más adelante, cuando el uso lo justifique.
+- Las cuentas profesionales solo pueden usar música libre de derechos: el uso comercial (promocionar un local o un evento de pago) suele quedar fuera de las licencias de uso personal. El prototipo ya aplica esta regla en el selector.
+- La música se guarda como referencia a una pista de la biblioteca, no como audio copiado en la publicación, para poder retirarla si cambia la licencia sin borrar la publicación.
+
+En el prototipo las pistas son originales y ficticias, generadas en el propio navegador, sin archivos ni canciones reales.
+
 ## Grupos y roles
 
 Los grupos son espacios de organización colectiva, al estilo de los grupos de mensajería, pensados para comunidades que montan planes de forma recurrente (un club de running, un grupo gastronómico). Un grupo tiene nombre, descripción y una lista de miembros, cada uno con un rol —administrador o miembro—, y puede tener varios administradores.
@@ -388,7 +400,7 @@ Dentro del MVP:
 - Aftermovie: subir fotos de un plan pasado a su hashtag.
 - Locales: publican sus anclas como cualquier anfitrión, con el distintivo de negocio verificado concedido a mano.
 
-Fuera del MVP (fase 2 o posterior): mensajes directos, stories, directos, menciones, grupos con roles, opciones avanzadas de publicación, mapa de lugares y "reclamar tu local", monetización de cuentas de negocio (CPA, suscripción, panel), publicidad y boost, micropago de desvelo, geolocalización automática y capa de ligar.
+Fuera del MVP (fase 2 o posterior): mensajes directos, stories, directos, música en publicaciones y stories, menciones, grupos con roles, opciones avanzadas de publicación, mapa de lugares y "reclamar tu local", monetización de cuentas de negocio (CPA, suscripción, panel), publicidad y boost, micropago de desvelo, geolocalización automática y capa de ligar.
 
 Criterio para sumar funcionalidades: una entra cuando una métrica del piloto muestra que el bucle se rompe sin ella.
 
@@ -475,10 +487,11 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Contenido
 
-- Publicación. Post de perfil. id, autor_id, formato (foto / vídeo / carrusel), media (una o varias imágenes), pie de texto (con menciones @usuario y hashtags #tema), ubicación (lugar_id, opcional), usuarios etiquetados, plan vinculado (plan_id opcional; liga la publicación a un plan al que se asistió o que se creó, para que aparezca ligada a ese plan), texto alternativo (accesibilidad), audiencia (público / solo seguidores / amigos cercanos, coherente con perfil público o privado), comentarios activos (bool), ocultar likes (bool), compartir en stories (bool), likes, visibilidad, fecha. El aftermovie es una publicación especializada, ligada a un plan, que vive además en Vividas.
+- Publicación. Post de perfil. id, autor_id, formato (foto / vídeo / carrusel), media (una o varias imágenes), pie de texto (con menciones @usuario y hashtags #tema), ubicación (lugar_id, opcional), usuarios etiquetados, plan vinculado (plan_id opcional; liga la publicación a un plan al que se asistió o que se creó, para que aparezca ligada a ese plan), texto alternativo (accesibilidad), audiencia (público / solo seguidores / amigos cercanos, coherente con perfil público o privado), comentarios activos (bool), ocultar likes (bool), compartir en stories (bool), pista_id (música, opcional), likes, visibilidad, fecha. El aftermovie es una publicación especializada, ligada a un plan, que vive además en Vividas.
 - Aftermovie. Post permanente. id, plan_id de origen, autor_id, media, hashtag(s), visibilidad (según perfil), fecha. Vive en la pestaña Vividas.
-- Story. Efímera (24 h). id, autor_id, plan_id (opcional), media, visibilidad (público / privado / mejores amigos), fecha de expiración. Vive en la pestaña Stories y puede aflorar destacada en Vividas.
+- Story. Efímera (24 h). id, autor_id, plan_id (opcional), media, pista_id (música, opcional), visibilidad (público / privado / mejores amigos), fecha de expiración. Vive en la pestaña Stories y puede aflorar destacada en Vividas.
 - Directo. id, emisor_id, plan_id (plan en marcha), título, estado (en curso o finalizado), inicio, fin. Derivado: espectadores. Su chat reutiliza la mensajería y la moderación.
+- Pista. Canción de la biblioteca de música. id, título, artista, ambiente, duración, origen de la licencia (libre de derechos / proveedor / catálogo comercial), países donde se puede usar, apta para cuentas profesionales (bool), estado (activa o retirada). Publicaciones y stories la referencian por pista_id; si se retira, la publicación se queda sin música pero no se borra.
 - Comentario. id, publicación_id, autor_id, texto, fecha. Solo cuando la publicación tiene los comentarios activos.
 - Me gusta. usuario_id, publicación_id, fecha. El contador de la publicación se deriva de aquí; "ocultar likes" solo cambia lo que ven los demás.
 - Guardado. usuario_id, publicación_id, fecha. Colección privada de cada usuario.
@@ -519,6 +532,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Un Grupo tiene muchos Miembros de grupo (Usuarios con rol admin o miembro) y muchos Planes; los admins aprueban las solicitudes de esos planes.
 - Un Usuario crea muchas Publicaciones (foto, vídeo o carrusel) que viven en su perfil y en el muro; cada una recibe Comentarios y Me gusta.
 - Un Plan en marcha puede tener Directos, emitidos por su anfitrión o por sus asistentes.
+- Una Pista de la biblioteca puede sonar en muchas Publicaciones y Stories; cada una lleva como mucho una.
 - Un Reporte apunta a cualquier objeto (Plan, Usuario, Mensaje, Contenido, comportamiento en evento) y puede derivar en Acciones de moderación.
 
 ## Decisiones abiertas
@@ -534,4 +548,5 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Umbral de anonimato de la presencia privada (propuesta: 10 asistentes, el valor que usa el prototipo).
 - Método de check-in del piloto y del MVP: QR del anfitrión (recomendado) frente a geolocalización automática.
 - Directos: confirmar quién puede emitir (solo anfitriones o también asistentes) y si se guardan al terminar.
+- Música: biblioteca libre de derechos o proveedor con licencia para el lanzamiento, cuándo (y si) incorporar catálogo comercial, y revisión legal de las licencias por país y por tipo de cuenta.
 - Objetivos numéricos de las métricas y criterios para continuar o parar tras el piloto (propuesta en el plan de validación).
