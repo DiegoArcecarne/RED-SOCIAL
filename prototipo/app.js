@@ -208,6 +208,10 @@ function setContentTab(t){ stopMusic(); state.contentTab = t; renderContent(); s
 // Publicaciones del muro, de la más reciente a la más antigua.
 function wallPosts(){ return POSTS.slice().sort((a,b)=>(a.ago||0)-(b.ago||0)); }
 
+// Botón de sonido sobre la foto, el carrusel o el vídeo (si la publicación lleva música).
+function soundBtn(po){
+  return po.trackId ? `<button class="pm-mute ${musicNow.src===po.id?'on':''}" data-music="${po.id}" onclick="event.stopPropagation();togglePostMusic('${po.id}')" aria-label="Activar o silenciar la música">${ico('mute')}${ico('volume')}</button>` : '';
+}
 function postMedia(po){
   const imgs = (po.imgs && po.imgs.length) ? po.imgs : [''];
   const grad = (i)=> (po.media||[])[i] || (po.media||[])[0] || 'g-dark';
@@ -216,7 +220,7 @@ function postMedia(po){
     return `<div class="pm pm-car">
       <div class="car-track" onscroll="carouselDots(this,'${po.id}')">${imgs.map((s,i)=>`<div class="car-slide ${grad(i)}" ondblclick="likePost('${po.id}',true)">${coverImg(s,700)}</div>`).join('')}</div>
       <span class="pm-count" id="cc-${po.id}">1/${imgs.length}</span>
-      <div class="car-dots" id="cd-${po.id}">${imgs.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>${burst}</div>`;
+      <div class="car-dots" id="cd-${po.id}">${imgs.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>${soundBtn(po)}${burst}</div>`;
   }
   if (po.kind==='video'){
     const d = po.duration || 20;
@@ -225,11 +229,10 @@ function postMedia(po){
       <div class="kb">${coverImg(imgs[0],700)}</div>
       <span class="pm-play">${ico('play')}</span>
       <span class="pm-dur">0:${String(d).padStart(2,'0')}</span>
-      ${po.trackId ? `<button class="pm-mute ${musicNow.src===po.id?'on':''}" data-music="${po.id}" onclick="event.stopPropagation();togglePostMusic('${po.id}')" aria-label="Activar o silenciar el sonido">${ico('mute')}${ico('volume')}</button>`
-        : `<span class="pm-mute">${ico('mute')}</span>`}
+      ${po.trackId ? soundBtn(po) : `<span class="pm-mute">${ico('mute')}</span>`}
       <span class="pm-bar"><i style="animation-duration:${d}s"></i></span>${burst}</div>`;
   }
-  return `<div class="pm ${grad(0)}" ondblclick="likePost('${po.id}',true)">${coverImg(imgs[0],700)}${burst}</div>`;
+  return `<div class="pm ${grad(0)}" ondblclick="likePost('${po.id}',true)">${coverImg(imgs[0],700)}${soundBtn(po)}${burst}</div>`;
 }
 
 function postCard(po){
@@ -1250,7 +1253,7 @@ function renderCreatePost(){
         <div class="opt-row"><span class="or-ic">${ico('link')}</span><span class="or-l">Vincular a un plan<span class="or-s">aparece ligada al plan</span></span>
           <select id="f-postplan" class="or-sel"><option value="">Ninguno</option>${linkable.map(p=>`<option value="${p.id}" ${d.planId===p.id?'selected':''}>${escapeHtml(p.title)}</option>`).join('')}</select></div>
         <div class="opt-row" onclick="openMusicPicker()"><span class="or-ic">${ico('music')}</span>
-          <span class="or-l">Música<span class="or-s">${tr ? escapeHtml(trackLabel(tr)) : 'Añade una canción a la publicación'}</span></span>
+          <span class="or-l">Música<span class="or-s">${tr ? escapeHtml(trackLabel(tr)) : `Añade una canción ${{foto:'a la foto',video:'al vídeo',carrusel:'al carrusel'}[k]||'a la publicación'}`}</span></span>
           ${tr ? `<button class="or-clear" onclick="clearPostTrack(event)" aria-label="Quitar música">${ico('close')}</button>` : `<span class="pl-arrow">${ico('chevR')}</span>`}</div>
         <div class="opt-row"><span class="or-ic">${ico('pin')}</span><span class="or-l">Ubicación</span>
           <select id="f-postplace" class="or-sel"><option value="">Sin ubicación</option>${PLACES.map(pl=>`<option value="${pl.id}" ${d.place===pl.id?'selected':''}>${escapeHtml(pl.name)} · ${pl.city}</option>`).join('')}</select></div>

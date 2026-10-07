@@ -39,8 +39,8 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    lados para navegar) y vista de directo con espectadores y chat en vivo. Desde
    *Crear ▸ Directo* puedes emitir el tuyo.
    La pestaña *Menciones* sigue siendo de muestra.
-4. **Música** — publicaciones y stories con canción, como en Instagram. Toca la
-   canción bajo el nombre (o el altavoz del vídeo) para escucharla; las stories
+4. **Música** — fotos, carruseles, vídeos y stories con canción, como en Instagram.
+   Toca la canción bajo el nombre o el altavoz sobre la imagen para escucharla; las stories
    suenan solas y se pueden silenciar. Al crear una publicación, *Música* abre un
    selector con buscador, filtros por ambiente y escucha previa. Las pistas son
    originales y ficticias: se generan en el navegador (sin archivos ni canciones

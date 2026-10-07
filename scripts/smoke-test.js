@@ -188,6 +188,14 @@ a.run('state.draftPost.alsoStory = true; publishPost()');
 check('música: la publicación y su story guardan la pista', a.run('POSTS[0].trackId') === 't2' && a.run('STORIES.length') === nStories2 + 1 && a.run('STORIES[0].trackId') === 't2');
 a.run('setContentTab("vividas")'); h = a.html('feed-list');
 check('música: el muro muestra la canción de cada publicación', count(h, /class="post-music /g) === a.run('POSTS.filter(p => p.trackId).length'));
+const soundOn = (id) => { const card = h.split('data-post="' + id + '"')[1].split('</article>')[0]; return card.includes('class="pm-mute ') && card.includes('data-music="' + id + '"'); };
+check('música: fotos, carruseles y vídeos con botón de sonido sobre la imagen', soundOn('po10') && soundOn('po8') && soundOn('po7'));
+for (const kind of ['foto', 'carrusel']) {
+  a.run(`state.draftPost = freshPostDraft(); state.draftPost.kind = "${kind}"; state.draftPost.trackId = "t5"; publishPost()`);
+  check(`música: publicar un ${kind} con canción`, a.run('POSTS[0].kind') === kind && a.run('POSTS[0].trackId') === 't5');
+}
+a.run('setContentTab("vividas")'); h = a.html('feed-list');
+check('música: el nuevo carrusel con música tiene botón de sonido', soundOn(a.run('POSTS[0].id')));
 a.run('togglePostMusic("po8")');
 check('música: tocar la canción de una publicación la reproduce', a.run('musicNow.src') === 'po8' && a.run('musicNow.trackId') === 't1');
 a.run('togglePostMusic("po8")');

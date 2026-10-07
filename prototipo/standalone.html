@@ -866,10 +866,10 @@ const POSTS = [
   { id:'po12', authorId:'ana', planId:'p8', trackId:'t5', kind:'foto', media:['g-forest'], imgs:['1545205597-3d9d02c29597'], ago:26,
     caption:'Primera sesión de yoga al sol en el Retiro. Repetimos el sábado #retiromorning', likes:61,
     comments:[] },
-  { id:'po1',  authorId:'me', planId:'p5', kind:'carrusel', media:['g-forest','g-forest','g-sunset'], imgs:['1551632811-561732d1e306','1454496522488-7a8e488e8606','1495567720989-cebdbdd97913'], ago:30,
+  { id:'po1',  authorId:'me', planId:'p5', trackId:'t1', kind:'carrusel', media:['g-forest','g-forest','g-sunset'], imgs:['1551632811-561732d1e306','1454496522488-7a8e488e8606','1495567720989-cebdbdd97913'], ago:30,
     caption:'Finde de trail por la sierra con @davidl #trailamanecer', likes:64,
     comments:[{userId:'david',text:'La subida final, inolvidable'}] },
-  { id:'po13', authorId:'nora', planId:'p9', kind:'carrusel', media:['g-wine','g-wine'], imgs:['1510812431401-41d2bd2722f3','1474722883778-792e7990302f'], ago:40,
+  { id:'po13', authorId:'nora', planId:'p9', trackId:'t6', kind:'carrusel', media:['g-wine','g-wine'], imgs:['1510812431401-41d2bd2722f3','1474722883778-792e7990302f'], ago:40,
     caption:'Seis vinos naturales y una mesa de desconocidos que ya no lo son #catadevinos', likes:132,
     comments:[{userId:'sara',text:'Apuntadísima a la próxima'}] },
   { id:'po15', authorId:'david', planId:'p5', trackId:'t4', kind:'video', duration:15, media:['g-forest'], imgs:['1454496522488-7a8e488e8606'], ago:44,
@@ -878,14 +878,14 @@ const POSTS = [
   { id:'po3',  authorId:'me', planId:'p3', trackId:'t2', kind:'video', duration:18, media:['g-grape'], imgs:['1566737236500-c8ac43014a67'], ago:52,
     caption:'Rooftop al atardecer #rooftopmadrid', likes:120,
     comments:[{userId:'azotea',text:'Gracias por venir, Marina'}] },
-  { id:'po14', authorId:'marco', planId:'p12', kind:'foto', media:['g-sunset'], imgs:['1505686994434-e3cc5abf1330'], ago:60,
+  { id:'po14', authorId:'marco', planId:'p12', trackId:'t5', kind:'foto', media:['g-sunset'], imgs:['1505686994434-e3cc5abf1330'], ago:60,
     caption:'Palomitas, manta y peli bajo las estrellas #cinedeverano', likes:47,
     comments:[] },
   { id:'po2',  authorId:'me', planId:'p9', kind:'foto', media:['g-wine'], imgs:['1474722883778-792e7990302f'], ago:70,
     caption:'Noche de vinos naturales', likes:38, comments:[] },
-  { id:'po4',  authorId:'me', planId:'p2', kind:'foto', media:['g-sunset'], imgs:['1495567720989-cebdbdd97913'], ago:96,
+  { id:'po4',  authorId:'me', planId:'p2', trackId:'t1', kind:'foto', media:['g-sunset'], imgs:['1495567720989-cebdbdd97913'], ago:96,
     caption:'Atardecer en Debod #atardecerdebod', likes:51, comments:[] },
-  { id:'po5',  authorId:'me', planId:'p6', kind:'carrusel', media:['g-dark','g-wine','g-dark'], imgs:['1558370781-d6196949e317','1555939594-58d7cb561ad1','1414235077428-338989a2e8c0'], ago:120,
+  { id:'po5',  authorId:'me', planId:'p6', trackId:'t6', kind:'carrusel', media:['g-dark','g-wine','g-dark'], imgs:['1558370781-d6196949e317','1555939594-58d7cb561ad1','1414235077428-338989a2e8c0'], ago:120,
     caption:'Ruta de tapas por Lavapiés con gente de seis países #tapasviajeros', likes:29,
     comments:[{userId:'lucia',text:'Qué buena pinta todo'}] },
   { id:'po6',  authorId:'me', planId:'p8', kind:'foto', media:['g-forest'], imgs:['1506126613408-eca07ce68773'], ago:140,
@@ -1194,6 +1194,10 @@ function setContentTab(t){ stopMusic(); state.contentTab = t; renderContent(); s
 // Publicaciones del muro, de la más reciente a la más antigua.
 function wallPosts(){ return POSTS.slice().sort((a,b)=>(a.ago||0)-(b.ago||0)); }
 
+// Botón de sonido sobre la foto, el carrusel o el vídeo (si la publicación lleva música).
+function soundBtn(po){
+  return po.trackId ? `<button class="pm-mute ${musicNow.src===po.id?'on':''}" data-music="${po.id}" onclick="event.stopPropagation();togglePostMusic('${po.id}')" aria-label="Activar o silenciar la música">${ico('mute')}${ico('volume')}</button>` : '';
+}
 function postMedia(po){
   const imgs = (po.imgs && po.imgs.length) ? po.imgs : [''];
   const grad = (i)=> (po.media||[])[i] || (po.media||[])[0] || 'g-dark';
@@ -1202,7 +1206,7 @@ function postMedia(po){
     return `<div class="pm pm-car">
       <div class="car-track" onscroll="carouselDots(this,'${po.id}')">${imgs.map((s,i)=>`<div class="car-slide ${grad(i)}" ondblclick="likePost('${po.id}',true)">${coverImg(s,700)}</div>`).join('')}</div>
       <span class="pm-count" id="cc-${po.id}">1/${imgs.length}</span>
-      <div class="car-dots" id="cd-${po.id}">${imgs.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>${burst}</div>`;
+      <div class="car-dots" id="cd-${po.id}">${imgs.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>${soundBtn(po)}${burst}</div>`;
   }
   if (po.kind==='video'){
     const d = po.duration || 20;
@@ -1211,11 +1215,10 @@ function postMedia(po){
       <div class="kb">${coverImg(imgs[0],700)}</div>
       <span class="pm-play">${ico('play')}</span>
       <span class="pm-dur">0:${String(d).padStart(2,'0')}</span>
-      ${po.trackId ? `<button class="pm-mute ${musicNow.src===po.id?'on':''}" data-music="${po.id}" onclick="event.stopPropagation();togglePostMusic('${po.id}')" aria-label="Activar o silenciar el sonido">${ico('mute')}${ico('volume')}</button>`
-        : `<span class="pm-mute">${ico('mute')}</span>`}
+      ${po.trackId ? soundBtn(po) : `<span class="pm-mute">${ico('mute')}</span>`}
       <span class="pm-bar"><i style="animation-duration:${d}s"></i></span>${burst}</div>`;
   }
-  return `<div class="pm ${grad(0)}" ondblclick="likePost('${po.id}',true)">${coverImg(imgs[0],700)}${burst}</div>`;
+  return `<div class="pm ${grad(0)}" ondblclick="likePost('${po.id}',true)">${coverImg(imgs[0],700)}${soundBtn(po)}${burst}</div>`;
 }
 
 function postCard(po){
@@ -2236,7 +2239,7 @@ function renderCreatePost(){
         <div class="opt-row"><span class="or-ic">${ico('link')}</span><span class="or-l">Vincular a un plan<span class="or-s">aparece ligada al plan</span></span>
           <select id="f-postplan" class="or-sel"><option value="">Ninguno</option>${linkable.map(p=>`<option value="${p.id}" ${d.planId===p.id?'selected':''}>${escapeHtml(p.title)}</option>`).join('')}</select></div>
         <div class="opt-row" onclick="openMusicPicker()"><span class="or-ic">${ico('music')}</span>
-          <span class="or-l">Música<span class="or-s">${tr ? escapeHtml(trackLabel(tr)) : 'Añade una canción a la publicación'}</span></span>
+          <span class="or-l">Música<span class="or-s">${tr ? escapeHtml(trackLabel(tr)) : `Añade una canción ${{foto:'a la foto',video:'al vídeo',carrusel:'al carrusel'}[k]||'a la publicación'}`}</span></span>
           ${tr ? `<button class="or-clear" onclick="clearPostTrack(event)" aria-label="Quitar música">${ico('close')}</button>` : `<span class="pl-arrow">${ico('chevR')}</span>`}</div>
         <div class="opt-row"><span class="or-ic">${ico('pin')}</span><span class="or-l">Ubicación</span>
           <select id="f-postplace" class="or-sel"><option value="">Sin ubicación</option>${PLACES.map(pl=>`<option value="${pl.id}" ${d.place===pl.id?'selected':''}>${escapeHtml(pl.name)} · ${pl.city}</option>`).join('')}</select></div>
