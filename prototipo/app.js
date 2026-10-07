@@ -12,8 +12,12 @@ const state = {
   joined: new Set(), attended: new Set(), requested: new Set(),
   presencePublic: (typeof ME !== 'undefined') ? ME.presencePublic : true,
   profileTab: 'posts',                 // posts | vividas
+  profileFilter: 'todo',               // publicaciones del perfil: todo | plan | vida
+  wallFilter: 'todo',                  // publicaciones del muro: todo | plan | vida
   draft: { cover:'g-grape', size:'mediano', cat:'social', access:'libre', price:'gratis' },
-  draftPost: { kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false },
+  draftPost: { origin:'plan', kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' },
+  storySound: true,                    // las stories suenan con su música (se puede silenciar)
+  musicQuery: '', musicMood: 'todas',  // filtros del selector de música
   draftMembers: {},                    // userId -> 'admin' | 'miembro'
   pendingGroup: null,                  // grupo preseleccionado al crear plan
 };
@@ -68,6 +72,16 @@ const SVG = {
   tag:'<svg viewBox="0 0 24 24"><path d="M11.5 3H20v8.5l-8.5 8.5L3 11.5z"/><circle cx="15.5" cy="8.5" r="1.5"/></svg>',
   link:'<svg viewBox="0 0 24 24"><path d="M9.5 14.5 14.5 9.5"/><path d="M8 12l-2 2a3 3 0 0 0 4.2 4.2l2-2"/><path d="M16 12l2-2a3 3 0 0 0-4.2-4.2l-2 2"/></svg>',
   eye:'<svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg>',
+  heartO:'<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A3.8 3.8 0 0 1 12 7a3.8 3.8 0 0 1 7 3.5C19 15.6 12 20 12 20z"/></svg>',
+  send:'<svg viewBox="0 0 24 24"><path d="M21 3 10.5 13.5"/><path d="M21 3 14.5 21l-4-7.5L3 9.5z"/></svg>',
+  bookmark:'<svg viewBox="0 0 24 24"><path d="M6.5 3.5h11v17l-5.5-4-5.5 4z"/></svg>',
+  bookmarkF:'<svg viewBox="0 0 24 24" class="fill"><path d="M6.5 3.5h11v17l-5.5-4-5.5 4z"/></svg>',
+  mute:'<svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>',
+  cast:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.2" class="fill"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.4 5.4a9.3 9.3 0 0 0 0 13.2M18.6 5.4a9.3 9.3 0 0 1 0 13.2"/></svg>',
+  volume:'<svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a8 8 0 0 1 0 11"/></svg>',
+  playS:'<svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
+  pause:'<svg viewBox="0 0 24 24"><path d="M8.5 5.5v13M15.5 5.5v13"/></svg>',
+  search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.4"/><path d="M15.7 15.7 20 20"/></svg>',
 };
 function ico(name){ return `<i class="ico">${SVG[name]||''}</i>`; }
 const ICON_FOR_CAT = { outdoor:'mountain', fiesta:'music', gastro:'food', cultura:'landmark', deporte:'flag', bienestar:'leaf', social:'chat', viajeros:'compass' };
@@ -91,6 +105,9 @@ function sizeLabel(p){ return {intimo:'Íntimo',mediano:'Mediano',grande:'Grande
 function initials(name){ return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
 function rating(n){ return `<span class="rate">${ico('star')} ${n}</span>`; }
 function freeIcon(p){ return p.secret ? ico('lock') : (p.paid ? ico('euro') : ico('ticket')); }
+function uimg(slug,s){ s=s||500; return `https://images.unsplash.com/photo-${slug}?w=${s}&h=${s}&fit=crop&q=60`; }
+// Imagen de portada sobre el degradado; si no carga se elimina y queda el degradado (fallback).
+function coverImg(slug,s){ return slug ? `<img class="cover-img" src="${uimg(slug,s)}" alt="" loading="lazy" onerror="this.remove()">` : ''; }
 function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function val(id){ const el=document.getElementById(id); return el?el.value:''; }
 function toast(msg){
@@ -99,6 +116,61 @@ function toast(msg){
   clearTimeout(t._tmo);t._tmo=setTimeout(()=>t.classList.remove('show'),2100);
 }
 function typeBadge(u){ return u.type==='profesional' ? `<span class="pro-badge">${ico('briefcase')} Profesional</span>` : ''; }
+
+/* ---------- umbral de anonimato de la presencia privada ----------
+   Con pocos asistentes, mostrar el total delataría a quien fue en privado
+   ("4 asistentes" y 3 caras visibles → se deduce quién falta). Por debajo de
+   PRIVACY_MIN solo se cuentan y muestran los asistentes visibles. */
+const PRIVACY_MIN = 10;
+function attendanceView(p){
+  const total = p.attended || 0;
+  if (total >= PRIVACY_MIN) return { n: total, label: 'asistentes reales', priv: p.attendedPrivate || 0, below: false };
+  const visible = Math.min((p.publicAttendees || []).length, total);
+  return { n: visible, label: 'asistentes visibles', priv: 0, below: true };
+}
+
+/* ---------- persistencia local (localStorage) ----------
+   Lo creado en la demo (planes, publicaciones, grupos, solicitudes, asistencias)
+   sobrevive a recargar la página. Si el navegador bloquea el almacenamiento,
+   la demo sigue funcionando en memoria. "Restablecer demo" en Ajustes lo borra. */
+const STORE_KEY = 'planes-proto-v3';
+function saveState(){
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      plans: PLANS.map(p => ({ ...p, when: p.when instanceof Date ? p.when.toISOString() : p.when })),
+      posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES,
+      me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds },
+      sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested] },
+    }));
+  } catch (e) { /* sin almacenamiento: la demo funciona en memoria */ }
+}
+function loadState(){
+  let snap = null;
+  try { snap = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { return; }
+  if (!snap) return;
+  // Los planes base conservan su fecha relativa a hoy; los creados en la demo, la suya.
+  const baseWhen = new Map(PLANS.map(p => [p.id, p.when]));
+  const saved = (snap.plans || []).map(p => ({ ...p, when: baseWhen.get(p.id) || new Date(p.when) }));
+  const savedIds = new Set(saved.map(p => p.id));
+  const merged = saved.concat(PLANS.filter(p => !savedIds.has(p.id))); // planes base nuevos tras una actualización
+  if (merged.length) PLANS.splice(0, PLANS.length, ...merged);
+  if (Array.isArray(snap.posts)) POSTS.splice(0, POSTS.length, ...snap.posts);
+  if (Array.isArray(snap.groups)) GROUPS.splice(0, GROUPS.length, ...snap.groups);
+  if (Array.isArray(snap.requests)) REQUESTS.splice(0, REQUESTS.length, ...snap.requests);
+  if (Array.isArray(snap.stories)) STORIES.splice(0, STORIES.length, ...snap.stories);
+  if (snap.me) Object.assign(ME, snap.me);
+  if (snap.sets) {
+    state.joined = new Set(snap.sets.joined || []);
+    state.attended = new Set(snap.sets.attended || []);
+    state.requested = new Set(snap.sets.requested || []);
+  }
+  state.presencePublic = ME.presencePublic;
+}
+function resetDemo(){
+  try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+  location.hash = '#/feed';
+  location.reload();
+}
 
 /* ---------- filtrado feed ---------- */
 function filteredPlans(){
@@ -115,11 +187,12 @@ function gridCell(p){
   const loc = p.secret ? 'Zona aprox.' : (place ? place.name : 'Madrid');
   return `
   <button class="cell ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">
+    ${coverImg(p.photo,500)}
     <span class="cell-scrim"></span>
     <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>
     <span class="cell-info">
       <span class="cell-title">${escapeHtml(p.title)}</span>
-      <span class="cell-meta">${escapeHtml(loc)} · ${ico('geo')} ${p.attended}</span>
+      <span class="cell-meta">${escapeHtml(loc)} · ${ico('geo')} ${attendanceView(p).n}</span>
     </span>
   </button>`;
 }
@@ -129,13 +202,514 @@ function renderFeed(){
   cont.innerHTML = plans.length ? `<div class="grid">${plans.map(gridCell).join('')}</div>`
     : emptyTab('grid','Sin planes con esos filtros','Prueba a ampliar el tamaño de grupo o el tema.');
 }
-function renderVividasTab(){
-  const cells = AFTERMOVIES.concat(AFTERMOVIES).slice(0,6).map(a=>`
-    <button class="cell ${a.gradient}" onclick="toast('Aftermovie · ${a.hashtag}')" aria-label="${a.planTitle}">
-      <span class="cell-scrim"></span><span class="cell-corner">${ico('heart')}</span>
-      <span class="cell-info"><span class="cell-title">${a.hashtag}</span><span class="cell-meta">${a.author}</span></span>
-    </button>`).join('');
-  return `<div class="grid">${cells}</div>`;
+/* ======================= MURO (Vividas), STORIES Y DIRECTOS ======================= */
+function agoLabel(h){ if (h < 1) return 'ahora'; if (h < 24) return `hace ${Math.round(h)} h`; return `hace ${Math.round(h/24)} d`; }
+function minLabel(m){ return m < 1 ? 'ahora' : (m < 60 ? `hace ${m} min` : `hace ${Math.round(m/60)} h`); }
+function setContentTab(t){ stopMusic(); state.contentTab = t; renderContent(); scrollTop('feed'); }
+
+// Publicaciones del muro, de la más reciente a la más antigua.
+function wallPosts(){ return POSTS.slice().sort((a,b)=>(a.ago||0)-(b.ago||0)); }
+
+// Filtro por origen: experiencias de planes o momentos de la vida de cada uno.
+function byOrigin(posts, f){ return f === 'todo' ? posts : posts.filter(po => postOrigin(po) === f); }
+function originFilter(posts, cur, call, vidaLabel){
+  const opts = [['todo','Todo','layers'],['plan','Planes','ticket'],['vida',vidaLabel,'heartO']];
+  return `<div class="iseg origin-seg" role="tablist">${opts.map(([v,l,n]) =>
+    `<button class="${cur===v?'active':''}" role="tab" aria-selected="${cur===v}" onclick="${call(v)}">${ico(n)}<span>${l}</span><em>${byOrigin(posts, v).length}</em></button>`).join('')}</div>`;
+}
+function setWallFilter(f){ stopMusic(); state.wallFilter = f; renderContent(); scrollTop('feed'); }
+
+// Botón de sonido sobre la foto, el carrusel o el vídeo (si la publicación lleva música).
+function soundBtn(po){
+  return po.trackId ? `<button class="pm-mute ${musicNow.src===po.id?'on':''}" data-music="${po.id}" onclick="event.stopPropagation();togglePostMusic('${po.id}')" aria-label="Activar o silenciar la música">${ico('mute')}${ico('volume')}</button>` : '';
+}
+function postMedia(po){
+  const imgs = (po.imgs && po.imgs.length) ? po.imgs : [''];
+  const grad = (i)=> (po.media||[])[i] || (po.media||[])[0] || 'g-dark';
+  const burst = `<span class="burst">${ico('heart')}</span>`;
+  if (po.kind==='carrusel' && imgs.length > 1){
+    return `<div class="pm pm-car">
+      <div class="car-track" onscroll="carouselDots(this,'${po.id}')">${imgs.map((s,i)=>`<div class="car-slide ${grad(i)}" ondblclick="likePost('${po.id}',true)">${coverImg(s,700)}</div>`).join('')}</div>
+      <span class="pm-count" id="cc-${po.id}">1/${imgs.length}</span>
+      <div class="car-dots" id="cd-${po.id}">${imgs.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>${soundBtn(po)}${burst}</div>`;
+  }
+  if (po.kind==='video'){
+    const d = po.duration || 20;
+    // Vídeo simulado: la portada con movimiento lento y una barra de progreso.
+    return `<div class="pm pm-video ${grad(0)}" onclick="toggleVideo(this)" ondblclick="likePost('${po.id}',true)">
+      <div class="kb">${coverImg(imgs[0],700)}</div>
+      <span class="pm-play">${ico('play')}</span>
+      <span class="pm-dur">0:${String(d).padStart(2,'0')}</span>
+      ${po.trackId ? soundBtn(po) : `<span class="pm-mute">${ico('mute')}</span>`}
+      <span class="pm-bar"><i style="animation-duration:${d}s"></i></span>${burst}</div>`;
+  }
+  return `<div class="pm ${grad(0)}" ondblclick="likePost('${po.id}',true)">${coverImg(imgs[0],700)}${soundBtn(po)}${burst}</div>`;
+}
+
+function postCard(po){
+  const u = getUser(po.authorId) || { id:'', name:'Usuario', initials:'?', handle:'' };
+  const plan = po.planId ? getPlan(po.planId) : null;
+  const place = plan ? getPlace(plan.placeId) : (po.placeId ? getPlace(po.placeId) : null);
+  const placeName = plan && plan.secret ? 'Zona aproximada' : (place ? place.name : '');
+  const liked = !!po.likedByMe;
+  const comments = po.comments || [];
+  const commentsOff = po.commentsEnabled === false;
+  const likesHidden = po.hideLikes && po.authorId !== 'me';
+  return `<article class="post" data-post="${po.id}">
+    <header class="post-h">
+      <button class="post-av" onclick="go('u/${u.id}')" aria-label="Perfil de ${escapeHtml(u.name)}">${escapeHtml(u.initials || initials(u.name))}</button>
+      <div class="post-who">
+        <button class="post-name" onclick="go('u/${u.id}')">${escapeHtml(u.name)} ${u.verified?`<span class="vchk">${ico('check')}</span>`:''}${u.type==='profesional'?' <span class="pro-badge sm">Profesional</span>':''}</button>
+        <span class="post-sub">${placeName?escapeHtml(placeName)+' · ':''}${agoLabel(po.ago||0)}</span>
+        ${postMusicLine(po)}
+      </div>
+      <span class="post-kind" title="${po.kind}">${ico(POST_ICON[po.kind]||'image')}</span>
+    </header>
+    ${postMedia(po)}
+    <div class="post-actions">
+      <button class="pa ${liked?'liked':''}" onclick="likePost('${po.id}')" aria-label="Me gusta" aria-pressed="${liked}">${ico(liked?'heart':'heartO')}</button>
+      ${commentsOff ? '' : `<button class="pa" onclick="openComments('${po.id}')" aria-label="Comentarios">${ico('chat')}</button>`}
+      <button class="pa" onclick="toast('Compartir estará disponible en la app')" aria-label="Compartir">${ico('send')}</button>
+      <span class="pa-sp"></span>
+      <button class="pa ${po.savedByMe?'saved':''}" onclick="savePost('${po.id}')" aria-label="Guardar" aria-pressed="${!!po.savedByMe}">${ico(po.savedByMe?'bookmarkF':'bookmark')}</button>
+    </div>
+    <div class="post-body">
+      <div class="post-likes">${likesHidden ? 'Le gusta a varias personas' : `${po.likes||0} Me gusta`}</div>
+      <p class="post-cap"><b>${escapeHtml(u.handle || u.name)}</b> ${highlightCaption(po.caption||'')}</p>
+      ${plan ? `<button class="post-plan" onclick="go('plan/${plan.id}')">${ico('link')}<span>${escapeHtml(plan.title)}</span>${ico('chevR')}</button>` : ''}
+      ${commentsOff ? '<div class="post-off">Comentarios desactivados</div>'
+        : (comments.length ? `<button class="post-more" onclick="openComments('${po.id}')">Ver ${comments.length===1?'1 comentario':'los '+comments.length+' comentarios'}</button>` : '')}
+    </div>
+  </article>`;
+}
+
+// Plan inyectado en el muro (regla de producto: 1 cada 5 publicaciones), de la
+// misma categoría que las publicaciones que se acaban de ver.
+function injectedPlan(seen, used){
+  let cat = null;
+  for (let i = seen.length - 1; i >= 0; i--){ const p = seen[i].planId && getPlan(seen[i].planId); if (p){ cat = p.category; break; } }
+  const upcoming = PLANS.filter(p => p.when > new Date() && !used.has(p.id));
+  const pick = upcoming.find(p => p.category === cat) || upcoming[0];
+  if (!pick) return '';
+  used.add(pick.id);
+  const place = getPlace(pick.placeId);
+  const seats = pick.joinType==='libre' ? 'Plan libre' : `Quedan ${Math.max(0, pick.groupMax - pick.joined)} plazas`;
+  return `<button class="inject ${pick.gradient}" onclick="go('plan/${pick.id}')">
+    ${coverImg(pick.photo,700)}<span class="inject-scrim"></span>
+    <span class="inject-tag">Puedes hacerlo tú</span>
+    <span class="inject-info">
+      <span class="inject-t">${escapeHtml(pick.title)}</span>
+      <span class="inject-m"><span>${ico('clock')} ${fmtCountdown(pick.when)}</span><span>${ico('pin')} ${escapeHtml(pick.secret?'Zona aprox.':(place?place.name:''))}</span><span>${freeIcon(pick)} ${pick.paid?pick.price+' €':'Gratis'}</span><span>${ico('users')} ${seats}</span></span>
+      <span class="inject-cta">Ver plan ${ico('chevR')}</span>
+    </span></button>`;
+}
+
+// Stories agrupadas por persona: la persona con la story más reciente va primero
+// y sus stories se reproducen de la más antigua a la más nueva.
+function storyGroups(){
+  const by = {};
+  STORIES.forEach(s => { (by[s.userId] = by[s.userId] || []).push(s); });
+  return Object.keys(by).map(userId => {
+    const list = by[userId].slice().sort((a,b)=>b.minAgo-a.minAgo);
+    return { userId, list, latest: Math.min(...list.map(s=>s.minAgo)) };
+  }).sort((a,b)=>a.latest-b.latest);
+}
+
+// Tira "Ahora mismo" dentro del muro: directos y stories destacadas.
+function storiesStrip(){
+  const lives = LIVES.map(l => { const u = getUser(l.userId) || { name:'' };
+    return `<button class="ss live" onclick="openLive('${l.id}')"><span class="ss-img">${coverImg(l.img,240)}<span class="ss-badge">En directo</span></span><span class="ss-n">${escapeHtml(u.name)}</span></button>`; }).join('');
+  const st = storyGroups().map((g,i) => { const u = getUser(g.userId) || { name:'' }; const last = g.list[g.list.length-1];
+    return `<button class="ss" onclick="openStory(${i})"><span class="ss-img">${coverImg(last.img,240)}</span><span class="ss-n">${escapeHtml(u.name)}</span></button>`; }).join('');
+  return `<section class="strip"><div class="strip-h">${ico('live')} Ahora mismo<button class="strip-all" onclick="setContentTab('stories')">Ver todo</button></div><div class="strip-row">${lives}${st}</div></section>`;
+}
+
+function renderWall(){
+  const all = wallPosts();
+  const posts = byOrigin(all, state.wallFilter);
+  const used = new Set();
+  let out = `<div class="wall-filter">${originFilter(all, state.wallFilter, v => `setWallFilter('${v}')`, 'Vida')}</div>`;
+  if (!posts.length) out += emptyTab('image', 'Nada por aquí todavía', 'Cuando la gente a la que sigues publique, lo verás aquí.');
+  posts.forEach((po,i) => {
+    out += postCard(po);
+    if (i === 1) out += storiesStrip();
+    if ((i + 1) % 5 === 0) out += injectedPlan(posts.slice(0, i + 1), used);
+  });
+  return `<div class="wall">${out}</div>`;
+}
+
+function renderStoriesTab(){
+  const lives = LIVES.map(l => { const u = getUser(l.userId) || { name:'' }; const p = getPlan(l.planId);
+    return `<button class="live-card" onclick="openLive('${l.id}')">${coverImg(l.img,600)}<span class="lc-scrim"></span>
+      <span class="live-badge">${ico('cast')} En directo</span><span class="lc-view">${ico('eye')} ${l.viewers}</span>
+      <span class="lc-info"><span class="lc-t">${escapeHtml(l.title)}</span><span class="lc-m">${escapeHtml(u.name)}${p?' · '+escapeHtml(p.title):''} · ${minLabel(l.startedMin)}</span></span></button>`; }).join('');
+  const tiles = storyGroups().map((g,i) => { const u = getUser(g.userId) || { name:'', initials:'' }; const last = g.list[g.list.length-1]; const p = getPlan(last.planId);
+    return `<button class="st-tile" onclick="openStory(${i})">${coverImg(last.img,420)}<span class="st-scrim"></span>
+      <span class="st-ring">${escapeHtml(u.initials||'')}</span><span class="st-count">${g.list.length}</span>
+      <span class="st-info"><span class="st-n">${escapeHtml(u.name)}</span><span class="st-m">${p?escapeHtml(p.title)+' · ':''}${minLabel(g.latest)}</span></span></button>`; }).join('');
+  return `<div class="stories-tab">
+    ${LIVES.length ? `<div class="sec-h">${ico('cast')} En directo ahora</div><div class="live-row">${lives}</div>` : ''}
+    <div class="sec-h">${ico('live')} Stories de hoy<span class="sec-s">desaparecen a las 24 h</span></div>
+    <div class="st-grid"><button class="st-tile st-add" onclick="newStory()"><span class="st-plus">${ico('plus')}</span><span class="st-n">Tu story</span></button>${tiles}</div>
+  </div>`;
+}
+function newStory(){ state.draftPost = freshPostDraft(); state.draftPost.alsoStory = true; go('crear-post'); }
+
+/* ======================= MÚSICA ======================= */
+/* Motor de audio: sintetiza en el navegador (Web Audio API) las pistas de TRACKS a
+   partir de su patrón. Sin archivos ni canciones reales, así que no hay derechos
+   de autor en juego y funciona sin conexión. Solo suena tras un toque del usuario. */
+const Music = (() => {
+  let ctx = null, master = null, bus = null, noise = null, timer = null, track = null, step = 0, next = 0;
+  const AC = () => window.AudioContext || window.webkitAudioContext;
+  const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
+  function ensure(){
+    if (ctx) return true;
+    const C = AC(); if (!C) return false;
+    try { ctx = new C(); } catch (e) { return false; }
+    master = ctx.createGain(); master.gain.value = 0.55;
+    const comp = ctx.createDynamicsCompressor ? ctx.createDynamicsCompressor() : null;
+    if (comp){ master.connect(comp); comp.connect(ctx.destination); } else master.connect(ctx.destination);
+    return true;
+  }
+  function env(g, t, attack, peak, dur){
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  }
+  function tone(midi, t, dur, type, peak, cutoff, attack){
+    const o = ctx.createOscillator(), g = ctx.createGain(), f = ctx.createBiquadFilter();
+    o.type = type; o.frequency.setValueAtTime(hz(midi), t);
+    f.type = 'lowpass'; f.frequency.value = cutoff;
+    o.connect(f); f.connect(g); g.connect(bus);
+    env(g, t, attack || 0.01, peak, dur);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+  function kick(t){
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.16);
+    o.connect(g); g.connect(bus); env(g, t, 0.004, 0.9, 0.28);
+    o.start(t); o.stop(t + 0.3);
+  }
+  function hat(t){
+    if (!noise){
+      const len = Math.floor(ctx.sampleRate * 0.1); noise = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = noise.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noise; f.type = 'highpass'; f.frequency.value = 7000;
+    s.connect(f); f.connect(g); g.connect(bus); env(g, t, 0.002, 0.16, 0.05);
+    s.start(t); s.stop(t + 0.08);
+  }
+  // Un paso de semicorchea: acorde de fondo al empezar cada compás, batería, bajo y melodía.
+  function playStep(t){
+    const tr = track, sd = 60 / tr.bpm / 4, i = step % 16;
+    const ch = tr.chords[Math.floor(step / 16) % tr.chords.length];
+    const note = (c) => ch[(parseInt(c, 10) - 1) % ch.length];
+    if (i === 0) ch.forEach(n => tone(n, t, sd * 16 * 0.97, tr.pad || 'triangle', 0.045, 1600, 0.3));
+    if (tr.kick[i] === 'x') kick(t);
+    if (tr.hat[i] === 'x') hat(t);
+    if (/\d/.test(tr.bass[i])) tone(note(tr.bass[i]) - 24, t, sd * 1.8, 'triangle', 0.3, 650);
+    if (/\d/.test(tr.lead[i])) tone(note(tr.lead[i]) + 12, t, sd * 2.6, tr.leadWave || 'sine', 0.09, 2800);
+  }
+  // Programador con margen: agenda los pasos de los próximos 120 ms.
+  function tick(){
+    if (!track) return;
+    const sd = 60 / track.bpm / 4;
+    while (next < ctx.currentTime + 0.12){
+      playStep(next + (step % 2 && track.swing ? track.swing * sd : 0));
+      next += sd; step++;
+    }
+  }
+  function stop(){
+    clearInterval(timer); timer = null; track = null;
+    if (bus){ const old = bus; try { old.gain.setTargetAtTime(0, ctx.currentTime, 0.04); } catch (e) {} setTimeout(() => old.disconnect(), 400); bus = null; }
+  }
+  function play(tr){
+    if (!tr || !ensure()) return false;
+    stop();
+    if (ctx.resume) ctx.resume();
+    bus = ctx.createGain(); bus.gain.value = 1; bus.connect(master);
+    track = tr; step = 0; next = ctx.currentTime + 0.06;
+    tick(); timer = setInterval(tick, 25);
+    return true;
+  }
+  return { play, stop, supported: () => !!AC() };
+})();
+
+// Qué suena ahora y desde dónde: id de publicación, 'story' o 'pv:<pista>' (escucha previa).
+const musicNow = { trackId:null, src:null };
+function trackLabel(t){ return `${t.artist} · ${t.title}`; }
+function playTrack(trackId, src){
+  const t = getTrack(trackId); if (!t) return false;
+  if (!Music.play(t)){ toast('Este navegador no puede reproducir audio'); return false; }
+  musicNow.trackId = trackId; musicNow.src = src;
+  refreshMusicUi(); return true;
+}
+function stopMusic(){
+  if (!musicNow.src) return;
+  Music.stop(); musicNow.trackId = null; musicNow.src = null;
+  refreshMusicUi();
+}
+// Marca como activos los botones de lo que está sonando (data-music = origen).
+function refreshMusicUi(){
+  document.querySelectorAll('[data-music]').forEach(el => el.classList.toggle('on', !!musicNow.src && el.dataset.music === musicNow.src));
+}
+function togglePostMusic(id){
+  const po = POSTS.find(p => p.id === id); if (!po || !po.trackId) return;
+  if (musicNow.src === id) stopMusic(); else playTrack(po.trackId, id);
+}
+// Línea de música bajo el nombre del autor (como en Instagram); toca para escuchar.
+function postMusicLine(po){
+  const t = po.trackId && getTrack(po.trackId); if (!t) return '';
+  return `<button class="post-music ${musicNow.src===po.id?'on':''}" data-music="${po.id}" onclick="togglePostMusic('${po.id}')" aria-label="Escuchar ${escapeHtml(trackLabel(t))}">
+    ${ico('music')}<span class="eq"><i></i><i></i><i></i></span><span class="pmu-t">${escapeHtml(trackLabel(t))}</span></button>`;
+}
+
+/* ---------- selector de música (al crear una publicación o story) ---------- */
+// Las cuentas profesionales solo pueden usar música libre de derechos (ver PRODUCTO.md).
+function availableTracks(){ return ME.type === 'profesional' ? TRACKS.filter(t => t.free) : TRACKS; }
+function openMusicPicker(){
+  capturePostInputs();
+  state.musicQuery = ''; state.musicMood = 'todas';
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeMusicPicker()"></div>
+    <div class="sheet mp" role="dialog" aria-label="Añadir música">
+      <div class="sheet-h"><span>Añadir música</span><button class="sv-x" onclick="closeMusicPicker()" aria-label="Cerrar">${ico('close')}</button></div>
+      <div class="mp-search">${ico('search')}<input id="mp-q" placeholder="Busca por canción, artista o ambiente" oninput="state.musicQuery=this.value;renderMusicList()"></div>
+      <div class="chips mp-moods" id="mp-moods"></div>
+      <div class="sheet-list mp-list" id="mp-list"></div>
+      <p class="mp-note">${ME.type==='profesional' ? 'Como cuenta profesional solo puedes usar música libre de derechos. ' : ''}Pistas originales de la demo, generadas en tu navegador.</p>
+    </div>`);
+  renderMusicList();
+}
+function setMusicMood(m){ state.musicMood = m; renderMusicList(); }
+function renderMusicList(){
+  const moods = ['todas', ...new Set(availableTracks().map(t => t.mood))];
+  const chips = document.getElementById('mp-moods');
+  if (chips) chips.innerHTML = moods.map(m => `<button class="${state.musicMood===m?'active':''}" onclick="setMusicMood('${m}')"><span>${m==='todas'?'Todas':escapeHtml(m)}</span></button>`).join('');
+  const q = (state.musicQuery || '').trim().toLowerCase();
+  const list = availableTracks().filter(t => (state.musicMood === 'todas' || t.mood === state.musicMood)
+    && (!q || [t.title, t.artist, t.mood].some(s => s.toLowerCase().includes(q))));
+  const el = document.getElementById('mp-list'); if (!el) return;
+  el.innerHTML = list.map(t => `<div class="mp-row">
+      <button class="mp-play ${musicNow.src==='pv:'+t.id?'on':''}" data-music="pv:${t.id}" onclick="previewTrack('${t.id}')" aria-label="Escuchar ${escapeHtml(t.title)}"><span class="mp-cover ${t.cover}"></span>${ico('playS')}${ico('pause')}</button>
+      <span class="mp-info"><b>${escapeHtml(t.title)}</b><span>${escapeHtml(t.artist)} · ${escapeHtml(t.mood)} · ${t.bpm} bpm${t.free?' · <em>Libre</em>':''}</span></span>
+      <button class="mp-use ${state.draftPost.trackId===t.id?'active':''}" onclick="chooseTrack('${t.id}')">${state.draftPost.trackId===t.id?'Elegida':'Usar'}</button>
+    </div>`).join('') || '<p class="hint">No hay pistas que coincidan con la búsqueda.</p>';
+}
+function previewTrack(id){ if (musicNow.src === 'pv:' + id) stopMusic(); else playTrack(id, 'pv:' + id); }
+function chooseTrack(id){
+  state.draftPost.trackId = id;
+  closeOverlay();
+  const t = getTrack(id); if (t) toast('Música: ' + trackLabel(t));
+  renderCreatePost();
+}
+function closeMusicPicker(){ closeOverlay(); }
+function clearPostTrack(ev){ if (ev && ev.stopPropagation) ev.stopPropagation(); capturePostInputs(); state.draftPost.trackId = ''; renderCreatePost(); }
+// Activa o silencia la música de las stories (por defecto suenan).
+function toggleStorySound(){
+  state.storySound = !state.storySound;
+  renderStory();
+}
+function syncStoryMusic(){
+  const g = storyGroups()[storyState.g], s = g && g.list[storyState.i];
+  if (!s) return;
+  if (!state.storySound || !s.trackId){ if (musicNow.src === 'story') stopMusic(); return; }
+  if (musicNow.src !== 'story' || musicNow.trackId !== s.trackId) playTrack(s.trackId, 'story');
+}
+
+/* ---------- interacciones con publicaciones ---------- */
+function rerenderPost(id){
+  const po = POSTS.find(p=>p.id===id); if (!po) return;
+  document.querySelectorAll(`[data-post="${id}"]`).forEach(el => { el.outerHTML = postCard(po); });
+}
+function likePost(id, fromDouble){
+  const po = POSTS.find(p=>p.id===id); if (!po) return;
+  if (fromDouble && po.likedByMe){ burst(id); return; }
+  po.likedByMe = !po.likedByMe;
+  po.likes = Math.max(0, (po.likes||0) + (po.likedByMe ? 1 : -1));
+  saveState(); rerenderPost(id);
+  if (fromDouble) burst(id);
+}
+function burst(id){
+  document.querySelectorAll(`[data-post="${id}"]`).forEach(el => { el.classList.add('burst-on'); setTimeout(()=>el.classList.remove('burst-on'), 850); });
+}
+function savePost(id){
+  const po = POSTS.find(p=>p.id===id); if (!po) return;
+  po.savedByMe = !po.savedByMe; saveState(); rerenderPost(id);
+  toast(po.savedByMe ? 'Guardada en tu colección' : 'Quitada de tu colección');
+}
+function toggleVideo(el){ el.classList.toggle('playing'); }
+function carouselDots(track, id){
+  const i = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+  const dots = document.getElementById('cd-'+id);
+  if (dots) Array.from(dots.children).forEach((d,k)=>d.classList.toggle('on', k===i));
+  const c = document.getElementById('cc-'+id);
+  if (c && dots) c.textContent = (i+1) + '/' + dots.children.length;
+}
+
+/* ---------- capa superpuesta: publicación, comentarios, stories, directos ---------- */
+let overlayTimer = null;
+function overlayEl(){ return document.getElementById('overlay'); }
+function showOverlay(cls, html){ const o = overlayEl(); o.className = 'overlay ' + cls; o.innerHTML = html; o.hidden = false; }
+function closeOverlay(){
+  clearInterval(overlayTimer); overlayTimer = null;
+  const o = overlayEl();
+  if (musicNow.src === 'story' || String(musicNow.src).startsWith('pv:') || o.className.includes('ov-post')) stopMusic();
+  o.hidden = true; o.innerHTML = ''; o.className = 'overlay';
+}
+function openPost(id){
+  const po = POSTS.find(p=>p.id===id); if (!po) return;
+  showOverlay('ov-post', `<div class="post-top"><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('chevL')}</button><span>Publicación</span></div>${postCard(po)}`);
+}
+function openComments(id){
+  const po = POSTS.find(p=>p.id===id); if (!po) return;
+  if (!overlayEl().hidden && overlayEl().className.includes('ov-post')) state.sheetReturn = id;
+  const list = (po.comments||[]).map(c => { const u = getUser(c.userId) || { name:c.userId, initials:'?' };
+    return `<div class="cm"><span class="post-av sm">${escapeHtml(u.initials||'')}</span><p><b>${escapeHtml(u.handle||u.name)}</b> ${highlightCaption(c.text)}</p></div>`; }).join('')
+    || '<p class="hint">Aún no hay comentarios. Escribe el primero.</p>';
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeSheet()"></div>
+    <div class="sheet" role="dialog" aria-label="Comentarios">
+      <div class="sheet-h"><span>Comentarios</span><button class="sv-x" onclick="closeSheet()" aria-label="Cerrar">${ico('close')}</button></div>
+      <div class="sheet-list">${list}</div>
+      <div class="sheet-in"><input id="cm-input" placeholder="Añade un comentario…" onkeydown="if(event.key==='Enter')addComment('${id}')"><button class="pa" onclick="addComment('${id}')" aria-label="Publicar comentario">${ico('send')}</button></div>
+    </div>`);
+}
+function closeSheet(){ const back = state.sheetReturn; state.sheetReturn = null; closeOverlay(); if (back) openPost(back); }
+function addComment(id){
+  const text = val('cm-input').trim(); if (!text) return;
+  const po = POSTS.find(p=>p.id===id); if (!po) return;
+  (po.comments = po.comments || []).push({ userId:'me', text });
+  saveState(); openComments(id); rerenderPost(id);
+}
+
+// Visor de stories: 5 s por story, toque a la izquierda o a la derecha para navegar.
+const STORY_MS = 5000;
+const storyState = { g:0, i:0, t:0 };
+function openStory(g){
+  Object.assign(storyState, { g, i:0, t:0 });
+  renderStory();
+  clearInterval(overlayTimer); overlayTimer = setInterval(tickStory, 100);
+}
+function tickStory(){
+  storyState.t += 100;
+  if (storyState.t >= STORY_MS) storyNext();
+  else { const b = document.getElementById('sv-cur'); if (b) b.style.width = (storyState.t/STORY_MS*100) + '%'; }
+}
+function storyNext(){
+  const groups = storyGroups(), g = groups[storyState.g];
+  storyState.t = 0;
+  if (g && storyState.i < g.list.length - 1) storyState.i++;
+  else if (storyState.g < groups.length - 1){ storyState.g++; storyState.i = 0; }
+  else { closeOverlay(); return; }
+  renderStory();
+}
+function storyPrev(){
+  storyState.t = 0;
+  if (storyState.i > 0) storyState.i--;
+  else if (storyState.g > 0){ storyState.g--; storyState.i = storyGroups()[storyState.g].list.length - 1; }
+  renderStory();
+}
+function renderStory(){
+  const g = storyGroups()[storyState.g]; if (!g){ closeOverlay(); return; }
+  const s = g.list[storyState.i];
+  const u = getUser(g.userId) || { name:'', initials:'?' };
+  const p = getPlan(s.planId);
+  const t = s.trackId && getTrack(s.trackId);
+  const soundOn = !!(t && state.storySound);
+  showOverlay('ov-story', `<div class="sv-media">${coverImg(s.img,800)}</div><div class="sv-shade"></div>
+    <div class="sv-bars">${g.list.map((_,i)=>`<span class="sv-bar"><i ${i===storyState.i?'id="sv-cur"':''} style="width:${i<storyState.i?100:(i===storyState.i?storyState.t/STORY_MS*100:0)}%"></i></span>`).join('')}</div>
+    <div class="sv-head"><span class="post-av">${escapeHtml(u.initials||'')}</span>
+      <span class="sv-who"><b>${escapeHtml(u.name)}</b><span>${minLabel(s.minAgo)}${p?' · '+escapeHtml(p.title):''}</span></span>
+      ${t ? `<button class="sv-x sv-sound ${soundOn?'on':''}" data-music="story" onclick="toggleStorySound()" aria-label="${soundOn?'Silenciar':'Activar sonido'}">${ico('mute')}${ico('volume')}</button>` : ''}
+      <button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    ${t ? `<div class="sv-music ${soundOn?'on':''}" data-music="story">${ico('music')}<span class="eq"><i></i><i></i><i></i></span><span><b>${escapeHtml(t.title)}</b> · ${escapeHtml(t.artist)}</span></div>` : ''}
+    <button class="sv-tap prev" onclick="storyPrev()" aria-label="Story anterior"></button>
+    <button class="sv-tap next" onclick="storyNext()" aria-label="Story siguiente"></button>
+    <p class="sv-text">${escapeHtml(s.text)}</p>
+    ${p ? `<button class="sv-cta" onclick="closeOverlay();go('plan/${p.id}')">${ico('pin')} Ver el plan</button>` : ''}`);
+  syncStoryMusic();
+}
+
+// Directo: espectadores y chat simulados que se actualizan solos.
+const liveState = { id:null, host:false, viewers:0, chat:[], idx:0 };
+function openLive(id, host){
+  const l = LIVES.find(x=>x.id===id); if (!l) return;
+  stopMusic();
+  Object.assign(liveState, { id, host:!!host, viewers:l.viewers, chat:[], idx:0 });
+  renderLive();
+  clearInterval(overlayTimer); overlayTimer = setInterval(tickLive, 1600);
+}
+function tickLive(){
+  liveState.chat.push(LIVE_CHAT[liveState.idx % LIVE_CHAT.length]); liveState.idx++;
+  if (liveState.chat.length > 6) liveState.chat.shift();
+  liveState.viewers = Math.max(1, liveState.viewers + Math.round(Math.random()*6) - 2);
+  renderLiveChat();
+}
+function renderLive(){
+  const l = LIVES.find(x=>x.id===liveState.id); if (!l){ closeOverlay(); return; }
+  const u = getUser(l.userId) || { name:'', initials:'?' };
+  const p = getPlan(l.planId);
+  showOverlay('ov-live', `<div class="sv-media kb-on">${coverImg(l.img,800)}</div><div class="sv-shade"></div>
+    <div class="sv-head"><span class="post-av">${escapeHtml(u.initials||'')}</span>
+      <span class="sv-who"><b>${escapeHtml(u.name)}</b><span>${escapeHtml(l.title)}</span></span>
+      <span class="live-badge">${ico('cast')} En directo</span><span class="lv-view" id="lv-view">${ico('eye')} ${liveState.viewers}</span>
+      <button class="sv-x" onclick="${liveState.host?'endLive()':'closeOverlay()'}" aria-label="Cerrar">${ico('close')}</button></div>
+    ${liveState.host ? `<div class="lv-host">${ico('shield')} Emites desde «${escapeHtml(p?p.title:'')}». No enfoques a quien no quiera salir.</div>` : ''}
+    <div class="lv-chat" id="lv-chat"></div>
+    <div class="lv-hearts" id="lv-hearts"></div>
+    <div class="lv-bar">
+      <input id="lv-input" class="lv-input" placeholder="Escribe un comentario…" onkeydown="if(event.key==='Enter')sendLiveMsg()">
+      <button class="pa" onclick="sendLiveMsg()" aria-label="Enviar">${ico('send')}</button>
+      <button class="pa lv-like" onclick="liveHeart()" aria-label="Me gusta">${ico('heart')}</button>
+      ${liveState.host ? `<button class="lv-cta end" onclick="endLive()">Finalizar</button>`
+        : (p ? `<button class="lv-cta" onclick="closeOverlay();go('plan/${p.id}')">Ir al plan</button>` : '')}
+    </div>`);
+  renderLiveChat();
+}
+function renderLiveChat(){
+  const c = document.getElementById('lv-chat');
+  if (c) c.innerHTML = liveState.chat.map(m=>`<p><b>${escapeHtml(m.name)}</b> ${escapeHtml(m.text)}</p>`).join('');
+  const v = document.getElementById('lv-view'); if (v) v.innerHTML = `${ico('eye')} ${liveState.viewers}`;
+}
+function sendLiveMsg(){
+  const t = val('lv-input').trim(); if (!t) return;
+  liveState.chat.push({ name:ME.name, text:t }); if (liveState.chat.length > 6) liveState.chat.shift();
+  const i = document.getElementById('lv-input'); if (i) i.value = '';
+  renderLiveChat();
+}
+function liveHeart(){
+  const h = document.getElementById('lv-hearts'); if (!h || !document.createElement) return;
+  const el = document.createElement('i'); el.className = 'ico'; el.innerHTML = SVG.heart;
+  el.style.left = (8 + Math.random()*28) + 'px'; h.appendChild(el);
+  setTimeout(()=>el.remove(), 1700);
+}
+function renderCreateLive(){
+  const view = document.getElementById('view-page');
+  const options = PLANS.filter(p => (ME.attendedPlanIds||[]).includes(p.id) || p.host.name===ME.name || state.joined.has(p.id));
+  view.innerHTML = pageHead('Emitir en directo') + `<div class="page-body form">
+    <div class="field"><label for="f-liveplan">Plan desde el que emites</label>
+      <select id="f-liveplan">${options.map(p=>`<option value="${p.id}">${escapeHtml(p.title)}</option>`).join('')}</select>
+      <p class="hint">Solo se emite desde un plan en marcha al que asistes o que organizas.</p></div>
+    <div class="field"><label for="f-livetitle">Título</label><input id="f-livetitle" placeholder="Ej. Atardecer en directo desde Debod" /></div>
+    <div class="block"><h4>${ico('shield')} Antes de empezar</h4><p class="hint">Pide permiso antes de enfocar a alguien; quien tenga su presencia en privado no debe salir. Los directos se pueden reportar y se moderan mientras se emiten.</p></div>
+    <div class="form-actions"><button class="btn-primary" onclick="startLive()">${ico('cast')} Empezar directo</button></div>
+  </div>`;
+}
+function startLive(){
+  const planId = val('f-liveplan') || (PLANS[0] && PLANS[0].id);
+  const p = getPlan(planId);
+  const title = val('f-livetitle').trim() || ('En directo desde ' + (p ? p.title : 'un plan'));
+  const l = { id:'lme'+Date.now(), userId:'me', planId, img:(p && p.photo) || '', title, viewers:1, startedMin:0 };
+  LIVES.unshift(l);
+  state.contentTab = 'stories'; go('feed');
+  openLive(l.id, true);
+}
+function endLive(){
+  const i = LIVES.findIndex(x => x.id===liveState.id && x.userId==='me');
+  if (i >= 0) LIVES.splice(i, 1);
+  closeOverlay(); toast('Directo finalizado');
+  if (state.contentTab==='stories') renderContent();
 }
 function emptyTab(icon,title,text){ return `<div class="empty-tab"><span class="empty-ic">${ico(icon)}</span><h3>${title}</h3><p>${text}</p></div>`; }
 function renderContent(){
@@ -145,8 +719,8 @@ function renderContent(){
   if (state.contentTab==='disponibles'){ filters.style.display='flex'; renderFeed(); }
   else {
     filters.style.display='none';
-    if (state.contentTab==='vividas') list.innerHTML = renderVividasTab();
-    else if (state.contentTab==='stories') list.innerHTML = emptyTab('live','Stories · el “ahora mismo”','Contenido efímero de planes en marcha. El prototipo se centra en las vistas principales y los flujos de creación.');
+    if (state.contentTab==='vividas') list.innerHTML = renderWall();
+    else if (state.contentTab==='stories') list.innerHTML = renderStoriesTab();
     else list.innerHTML = emptyTab('at','Menciones','Aquí llegan los planes y stories donde te etiquetan. Una mención no se asocia a tu perfil hasta que la aceptas.');
   }
 }
@@ -158,8 +732,8 @@ function renderMap(){
   const pins = PLACES.map(pl=>{
     const sel = state.selectedPlace===pl.id ? 'selected' : '';
     const inner = pl.secret ? ico('lock') : (pl.kind==='negocio' ? ico('shield') : ico('pin'));
-    return `<button class="pin ${placeKindClass(pl)} ${sel}" style="left:${pl.x}%;top:${pl.y}%" onclick="selectPlace('${pl.id}')" aria-label="${pl.name}">
-      <span class="pin-dot">${inner}</span><span class="pin-cap">${pl.secret?'·····':pl.name}</span></button>`;
+    return `<button class="pin ${placeKindClass(pl)} ${sel}" style="left:${pl.x}%;top:${pl.y}%" onclick="selectPlace('${pl.id}')" aria-label="${escapeHtml(pl.name)}">
+      <span class="pin-dot">${inner}</span><span class="pin-cap">${pl.secret?'·····':escapeHtml(pl.name)}</span></button>`;
   }).join('');
   map.innerHTML = `
     <div class="map-hint">${ico('pin')} Madrid · ${PLACES.length} lugares cerca · toca un pin</div>
@@ -181,15 +755,15 @@ function renderMapSheet(){
   const pl = getPlace(state.selectedPlace);
   const plans = PLANS.filter(p=>p.placeId===pl.id);
   sheet.innerHTML = `
-    <h3>${pl.secret?'Lugar por desvelar':pl.name} ${pl.verified?`<span class="vchk">${ico('check')}</span>`:''}</h3>
+    <h3>${pl.secret?'Lugar por desvelar':escapeHtml(pl.name)} ${pl.verified?`<span class="vchk">${ico('check')}</span>`:''}</h3>
     <div class="sub">${pl.kind==='negocio'?'Negocio verificado':'Lugar público'} · ${pl.city} · ${rating(pl.rating)} · ${pl.hashtag}</div>
     ${plans.length?plans.map(miniPlan).join(''):'<div class="sub">Sin planes próximos en este lugar.</div>'}`;
 }
 function miniPlan(p){
   return `<button class="mini-plan" onclick="go('plan/${p.id}')">
-    <span class="mini-thumb ${p.gradient}"></span>
+    <span class="mini-thumb ${p.gradient}">${coverImg(p.photo,120)}</span>
     <span class="mini-info"><span class="mini-t">${escapeHtml(p.title)}</span>
-      <span class="mini-m">${fmtWhen(p.when)} · ${sizeLabel(p)} · ${ico('geo')} ${p.attended}</span></span>
+      <span class="mini-m">${fmtWhen(p.when)} · ${sizeLabel(p)} · ${ico('geo')} ${attendanceView(p).n}</span></span>
     <span class="mini-corner">${freeIcon(p)}</span></button>`;
 }
 function selectPlace(id){ state.selectedPlace = state.selectedPlace===id ? null : id; renderMap(); }
@@ -203,6 +777,7 @@ function registerArrival(id){
   if (state.presencePublic){ if(!p.publicAttendees.includes(ME.initials)) p.publicAttendees.unshift(ME.initials); }
   else { p.attendedPrivate = (p.attendedPrivate||0)+1; }
   if (!ME.attendedPlanIds.includes(id)) ME.attendedPlanIds.push(id);
+  saveState();
   toast(state.presencePublic ? 'Llegada verificada por ubicación · presencia pública' : 'Llegada verificada por ubicación · presencia privada');
   renderDetail(id);
 }
@@ -210,6 +785,7 @@ function requestAttendance(id){
   if (state.requested.has(id)) return;
   state.requested.add(id);
   REQUESTS.push({ id:'r'+Date.now(), planId:id, userId:'me', status:'pendiente', message:'Solicitud enviada desde el prototipo.' });
+  saveState();
   toast('Solicitud de asistencia enviada · pendiente de aprobación');
   renderDetail(id);
 }
@@ -256,14 +832,16 @@ function renderDetail(id){
       </div></div>`;
 
   const pubList = p.publicAttendees.slice(0,6);
-  const priv = p.attendedPrivate;
+  const av = attendanceView(p);
   const whoBlock = `
     <div class="block"><h4>Quién asiste · verificado por ubicación</h4>
       <div class="attendees">
-        ${pubList.map(a=>`<span class="avatar sm">${a}</span>`).join('')}
-        <span class="more">${ico('geo')} ${p.attended} asistentes reales${priv?` · ${priv} en privado`:''}</span>
+        ${pubList.map(a=>`<span class="avatar sm">${escapeHtml(a)}</span>`).join('')}
+        <span class="more">${ico('geo')} ${av.n} ${av.label}${av.priv?` · ${av.priv} en privado`:''}</span>
       </div>
-      <p class="hint">Los asistentes en privado cuentan en el total pero no se listan.</p></div>`;
+      <p class="hint">${av.below
+        ? `Con menos de ${PRIVACY_MIN} asistentes solo se cuentan los visibles, para que nadie pueda deducir quién fue en privado.`
+        : 'Los asistentes en privado cuentan en el total pero no se listan.'}</p></div>`;
 
   const pend = requestsForPlan(p.id).filter(r=>r.status==='pendiente').length;
   const manageBlock = canManage(p) ? `
@@ -274,6 +852,7 @@ function renderDetail(id){
 
   view.innerHTML = `
     <div class="detail-hero ${p.gradient}">
+      ${coverImg(p.photo,820)}
       <span class="hero-scrim"></span>
       <button class="back-btn" onclick="history.back()" aria-label="Atrás">${ico('chevL')}</button>
       <div class="hero-content">
@@ -291,7 +870,7 @@ function renderDetail(id){
       <div class="kpis">
         <div class="kpi"><div class="v">${fmtCountdown(p.when)}</div><div class="k">${ico('clock')} empieza en</div></div>
         <div class="kpi"><div class="v">${libre?'Libre':sizeLabel(p)}</div><div class="k">${ico('users')} ${libre?'sin aforo':p.groupMin+'–'+p.groupMax}</div></div>
-        <div class="kpi"><div class="v">${p.attended}</div><div class="k">${ico('geo')} asistentes</div></div>
+        <div class="kpi"><div class="v">${av.n}</div><div class="k">${ico('geo')} ${av.below?'visibles':'asistentes'}</div></div>
       </div>
       ${p.secret?`<div class="secret-note"><span class="sn-ic">${ico('lock')}</span><p>La ubicación exacta se revela 2 horas antes del plan. El secreto es parte de la experiencia.</p></div>`:''}
       <div class="block"><h4>El plan</h4><p>${escapeHtml(p.summary)}</p>
@@ -311,7 +890,7 @@ function renderDetail(id){
       </div>
       <div class="block"><h4>Lugar</h4>
         <button class="place-link" onclick="go('mapa');selectPlace('${place?place.id:''}')">
-          <span class="mini-thumb ${p.gradient}"></span>
+          <span class="mini-thumb ${p.gradient}">${coverImg(p.photo,120)}</span>
           <span class="pl-info"><span class="pl-n">${p.secret?'Zona aproximada · centro de Madrid':(place?place.name:'Madrid')}</span>
             <span class="pl-s">${place?place.city+' · '+(place.kind==='negocio'?'Negocio verificado':'Lugar público')+' · '+place.hashtag:''}</span></span>
           <span class="pl-arrow">${ico('chevR')}</span></button>
@@ -332,6 +911,7 @@ function toggleJoin(id){
   const p=getPlan(id);
   if (state.joined.has(id)) state.joined.delete(id);
   else { state.joined.add(id); toast(p.paid?'Reserva retenida en escrow':'Apuntado · verifica tu identidad antes del plan'); }
+  saveState();
   renderDetail(id);
 }
 
@@ -368,29 +948,40 @@ function resolveRequest(reqId, decision, planId){
   const r = REQUESTS.find(x=>x.id===reqId); if(!r) return;
   r.status = decision;
   if (decision==='aceptada'){
-    const p = getPlan(planId), u = getUser(r.userId);
-    p.attended = (p.attended||0)+1;
-    if (u && !p.publicAttendees.includes(u.initials)) p.publicAttendees.unshift(u.initials);
-    toast('Solicitud aceptada · ahora es asistente');
+    // Aceptar inscribe al usuario; la asistencia real se verifica al llegar, no se suma aquí.
+    const p = getPlan(planId);
+    p.joined = (p.joined||0)+1;
+    if (r.userId==='me') state.joined.add(planId);
+    toast('Solicitud aceptada · inscrito; su asistencia se verificará al llegar');
   } else toast('Solicitud rechazada');
+  saveState();
   renderRequests(planId);
 }
 
 /* ---------- perfil ---------- */
 function profileGridPosts(uid){
-  const posts = postsByUser(uid);
-  if (!posts.length) return `<div class="empty-tab"><span class="empty-ic">${ico('image')}</span><p>Aún no hay publicaciones.</p></div>`;
-  return `<div class="grid">${posts.map(po=>`
-    <button class="cell ${po.media[0]}" onclick="toast('Publicación · ${po.kind}')" aria-label="${escapeHtml(po.caption)}">
+  const me = uid === 'me';
+  const all = postsByUser(uid).slice().sort((a,b)=>(a.ago||0)-(b.ago||0));
+  const f = state.profileFilter;
+  const posts = byOrigin(all, f);
+  const filter = all.length ? `<div class="prof-filter">${originFilter(all, f, v => `setProfileFilter('${v}','${uid}')`, me ? 'Tu vida' : 'Su vida')}</div>` : '';
+  const emptyText = { todo:'Aún no hay publicaciones.', plan:'Aún no hay publicaciones de planes.', vida: me ? 'Aún no has compartido nada de tu vida.' : 'Aún no ha compartido nada de su vida.' }[f];
+  if (!posts.length) return `${filter}<div class="empty-tab"><span class="empty-ic">${ico('image')}</span><p>${emptyText}</p></div>`;
+  return `${filter}<div class="grid">${posts.map(po=>{ const plan = po.planId && getPlan(po.planId);
+    return `
+    <button class="cell ${po.media[0]}" onclick="openPost('${po.id}')" aria-label="${escapeHtml(po.caption)}">
+      ${coverImg((po.imgs||[])[0],500)}
       <span class="cell-scrim"></span><span class="cell-corner">${ico(POST_ICON[po.kind]||'image')}</span>
-      <span class="cell-info"><span class="cell-meta">${ico('heart')} ${po.likes}</span></span>
-    </button>`).join('')}</div>`;
+      <span class="cell-info"><span class="cell-meta">${plan ? `${ico('ticket')} <span class="cm-t">${escapeHtml(plan.title)}</span>` : `${ico('heart')} ${po.likes}`}</span></span>
+    </button>`; }).join('')}</div>`;
 }
+function setProfileFilter(f, uid){ stopMusic(); state.profileFilter = f; const g = document.getElementById('profile-grid'); if (g) g.innerHTML = profileGridPosts(uid); }
 function profileGridVividas(u){
   const plans = (u.attendedPlanIds||[]).map(getPlan).filter(Boolean);
   if (!plans.length) return `<div class="empty-tab"><span class="empty-ic">${ico('play')}</span><p>Aún no hay Vividas.</p></div>`;
   return `<div class="grid">${plans.map(p=>`
     <button class="cell ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">
+      ${coverImg(p.photo,500)}
       <span class="cell-scrim"></span><span class="cell-corner">${freeIcon(p)}</span>
       <span class="cell-info"><span class="cell-title">${escapeHtml(p.title)}</span></span></button>`).join('')}</div>`;
 }
@@ -400,6 +991,8 @@ function renderProfile(uid){
   if (!u){ document.getElementById(me?'view-perfil':'view-page').innerHTML = '<div class="empty-tab"><p>Perfil no encontrado.</p></div>'; return; }
   const container = me ? document.getElementById('view-perfil') : document.getElementById('view-page');
   const tab = state.profileTab;
+  const fid = me ? 'me' : u.id;
+  if (state.profileFilterUid !== fid){ state.profileFilterUid = fid; state.profileFilter = 'todo'; }  // cada perfil empieza en "Todo"
   const proExtra = u.type==='profesional' ? `
     <div class="block"><h4>${ico('briefcase')} Información de negocio</h4>
       <div class="kv"><span>Categoría</span><b>${escapeHtml(u.business?.category||'—')}</b></div>
@@ -429,7 +1022,7 @@ function renderProfile(uid){
       <button class="${tab==='posts'?'active':''}" onclick="setProfileTab('posts','${u.id}')">${ico('grid')} Publicaciones</button>
       <button class="${tab==='vividas'?'active':''}" onclick="setProfileTab('vividas','${u.id}')">${ico('play')} Vividas</button>
     </div>
-    <div id="profile-grid">${tab==='posts'?profileGridPosts(u.id):profileGridVividas(u)}</div>`;
+    <div id="profile-grid">${tab==='posts'?profileGridPosts(me?'me':u.id):profileGridVividas(u)}</div>`;
 }
 function setProfileTab(t, uid){ state.profileTab=t; renderProfile(uid==='me'?'me':uid); }
 
@@ -460,13 +1053,17 @@ function renderSettings(){
         ${row('card','Pagos y reembolsos')}
         ${row('doc','Datos y legal')}
       </div>
+      <div class="set-group"><div class="set-title">Prototipo</div>
+        <div class="set-row static"><span class="sr-ic">${ico('image')}</span><span class="sr-l">Fotos de Unsplash (licencia Unsplash)</span></div>
+        <button class="set-row" onclick="resetDemo()"><span class="sr-ic">${ico('repeat')}</span><span class="sr-l">Restablecer demo</span><span class="soon">borra lo creado</span></button>
+      </div>
       <div class="set-group">
         <button class="set-row danger" onclick="toast('Sesión cerrada (demo)')"><span class="sr-ic">${ico('logout')}</span><span class="sr-l">Cerrar sesión</span></button>
       </div>
     </div>`;
 }
-function toggleProfilePrivacy(){ ME.profilePublic = !ME.profilePublic; renderSettings(); }
-function togglePresenceDefault(){ ME.presencePublic = !ME.presencePublic; state.presencePublic = ME.presencePublic; renderSettings(); }
+function toggleProfilePrivacy(){ ME.profilePublic = !ME.profilePublic; saveState(); renderSettings(); }
+function togglePresenceDefault(){ ME.presencePublic = !ME.presencePublic; state.presencePublic = ME.presencePublic; saveState(); renderSettings(); }
 
 /* ---------- grupos ---------- */
 function roleBadge(role){ return role==='admin' ? `<span class="role admin">${ico('shield')} Admin</span>` : `<span class="role">Miembro</span>`; }
@@ -534,6 +1131,7 @@ function publishGroup(){
   const members = [{userId:'me',role:'admin'}].concat(Object.entries(state.draftMembers).map(([userId,role])=>({userId,role})));
   const g = { id:'g'+Date.now(), name, about, gradient:'g-dark', members, planIds:[] };
   GROUPS.unshift(g); state.draftMembers={}; state.draftGName=''; state.draftGAbout='';
+  saveState();
   toast('Grupo creado'); go('grupo/'+g.id);
 }
 
@@ -546,6 +1144,7 @@ function renderCreateChooser(){
     ${opt('pin','Plan','Organiza una quedada: libre o con aprobación','crear-plan')}
     ${opt('image','Publicación','Foto, vídeo o carrusel para tu perfil','crear-post')}
     ${opt('group','Grupo','Reúne gente con varios admins','crear-grupo')}
+    ${opt('cast','Directo','Emite en vivo desde un plan en marcha','crear-directo')}
   </div>`;
 }
 function renderCreatePlan(){
@@ -619,9 +1218,10 @@ function publishPlan(){
   PLANS.unshift(plan);
   if (groupId){ const g=getGroup(groupId); if(g) g.planIds.unshift(plan.id); }
   state.pendingGroup = null;
+  saveState();
   toast('Plan publicado'); go('plan/'+plan.id);
 }
-function freshPostDraft(){ return { kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false }; }
+function freshPostDraft(){ return { origin:'plan', kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' }; }
 function capturePostInputs(){
   const d=state.draftPost;
   d.caption=val('f-caption'); d.alt=val('f-alt');
@@ -640,12 +1240,15 @@ function updateCaptionPreview(){
 function renderCreatePost(){
   const view = document.getElementById('view-page');
   const d = state.draftPost, k = d.kind;
-  const sample = ['g-grape','g-sunset','g-forest'];
+  const tr = d.trackId && getTrack(d.trackId);
+  const musicSticker = tr ? `<span class="pp-music">${ico('music')} ${escapeHtml(trackLabel(tr))}</span>` : '';
+  const sample = [['g-grape','1566737236500-c8ac43014a67'],['g-sunset','1495567720989-cebdbdd97913'],['g-forest','1551632811-561732d1e306']];
   const preview = k==='carrusel'
-    ? `<div class="post-prev carrusel">${sample.map(c=>`<span class="pp ${c}"></span>`).join('')}<span class="pp-dots">1 / ${sample.length}</span></div>`
-    : `<div class="post-prev"><span class="pp ${sample[0]}">${k==='video'?`<span class="play-ov">${ico('play')}</span>`:''}</span></div>`;
+    ? `<div class="post-prev carrusel">${sample.map(([c,ph])=>`<span class="pp ${c}">${coverImg(ph,500)}</span>`).join('')}<span class="pp-dots">1 / ${sample.length}</span>${musicSticker}</div>`
+    : `<div class="post-prev"><span class="pp ${sample[0][0]}">${coverImg(sample[0][1],700)}${k==='video'?`<span class="play-ov">${ico('play')}</span>`:''}${musicSticker}</span></div>`;
   // planes vinculables: a los que asististe o que creaste
-  const linkable = PLANS.filter(p=> (ME.attendedPlanIds||[]).includes(p.id) || p.host.name===ME.name);
+  const linkable = linkablePlans();
+  const fromPlan = d.origin === 'plan' && linkable.length > 0;
   const aud=[['publico','Público','globe'],['seguidores','Seguidores','users'],['cercanos','Cercanos','star']];
   const tagChips = USERS.filter(u=>u.id!=='me').map(u=>`<button class="tag-chip ${d.tags.includes(u.id)?'active':''}" onclick="togglePostTag('${u.id}')">${ico('user')} ${escapeHtml(u.name)}</button>`).join('');
   const optRow=(icon,label,key,sub='')=>`<div class="opt-row" onclick="togglePostOpt('${key}')"><span class="or-ic">${ico(icon)}</span>
@@ -653,7 +1256,14 @@ function renderCreatePost(){
     <span class="switch ${d[key]?'on':''}"><span class="knob"></span></span></div>`;
   view.innerHTML = pageHead('Nueva publicación') + `
     <div class="page-body form">
-      <div class="field"><label>Tipo</label>
+      <div class="field"><label>Qué compartes</label>
+        <div class="iseg" id="d-postorigin">
+          <button class="${fromPlan?'active':''}" onclick="setPostField('origin','plan')">${ico('ticket')}<span>Un plan</span></button>
+          <button class="${fromPlan?'':'active'}" onclick="setPostField('origin','vida')">${ico('heartO')}<span>Tu vida</span></button></div>
+        ${fromPlan ? `<select id="f-postplan" class="or-sel wide" aria-label="Plan del que compartes la experiencia">${linkable.map(p=>`<option value="${p.id}" ${d.planId===p.id?'selected':''}>${escapeHtml(p.title)}</option>`).join('')}</select>
+          <p class="hint">Queda ligada al plan y cuenta como prueba social; en tu perfil sale dentro de "Planes".</p>`
+        : `<p class="hint">${linkable.length ? 'Un momento tuyo, sin plan: sale en tu perfil, dentro de "Tu vida".' : 'Aún no has asistido a ningún plan; puedes compartir momentos de tu vida.'}</p>`}</div>
+      <div class="field"><label>Formato</label>
         <div class="iseg" id="d-postkind">
           <button class="${k==='foto'?'active':''}" onclick="setPostField('kind','foto')">${ico('image')}<span>Foto</span></button>
           <button class="${k==='video'?'active':''}" onclick="setPostField('kind','video')">${ico('video')}<span>Vídeo</span></button>
@@ -670,8 +1280,9 @@ function renderCreatePost(){
 
       <div class="adv-title">Añadir a la publicación</div>
       <div class="opt-list">
-        <div class="opt-row"><span class="or-ic">${ico('link')}</span><span class="or-l">Vincular a un plan<span class="or-s">aparece ligada al plan</span></span>
-          <select id="f-postplan" class="or-sel"><option value="">Ninguno</option>${linkable.map(p=>`<option value="${p.id}" ${d.planId===p.id?'selected':''}>${escapeHtml(p.title)}</option>`).join('')}</select></div>
+        <div class="opt-row" onclick="openMusicPicker()"><span class="or-ic">${ico('music')}</span>
+          <span class="or-l">Música<span class="or-s">${tr ? escapeHtml(trackLabel(tr)) : `Añade una canción ${{foto:'a la foto',video:'al vídeo',carrusel:'al carrusel'}[k]||'a la publicación'}`}</span></span>
+          ${tr ? `<button class="or-clear" onclick="clearPostTrack(event)" aria-label="Quitar música">${ico('close')}</button>` : `<span class="pl-arrow">${ico('chevR')}</span>`}</div>
         <div class="opt-row"><span class="or-ic">${ico('pin')}</span><span class="or-l">Ubicación</span>
           <select id="f-postplace" class="or-sel"><option value="">Sin ubicación</option>${PLACES.map(pl=>`<option value="${pl.id}" ${d.place===pl.id?'selected':''}>${escapeHtml(pl.name)} · ${pl.city}</option>`).join('')}</select></div>
       </div>
@@ -692,6 +1303,8 @@ function renderCreatePost(){
       <div class="form-actions"><button class="btn-primary" onclick="publishPost()">${ico('check')} Publicar</button></div>
     </div>`;
 }
+// Planes que puedes vincular a una publicación: a los que asististe o que creaste.
+function linkablePlans(){ return PLANS.filter(p=> (ME.attendedPlanIds||[]).includes(p.id) || p.host.name===ME.name); }
 function setPostField(key,v){ capturePostInputs(); state.draftPost[key]=v; renderCreatePost(); }
 function togglePostTag(uid){ capturePostInputs(); const t=state.draftPost.tags; const i=t.indexOf(uid); if(i>=0) t.splice(i,1); else t.push(uid); renderCreatePost(); }
 function togglePostOpt(key){ capturePostInputs(); state.draftPost[key]=!state.draftPost[key]; renderCreatePost(); }
@@ -702,15 +1315,25 @@ function publishPost(){
   const media = k==='carrusel' ? ['g-grape','g-sunset','g-forest'] : [k==='video'?'g-grape':'g-sunset'];
   const mentions = (caption.match(/@[\wáéíóúñ]+/gi)||[]);
   const hashtags = (caption.match(/#[\wáéíóúñ]+/gi)||[]);
+  const sample = ['1566737236500-c8ac43014a67','1495567720989-cebdbdd97913','1551632811-561732d1e306'];
+  const imgs = k==='carrusel' ? sample : [sample[0]];
+  const id = 'npo'+Date.now();
+  const linkable = linkablePlans();
+  const planId = (d.origin === 'plan' && linkable.length) ? (linkable.some(p => p.id === d.planId) ? d.planId : linkable[0].id) : null;
   POSTS.unshift({
-    id:'npo'+Date.now(), authorId:'me', kind:k, media, caption, likes:0,
-    placeId:d.place||null, taggedUserIds:[...d.tags], planId:d.planId||null, altText:(d.alt||'').trim(),
+    id, authorId:'me', kind:k, media, imgs, caption, likes:0, ago:0, comments:[], duration: k==='video' ? 15 : undefined,
+    placeId:d.place||null, taggedUserIds:[...d.tags], planId, altText:(d.alt||'').trim(),
     mentions, hashtags, audience:d.audience, commentsEnabled:d.comments, hideLikes:d.hideLikes, sharedToStory:d.alsoStory,
+    trackId:d.trackId||null,
   });
   const story = d.alsoStory;
+  if (story) STORIES.unshift({ id:'s'+id, userId:'me', planId, img:imgs[0], minAgo:0, trackId:d.trackId||null, text:caption });
   state.draftPost = freshPostDraft();
+  saveState();
   toast(story ? 'Publicación creada · compartida en Stories' : 'Publicación creada');
-  state.profileTab='posts'; go('perfil');
+  // Tu perfil se abre en el apartado donde ha quedado la publicación.
+  state.profileTab='posts'; state.profileFilterUid='me'; state.profileFilter = planId ? 'plan' : 'vida';
+  go('perfil');
 }
 
 /* ---------- helpers de página ---------- */
@@ -745,6 +1368,7 @@ function showView(name){
 }
 function scrollTop(v){ const el=document.getElementById('view-'+v); if(el) el.scrollTop=0; }
 function router(){
+  stopMusic();
   const hash = location.hash.replace(/^#\//,'') || 'feed';
   const [route,arg] = hash.split('/');
   switch(route){
@@ -760,14 +1384,19 @@ function router(){
     case 'crear-plan':  renderCreatePlan(); showView('page'); scrollTop('page'); break;
     case 'crear-post':  renderCreatePost(); showView('page'); scrollTop('page'); break;
     case 'crear-grupo': renderCreateGroup(); showView('page'); scrollTop('page'); break;
+    case 'crear-directo': renderCreateLive(); showView('page'); scrollTop('page'); break;
     default:        state.navTab='feed'; renderContent(); showView('feed');
   }
 }
 
 /* ---------- init ---------- */
 function init(){
+  loadState();
+  window.addEventListener('pagehide', saveState);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopMusic(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !overlayEl().hidden) (liveState.host ? endLive() : closeOverlay()); });
   buildFilters();
-  document.querySelectorAll('.content-tabs button').forEach(b=>{ b.onclick=()=>{ state.contentTab=b.dataset.tab; renderContent(); }; });
+  document.querySelectorAll('.content-tabs button').forEach(b=>{ b.onclick=()=>setContentTab(b.dataset.tab); });
   document.querySelectorAll('.tabbar button').forEach(b=>{ b.onclick=()=>go(b.dataset.nav==='crear'?'crear':b.dataset.nav); });
   window.addEventListener('hashchange', router);
   router();
