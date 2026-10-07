@@ -115,7 +115,8 @@ function toast(msg){
   t.textContent=msg;t.classList.add('show');
   clearTimeout(t._tmo);t._tmo=setTimeout(()=>t.classList.remove('show'),2100);
 }
-function typeBadge(u){ return u.type==='profesional' ? `<span class="pro-badge">${ico('briefcase')} Profesional</span>` : ''; }
+// Cuenta profesional: solo el icono (el texto sobra; se explica al pasar o leer en voz alta).
+function typeBadge(u){ return u.type==='profesional' ? `<span class="pro-ic" title="Cuenta profesional" aria-label="Cuenta profesional" role="img">${ico('briefcase')}</span>` : ''; }
 
 /* ---------- umbral de anonimato de la presencia privada ----------
    Con pocos asistentes, mostrar el total delataría a quien fue en privado
@@ -259,7 +260,7 @@ function postCard(po){
     <header class="post-h">
       <button class="post-av" onclick="go('u/${u.id}')" aria-label="Perfil de ${escapeHtml(u.name)}">${escapeHtml(u.initials || initials(u.name))}</button>
       <div class="post-who">
-        <button class="post-name" onclick="go('u/${u.id}')">${escapeHtml(u.name)} ${u.verified?`<span class="vchk">${ico('check')}</span>`:''}${u.type==='profesional'?' <span class="pro-badge sm">Profesional</span>':''}</button>
+        <button class="post-name" onclick="go('u/${u.id}')">${escapeHtml(u.name)} ${u.verified?`<span class="vchk">${ico('check')}</span>`:''}${typeBadge(u)}</button>
         <span class="post-sub">${placeName?escapeHtml(placeName)+' · ':''}${agoLabel(po.ago||0)}</span>
         ${postMusicLine(po)}
       </div>
@@ -882,7 +883,7 @@ function renderDetail(id){
       <div class="block"><h4>Anfitrión</h4>
         <button class="host-card linkable" onclick="go('u/${p.host.business?'azotea':'me'}')">
           <span class="avatar">${initials(p.host.name)}</span>
-          <div class="meta"><div class="n">${escapeHtml(p.host.name)} ${p.host.verified?`<span class="vchk">${ico('check')}</span>`:''} ${p.host.business?`<span class="pro-badge sm">${ico('briefcase')} Profesional</span>`:''}</div>
+          <div class="meta"><div class="n">${escapeHtml(p.host.name)} ${p.host.verified?`<span class="vchk">${ico('check')}</span>`:''} ${p.host.business?typeBadge({type:'profesional'}):''}</div>
             <div class="s">${rating(p.host.rating)} · responde del plan</div></div>
           <span class="pl-arrow">${ico('chevR')}</span>
         </button>
@@ -993,30 +994,33 @@ function renderProfile(uid){
   const tab = state.profileTab;
   const fid = me ? 'me' : u.id;
   if (state.profileFilterUid !== fid){ state.profileFilterUid = fid; state.profileFilter = 'todo'; }  // cada perfil empieza en "Todo"
-  const proExtra = u.type==='profesional' ? `
-    <div class="block"><h4>${ico('briefcase')} Información de negocio</h4>
-      <div class="kv"><span>Categoría</span><b>${escapeHtml(u.business?.category||'—')}</b></div>
-      <div class="kv"><span>Web</span><b>${escapeHtml(u.business?.web||'—')}</b></div>
-      <div class="kv"><span>Dirección</span><b>${escapeHtml(u.business?.address||'—')}</b></div>
-      <p class="hint">Condiciones y plan de la cuenta profesional: <b>pendiente de definir</b> (decisión de negocio abierta).</p>
-    </div>` : '';
-  const head = me ? '' : pageHead(u.name);
+  // Datos de negocio sin etiquetas, como en Instagram: categoría en gris y una
+  // línea con dirección y web. Lo obvio ("Categoría", "Web"...) no se escribe.
+  const biz = (u.type==='profesional' && u.business) || null;
+  const bizLinks = biz ? [
+    biz.address ? `<span>${ico('pin')} ${escapeHtml(biz.address)}</span>` : '',
+    biz.web ? `<button class="ph-web" onclick="toast('Abriría ${escapeHtml(biz.web)}')">${ico('link')} ${escapeHtml(biz.web)}</button>` : '',
+  ].join('') : '';
+  const about = (biz && biz.category ? `<span class="ph-cat">${escapeHtml(biz.category)}</span>` : '')
+    + (u.bio ? `<span>${escapeHtml(u.bio)}</span>` : '')
+    + (bizLinks ? `<span class="ph-biz">${bizLinks}</span>` : '');
+  const nPosts = postsByUser(u.id).length, nAtt = (u.attendedPlanIds||[]).length;
+  const head = me ? '' : pageHead(u.handle || u.name);   // como en Instagram: el @usuario arriba, el nombre abajo
   container.innerHTML = `${head}
     <div class="profile-head">
       <span class="avatar lg">${u.initials||initials(u.name)}</span>
       <div class="ph-main">
-        <div class="ph-top"><span class="ph-name">${escapeHtml(u.name)} ${u.verified?`<span class="vchk">${ico('check')}</span>`:''}</span>
+        <div class="ph-top"><span class="ph-name">${escapeHtml(u.name)} ${u.verified?`<span class="vchk">${ico('check')}</span>`:''}${typeBadge(u)}</span>
           ${me?`<button class="ph-priv" onclick="go('ajustes')">${ico('gear')} Ajustes</button>`:`<button class="ph-priv" onclick="toast('Siguiendo a ${escapeHtml(u.name)}')">Seguir</button>`}</div>
-        <div class="ph-handle">${u.handle} ${typeBadge(u)}</div>
+        ${me ? `<div class="ph-handle">${u.handle}</div>` : ''}
         <div class="ph-stats">
-          <span><b>${postsByUser(u.id).length}</b> publicaciones</span>
-          <span><b>${(u.attendedPlanIds||[]).length}</b> asistidos</span>
+          <span><b>${nPosts}</b> ${nPosts===1?'publicación':'publicaciones'}</span>
+          <span><b>${nAtt}</b> ${nAtt===1?'asistido':'asistidos'}</span>
           <span><b>${u.followers||0}</b> seguidores</span>
         </div>
       </div>
     </div>
-    ${u.bio?`<p class="bio">${escapeHtml(u.bio)}</p>`:''}
-    ${proExtra}
+    ${about ? `<p class="bio">${about}</p>` : ''}
     ${(me && !u.profilePublic)?`<div class="priv-banner">${ico('lock')} Perfil privado: solo tus seguidores aprobados ven tu actividad.</div>`:''}
     <div class="prof-tabs">
       <button class="${tab==='posts'?'active':''}" onclick="setProfileTab('posts','${u.id}')">${ico('grid')} Publicaciones</button>

@@ -90,7 +90,8 @@ check('grupos: lista', h.includes('group-card'));
 a.nav('perfil'); h = a.html('view-perfil'); rendered += h;
 check('perfil: pestañas y publicaciones', h.includes('prof-tabs') && count(h, /class="cell /g) > 0);
 a.nav('u/azotea'); h = a.html('view-page'); rendered += h;
-check('perfil profesional: badge y condiciones pendientes', h.includes('Profesional') && h.includes('pendiente de definir'));
+check('perfil profesional: icono, categoría, dirección y web sin etiquetas', h.includes('class="pro-ic"') && h.includes('Ocio nocturno') && h.includes('ph-biz') && h.includes('azoteacirculo.es')
+  && !h.includes('Información de negocio') && !h.includes('>Categoría<'));
 a.nav('grupo/g1'); h = a.html('view-page'); rendered += h;
 check('grupo: miembros con roles', h.includes('Admin') && h.includes('Miembro'));
 a.nav('plan/p6'); h = a.html('view-detail'); rendered += h;
