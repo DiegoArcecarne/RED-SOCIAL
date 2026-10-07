@@ -173,14 +173,17 @@ erDiagram
         decimal precio "nullable"
         decimal desvelo "solo especial/saturado no de pago"
         string politica_cancelacion "flexible|moderada|estricta"
-        string estado "proximo|en_curso|pasado"
+        string estado "proximo|en_curso|pasado|cancelado"
+        string foto "url en almacenamiento"
     }
     INSCRIPCION {
         uuid id PK
         uuid plan_id FK
         uuid usuario_id FK
-        string estado "solicitada|aprobada|confirmada|lista_espera|cancelada|asistio|no_show"
+        string estado "solicitada|aprobada|rechazada|confirmada|lista_espera|cancelada|cancelada_tarde|asistio|no_show"
+        int posicion_espera "si lista_espera"
         bool reconfirmado_dia
+        decimal reembolsado
         uuid pago_id FK "nullable"
     }
     ASISTENCIA_REAL {
@@ -188,7 +191,7 @@ erDiagram
         uuid plan_id FK
         uuid usuario_id FK
         datetime fecha_hora
-        string metodo "geolocalizacion|qr_anfitrion"
+        string metodo "qr_anfitrion|manual_anfitrion|geolocalizacion"
         string visibilidad "publica|privada"
     }
     SOLICITUD_ASISTENCIA {
@@ -396,7 +399,10 @@ erDiagram
     NOTIFICACION {
         uuid id PK
         uuid usuario_id FK
-        string tipo
+        string tipo "recordatorio|solicitud|mensaje|cambio|plaza|despues_plan"
+        string referencia "plan, conversacion o ruta"
+        string texto
         bool leida
+        datetime fecha
     }
 ```

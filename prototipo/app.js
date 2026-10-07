@@ -9,7 +9,8 @@ const state = {
   navTab: 'feed',
   size: 'todos', category: 'todas', price: 'todos',
   selectedPlace: null,
-  joined: new Set(), attended: new Set(), requested: new Set(),
+  joined: new Set((typeof ME !== 'undefined' && ME.joinedPlanIds) || []), attended: new Set(), requested: new Set(),
+  reconfirmed: new Set(), when: 'todo',   // reconfirmaciones del día y filtro por fecha
   presencePublic: (typeof ME !== 'undefined') ? ME.presencePublic : true,
   profileTab: 'posts',                 // posts | vividas
   profileFilter: 'todo',               // publicaciones del perfil: todo | plan | vida
@@ -110,7 +111,9 @@ function rating(n){ return `<span class="rate">${ico('star')} ${n}</span>`; }
 function freeIcon(p){ return p.secret ? ico('lock') : (p.paid ? ico('euro') : ico('ticket')); }
 function uimg(slug,s){ s=s||500; return `https://images.unsplash.com/photo-${slug}?w=${s}&h=${s}&fit=crop&q=60`; }
 // Imagen de portada sobre el degradado; si no carga se elimina y queda el degradado (fallback).
-function coverImg(slug,s){ return slug ? `<img class="cover-img" src="${uimg(slug,s)}" alt="" loading="lazy" onerror="this.remove()">` : ''; }
+// Foto subida (data:/blob:/http) o slug de Unsplash.
+function imgSrc(slug,s){ return /^(data:|blob:|https?:)/.test(slug) ? slug : uimg(slug,s); }
+function coverImg(slug,s){ return slug ? `<img class="cover-img" src="${imgSrc(slug,s)}" alt="" loading="lazy" onerror="this.remove()">` : ''; }
 function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function val(id){ const el=document.getElementById(id); return el?el.value:''; }
 function toast(msg){
@@ -177,11 +180,14 @@ function saveState(){
       posts: POSTS, groups: GROUPS, requests: REQUESTS, stories: STORIES, ratings: RATINGS, follows: FOLLOWS, conversations: CONVERSATIONS, reports: REPORTS,
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
-            city: ME.city, languages: ME.languages, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom },
+            city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom },
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
-      sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested] },
+      sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
+      notifications: NOTIFICATIONS,
     }));
-  } catch (e) { /* sin almacenamiento: la demo funciona en memoria */ }
+  } catch (e) {   // sin almacenamiento: la demo funciona en memoria
+    if (e && /quota/i.test(e.name + e.message)) toast('No queda espacio en este navegador para guardar más fotos');
+  }
 }
 function loadState(){
   let snap = null;
@@ -201,12 +207,14 @@ function loadState(){
   if (Array.isArray(snap.follows)) FOLLOWS.splice(0, FOLLOWS.length, ...snap.follows);
   if (Array.isArray(snap.conversations)) CONVERSATIONS.splice(0, CONVERSATIONS.length, ...snap.conversations);
   if (Array.isArray(snap.reports)) REPORTS.splice(0, REPORTS.length, ...snap.reports);
+  if (Array.isArray(snap.notifications)) NOTIFICATIONS.splice(0, NOTIFICATIONS.length, ...snap.notifications);
   if (snap.me) Object.assign(ME, snap.me);
   (snap.extraProfiles || []).forEach(x => { if (!USERS.some(u => u.id === x.id)) USERS.push(x); });
   if (snap.sets) {
     state.joined = new Set(snap.sets.joined || []);
     state.attended = new Set(snap.sets.attended || []);
     state.requested = new Set(snap.sets.requested || []);
+    state.reconfirmed = new Set(snap.sets.reconfirmed || []);
   }
   state.presencePublic = ME.presencePublic;
 }
@@ -224,6 +232,8 @@ function filteredPlans(){
     if (state.category!=='todas' && p.category!==state.category) return false;
     if (state.price==='gratis' && p.paid) return false;
     if (state.price==='pago' && !p.paid) return false;
+    if (!matchesWhen(p, state.when)) return false;
+    if (isCancelled(p)) return false;
     return true;
   });
 }
@@ -648,7 +658,7 @@ function renderInbox(tab){
   const visible = CONVERSATIONS.filter(c => !((ME.blocked || []).includes(c.with)));
   const groups = {
     chats: visible.filter(c => c.type === 'dm' && ['aceptada','enviada'].includes(convStatus(c))),
-    planes: visible.filter(c => c.type === 'plan'),
+    planes: visible.filter(c => c.type === 'plan' && c.members.includes('me')),
     solicitudes: visible.filter(c => convStatus(c) === 'solicitud'),
   };
   const view = document.getElementById('view-page');
@@ -712,6 +722,7 @@ function renderChat(id){
       <button class="vis-chip ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'solid' : ''}" onclick="confirmDay('${plan.id}','${c.id}')">${ico('check')} ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'Confirmado' : 'Confirmo que voy'}</button></div>` : '';
   let prev = null;
   const bubbles = c.messages.map((m, i) => {
+    if (m.from === 'system'){ prev = null; return `<div class="msg-sys">${escapeHtml(m.text)}</div>`; }
     const mine = m.from === 'me';
     const who = (!mine && c.type === 'plan' && prev !== m.from) ? `<span class="msg-who">${escapeHtml((getUser(m.from) || { name:'' }).name)}</span>` : '';
     prev = m.from;
@@ -719,7 +730,7 @@ function renderChat(id){
     const img = m.img ? `<span class="msg-img ${blurred ? 'blur' : ''}">${coverImg(m.img, 500)}${blurred ? `<button class="msg-reveal" onclick="revealImg('${c.id}',${i})">${ico('eye')} Foto de alguien que no conoces · Ver</button>` : ''}</span>` : '';
     return `<div class="msg ${mine ? 'me' : ''}">${who}${m.share ? msgShareCard(m.share) : ''}${img}${m.text ? `<span class="bubble">${escapeHtml(m.text)}</span>` : ''}</div>`;
   }).join('');
-  const first = c.messages[0];
+  const first = c.messages.find(m => m.from !== 'system') || c.messages[0];
   let foot;
   if (st === 'solicitud') foot = `<div class="chat-req"><p><b>${escapeHtml(u.name)}</b> quiere enviarte un mensaje. No sabrá que lo has leído hasta que aceptes.</p>
       <div class="chat-req-b"><button class="ph-btn" onclick="rejectRequest('${c.id}')">Rechazar</button><button class="ph-btn primary" onclick="acceptRequest('${c.id}')">Aceptar</button></div>
@@ -739,10 +750,17 @@ function sendMsg(id){
   // Respuesta simulada para que la demo se sienta viva (no en solicitudes enviadas).
   if (c.status === 'aceptada' || c.type === 'plan'){
     const others = c.type === 'plan' ? c.members.filter(x => x !== 'me') : [c.with];
+    if (!others.length) return;
+    const who = others[Math.floor(Math.random() * others.length)], u = getUser(who) || { name:'' };
+    // "Está escribiendo…" y la respuesta; si no estás en el chat, llega como notificación.
+    setTimeout(() => { const b = document.querySelector && document.querySelector('.chat-body');
+      if (b && location.hash === '#/chat/' + id) b.insertAdjacentHTML('beforeend', `<div class="typing" id="typing">${escapeHtml(u.name.split(' ')[0])} está escribiendo…</div>`); }, 600);
     setTimeout(() => {
-      c.messages.push({ from: others[Math.floor(Math.random() * others.length)], text: AUTO_REPLIES[c.messages.length % AUTO_REPLIES.length], min:0 });
+      const t = AUTO_REPLIES[c.messages.length % AUTO_REPLIES.length];
+      c.messages.push({ from: who, text: t, min:0 });
       saveState();
-      if (location.hash === '#/chat/' + id) renderChat(id); else { c.unread = (c.unread || 0) + 1; updateDmBadge(); }
+      if (location.hash === '#/chat/' + id) renderChat(id);
+      else { c.unread = (c.unread || 0) + 1; updateDmBadge(); notify('mensaje', `${u.name}: ${t}`, { convId: id }); }
     }, 1800);
   }
 }
@@ -1003,7 +1021,7 @@ function shareImage(po){
     if (!m.image) return finish(null);
     const img = new Image(); img.crossOrigin = 'anonymous';
     img.onload = () => finish(img); img.onerror = () => finish(null);
-    img.src = uimg(m.image, 1200);
+    img.src = imgSrc(m.image, 1200);
   });
 }
 // Guardar un archivo: con la capacidad "downloads" si la página corre en el visor de
@@ -1046,6 +1064,7 @@ function overlayEl(){ return document.getElementById('overlay'); }
 function showOverlay(cls, html){ const o = overlayEl(); o.className = 'overlay ' + cls; o.innerHTML = html; o.hidden = false; }
 function closeOverlay(){
   clearInterval(overlayTimer); overlayTimer = null;
+  stopScan();
   const o = overlayEl();
   if (musicNow.src === 'story' || String(musicNow.src).startsWith('pv:') || o.className.includes('ov-post')) stopMusic();
   o.hidden = true; o.innerHTML = ''; o.className = 'overlay';
@@ -1272,7 +1291,7 @@ function registerArrival(id){
   else { p.attendedPrivate = (p.attendedPrivate||0)+1; }
   if (!ME.attendedPlanIds.includes(id)) ME.attendedPlanIds.push(id);
   saveState();
-  toast(state.presencePublic ? 'Llegada verificada por ubicación · presencia pública' : 'Llegada verificada por ubicación · presencia privada');
+  toast(state.presencePublic ? 'Llegada registrada con el QR del anfitrión · presencia pública' : 'Llegada registrada con el QR del anfitrión · presencia privada');
   renderDetail(id);
 }
 function requestAttendance(id){
@@ -1282,10 +1301,12 @@ function requestAttendance(id){
   REQUESTS.push({ id:'r'+Date.now(), planId:id, userId:'me', status:'pendiente', message:'Solicitud enviada desde el prototipo.' });
   saveState();
   toast('Solicitud de asistencia enviada · pendiente de aprobación');
+  setTimeout(() => simulateHostDecision(id, 'aceptada'), 4000);   // demo: el anfitrión responde
   renderDetail(id);
 }
 function canManage(p){ // ¿puede el usuario actual gestionar solicitudes de este plan?
   if (p.approval!=='manual') return false;
+  if (p.hostId === 'me') return true;
   if (p.groupId){ const g=getGroup(p.groupId); return g && g.members.some(m=>m.userId==='me' && m.role==='admin'); }
   return false;
 }
@@ -1308,14 +1329,40 @@ function renderDetail(id){
   const group = p.groupId ? getGroup(p.groupId) : null;
   const view = document.getElementById('view-detail');
 
+  const host = canRunPlan(p), waiting = waitPos(p), full = isFull(p);
   let cta;
-  if (!isVerified() && !attended && !joined) cta = `<button class="btn-join" onclick="requireVerified('Verifica tu identidad para ir a este plan', () => renderDetail('${p.id}'))">${ico('shield')} Verifícate para ir</button>`;
+  if (isCancelled(p)) cta = `<button class="btn-join done" disabled>${ico('close')} Plan cancelado</button>`;
+  else if (isHost(p)) cta = `<button class="btn-join" onclick="openHostQr('${p.id}')">${ico('grid')} Mostrar QR de llegada</button>`;
+  else if (!isVerified() && !attended && !joined) cta = `<button class="btn-join" onclick="requireVerified('Verifica tu identidad para ir a este plan', () => renderDetail('${p.id}'))">${ico('shield')} Verifícate para ir</button>`;
   else if (attended) cta = `<button class="btn-join done" disabled>${ico('check')} Asististe · verificado</button>`;
-  else if (libre || joined) cta = `<button class="btn-join" onclick="registerArrival('${p.id}')">${ico('geo')} Registrar mi llegada</button>`;
+  else if (libre || joined) cta = `<button class="btn-join" onclick="openCheckin('${p.id}')">${ico('geo')} Registrar mi llegada</button>`;
+  else if (waiting) cta = `<button class="btn-join done" disabled>${ico('clock')} Lista de espera · puesto ${waiting}</button>`;
   else if (manual) cta = requested
       ? `<button class="btn-join done" disabled>${ico('clock')} Solicitud enviada</button>`
       : `<button class="btn-join" onclick="requestAttendance('${p.id}')">Solicitar asistencia</button>`;
+  else if (full) cta = `<button class="btn-join" onclick="joinWaitlist('${p.id}')">${ico('clock')} Apuntarme a la lista de espera</button>`;
   else cta = `<button class="btn-join" onclick="toggleJoin('${p.id}')">Apuntarme</button>`;
+
+  // Avisos: plan cancelado y reconfirmación del día.
+  const cancelBanner = isCancelled(p) ? `<div class="pl-banner bad">${ico('alert')}<div><b>El anfitrión ha cancelado este plan.</b><p>${p.paid ? 'Si pagaste, te devolvemos el 100 % en 5-10 días.' : 'Te hemos avisado a ti y al resto del grupo.'}</p></div></div>` : '';
+  const deadline = new Date(new Date(p.when).getTime() - RECONFIRM_DEADLINE_HOURS * 3600000);
+  const reconfirmBanner = needsReconfirm(p) ? `<div class="pl-banner">${ico('clock')}<div><b>${dayWord(p)} a las ${fmtHour(new Date(p.when))}. ¿Sigues yendo?</b>
+      <p>Reconfirma antes de las ${fmtHour(deadline)}; si no, tu plaza pasa a la lista de espera.</p>
+      <div class="pl-banner-b"><button class="ph-btn primary" onclick="reconfirm('${p.id}')">Sí, voy</button><button class="ph-btn" onclick="openCancel('${p.id}')">Ya no puedo</button></div></div></div>` : '';
+  // Tu asistencia: estado, cancelar y, en la demo, simular el final del plan.
+  const myBlock = (joined && !attended && !isCancelled(p)) ? `<div class="block"><h4>Tu asistencia</h4>
+      <p class="hint">${state.reconfirmed.has(p.id) ? `${ico('check')} Apuntado y reconfirmado.` : 'Apuntado.'} ${p.paid ? `Política de cancelación ${CANCEL_POLICIES[p.cancelPolicy || 'flexible'].label.toLowerCase()}: ${CANCEL_POLICIES[p.cancelPolicy || 'flexible'].text}` : 'Si no puedes ir, cancela con tiempo: deja la plaza a otra persona.'}</p>
+      <div class="pl-actions"><button class="link-btn" onclick="openCancel('${p.id}')">Cancelar asistencia</button><button class="link-btn dim" onclick="demoPlanEnded('${p.id}')">Demo: simular que el plan ha terminado</button></div></div>`
+    : (waiting ? `<div class="block"><h4>Lista de espera</h4><p class="hint">Eres el puesto ${waiting}. Si alguien cancela, la plaza es tuya y te avisamos.</p>
+      <div class="pl-actions"><button class="link-btn" onclick="leaveWaitlist('${p.id}')">Salir de la lista</button><button class="link-btn dim" onclick="demoSomeoneCancels('${p.id}')">Demo: alguien cancela</button></div></div>` : '');
+  // Organización (anfitrión o admin del grupo): QR, llegadas, solicitudes, editar y cancelar.
+  const hostBlock = host && !isCancelled(p) ? `<div class="block"><h4>Organización</h4>
+      <div class="pl-host">
+        <button class="sh-row" onclick="openHostQr('${p.id}')">${ico('grid')}<span>QR de llegada</span>${ico('chevR')}</button>
+        <button class="sh-row" onclick="openManualArrivals('${p.id}')">${ico('users')}<span>Marcar llegadas a mano</span>${ico('chevR')}</button>
+        ${isHost(p) ? `<button class="sh-row" onclick="go('editar-plan/${p.id}')">${ico('doc')}<span>Editar fecha, hora o lugar</span>${ico('chevR')}</button>
+        <button class="sh-row danger" onclick="openCancelPlan('${p.id}')">${ico('close')}<span>Cancelar el plan</span>${ico('chevR')}</button>` : ''}
+      </div></div>` : '';
 
   const pub = state.presencePublic;
   const presence = `
@@ -1336,7 +1383,7 @@ function renderDetail(id){
     <div class="block"><h4>Quién asiste</h4>
       <div class="attendees"><span class="more">${ico('geo')} ${av.n} ${av.label}</span></div>
       <button class="vg-inline" onclick="requireVerified('Verifica tu identidad para ver quién va')">${ico('shield')} Verifícate para ver quién va. ${VERIFY_WHY.split('.')[0]}.</button></div>` : `
-    <div class="block"><h4>Quién asiste · verificado por ubicación</h4>
+    <div class="block"><h4>Quién asiste · llegada verificada</h4>
       <div class="attendees">
         ${pubList.map(a=>`<span class="avatar sm">${escapeHtml(a)}</span>`).join('')}
         <span class="more">${ico('geo')} ${av.n} ${av.label}${av.priv?` · ${av.priv} en privado`:''}</span>
@@ -1348,7 +1395,7 @@ function renderDetail(id){
   const pend = requestsForPlan(p.id).filter(r=>r.status==='pendiente').length;
   const manageBlock = canManage(p) ? `
     <div class="block"><h4>Organización</h4>
-      <p class="hint">Este plan es del grupo <b>${escapeHtml(group?group.name:'')}</b> y requiere aprobación. Como admin, gestionas las solicitudes.</p>
+      <p class="hint">${group ? `Este plan es del grupo <b>${escapeHtml(group.name)}</b> y requiere aprobación. Como admin, gestionas las solicitudes.` : 'Plan con aprobación: decides tú quién entra.'}</p>
       <button class="btn-ghost" onclick="go('solicitudes/${p.id}')">${ico('users')} Gestionar solicitudes${pend?` · ${pend} pendientes`:''}</button>
     </div>` : (group ? `<div class="block"><h4>Organización</h4><p class="hint">Plan del grupo <b>${escapeHtml(group.name)}</b>. Las solicitudes las aprueban sus admins.</p></div>` : '');
 
@@ -1372,13 +1419,16 @@ function renderDetail(id){
     <div class="detail-body">
       <div class="kpis">
         <div class="kpi"><div class="v">${fmtCountdown(p.when)}</div><div class="k">${ico('clock')} empieza en</div></div>
-        <div class="kpi"><div class="v">${libre?'Libre':sizeLabel(p)}</div><div class="k">${ico('users')} ${libre?'sin aforo':p.groupMin+'–'+p.groupMax}</div></div>
+        <div class="kpi"><div class="v">${libre?'Libre':(full?'Completo':sizeLabel(p))}</div><div class="k">${ico('users')} ${libre?'sin aforo':(full?(p.waitlist.length+' en espera'):(p.joined||0)+' de '+p.groupMax)}</div></div>
         <div class="kpi"><div class="v">${av.n}</div><div class="k">${ico('geo')} ${av.below?'visibles':'asistentes'}</div></div>
       </div>
       ${p.secret?`<div class="secret-note"><span class="sn-ic">${ico('lock')}</span><p>La ubicación exacta se revela 2 horas antes del plan. El secreto es parte de la experiencia.</p></div>`:''}
       <div class="block"><h4>El plan</h4><p>${escapeHtml(p.summary)}</p>
-        <p class="hint">${manual?'Plan con aprobación: envía una solicitud; el creador o los admins la aceptan o rechazan.':(libre?'Plan libre: no hace falta apuntarse. Tu asistencia se registra por geolocalización al llegar.':'Plan apuntado: requiere apuntarse. Al llegar, tu asistencia se verifica por geolocalización.')}</p>
+        <p class="hint">${manual?'Plan con aprobación: envía una solicitud; el creador o los admins la aceptan o rechazan.':(libre?'Plan libre: no hace falta apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.':'Plan apuntado: hay que apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.')}</p>
       </div>
+      ${cancelBanner}${reconfirmBanner}
+      ${myBlock}
+      ${hostBlock}
       ${manageBlock}
       ${whoBlock}
       ${presence}
@@ -1410,13 +1460,10 @@ function renderDetail(id){
       </div>
     </div>`;
 }
+// Apuntarse o, si ya lo estás, abrir la cancelación (con su política).
 function toggleJoin(id){
-  const p=getPlan(id);
-  if (!state.joined.has(id) && !requireVerified('Verifica tu identidad para apuntarte', () => toggleJoin(id))) return;
-  if (state.joined.has(id)) state.joined.delete(id);
-  else { state.joined.add(id); toast(p.paid?'Reserva retenida en escrow':'Apuntado · verifica tu identidad antes del plan'); }
-  saveState();
-  renderDetail(id);
+  if (state.joined.has(id)) return openCancel(id);
+  joinPlan(id);
 }
 
 /* ---------- solicitudes (aprobación) ---------- */
@@ -1455,7 +1502,7 @@ function resolveRequest(reqId, decision, planId){
     // Aceptar inscribe al usuario; la asistencia real se verifica al llegar, no se suma aquí.
     const p = getPlan(planId);
     p.joined = (p.joined||0)+1;
-    if (r.userId==='me') state.joined.add(planId);
+    if (r.userId==='me'){ state.joined.add(planId); ensurePlanChat(planId); }
     toast('Solicitud aceptada · inscrito; su asistencia se verificará al llegar');
   } else toast('Solicitud rechazada');
   saveState();
@@ -1523,6 +1570,7 @@ function renderProfile(uid){
           <span><b>${nAtt}</b> ${nAtt===1?'asistido':'asistidos'}</span>
           <span><b>${u.followers||0}</b> seguidores</span>
         </div>
+        ${me ? (() => { const r = reliability(); return `<div class="ph-rel">${ico('check')} Fiabilidad ${r.pct} % · ${r.noShows} ${r.noShows === 1 ? 'no presentado' : 'no presentados'}${r.late ? ` · ${r.late} ${r.late === 1 ? 'cancelación tardía' : 'cancelaciones tardías'}` : ''}</div>`; })() : ''}
       </div>
     </div>
     ${about ? `<p class="bio">${about}</p>` : ''}
@@ -1825,7 +1873,7 @@ function renderSettings(){
             <p class="hint">Seguidores: quien te sigue. Amigos: quien te sigue y a quien sigues (tienes ${nFriends}). En cada plan puedes hacer una valoración pública o privada desde tu perfil ▸ Valoraciones.</p></div>`; })()}
       </div>
       <div class="set-group"><div class="set-title">General</div>
-        ${row('bell','Notificaciones')}
+        <button class="set-row" onclick="go('notificaciones')"><span class="sr-ic">${ico('bell')}</span><span class="sr-l">Notificaciones</span><span class="pl-arrow">${ico('chevR')}</span></button>
         <button class="set-row" onclick="go('seguridad')"><span class="sr-ic">${ico('shield')}</span><span class="sr-l">Seguridad y acceso</span><span class="pl-arrow">${ico('chevR')}</span></button>
         ${row('card','Pagos y reembolsos')}
         ${row('doc','Datos y legal')}
@@ -1941,7 +1989,9 @@ function renderCreatePlan(){
     <div class="page-body form">
       <div class="field"><label>Portada</label>
         <div class="cover-pick" id="cover-pick">${covers.map(c=>`<button class="sw ${c} ${d.cover===c?'active':''}" data-v="${c}" onclick="setDraft('cover','${c}')"></button>`).join('')}
-          <span class="add-media">${ico('image')} Añadir fotos/vídeo</span></div></div>
+          <label class="add-media">${ico('image')} ${d.photo ? 'Cambiar foto' : 'Subir foto'}<input type="file" accept="image/*" hidden onchange="pickPlanPhoto(this)"></label></div>
+        <div class="photo-prev" id="photo-prev">${d.photo ? `<img src="${d.photo}" alt="Portada del plan"><button class="sv-x pv-x" onclick="clearPlanPhoto()" aria-label="Quitar foto">${ico('close')}</button>` : ''}</div>
+        <p class="hint">Haz una foto o elígela de la galería. Si no subes ninguna, se usa el color.</p></div>
       <div class="field"><label for="f-title">Título ${counter('f-title','planTitle')}</label><input ${lim('f-title','planTitle')} placeholder="Ej. Atardecer en el mirador" /></div>
       <div class="field"><label for="f-desc">Descripción ${counter('f-desc','planDesc')}</label><textarea ${lim('f-desc','planDesc')} rows="3" placeholder="¿En qué consiste el plan?"></textarea></div>
       <div class="field"><label>Lugar</label>
@@ -1961,7 +2011,7 @@ function renderCreatePlan(){
         <div class="iseg" id="d-access">
           <button data-v="libre" class="${d.access==='libre'?'active':''}" onclick="setDraft('access','libre')">${ico('globe')}<span>Libre</span></button>
           <button data-v="aprobacion" class="${d.access==='aprobacion'?'active':''}" onclick="setDraft('access','aprobacion')">${ico('check')}<span>Con aprobación</span></button></div>
-        <p class="hint" id="access-hint">${d.access==='aprobacion'?'Recibirás solicitudes de asistencia y decides a quién aceptas.':'Cualquiera puede asistir; la presencia se verifica por ubicación.'}</p></div>
+        <p class="hint" id="access-hint">${d.access==='aprobacion'?'Recibirás solicitudes de asistencia y decides a quién aceptas.':'Cualquiera puede asistir; al llegar, cada persona escanea tu QR de llegada.'}</p></div>
       <div class="field"><label>Grupo organizador (opcional)</label>
         <select id="f-group"><option value="">Ninguno</option>${adminGroups.map(g=>`<option value="${g.id}" ${d.group===g.id?'selected':''}>${g.name}</option>`).join('')}</select>
         <p class="hint">Si eliges un grupo, sus admins aprueban las solicitudes.</p></div>
@@ -1975,7 +2025,7 @@ function setDraft(key,v){
   if(c) c.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.v===v));
   if(key==='access'){ const h=document.getElementById('access-hint'); if(h) h.textContent = v==='aprobacion'
     ? 'Recibirás solicitudes de asistencia y decides a quién aceptas.'
-    : 'Cualquiera puede asistir; la presencia se verifica por ubicación.'; }
+    : 'Cualquiera puede asistir; al llegar, cada persona escanea tu QR de llegada.'; }
 }
 function publishPlan(){
   if (!requireVerified('Verifica tu identidad para organizar un plan', () => publishPlan())) return;
@@ -1993,7 +2043,8 @@ function publishPlan(){
   const plan = {
     id:'np'+Date.now(), title, summary:desc, placeId, category:d.cat, gradient:d.cover,
     level:2, paid, price, recurring:false, secret:false,
-    host:{ name:ME.name, business:ME.type==='profesional', verified:ME.verified, rating:5.0, reliability:100 },
+    host:{ name:ME.name, business:ME.type==='profesional', verified:ME.verified, rating:5.0, reliability:reliability().pct },
+    hostId:'me', photo: d.photo || null, status:'activo', waitlist:[], cancelPolicy:'flexible',
     when, groupMin:ranges[0], groupMax:ranges[1], joined:0, attended:0, publicAttendees:[], attendedPrivate:0,
     joinType: access==='libre' ? 'libre' : 'apuntado',
     approval: access==='aprobacion' ? 'manual' : (access==='libre' ? 'libre' : 'automatica'),
@@ -2001,8 +2052,10 @@ function publishPlan(){
   };
   PLANS.unshift(plan);
   if (groupId){ const g=getGroup(groupId); if(g) g.planIds.unshift(plan.id); }
-  state.pendingGroup = null;
+  state.pendingGroup = null; d.photo = null;
+  ensurePlanChat(plan.id);
   saveState();
+  if (plan.approval === 'manual') setTimeout(() => simulateIncomingRequest(plan.id), 5000);   // demo: llega una solicitud
   toast('Plan publicado'); go('plan/'+plan.id);
 }
 function freshPostDraft(){ return { origin:'plan', kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' }; }
@@ -2133,7 +2186,9 @@ function buildFilters(){
     <div class="chips" id="chips-cat">${ichip('todas','Todos','hash',true)}${CATEGORIES.map(c=>ichip(c.id,c.label,ICON_FOR_CAT[c.id]||'hash',false)).join('')}</div>
     <div class="seg-row">
       <div class="iseg" id="seg-size">${sizes.map(([v,l,n])=>ichip(v,l,n,v==='todos')).join('')}</div>
-      <div class="iseg" id="seg-price">${prices.map(([v,l,n])=>ichip(v,l,n,v==='todos')).join('')}</div></div>`;
+      <div class="iseg" id="seg-price">${prices.map(([v,l,n])=>ichip(v,l,n,v==='todos')).join('')}</div></div>
+    <div class="iseg when-seg" id="seg-when">${WHEN_OPTS.map(([v,l])=>`<button data-v="${v}" class="${v==='todo'?'active':''}">${v==='todo'?ico('clock'):''}<span>${l}</span></button>`).join('')}</div>`;
+  cont.querySelector('#seg-when').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.when=b.dataset.v; setActive('#seg-when button',b); renderFeed(); };
   cont.querySelector('#seg-size').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.size=b.dataset.v; setActive('#seg-size button',b); renderFeed(); };
   cont.querySelector('#seg-price').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.price=b.dataset.v; setActive('#seg-price button',b); renderFeed(); };
   cont.querySelector('#chips-cat').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.category=b.dataset.v; setActive('#chips-cat button',b); renderFeed(); };
@@ -2152,7 +2207,7 @@ function showView(name){
 }
 function scrollTop(v){ const el=document.getElementById('view-'+v); if(el) el.scrollTop=0; }
 function router(){
-  stopMusic(); updateDmBadge();
+  stopMusic(); updateDmBadge(); updateNotifBadge();
   const hash = location.hash.replace(/^#\//,'') || 'feed';
   const [route,arg] = hash.split('/');
   switch(route){
@@ -2164,6 +2219,8 @@ function router(){
     case 'grupo':   renderGroupDetail(arg); showView('page'); scrollTop('page'); break;
     case 'mensajes': renderInbox(arg); showView('page'); scrollTop('page'); break;
     case 'chat':     renderChat(arg); showView('page'); { const v = document.getElementById('view-page'); v.scrollTop = v.scrollHeight || 0; } break;
+    case 'notificaciones': renderNotifications(); showView('page'); scrollTop('page'); break;
+    case 'editar-plan': renderEditPlan(arg); showView('page'); scrollTop('page'); break;
     case 'seguridad': renderSecurity(); showView('page'); scrollTop('page'); break;
     case 'nuevo-perfil': renderNewProfile(); showView('page'); scrollTop('page'); break;
     case 'editar-perfil': renderEditProfile(); showView('page'); scrollTop('page'); break;

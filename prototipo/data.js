@@ -89,7 +89,7 @@ const PLANS = [
     id: 'p7', title: 'Jazz íntimo en Clamores', placeId: 'clamores', category: 'cultura',
     level: 3, paid: true, price: 14, recurring: false,
     host: { name: 'Sala Clamores', business: true, verified: true, rating: 4.5, reliability: 96 },
-    when: hoursFromNow(46), groupMin: 10, groupMax: 40, joined: 22,
+    when: hoursFromNow(46), groupMin: 10, groupMax: 40, joined: 40,
     gradient: 'g-grape',
     summary: 'Directo de jazz en formato reducido. Vente solo o con quien quieras: la sala hace el resto.',
     secret: false,
@@ -107,7 +107,7 @@ const PLANS = [
     id: 'p9', title: 'Cata de vinos naturales', placeId: 'clamores', category: 'gastro',
     level: 3, paid: true, price: 22, recurring: false,
     host: { name: 'Vinos Vivos', business: true, verified: true, rating: 4.7, reliability: 97 },
-    when: hoursFromNow(40), groupMin: 8, groupMax: 24, joined: 15,
+    when: hoursFromNow(20), groupMin: 8, groupMax: 24, joined: 15,
     gradient: 'g-wine',
     summary: 'Seis referencias de vino natural con un sumiller que te lo cuenta sin pretensiones.',
     secret: false,
@@ -187,14 +187,19 @@ PLANS.forEach((p) => {
    Para los planes libres no aplica (cualquiera asiste).
    groupId: si el plan se crea dentro de un grupo, sus admins aprueban.            */
 const PLAN_EXTRA = {
-  p4: { approval: 'manual' },
+  p3: { cancelPolicy: 'moderada' },
+  p4: { approval: 'manual', cancelPolicy: 'estricta' },
   p6: { approval: 'manual', groupId: 'g1' },
+  p7: { waitlist: ['x1','x2','x3'] },   // completo: tres personas esperan plaza
   p9: { groupId: 'g2' },
 };
 PLANS.forEach((p) => {
   const e = PLAN_EXTRA[p.id] || {};
   p.approval = (p.joinType === 'libre') ? 'libre' : (e.approval || 'automatica');
   p.groupId = e.groupId || null;
+  p.cancelPolicy = e.cancelPolicy || 'flexible';   // flexible | moderada | estricta (solo cuenta en los de pago)
+  p.waitlist = e.waitlist ? e.waitlist.slice() : [];
+  p.status = 'activo';                              // activo | cancelado
 });
 
 // Foto temática (Unsplash, slug photo-<id>) por plan. Si no carga, cae al degradado.
@@ -220,6 +225,8 @@ const USERS = [
     bio:'Viajera y runner. Outdoor y gastronomía por Madrid.',
     profilePublic:true, presencePublic:true, followers:184, following:156,
     ratings:{ default:'publica', publica:'todos', privada:'amigos' },
+    joinedPlanIds:['p9'],   // apuntada a la cata de mañana (toca reconfirmar)
+    stats:{ noShows:0, lateCancels:0 },
     dmMode:'solicitud',   // quién puede escribirte: cerrado | solicitud | abierto (por defecto, bajo solicitud)
     attendedPlanIds:['p1','p5','p8','p2','p3','p6','p9'] },
   { id:'azotea', name:'Azotea Círculo', handle:'@azoteacirculo', initials:'AC', type:'profesional', verified:true,
@@ -448,6 +455,15 @@ const getConversation = (id) => CONVERSATIONS.find((c) => c.id === id);
 // Reportes enviados a moderación (el reportado nunca sabe quién reporta).
 const REPORTS = [];
 
+/* Notificaciones. type: recordatorio | solicitud | mensaje | cambio | plaza | fiabilidad.
+   min: minutos desde que llegó (las nuevas guardan "at"). */
+const NOTIFICATIONS = [
+  { id:'n1', type:'recordatorio', planId:'p9', min:30, read:false, text:'Mañana: Cata de vinos naturales. Reconfirma que vas para no perder tu plaza.' },
+  { id:'n2', type:'cambio', planId:'p3', min:180, read:false, text:'Cambio en Rooftop Sunset Sessions: abren puertas a las 20:00 en lugar de a las 20:30.' },
+  { id:'n3', type:'solicitud', planId:'p6', route:'solicitudes/p6', min:240, read:true, text:'Lucía y Ana quieren ir a Ruta de tapas para viajeros. Como admin del grupo, decides tú.' },
+  { id:'n4', type:'mensaje', convId:'c1', min:42, read:true, text:'Lucía R.: El jueves repetimos, ¿te apuntas?' },
+];
+
 const getUser  = (id) => USERS.find((u) => u.id === id);
 const getGroup = (id) => GROUPS.find((g) => g.id === id);
 const getTrack = (id) => TRACKS.find((t) => t.id === id);
@@ -461,7 +477,7 @@ const requestsForPlan = (pid) => REQUESTS.filter((r) => r.planId === pid);
 if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
-    STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS,
+    STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }

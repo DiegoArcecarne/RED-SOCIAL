@@ -98,6 +98,15 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    desconocidos se pide verificar, con una explicación breve. Un perfil personal y
    perfiles profesionales vinculados (Crear ▸ Perfil profesional; cambia de perfil
    tocando tu @usuario). Pruébalo en *Ajustes ▸ Simular cuenta sin verificar*.
+13. **Bucle de planes** — filtro *Cuándo* (hoy, mañana, finde, 7 días); crear un plan
+   con **foto real** de la cámara o la galería; lista de espera en planes completos;
+   **reconfirmación del día**; cancelar con su política de reembolso (con menos de
+   24 h es tardía); **llegada con el QR del anfitrión** (escanear o escribir su código; se
+   puede probar con dos móviles); llegadas a mano; editar o cancelar tu plan con aviso
+   al grupo; fiabilidad en tu perfil; chat del plan al apuntarte; y **campana de
+   notificaciones** con preferencias (y avisos del sistema si das permiso). Pruébalo con
+   *Cata de vinos naturales* (mañana: reconfirma) o *Jazz íntimo en Clamores* (completo).
+   Especificación del servidor: [`../docs/bucle-de-planes.md`](../docs/bucle-de-planes.md).
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.
@@ -107,7 +116,7 @@ condiciones de las cuentas profesionales están pendientes de decidir.
 
 ## Para desarrollar
 
-Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `app.js`).
+Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `app.js`).
 `standalone.html` se genera; no lo edites a mano. Desde la raíz del repositorio:
 
 ```bash

@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: '20'
       - name: Sintaxis JavaScript
-        run: node --check prototipo/data.js && node --check prototipo/cuentas.js && node --check prototipo/app.js && node --check prototipo/sw.js
+        run: node --check prototipo/data.js && node --check prototipo/cuentas.js && node --check prototipo/planes.js && node --check prototipo/app.js && node --check prototipo/sw.js
       - name: standalone.html sincronizado con las fuentes
         run: node scripts/build-standalone.js --check
       - name: Prueba de humo (todas las vistas y flujos)
