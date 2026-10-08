@@ -1,0 +1,23 @@
+name: Prototipo
+
+on:
+  pull_request:
+    paths: ['prototipo/**', 'scripts/**', '.github/workflows/prototipo.yml']
+  push:
+    branches: [main]
+    paths: ['prototipo/**', 'scripts/**', '.github/workflows/prototipo.yml']
+
+jobs:
+  comprobar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Sintaxis JavaScript
+        run: node --check prototipo/data.js && node --check prototipo/cuentas.js && node --check prototipo/planes.js && node --check prototipo/social.js && node --check prototipo/confianza.js && node --check prototipo/app.js && node --check prototipo/sw.js && node --check scripts/build-web.js
+      - name: standalone.html y la web pública sincronizados con las fuentes
+        run: node scripts/build-standalone.js --check && node scripts/build-web.js --check
+      - name: Prueba de humo (todas las vistas y flujos)
+        run: node scripts/smoke-test.js
