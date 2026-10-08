@@ -29,6 +29,8 @@ Los códigos llegan como una notificación dentro de la pantalla: tócala para r
 
 Se abre a pantalla completa, con su icono, y funciona sin conexión una vez cargado (`manifest.webmanifest`, `sw.js` e iconos en esta carpeta).
 
+**Compartir con vista previa.** Con el prototipo publicado así, los enlaces que compartes desde la app llevan a la web pública (`…/prototipo/web/plan/p2.html`, etc.): al pegarlos en WhatsApp o Telegram sale la vista previa con la foto, y *Abrir en la app* te lleva a esa pantalla. Lo que crees en la demo se comparte con una página genérica (`web/abrir.html`).
+
 **Las fotos necesitan internet.** Se cargan desde Unsplash; sin conexión se ven los
 degradados de respaldo y el prototipo sigue funcionando. Fotos de
 [Unsplash](https://unsplash.com) bajo la licencia de Unsplash.
@@ -125,6 +127,14 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    **botón SOS** en la ficha y el chat de cada plan. **Tus datos**: descargar una copia
    (JSON), consentimientos y eliminar la cuenta.
    Especificación del servidor: [`../docs/confianza-y-seguridad.md`](../docs/confianza-y-seguridad.md).
+16. **Compartir** — **web pública** en [`web/`](web/) (una página por plan, publicación
+   pública y perfil, con las etiquetas que generan la vista previa con imagen en WhatsApp o
+   Telegram); con el prototipo publicado, los enlaces que compartes llevan a esas páginas, y
+   su botón *Abrir en la app* va a la misma pantalla. **Compartir perfiles**, **código QR**,
+   **Compartir en otras apps** (el menú del móvil) e *Imagen* para stories. Un enlace abierto
+   sin sesión te lleva a él al entrar. Con la web instalada en Android, *planes* sale en el
+   menú de compartir de la galería (crea una publicación) y captura los enlaces.
+   Especificación: [`../docs/compartir.md`](../docs/compartir.md).
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.
@@ -135,13 +145,14 @@ condiciones de las cuentas profesionales están pendientes de decidir.
 ## Para desarrollar
 
 Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `app.js`).
-`standalone.html` se genera; no lo edites a mano. Desde la raíz del repositorio:
+`standalone.html` y `web/` se generan; no los edites a mano. Desde la raíz del repositorio:
 
 ```bash
 node scripts/build-standalone.js           # regenera standalone.html
 node scripts/build-standalone.js --check   # comprueba que está al día
+node scripts/build-web.js                  # regenera la web pública (web/) a partir de data.js
 node scripts/smoke-test.js                 # prueba todas las vistas y flujos
 ```
 
-La integración continua (`.github/workflows/prototipo.yml`) ejecuta las tres cosas
-en cada pull request.
+La integración continua (`.github/workflows/prototipo.yml`) comprueba en cada pull request la sintaxis,
+que `standalone.html` y `web/` están al día, y la prueba de humo.

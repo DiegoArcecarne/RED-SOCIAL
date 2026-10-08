@@ -16,6 +16,7 @@ bucle con un piloto low-code en Madrid antes de construir la app.
 | [`docs/cuentas-y-acceso.md`](docs/cuentas-y-acceso.md) | Especificación del servidor: registro, acceso, 2FA, 18+, onboarding y verificación |
 | [`docs/bucle-de-planes.md`](docs/bucle-de-planes.md) | Especificación del servidor: apuntarse, lista de espera, reconfirmación, QR de llegada, chat y notificaciones |
 | [`docs/social.md`](docs/social.md) | Especificación del servidor: fotos y vídeos, muro, perfiles privados, búsqueda y menciones |
+| [`docs/compartir.md`](docs/compartir.md) | Especificación: web pública con vista previa, enlaces que abren la app y menú de compartir nativo |
 | [`docs/confianza-y-seguridad.md`](docs/confianza-y-seguridad.md) | Especificación del servidor: bloqueos, reportes, filtros, moderación y apelaciones, SOS y RGPD |
 | [`docs/plan-validacion-madrid.md`](docs/plan-validacion-madrid.md) | Piloto de 6 semanas: hipótesis, herramientas, calendario y criterios para continuar o parar |
 | [`docs/borrador-propuesta-fever.md`](docs/borrador-propuesta-fever.md) | Borrador de propuesta a Fever, a completar con los datos del piloto |

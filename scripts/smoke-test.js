@@ -50,7 +50,7 @@ function createEnv(store, opts = {}) {
     AudioContext: makeAudio(audio),
     console, setTimeout, clearTimeout, setInterval, clearInterval,
     document: { getElementById: (id) => reg[id] || (reg[id] = makeEl()), querySelectorAll: () => [], addEventListener() {}, readyState: 'complete' },
-    location: { hash: '', reload() {} },
+    location: { hash: opts.hash || '', reload() {} },
     history: { back() {} },
     localStorage: {
       getItem: (k) => (k in store ? store[k] : null),
@@ -894,6 +894,72 @@ const t2 = createEnv(tst);
 check('persisten decisiones, apelaciones, sanciones, SOS, contactos y consentimientos', t2.run('MOD_ACTIONS.find(a => a.id === "ma1").status') === 'revocada' && t2.run('isSanctioned("alexv")')
   && t2.run('SAFETY_EVENTS.some(e => e.type === "sos")') && t2.run('trustedContacts().length') === 2 && t2.run('consentValue("analitica")') === true && t2.run('REPORTS.some(r => r.reporterId === "me")'));
 check('persisten los comentarios retirados y retenidos', !t2.run('visibleComments(POSTS.find(p => p.id === "po7")).some(c => c.id === "cm-a1")'));
+
+const pdir0 = path.join(__dirname, '..', 'prototipo');
+// --- Compartir: web pública con vista previa, enlaces que abren la app y menú nativo ---
+const wdir = path.join(__dirname, '..', 'prototipo', 'web');
+const wread = (f) => { try { return fs.readFileSync(path.join(wdir, f), 'utf8'); } catch (err) { return ''; } };
+const sh = createEnv({});
+let wp = wread('plan/p2.html');
+check('web: página del plan con etiquetas Open Graph y Twitter (imagen 1200×630)', ['og:title', 'og:description', 'og:image" content="https://images.unsplash.com/', 'og:image:width" content="1200"', 'twitter:card" content="summary_large_image"', 'og:locale" content="es_ES"'].every((x) => wp.includes(x)));
+check('web: "Abrir en la app" lleva a la misma pantalla de la app', wp.includes('href="../../standalone.html#/plan/p2"') && wp.includes("display-mode: standalone"));
+const webGen = require('./build-web.js');
+check('web: plan íntimo en un lugar público, sin el sitio exacto; en un negocio, con él', webGen.planWhere({ groupMax:6, placeId:'debod' }) === 'Zona aproximada · Madrid'
+  && webGen.planWhere({ groupMax:6, placeId:'clamores' }) === 'Sala Clamores · Madrid' && webGen.planWhere({ groupMax:30, placeId:'debod' }) === 'Templo de Debod · Madrid');
+check('web: lo generado coincide con prototipo/web/ (node scripts/build-web.js)', Object.entries(webGen.files).every(([f, c]) => wread(f) === c));
+const secretPlan = sh.run('(PLANS.find(p => p.secret) || {}).id');
+check('web: plan secreto, sin el sitio', !secretPlan || wread(`plan/${secretPlan}.html`).includes('Zona aproximada'));
+const pubPosts = sh.run('POSTS.filter(po => postIsPublic(po)).map(po => po.id)');
+const privPosts = sh.run('POSTS.filter(po => !postIsPublic(po)).map(po => po.id)');
+check('web: una página por publicación pública y ninguna de las privadas', pubPosts.every((id) => wread(`p/${id}.html`).includes('og:image')) && privPosts.length > 0 && privPosts.every((id) => !wread(`p/${id}.html`)));
+wp = wread('u/irenec.html');
+check('web: perfil privado sin publicaciones', wp.includes('Esta cuenta es privada') && !wp.includes('w-grid') && wp.includes('Cuenta privada'));
+check('web: perfil público con sus publicaciones', wread('u/lucia.html').includes('w-grid') && wread('u/lucia.html').includes('#/u/lucia'));
+check('web: página genérica para lo creado en la demo y portada', wread('abrir.html').includes("standalone.html#/' + r") && wread('index.html').includes('plan/p2.html'));
+let aasa = null, alinks = null; try { aasa = JSON.parse(wread('.well-known/apple-app-site-association')); alinks = JSON.parse(wread('.well-known/assetlinks.json')); } catch (err) {}
+check('web: asociación de dominio para universal links (iOS) y App Links (Android)', !!aasa && aasa.applinks.details[0].components.some((c) => c['/'] === '/plan/*') && !!alinks && alinks[0].target.package_name && alinks[0].relation[0].includes('handle_all_urls'));
+check('web: la web pública no tiene emojis', !/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/u.test(['plan/p2.html', 'u/lucia.html', 'abrir.html', 'index.html'].map(wread).join('')));
+check('enlace sin web publicada: dominio de la app', sh.run('postUrl(getPlan("p2"))') === 'https://planes.app/plan/p2' && sh.run('postUrl(getUser("lucia"))') === 'https://planes.app/u/lucia');
+sh.run('Object.assign(location, { protocol:"https:", hostname:"diego.github.io", origin:"https://diego.github.io", pathname:"/RED-SOCIAL/prototipo/standalone.html" })');
+const WB = 'https://diego.github.io/RED-SOCIAL/prototipo/web/';
+check('enlace con la web publicada: lleva a su página', sh.run('postUrl(getPlan("p2"))') === WB + 'plan/p2.html' && sh.run('postUrl(POSTS.find(p => p.id === "po8"))') === WB + 'p/po8.html' && sh.run('postUrl(ME)') === WB + 'u/marina.html');
+const seedUrls = sh.run('[...PLANS, ...POSTS.filter(postIsPublic), ...USERS.filter(u => !u.managedBy)].map(postUrl)');
+check('cada enlace de los datos de ejemplo tiene su página generada', seedUrls.every((u) => u.startsWith(WB) && !u.includes('abrir.html') && fs.existsSync(path.join(wdir, u.slice(WB.length)))));
+sh.run('POSTS.unshift({ id:"npo1", authorId:"me", kind:"foto", imgs:[], media:["g-dark"], caption:"Nueva", likes:0, comments:[] })');
+check('lo creado en la demo: enlace a abrir.html con el destino', sh.run('postUrl(POSTS[0])') === WB + 'abrir.html#/p/npo1');
+sh.run('ME.handle = "@marina.nueva"'); check('perfil con otro usuario: enlace a abrir.html', sh.run('postUrl(ME)') === WB + 'abrir.html#/u/me'); sh.run('ME.handle = "@marina"');
+// Compartir perfiles
+sh.nav('perfil'); check('perfil: "Compartir perfil" abre la hoja', sh.html('view-perfil').includes("openShare('u:me')"));
+sh.run('openShare("u:lucia")'); h = sh.html('overlay'); rendered += h;
+check('compartir perfil: vista previa, enlace, imagen y QR; sin story', h.includes('Compartir perfil') && h.includes('Lucía R. (@lucia)') && h.includes('Código QR') && !h.includes('Añadir a tu story') && !h.includes('Compartir en otras apps'));
+check('perfil privado: la vista previa no enseña sus fotos', sh.run('shareMeta(getUser("irene")).description') === 'Cuenta privada en planes' && sh.run('shareMeta(getUser("irene")).image') === '');
+sh.run('state.share.to = ["lucia"]; sendShareInApp()');
+check('enviar un perfil por mensaje: tarjeta con el perfil', sh.run('dmWith("lucia").messages.slice(-1)[0].share') === 'u:lucia' && sh.run('msgShareCard("u:lucia")').includes('Lucía R.') && sh.run('msgPreview({ from:"me", share:"u:lucia" }, dmWith("lucia"))').includes('perfil'));
+sh.run('openUserMenu("marco")'); check('perfil ajeno (⋯): compartir el perfil', sh.html('overlay').includes("openShare('u:marco')"));
+sh.run('openShareQr("plan:p2")'); h = sh.html('overlay'); rendered += h;
+check('código QR del enlace', h.includes('qr-box') && h.includes(WB + 'plan/p2.html'));
+// Menú de compartir nativo
+sh.run('globalThis.__shared = null; globalThis.navigator = { share: (d) => { __shared = d; return Promise.resolve(); }, canShare: () => true }');
+sh.run('openShare("plan:p2")'); check('con menú nativo: botón "Compartir en otras apps"', sh.html('overlay').includes('Compartir en otras apps'));
+sh.run('systemShare("plan:p2")');
+check('menú nativo: comparte el enlace (la vista previa la genera la web), sin esperar a la imagen', sh.run('__shared && __shared.url') === WB + 'plan/p2.html' && sh.run('__shared.title') === sh.run('getPlan("p2").title') && !sh.run('__shared.files'));
+// Enlaces que abren la app
+sh.nav('p/po8'); check('enlace a una publicación: se abre en la app', sh.html('overlay').includes('data-post="po8"'));
+sh.run('closeOverlay()'); sh.nav('p/no-existe'); check('enlace roto: aviso', sh.run('document.getElementById("toast").textContent').includes('ya no está disponible'));
+sh.nav('plan/no-existe'); check('plan que ya no existe: página de aviso', sh.html('view-page').includes('Este plan ya no está disponible'));
+const dst = {};
+const nd = createEnv(dst, { sinSesion: true, hash: '#/plan/p2' }); rendered += nd.html('auth');
+check('enlace sin sesión: se recuerda y se explica en la bienvenida', dst['planes-destino'] === '#/plan/p2' && nd.html('auth').includes('Te han compartido el plan «Atardecer en el Templo de Debod»'));
+nd.run('loginDemo()'); check('al entrar, lleva al enlace compartido', nd.run('location.hash') === '#/plan/p2' && !('planes-destino' in dst));
+// Recibir desde el menú de compartir del móvil
+check('recibir: reconoce enlaces de planes', sh.run('sharedLink("mira " + location.origin + "/RED-SOCIAL/prototipo/web/u/lucia.html")') === 'u/lucia' && sh.run('sharedLink("https://planes.app/plan/p4")') === 'plan/p4'
+  && sh.run('sharedLink("x/web/abrir.html#/p/npo1")') === 'p/npo1' && sh.run('sharedLink("hola")') === null);
+sh.run('applyShared({ title:"", text:"", url:"https://planes.app/plan/p4" }, [])'); check('recibir un enlace de planes: lo abre', sh.run('location.hash') === '#/plan/p4');
+sh.run('applyShared({ title:"", text:"Qué atardecer", url:"" }, [])');
+check('recibir texto: nueva publicación con el texto en el pie', sh.run('location.hash') === '#/crear-post' && sh.run('state.draftPost.caption') === 'Qué atardecer' && sh.html('view-page').includes('Qué atardecer'));
+let mf = null; try { mf = JSON.parse(fs.readFileSync(path.join(pdir0, 'manifest.webmanifest'), 'utf8')); } catch (err) {}
+check('PWA: sale en el menú de compartir (share_target con fotos y vídeos) y captura los enlaces', !!mf && mf.share_target.method === 'POST' && mf.share_target.params.files[0].accept.includes('image/*') && mf.handle_links === 'preferred'
+  && fs.readFileSync(path.join(pdir0, 'sw.js'), 'utf8').includes('recibir-compartido'));
 
 // --- Web instalable (PWA) ---
 const pdir = path.join(__dirname, '..', 'prototipo');

@@ -234,10 +234,11 @@ El flujo de creación incluye las opciones habituales de una red social, adaptad
 
 ## Compartir publicaciones y planes
 
-Cualquier publicación, propia o ajena, y cualquier plan se pueden compartir desde el botón de compartir (en el plan, arriba a la derecha de su ficha). Publicaciones y planes usan la misma hoja y las mismas opciones. Cambia el contenido de la vista previa:
+Cualquier publicación, propia o ajena, cualquier plan y cualquier perfil se pueden compartir desde el botón de compartir (en el plan, arriba a la derecha de su ficha; en tu perfil, "Compartir perfil"; en el de otra persona, en ⋯). Todos usan la misma hoja y las mismas opciones. Cambia el contenido de la vista previa:
 
 - Publicación: autor, primera foto y pie. Enlace planes.app/p/….
 - Plan: título, fecha, lugar y precio ("vie · 20:30 · Azotea Círculo · 18 €"), resumen y portada del plan. Enlace planes.app/plan/…. Si la ubicación es secreta, el enlace dice "Zona aproximada" y nunca la desvela. Al añadirlo a tu story sale como "¿Te vienes? …", con el botón "Ver el plan".
+- Perfil: nombre, @usuario, descripción y primera foto pública. Enlace planes.app/u/…. De un perfil privado solo se enseña la cabecera. Dentro de la app llega como tarjeta del perfil.
 
 Compartir planes es la forma natural de traer a amigos a un plan, así que el enlace de un plan abre su ficha con el botón para apuntarse; si no tienes la app, primero te lleva a descargarla.
 
@@ -253,16 +254,20 @@ Fuera de la app (WhatsApp, Telegram, SMS, correo…):
   - og:description: en una publicación, el pie recortado a unos 120 caracteres; en un plan, "fecha · lugar · precio" y el resumen.
   - og:image: una imagen de 1200×630 generada a partir de la primera foto (o de la portada del plan), con el pie o el título, el autor o los datos del plan y la marca encima. Recomendado: JPEG de menos de 300 KB, para que WhatsApp la muestre siempre.
   - og:url y twitter:card = summary_large_image.
-- Botones directos para WhatsApp y Telegram, "Copiar enlace", "Imagen" (descarga la imagen 1200×630) y "Más", que abre la hoja de compartir del móvil. Si el móvil lo permite, esa hoja envía la imagen como archivo junto al texto y el enlace.
-- La página pública enseña la publicación y un botón para abrirla en la app o descargarla. Con enlaces universales (iOS) y App Links (Android), si la app está instalada se abre directamente.
+- "Compartir en otras apps" abre el menú de compartir del móvil con el título, el texto y el enlace. Se comparte el enlace (no la imagen) para que WhatsApp y compañía generen la vista previa a partir de la web pública.
+- Botones directos para WhatsApp y Telegram, "Copiar enlace", "Imagen" (la imagen 1200×630 como archivo, para una story de Instagram; si el móvil no deja compartir archivos, se descarga) y "Código QR" (para enseñarlo en persona en un plan o imprimirlo en un local).
+- La página pública enseña el contenido y un botón para abrirlo en la app o descargarla. Con enlaces universales (iOS) y App Links (Android), si la app está instalada se abre directamente en esa pantalla. Si no hay sesión, la app recuerda el destino y lleva a él al entrar o al terminar el registro.
+- "planes" aparece también en el menú de compartir del móvil: fotos o un vídeo de la galería abren una publicación nueva con ellos; un enlace de planes abre esa pantalla.
+
+El detalle de la web pública (etiquetas, imagen, indexación), los enlaces que abren la app y el menú nativo, y lo que deben hacer el servidor y la app, está en [docs/compartir.md](docs/compartir.md). El prototipo genera esa web para los datos de ejemplo en prototipo/web/.
 
 Privacidad al compartir:
 
-- Fuera solo se comparten publicaciones públicas: audiencia "Público" y perfil público. Si una publicación es para seguidores o amigos, o el perfil es privado, solo se puede enviar dentro de la app a quien ya puede verla.
+- Fuera solo se comparten publicaciones públicas: audiencia "Público" y perfil público. Si una publicación es para seguidores o amigos, o el perfil es privado, solo se puede enviar dentro de la app a quien ya puede verla. Las retiradas por moderación o en revisión tampoco tienen página pública.
 - Si un enlace llega a quien no tiene permiso para verla, la vista previa sale genérica, sin foto ni texto.
 - Propuesta: un ajuste para que cada persona decida si otros pueden compartir sus publicaciones fuera y en sus stories, como hace Instagram.
 
-Cada vez que se comparte se registra el destino (chat, story, WhatsApp, Telegram, copiar enlace, imagen, hoja del sistema). Sirve para medir el crecimiento por recomendación.
+Cada vez que se comparte se registra el destino (chat, story, WhatsApp, Telegram, copiar enlace, imagen, código QR, hoja del sistema). Sirve para medir el crecimiento por recomendación.
 
 ## Stories: el "ahora mismo"
 

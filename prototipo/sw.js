@@ -14,8 +14,10 @@ self.addEventListener('activate', (e) => {
 });
 self.addEventListener('fetch', (e) => {
   const req = e.request;
-  if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  // Lo que llega desde el menú de compartir del móvil (share_target del manifest).
+  if (req.method === 'POST' && url.pathname.endsWith('/recibir-compartido')) { e.respondWith(receiveShare(req)); return; }
+  if (req.method !== 'GET') return;
   if (url.hostname === 'images.unsplash.com') {
     e.respondWith(caches.open(VERSION + '-img').then((c) => c.match(req).then((hit) => hit || fetch(req).then((res) => {
       if (res.ok || res.type === 'opaque') c.put(req, res.clone());
@@ -29,3 +31,19 @@ self.addEventListener('fetch', (e) => {
     return res;
   }).catch(() => caches.match(req).then((hit) => hit || caches.match('./standalone.html'))));
 });
+
+/* Guarda lo recibido (fotos o vídeo, título, texto y enlace) en una caché y abre la app en
+   #/recibido, que lo convierte en una publicación nueva o abre el enlace (ver social.js). */
+async function receiveShare(req) {
+  const at = (p) => new URL(p, self.registration.scope).href;
+  try {
+    const form = await req.formData();
+    const box = await caches.open('planes-compartido');
+    await Promise.all((await box.keys()).map((k) => box.delete(k)));
+    const files = form.getAll('media').filter((f) => f && f.size).slice(0, 10);
+    await Promise.all(files.map((f, i) => box.put(at('compartido/' + i), new Response(f, { headers: { 'content-type': f.type || 'application/octet-stream' } }))));
+    const meta = { title: form.get('title') || '', text: form.get('text') || '', url: form.get('url') || '', n: files.length };
+    await box.put(at('compartido/meta'), new Response(JSON.stringify(meta), { headers: { 'content-type': 'application/json' } }));
+  } catch (err) { /* si falla, se abre la app sin más */ }
+  return Response.redirect(at('standalone.html#/recibido'), 303);
+}

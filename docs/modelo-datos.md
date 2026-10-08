@@ -44,6 +44,7 @@ erDiagram
     PUBLICACION ||--o{ COMPARTIDO : "se comparte"
     USUARIO ||--o{ COMPARTIDO : comparte
     PLAN ||--o{ COMPARTIDO : "se comparte"
+    USUARIO ||--o{ COMPARTIDO : "su perfil se comparte"
     PUBLICACION ||--o{ COMENTARIO : recibe
     USUARIO ||--o{ COMENTARIO : escribe
     PUBLICACION ||--o{ ME_GUSTA : recibe
@@ -300,9 +301,9 @@ erDiagram
     }
     COMPARTIDO {
         uuid id PK
-        uuid publicacion_id FK "o plan_id"
+        uuid publicacion_id FK "o plan_id, o perfil_id"
         uuid usuario_id FK
-        string destino "chat|story|whatsapp|telegram|copiar|imagen|sistema"
+        string destino "chat|story|whatsapp|telegram|copiar|imagen|qr|sistema"
         string destinatarios "si es chat"
         datetime fecha
     }

@@ -141,6 +141,7 @@ function auWelcome(){
     <div class="au-body">
       <span class="au-logo">planes</span>
       <h2 class="au-h big">Planes y gente con quien vivirlos</h2>
+      ${destinoLabel() ? `<p class="au-shared">${ico('send')}<span>Te han compartido ${escapeHtml(destinoLabel())}. Entra o crea tu cuenta y te llevamos ahí.</span></p>` : ''}
       <ul class="au-vals">
         <li>${ico('compass')}<span>Descubre qué hacer hoy cerca de ti: atardeceres, cenas, rutas, conciertos.</span></li>
         <li>${ico('users')}<span>Ve con gente nueva o con tu grupo. No es una app de ligar.</span></li>
@@ -323,7 +324,21 @@ function submitLogin(){
 function finishLogin(id){
   lsSet(SESSION_KEY, id);
   updateAccount(id, { lastLogin: new Date().toISOString() });
-  location.hash = '#/feed'; location.reload();
+  location.hash = takeDestino() || '#/feed'; location.reload();
+}
+/* Enlace compartido abierto sin sesión: se recuerda y, al entrar o terminar el registro,
+   se va directamente a él (en la app nativa, el "deferred deep link" tras instalar). */
+const DESTINO_KEY = 'planes-destino';
+const SHARED_ROUTE = /^#\/(plan|p|u|tema)\/[\w.%-]+$/;
+function rememberDestino(){ if (SHARED_ROUTE.test(location.hash || '')) lsSet(DESTINO_KEY, location.hash); }
+function takeDestino(){ const d = lsGet(DESTINO_KEY); lsDel(DESTINO_KEY); return d && SHARED_ROUTE.test(d) ? d : null; }
+function destinoLabel(){
+  const d = lsGet(DESTINO_KEY); if (!d || !SHARED_ROUTE.test(d)) return '';
+  const [, kind, id] = d.match(/^#\/(\w+)\/(.+)$/);
+  if (kind === 'plan'){ const p = getPlan(id); return p ? 'el plan «' + p.title + '»' : 'un plan'; }
+  if (kind === 'u'){ const u = getUser(id); return u ? 'el perfil de ' + u.name : 'un perfil'; }
+  if (kind === 'p'){ const po = POSTS.find(x => x.id === id), u = po && getUser(po.authorId); return u ? 'una publicación de ' + u.name : 'una publicación'; }
+  return 'el tema #' + decodeURIComponent(id);
 }
 function loginDemo(){ finishLogin('demo'); }
 function auRecover(d){
@@ -437,7 +452,7 @@ function followAllSuggested(){ followSuggestions().forEach(({ u }) => { if (!fol
 function finishOnboarding(){
   const a = currentAccount(); if (a) updateAccount(a.id, { onboarded:true, step:null });
   saveState(); hideAuth();
-  state.contentTab = 'vividas'; location.hash = '#/feed'; router();
+  state.contentTab = 'vividas'; location.hash = takeDestino() || '#/feed'; router();
   toast(`Te damos la bienvenida, ${(ME.name || '').split(' ')[0]}`);
 }
 

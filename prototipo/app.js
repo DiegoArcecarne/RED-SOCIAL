@@ -659,7 +659,7 @@ function convAvatar(c, cls=''){
 function msgPreview(m, c){
   if (!m) return 'Aún no hay mensajes';
   const who = m.from === 'me' ? 'Tú: ' : (c.type === 'plan' ? ((getUser(m.from) || { name:'' }).name.split(' ')[0] + ': ') : '');
-  const what = m.text ? m.text : (m.share ? (String(m.share).startsWith('plan:') ? 'Ha compartido un plan' : 'Ha compartido una publicación') : (m.img ? 'Foto' : ''));
+  const what = m.text ? m.text : (m.share ? (String(m.share).startsWith('plan:') ? 'Ha compartido un plan' : (String(m.share).startsWith('u:') ? 'Ha compartido un perfil' : 'Ha compartido una publicación')) : (m.img ? 'Foto' : ''));
   return who + what;
 }
 function updateDmBadge(){
@@ -708,6 +708,8 @@ function renderConvList(){
 
 function msgShareCard(key){
   const x = findShare(key); if (!x) return '<span class="hint">Contenido no disponible</span>';
+  if (isProfile(x)) return `<button class="msg-card" onclick="go('u/${x.id}')"><span class="mc-img mc-av"><span class="avatar">${escapeHtml(x.initials || initials(x.name))}</span></span>
+    <span class="mc-txt"><b>${escapeHtml(x.name)}</b><span>${escapeHtml(x.handle)}${x.bio ? ' · ' + escapeHtml(x.bio.slice(0, 60)) : ''}</span></span></button>`;
   if (isPlan(x)){ const place = getPlace(x.placeId);
     return `<button class="msg-card" onclick="go('plan/${x.id}')"><span class="mc-img ${x.gradient}">${coverImg(x.photo,400)}</span>
       <span class="mc-txt"><b>${escapeHtml(x.title)}</b><span>${fmtWhen(x.when)} · ${escapeHtml(x.secret ? 'Zona aproximada' : (place ? place.name : 'Madrid'))}</span></span></button>`; }
@@ -903,24 +905,61 @@ function setDmMode(v){ ME.dmMode = v; saveState(); updateDmBadge(); renderSettin
    foto de la publicación (shareImage). Solo las publicaciones públicas se comparten
    fuera; dentro, se envían a personas que sigues o se añaden a tu story. */
 const PUBLIC_BASE = 'https://planes.app';   // dominio provisional, como la marca
-// Lo que se comparte: una publicación (clave = su id) o un plan (clave = 'plan:' + id).
-function findShare(key){ return String(key).startsWith('plan:') ? getPlan(String(key).slice(5)) : POSTS.find(p => p.id === key); }
+// Lo que se comparte: una publicación (clave = su id), un plan ('plan:' + id) o un perfil ('u:' + id).
+function findShare(key){
+  key = String(key);
+  if (key.startsWith('plan:')) return getPlan(key.slice(5));
+  if (key.startsWith('u:')) return getUser(key.slice(2));
+  return POSTS.find(p => p.id === key);
+}
 const isPlan = (x) => !!(x && x.when);
-function shareKey(x){ return isPlan(x) ? 'plan:' + x.id : x.id; }
-function postUrl(po){ return isPlan(po) ? `${PUBLIC_BASE}/plan/${po.id}` : `${PUBLIC_BASE}/p/${po.id}`; }
+const isProfile = (x) => !!(x && x.handle && !x.when && !x.authorId);
+function shareKey(x){ return isPlan(x) ? 'plan:' + x.id : (isProfile(x) ? 'u:' + x.id : x.id); }
+// Ruta en la app y en la web pública (la misma en las dos, como en https://planes.app/plan/p2).
+function appRoute(x){ return isPlan(x) ? `plan/${x.id}` : (isProfile(x) ? `u/${x.id}` : `p/${x.id}`); }
+function webPath(x){ return isPlan(x) ? `plan/${x.id}` : (isProfile(x) ? `u/${String(x.handle).replace(/^@/, '')}` : `p/${x.id}`); }
+// Lo que tiene página en la web pública del prototipo (los datos de ejemplo; ver scripts/build-web.js).
+const SEED_WEB = new Set([...PLANS.map(p => 'plan:' + p.id), ...POSTS.filter(po => postIsPublic(po)).map(po => po.id),
+  ...USERS.filter(u => !u.managedBy).map(u => 'u:' + u.id + ':' + u.handle)]);
+/* Web pública del prototipo (prototipo/web/): si la app está publicada (GitHub Pages o un
+   servidor local), los enlaces llevan a esas páginas, que sí generan la vista previa. Si no
+   (por ejemplo, en el visor de Claude), se usa el dominio provisional. */
+function webBase(){
+  try {
+    if (/^https?:$/.test(location.protocol) && (/\/prototipo\//.test(location.pathname) || /^(localhost|127\.0\.0\.1)$/.test(location.hostname)))
+      return location.origin + location.pathname.replace(/[^/]*$/, '') + 'web/';
+  } catch (e) {}
+  return null;
+}
+function canonicalUrl(x){ return `${PUBLIC_BASE}/${webPath(x)}`; }
+function postUrl(x){
+  const base = webBase(); if (!base) return canonicalUrl(x);
+  const k = isProfile(x) ? 'u:' + x.id + ':' + x.handle : shareKey(x);
+  // Lo creado en la demo no tiene página propia: va a abrir.html con el destino tras la #.
+  return SEED_WEB.has(k) && postIsPublic(x) ? `${base}${webPath(x)}.html` : `${base}abrir.html#/${appRoute(x)}`;
+}
 function postIsPublic(po){
+  if (isProfile(po)) return true;   // la cabecera del perfil es pública aunque la cuenta sea privada
   if (isPlan(po)) return true;   // los planes son públicos; si la ubicación es secreta, no se desvela
   const author = getUser(po.authorId) || {};
-  return (po.audience || 'publico') === 'publico' && author.profilePublic !== false;
+  return (po.audience || 'publico') === 'publico' && author.profilePublic !== false && !po.removed && !po.held;
 }
 // Metadatos Open Graph de la página pública de la publicación.
 function shareMeta(po){
+  const domain = PUBLIC_BASE.replace(/^https?:\/\//, '');
+  if (isProfile(po)){
+    const priv = po.id !== 'me' && po.profilePublic === false;
+    const n = postsByUser(po.id).length;
+    const first = priv ? null : postsByUser(po.id).find(x => postIsPublic(x) && (x.imgs || []).length);
+    return { title: `${po.name} (${po.handle})`, description: priv ? 'Cuenta privada en planes' : (po.bio || `${n} publicaciones en planes`),
+      image: first ? first.imgs[0] : '', url: postUrl(po), domain };
+  }
   if (isPlan(po)){
     const place = getPlace(po.placeId);
     const where = po.secret ? 'Zona aproximada' : (place ? place.name : 'Madrid');
     const info = `${fmtWhen(po.when)} · ${where} · ${po.paid ? po.price + ' €' : 'Gratis'}`;
     return { title: po.title, description: info, summary: po.summary || '', image: po.photo || '',
-      url: postUrl(po), domain: PUBLIC_BASE.replace(/^https?:\/\//, ''), host: po.host ? po.host.name : '' };
+      url: postUrl(po), domain, host: po.host ? po.host.name : '' };
   }
   const u = getUser(po.authorId) || { name:'' };
   const plan = po.planId && getPlan(po.planId);
@@ -928,7 +967,7 @@ function shareMeta(po){
   return {
     title: `${u.name} en planes${plan ? ' · ' + plan.title : ''}`,
     description: cap.length > 120 ? cap.slice(0, 117).trimEnd() + '…' : cap,
-    image: (po.imgs || [])[0] || '', url: postUrl(po), domain: PUBLIC_BASE.replace(/^https?:\/\//, ''),
+    image: (po.imgs || [])[0] || '', url: postUrl(po), domain,
   };
 }
 function shareText(po){ const m = shareMeta(po); return `${m.description ? m.description + ' ' : ''}${m.url}`; }
@@ -945,28 +984,30 @@ function openShare(id){
 }
 function renderShareSheet(){
   const po = findShare(state.share.id); if (!po) return;
-  const key = state.share.id, plan = isPlan(po);
+  const key = state.share.id, plan = isPlan(po), prof = isProfile(po);
   const m = shareMeta(po), pub = postIsPublic(po), sel = state.share.to;
+  const native = canNativeShare();
   const people = shareTargets().map(u => `<button class="sh-person ${sel.includes(u.id)?'on':''}" onclick="toggleShareTo('${u.id}')" aria-pressed="${sel.includes(u.id)}">
       <span class="avatar">${escapeHtml(u.initials||initials(u.name))}${sel.includes(u.id)?`<i class="sh-ok">${ico('check')}</i>`:''}</span><span>${escapeHtml(u.name.split(' ')[0])}</span></button>`).join('');
   const ext = (app, icon, label) => `<a class="sh-app" href="${externalShareUrl(po, app)}" target="_blank" rel="noopener" onclick="logShare('${key}','${app}')"><span class="sh-ic">${ico(icon)}</span><span>${label}</span></a>`;
   const btn = (fn, icon, label) => `<button class="sh-app" onclick="${fn}"><span class="sh-ic">${ico(icon)}</span><span>${label}</span></button>`;
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div>
     <div class="sheet sh" role="dialog" aria-label="Compartir">
-      <div class="sheet-h"><span>${plan ? 'Compartir plan' : 'Compartir'}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+      <div class="sheet-h"><span>${plan ? 'Compartir plan' : (prof ? 'Compartir perfil' : 'Compartir')}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
       <div class="sheet-list">
         <div class="sh-sec">Enviar en planes</div>
         <div class="sh-people">${people || '<p class="hint">Aún no sigues a nadie.</p>'}</div>
         ${sel.length ? `<div class="sheet-in sh-msg"><input id="sh-msg" maxlength="${LIMITS.comment}" placeholder="Escribe un mensaje…"><button class="btn-primary sm" onclick="sendShareInApp()">Enviar</button></div>` : ''}
-        ${pub || po.authorId === 'me' ? `<button class="sh-row" onclick="shareToStory('${key}')">${ico('live')}<span>Añadir a tu story</span>${ico('chevR')}</button>` : ''}
+        ${!prof && (pub || po.authorId === 'me') ? `<button class="sh-row" onclick="shareToStory('${key}')">${ico('live')}<span>Añadir a tu story</span>${ico('chevR')}</button>` : ''}
         <div class="sh-sec">Compartir fuera</div>
         ${pub ? `<div class="og-card" aria-label="Vista previa del enlace">
-            <span class="og-img ${plan ? po.gradient : ((po.media||[])[0]||'g-dark')}">${coverImg(m.image, 700)}</span>
+            <span class="og-img ${plan ? po.gradient : (prof ? 'g-dark' : ((po.media||[])[0]||'g-dark'))}">${coverImg(m.image, 700)}</span>
             <span class="og-txt"><span class="og-d">${escapeHtml(m.domain)}</span><b>${escapeHtml(m.title)}</b><span>${escapeHtml(m.description)}</span>${plan && m.summary ? `<span class="og-sum">${escapeHtml(m.summary)}</span>` : ''}</span></div>
-          <p class="hint">Así se ve el enlace en WhatsApp, Telegram o un SMS: con la imagen ${plan ? 'del plan' : 'de la publicación'}.</p>
+          <p class="hint">Así se ve el enlace en WhatsApp, Telegram o un SMS: con la imagen ${plan ? 'del plan' : (prof ? 'del perfil' : 'de la publicación')}. Si quien lo recibe tiene la app, se abre en ella.</p>
+          ${native ? `<button class="sh-row sh-native" onclick="systemShare('${key}')">${ico('send')}<span>Compartir en otras apps</span>${ico('chevR')}</button>` : ''}
           <div class="sh-apps">
             ${ext('whatsapp', 'chat', 'WhatsApp')}${ext('telegram', 'send', 'Telegram')}
-            ${btn(`copyShareLink('${key}')`, 'link', 'Copiar enlace')}${btn(`downloadShareImage('${key}')`, 'download', 'Imagen')}${btn(`systemShare('${key}')`, 'dots', 'Más')}
+            ${btn(`copyShareLink('${key}')`, 'link', 'Copiar enlace')}${btn(`shareImageFile('${key}')`, 'download', 'Imagen')}${btn(`openShareQr('${key}')`, 'grid', 'Código QR')}
           </div>`
         : `<p class="hint sh-lock">${ico('lock')} Esta publicación no es pública: solo se puede enviar dentro de planes a quien ya puede verla.</p>`}
       </div></div>`);
@@ -1023,13 +1064,13 @@ function copyShareLink(id){
   } catch (e) { toast(url); }
 }
 // Imagen para compartir (og:image): 1200×630 con la foto, el pie, el autor y la marca.
-const shareImageCache = {};
+const shareImageCache = {}, shareBlobCache = {};
 // En la vista previa del enlace se ve la imagen generada, que es la que mostraría WhatsApp.
 function showShareImage(po){
   const k = shareKey(po);
   const put = (url) => { const el = document.querySelector('.og-img'); if (el && state.share && state.share.id === k) el.innerHTML = `<img class="cover-img" src="${url}" alt="Imagen que se compartirá">`; };
   if (shareImageCache[k]) return put(shareImageCache[k]);
-  shareImage(po).then(b => { if (b && typeof URL !== 'undefined' && URL.createObjectURL){ shareImageCache[k] = URL.createObjectURL(b); put(shareImageCache[k]); } });
+  shareImage(po).then(b => { if (b && typeof URL !== 'undefined' && URL.createObjectURL){ shareBlobCache[k] = b; shareImageCache[k] = URL.createObjectURL(b); put(shareImageCache[k]); } });
 }
 function shareImage(po){
   return new Promise(resolve => {
@@ -1037,9 +1078,9 @@ function shareImage(po){
     const g = c && c.getContext && c.getContext('2d');
     if (!g) return resolve(null);
     c.width = 1200; c.height = 630;
-    const m = shareMeta(po), u = isPlan(po) ? { name: m.host } : (getUser(po.authorId) || { name:'' });
-    const big = isPlan(po) ? m.title : (m.description || m.title);
-    const small = isPlan(po) ? m.description : `${u.name} · ${m.domain}`;
+    const m = shareMeta(po), u = isPlan(po) ? { name: m.host } : (isProfile(po) ? po : (getUser(po.authorId) || { name:'' }));
+    const big = isPlan(po) ? m.title : (isProfile(po) ? po.name : (m.description || m.title));
+    const small = isPlan(po) ? m.description : (isProfile(po) ? `${po.handle} · ${m.domain}` : `${u.name} · ${m.domain}`);
     const finish = (img) => {
       g.fillStyle = '#16141c'; g.fillRect(0, 0, 1200, 630);
       if (img){ const r = Math.max(1200 / img.width, 630 / img.height), w = img.width * r, h = img.height * r; g.drawImage(img, (1200 - w) / 2, (630 - h) / 2, w, h); }
@@ -1077,22 +1118,53 @@ function downloadShareImage(id){
   const po = findShare(id); if (!po) return;
   shareImage(po).then(b => {
     if (!b){ toast('Este navegador no puede generar la imagen'); return; }
-    saveFile(b, `planes-${isPlan(po) ? 'plan-' : ''}${po.id}.jpg`).then(r => {
+    saveFile(b, shareFileName(po)).then(r => {
       if (r === 'saved'){ logShare(id, 'imagen'); toast('Imagen guardada'); }
       else if (r !== 'declined') toast('No se ha podido guardar la imagen');
     });
   });
 }
-// Hoja de compartir del sistema (móvil): imagen + texto + enlace, si el navegador lo permite.
+/* Menú de compartir nativo del móvil (Web Share API; en la app nativa, la hoja del sistema).
+   Se comparte el ENLACE: así WhatsApp y compañía generan la vista previa con la imagen a
+   partir de la web pública. Se llama sin esperar a nada, porque el navegador solo lo
+   permite justo después de tocar un botón. */
+function canNativeShare(){ return typeof navigator !== 'undefined' && typeof navigator.share === 'function'; }
 function systemShare(id){
   const po = findShare(id); if (!po) return;
   const m = shareMeta(po);
-  if (typeof navigator === 'undefined' || !navigator.share){ copyShareLink(id); return; }
-  shareImage(po).then(b => {
-    const data = { title: m.title, text: m.description, url: m.url };
-    if (b && typeof File !== 'undefined'){ const f = new File([b], `planes-${isPlan(po) ? 'plan-' : ''}${po.id}.jpg`, { type:'image/jpeg' }); if (navigator.canShare && navigator.canShare({ files:[f] })) data.files = [f]; }
-    navigator.share(data).then(() => logShare(id, 'sistema'), () => {});
-  });
+  if (!canNativeShare()){ copyShareLink(id); return; }
+  navigator.share({ title: m.title, text: m.description, url: m.url })
+    .then(() => logShare(id, 'sistema'), (e) => { if (e && e.name !== 'AbortError') copyShareLink(id); });
+}
+const shareFileName = (po) => `planes-${isPlan(po) ? 'plan-' : (isProfile(po) ? 'perfil-' : '')}${po.id}.jpg`;
+// La imagen 1200×630 (para una story de Instagram, por ejemplo): en el móvil, con el menú
+// nativo si deja compartir archivos; si no, se descarga.
+function shareImageFile(id){
+  const po = findShare(id); if (!po) return;
+  const b = shareBlobCache[shareKey(po)];
+  if (b && canNativeShare() && typeof File !== 'undefined'){
+    const f = new File([b], shareFileName(po), { type:'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files:[f] })){
+      navigator.share({ files:[f], title: shareMeta(po).title }).then(() => logShare(id, 'imagen'), () => {});
+      return;
+    }
+  }
+  downloadShareImage(id);
+}
+// Código QR del enlace: para enseñarlo en persona (por ejemplo, en un plan).
+function openShareQr(id){
+  const po = findShare(id); if (!po) return;
+  const m = shareMeta(po);
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Código QR">
+    <div class="sheet-h"><span>Código QR</span><button class="sv-x" onclick="openShare('${shareKey(po)}')" aria-label="Volver">${ico('chevL')}</button></div>
+    <div class="sheet-list qr">
+      <p class="hint">${escapeHtml(m.title)} · se escanea con la cámara del móvil y abre ${isPlan(po) ? 'el plan' : (isProfile(po) ? 'el perfil' : 'la publicación')}.</p>
+      <div id="qr-box" class="qr-box" aria-label="Código QR del enlace"></div>
+      <p class="hint qr-url">${escapeHtml(m.url)}</p>
+    </div></div>`);
+  logShare(id, 'qr');
+  loadQrLib().then(Q => { const box = document.getElementById('qr-box'); if (box){ box.innerHTML = ''; new Q(box, { text: m.url, width: 220, height: 220, colorDark:'#000000', colorLight:'#ffffff' }); } },
+    () => { const box = document.getElementById('qr-box'); if (box) box.innerHTML = '<p class="hint">Sin conexión para dibujar el QR: copia el enlace.</p>'; });
 }
 
 /* ---------- capa superpuesta: publicación, comentarios, stories, directos ---------- */
@@ -1618,7 +1690,7 @@ function renderProfile(uid){
       </div>
     </div>
     ${about ? `<p class="bio">${about}</p>` : ''}
-    ${me ? `<div class="ph-actions"><button class="ph-btn" onclick="go('editar-perfil')">Editar perfil</button><button class="ph-btn" onclick="toast('Compartir perfil estará disponible en la app')">Compartir perfil</button></div>`
+    ${me ? `<div class="ph-actions"><button class="ph-btn" onclick="go('editar-perfil')">Editar perfil</button><button class="ph-btn" onclick="openShare('u:me')">Compartir perfil</button></div>`
       : (u.managedBy === 'me' ? `<div class="ph-actions"><span class="hint">${ico('briefcase')} Gestionas este perfil desde tu cuenta personal.</span><button class="ph-btn" onclick="openProfileSwitcher()">Tus perfiles</button></div>`
       : (ME.blocked || []).includes(u.id) ? `<div class="ph-actions"><span class="hint">Has bloqueado a ${escapeHtml(u.name)}.</span><button class="ph-btn" onclick="unblockUser('${u.id}')">Desbloquear</button></div>`
         : sanctionNote(u) ? `<div class="ph-actions"><span class="hint">${escapeHtml(sanctionNote(u))}</span><button class="ph-btn ph-more" onclick="openUserMenu('${u.id}')" aria-label="Más opciones">${ico('dots')}</button></div>`
@@ -2296,7 +2368,9 @@ function router(){
     case 'mapa':    state.navTab='mapa'; renderMap(); showView('mapa'); break;
     case 'grupos':  state.navTab='grupos'; renderGroups(); showView('grupos'); break;
     case 'perfil':  state.navTab='perfil'; renderProfile('me'); showView('perfil'); break;
-    case 'plan':    renderDetail(arg); showView('detail'); scrollTop('detail'); break;
+    case 'plan':    if (!getPlan(arg)){ renderGone('Este plan ya no está disponible'); break; } renderDetail(arg); showView('detail'); scrollTop('detail'); break;
+    case 'p':       state.navTab='feed'; renderContent(); showView('feed'); openLinkedPost(arg); break;   // enlace a una publicación
+    case 'recibido': receiveShared(); break;   // lo que llega desde el menú de compartir del móvil
     case 'u':       renderProfile(arg); showView('page'); scrollTop('page'); break;
     case 'grupo':   renderGroupDetail(arg); showView('page'); scrollTop('page'); break;
     case 'mensajes': renderInbox(arg); showView('page'); scrollTop('page'); break;
@@ -2326,12 +2400,25 @@ function router(){
   }
 }
 
+// Enlaces que ya no llevan a nada (borrado, privado o retirado).
+function renderGone(title){
+  document.getElementById('view-page').innerHTML = pageHead('planes') + `<div class="empty-tab"><span class="empty-ic">${ico('link')}</span><h3>${escapeHtml(title)}</h3><p>Puede que se haya borrado o que no tengas acceso.</p>
+    <button class="btn-primary" style="margin-top:14px" onclick="go('feed')">Ir a Descubrir</button></div>`;
+  showView('page');
+}
+function openLinkedPost(id){
+  const po = POSTS.find(p => p.id === id);
+  if (!po || !canSeePost(po)){ toast(po && isPrivate(getUser(po.authorId)) ? 'Es de una cuenta privada: síguela para verla' : 'Esta publicación ya no está disponible'); return; }
+  openPost(id);
+}
+
 /* ---------- init ---------- */
 function init(){
   // Sin sesión: pantalla de bienvenida. Cuenta nueva: empieza sin el contenido de demostración.
   const acc = currentAccount();
   if (acc && acc.id !== 'demo') freshWorld();
   if (acc) loadState();
+  if (!acc || !acc.onboarded) rememberDestino();   // enlace compartido: se abre al entrar
   registerServiceWorker();
   window.addEventListener('pagehide', saveState);
   document.addEventListener('visibilitychange', () => { if (document.hidden) stopMusic(); });

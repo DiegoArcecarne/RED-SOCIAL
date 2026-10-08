@@ -407,3 +407,39 @@ function renderMentionsTab(){
   </div>`;
 }
 function setMentionPolicy(v){ ME.mentionPolicy = v; saveState(); renderSettings(); }
+
+/* ---------- recibir desde el menú de compartir del móvil ----------
+   Con la app instalada (Android), "planes" sale en el menú de compartir de la galería o
+   del navegador (share_target del manifest). El service worker (sw.js) guarda lo recibido
+   y abre #/recibido: fotos o vídeo → nueva publicación; un enlace de planes → se abre. */
+const SHARE_INBOX = 'planes-compartido';
+function receiveShared(){
+  const fallback = () => go('feed');
+  if (typeof caches === 'undefined') return fallback();
+  caches.open(SHARE_INBOX).then(c => c.match('compartido/meta').then(r => r ? r.json() : null).then(meta => {
+    if (!meta) return fallback();
+    return Promise.all(Array.from({ length: Math.min(meta.n || 0, MAX_ITEMS) }, (_, i) => c.match('compartido/' + i).then(r => r ? r.blob() : null)))
+      .then(blobs => c.keys().then(ks => Promise.all(ks.map(k => c.delete(k)))).then(() => applyShared(meta, blobs.filter(Boolean))));
+  })).catch(fallback);
+}
+// Ruta de la app si lo recibido es un enlace de planes (dominio real o web del prototipo).
+function sharedLink(text){
+  const s = String(text || '');
+  const m = s.match(/abrir\.html#\/(plan|p|u|tema)\/([\w.%-]+)/) || s.match(/(?:planes\.app|\/web)\/(plan|p|u|tema)\/([\w.%-]+?)(?:\.html)?(?=$|[\s?#"'<>])/);
+  if (!m) return null;
+  if (m[1] === 'u' && !getUser(m[2])){ const u = USERS.find(x => String(x.handle).replace(/^@/, '') === m[2]); return u ? 'u/' + u.id : null; }
+  return m[1] + '/' + m[2];
+}
+function applyShared(meta, blobs){
+  const text = [meta.title, meta.text, meta.url].filter(Boolean).join(' ').trim();
+  const link = sharedLink(text);
+  if (link && !blobs.length){ go(link); return; }
+  state.draftPost = freshPostDraft(); state.draftPost.origin = 'vida';
+  state.draftPost.caption = clip([meta.text, meta.url].filter(Boolean).join(' '), 'caption');
+  go('crear-post'); renderCreatePost(); showView('page');
+  if (blobs.length){
+    const files = blobs.map((b, i) => typeof File !== 'undefined' ? new File([b], 'compartido-' + i, { type: b.type }) : Object.assign(b, { name: 'compartido-' + i }));
+    pickPostMedia({ files });
+  }
+  toast(blobs.length ? 'Recibido: revisa y publica' : 'Texto recibido en el pie');
+}

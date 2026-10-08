@@ -164,6 +164,7 @@ function openUserMenu(uid){
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Opciones">
     <div class="sheet-h"><span>${escapeHtml(u.name)}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list">
+      <button class="sh-row" onclick="openShare('u:${u.id}')">${ico('send')}<span>Compartir el perfil</span>${ico('chevR')}</button>
       <button class="sh-row" onclick="openReport('${u.id}', null, { objectType:'usuario' })">${ico('alert')}<span>Reportar</span>${ico('chevR')}</button>
       ${(ME.blocked || []).includes(u.id) ? `<button class="sh-row" onclick="closeOverlay();unblockUser('${u.id}')">${ico('lock')}<span>Desbloquear</span>${ico('chevR')}</button>`
         : `<button class="sh-row danger" onclick="blockUser('${u.id}')">${ico('lock')}<span>Bloquear</span>${ico('chevR')}</button>`}
