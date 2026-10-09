@@ -27,6 +27,12 @@ erDiagram
     PLAN ||--o{ INSCRIPCION : recibe
     USUARIO ||--o{ INSCRIPCION : realiza
     INSCRIPCION ||--o| PAGO : genera
+    USUARIO ||--o{ METODO_PAGO : guarda
+    USUARIO ||--o| CUENTA_COBRO : "cobra con"
+    CUENTA_COBRO ||--o{ TRANSFERENCIA : recibe
+    PAGO }o--o| TRANSFERENCIA : "se liquida en"
+    PAGO ||--o{ FACTURA : "documenta"
+    CUENTA_COBRO ||--o{ FACTURA : "recibe (comision)"
 
     PLAN ||--o{ ASISTENCIA_REAL : "registra (geo)"
     USUARIO ||--o{ ASISTENCIA_REAL : asiste
@@ -243,9 +249,52 @@ erDiagram
         uuid id PK
         uuid inscripcion_id FK
         decimal importe
-        decimal comision "15% en planes de pago"
+        decimal comision "15% IVA incluido"
+        decimal reembolsado
         string tipo "reserva|desvelo|boost|suscripcion|cpa"
-        string estado_escrow "retenido|liberado|reembolsado"
+        string estado "pendiente|retenido|liberado|pagado|reembolsado|reembolso_parcial|en_revision"
+        string stripe_payment_intent
+        string numero_recibo "PL-AAAA-000000"
+        datetime fecha_liberacion
+    }
+    METODO_PAGO {
+        uuid id PK
+        uuid usuario_id FK
+        string marca
+        string ultimos4
+        string caducidad
+        bool principal
+        string stripe_payment_method
+    }
+    CUENTA_COBRO {
+        uuid id PK
+        uuid usuario_id FK
+        string tipo "particular|empresa"
+        string nombre_legal
+        string nif
+        string iban "cifrado"
+        string stripe_account "acct_..."
+        string estado "en_revision|activa|faltan_datos|desactivada"
+    }
+    TRANSFERENCIA {
+        uuid id PK
+        uuid cuenta_cobro_id FK
+        uuid plan_id FK
+        decimal neto
+        string stripe_transfer
+        bool revertida
+        datetime fecha
+    }
+    FACTURA {
+        uuid id PK
+        string tipo "recibo|entrada|comision_mensual"
+        string serie_numero
+        uuid emisor_id
+        uuid destinatario_id
+        decimal base
+        decimal iva
+        decimal total
+        datetime fecha
     }
     RESENA {
         uuid id PK
@@ -444,7 +493,7 @@ erDiagram
     NOTIFICACION {
         uuid id PK
         uuid usuario_id FK
-        string tipo "recordatorio|solicitud|mensaje|cambio|plaza|despues_plan|seguidor|mencion|seguridad"
+        string tipo "recordatorio|solicitud|mensaje|cambio|plaza|despues_plan|seguidor|mencion|seguridad|pago"
         string referencia "plan, conversacion o ruta"
         string texto
         bool leida

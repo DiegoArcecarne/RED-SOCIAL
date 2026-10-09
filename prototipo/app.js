@@ -181,8 +181,8 @@ function saveState(){
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
             city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom,
-            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog },
-      modActions: MOD_ACTIONS, userMod: USER_MOD, safety: SAFETY_EVENTS,
+            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts },
+      modActions: MOD_ACTIONS, userMod: USER_MOD, safety: SAFETY_EVENTS, payments: PAYMENTS, paymentMethods: PAYMENT_METHODS,
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
       notifications: NOTIFICATIONS,
@@ -213,6 +213,8 @@ function loadState(){
   if (Array.isArray(snap.notifications)) NOTIFICATIONS.splice(0, NOTIFICATIONS.length, ...snap.notifications);
   if (Array.isArray(snap.modActions)) MOD_ACTIONS.splice(0, MOD_ACTIONS.length, ...snap.modActions);
   if (Array.isArray(snap.safety)) SAFETY_EVENTS.splice(0, SAFETY_EVENTS.length, ...snap.safety);
+  if (Array.isArray(snap.payments)) PAYMENTS.splice(0, PAYMENTS.length, ...snap.payments);
+  if (Array.isArray(snap.paymentMethods)) PAYMENT_METHODS.splice(0, PAYMENT_METHODS.length, ...snap.paymentMethods);
   if (snap.userMod){ Object.keys(USER_MOD).forEach(k => delete USER_MOD[k]); Object.assign(USER_MOD, snap.userMod); }
   if (snap.me) Object.assign(ME, snap.me);
   (snap.extraProfiles || []).forEach(x => { if (!USERS.some(u => u.id === x.id)) USERS.push(x); });
@@ -1417,7 +1419,7 @@ function requestAttendance(id){
   state.requested.add(id);
   REQUESTS.push({ id:'r'+Date.now(), planId:id, userId:'me', status:'pendiente', message:'Solicitud enviada desde el prototipo.' });
   saveState();
-  toast('Solicitud de asistencia enviada · pendiente de aprobación');
+  toast('Solicitud de asistencia enviada · pendiente de aprobación' + (getPlan(id).paid ? '. Si te aceptan, tendrás 24 h para pagar' : ''));
   setTimeout(() => simulateHostDecision(id, 'aceptada'), 4000);   // demo: el anfitrión responde
   renderDetail(id);
 }
@@ -1447,18 +1449,20 @@ function renderDetail(id){
   const view = document.getElementById('view-detail');
 
   const host = canRunPlan(p), waiting = waitPos(p), full = isFull(p);
+  const pay = p.paid ? myPayment(p.id) : null, toPay = pay && pay.status === 'pendiente';
   let cta;
   if (isCancelled(p)) cta = `<button class="btn-join done" disabled>${ico('close')} Plan cancelado</button>`;
   else if (isHost(p)) cta = `<button class="btn-join" onclick="openHostQr('${p.id}')">${ico('grid')} Mostrar QR de llegada</button>`;
   else if (!isVerified() && !attended && !joined) cta = `<button class="btn-join" onclick="requireVerified('Verifica tu identidad para ir a este plan', () => renderDetail('${p.id}'))">${ico('shield')} Verifícate para ir</button>`;
   else if (attended) cta = `<button class="btn-join done" disabled>${ico('check')} Asististe · verificado</button>`;
   else if (libre || joined) cta = `<button class="btn-join" onclick="openCheckin('${p.id}')">${ico('geo')} Registrar mi llegada</button>`;
+  else if (toPay) cta = `<button class="btn-join" onclick="openCheckout('${p.id}')">${ico('card')} Pagar ${money(p.price)} y confirmar</button>`;
   else if (waiting) cta = `<button class="btn-join done" disabled>${ico('clock')} Lista de espera · puesto ${waiting}</button>`;
   else if (manual) cta = requested
       ? `<button class="btn-join done" disabled>${ico('clock')} Solicitud enviada</button>`
       : `<button class="btn-join" onclick="requestAttendance('${p.id}')">Solicitar asistencia</button>`;
   else if (full) cta = `<button class="btn-join" onclick="joinWaitlist('${p.id}')">${ico('clock')} Apuntarme a la lista de espera</button>`;
-  else cta = `<button class="btn-join" onclick="toggleJoin('${p.id}')">Apuntarme</button>`;
+  else cta = `<button class="btn-join" onclick="toggleJoin('${p.id}')">${p.paid ? `Reservar · ${money(p.price)}` : 'Apuntarme'}</button>`;
 
   // Avisos: plan cancelado y reconfirmación del día.
   const cancelBanner = isCancelled(p) ? `<div class="pl-banner bad">${ico('alert')}<div><b>El anfitrión ha cancelado este plan.</b><p>${p.paid ? 'Si pagaste, te devolvemos el 100 % en 5-10 días.' : 'Te hemos avisado a ti y al resto del grupo.'}</p></div></div>` : '';
@@ -1468,15 +1472,18 @@ function renderDetail(id){
       <div class="pl-banner-b"><button class="ph-btn primary" onclick="reconfirm('${p.id}')">Sí, voy</button><button class="ph-btn" onclick="openCancel('${p.id}')">Ya no puedo</button></div></div></div>` : '';
   // Tu asistencia: estado, cancelar y, en la demo, simular el final del plan.
   const myBlock = (joined && !attended && !isCancelled(p)) ? `<div class="block"><h4>Tu asistencia</h4>
-      <p class="hint">${state.reconfirmed.has(p.id) ? `${ico('check')} Apuntado y reconfirmado.` : 'Apuntado.'} ${p.paid ? `Política de cancelación ${CANCEL_POLICIES[p.cancelPolicy || 'flexible'].label.toLowerCase()}: ${CANCEL_POLICIES[p.cancelPolicy || 'flexible'].text}` : 'Si no puedes ir, cancela con tiempo: deja la plaza a otra persona.'}</p>
+      <p class="hint">${state.reconfirmed.has(p.id) ? `${ico('check')} Apuntado y reconfirmado.` : 'Apuntado.'} ${p.paid ? escapeHtml(policyLine(p)) : 'Si no puedes ir, cancela con tiempo: deja la plaza a otra persona.'}</p>
+      ${pay && pay.status !== 'pendiente' ? `<div class="pay-line">${ico('card')}<span>Pagado ${money2(pay.amount)} · ${PAY_STATUS[pay.status].toLowerCase()}</span><button class="link-btn" onclick="openReceipt('${pay.id}')">Recibo</button></div>` : ''}
       <div class="pl-actions"><button class="link-btn" onclick="openCancel('${p.id}')">Cancelar asistencia</button><button class="link-btn dim" onclick="demoPlanEnded('${p.id}')">Demo: simular que el plan ha terminado</button></div></div>`
+    : (toPay ? `<div class="block"><h4>Tu plaza</h4><p class="hint">${ico('clock')} Te guardamos la plaza hasta ${fmtWhen(new Date(pay.dueAt))}. Paga para confirmarla; si no, pasa a la siguiente persona.</p></div>`
     : (waiting ? `<div class="block"><h4>Lista de espera</h4><p class="hint">Eres el puesto ${waiting}. Si alguien cancela, la plaza es tuya y te avisamos.</p>
-      <div class="pl-actions"><button class="link-btn" onclick="leaveWaitlist('${p.id}')">Salir de la lista</button><button class="link-btn dim" onclick="demoSomeoneCancels('${p.id}')">Demo: alguien cancela</button></div></div>` : '');
+      <div class="pl-actions"><button class="link-btn" onclick="leaveWaitlist('${p.id}')">Salir de la lista</button><button class="link-btn dim" onclick="demoSomeoneCancels('${p.id}')">Demo: alguien cancela</button></div></div>` : ''));
   // Organización (anfitrión o admin del grupo): QR, llegadas, solicitudes, editar y cancelar.
   const hostBlock = host && !isCancelled(p) ? `<div class="block"><h4>Organización</h4>
       <div class="pl-host">
         <button class="sh-row" onclick="openHostQr('${p.id}')">${ico('grid')}<span>QR de llegada</span>${ico('chevR')}</button>
         <button class="sh-row" onclick="openManualArrivals('${p.id}')">${ico('users')}<span>Marcar llegadas a mano</span>${ico('chevR')}</button>
+        ${isHost(p) && p.paid ? `<button class="sh-row" onclick="go('cobros')">${ico('euro')}<span>Cobros · ${hostSales(p.id).filter(x => x.status !== 'reembolsado').length} reservas</span>${ico('chevR')}</button>` : ''}
         ${isHost(p) ? `<button class="sh-row" onclick="go('editar-plan/${p.id}')">${ico('doc')}<span>Editar fecha, hora o lugar</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openCancelPlan('${p.id}')">${ico('close')}<span>Cancelar el plan</span>${ico('chevR')}</button>` : ''}
       </div></div>` : '';
@@ -1571,7 +1578,7 @@ function renderDetail(id){
         ${REVIEWS.map(r=>`<div class="review"><div class="top"><span>${r.author}</span><span class="st">${Array(r.stars).fill(ico('star')).join('')}</span></div><p>${r.text}</p></div>`).join('')}
       </div>
       <div class="action-bar">
-        <div class="pr"><div class="v">${p.paid?p.price+' €':'Gratis'}</div><div class="k">${p.paid?'pago seguro · escrow':(libre?'plan libre':'sin coste')}</div></div>
+        <div class="pr"><div class="v">${p.paid?money(p.price):'Gratis'}</div><div class="k">${p.paid?'pago protegido hasta el plan':(libre?'plan libre':'sin coste')}</div></div>
         ${cta}
       </div>
     </div>`;
@@ -2010,7 +2017,8 @@ function renderSettings(){
         <button class="set-row" onclick="go('notificaciones')"><span class="sr-ic">${ico('bell')}</span><span class="sr-l">Notificaciones</span><span class="pl-arrow">${ico('chevR')}</span></button>
         <button class="set-row" onclick="go('seguridad')"><span class="sr-ic">${ico('shield')}</span><span class="sr-l">Seguridad y acceso</span><span class="pl-arrow">${ico('chevR')}</span></button>
         <button class="set-row" onclick="go('mis-datos')"><span class="sr-ic">${ico('doc')}</span><span class="sr-l">Tus datos y privacidad</span><span class="pl-arrow">${ico('chevR')}</span></button>
-        ${row('card','Pagos y reembolsos')}
+        <button class="set-row" onclick="go('pagos')"><span class="sr-ic">${ico('card')}</span><span class="sr-l">Pagos y reembolsos</span><span class="pl-arrow">${ico('chevR')}</span></button>
+        <button class="set-row" onclick="go('cobros')"><span class="sr-ic">${ico('euro')}</span><span class="sr-l">Cobros<span class="or-s">si organizas planes de pago</span></span><span class="soon">${payoutsReady() ? 'Activos' : (ME.payouts ? 'En revisión' : 'Sin configurar')}</span><span class="pl-arrow">${ico('chevR')}</span></button>
       </div>
       <div class="set-group"><div class="set-title">Prototipo</div>
         <div class="set-row static"><span class="sr-ic">${ico('image')}</span><span class="sr-l">Fotos de Unsplash (licencia Unsplash)</span></div>
@@ -2146,7 +2154,14 @@ function renderCreatePlan(){
         <div class="iseg" id="d-price">
           <button data-v="gratis" class="${d.price==='gratis'?'active':''}" onclick="setDraft('price','gratis')">${ico('ticket')}<span>Gratis</span></button>
           <button data-v="pago" class="${d.price==='pago'?'active':''}" onclick="setDraft('price','pago')">${ico('euro')}<span>De pago</span></button></div>
-        <input id="f-price" type="number" min="0" placeholder="Precio en € (si es de pago)" style="margin-top:8px" /></div>
+        <div id="paid-opts" ${d.price === 'pago' ? '' : 'hidden'}>
+          <input id="f-price" type="number" min="1" max="500" step="0.5" placeholder="Precio por plaza en €" style="margin-top:8px" oninput="updatePriceHint()" value="${escapeHtml(d.priceValue || '')}" />
+          <p class="hint" id="price-hint">${priceHint(d.priceValue)}</p>
+          <label class="sub-l">Política de cancelación</label>
+          <div class="iseg" id="d-policy">${Object.entries(CANCEL_POLICIES).map(([k, v]) => `<button data-v="${k}" class="${(d.policy || 'flexible') === k ? 'active' : ''}" onclick="setDraft('policy','${k}')"><span>${v.label}</span></button>`).join('')}</div>
+          <p class="hint" id="policy-hint">${escapeHtml(policyHint(d.policy))}</p>
+          ${payoutsReady() ? '' : `<button class="vg-inline" onclick="state.draft.priceValue=val('f-price');go('cobros')">${ico('euro')} Para cobrar, configura antes tus cobros (datos fiscales y cuenta bancaria).</button>`}
+        </div></div>
       <div class="field"><label>Tipo de asistencia</label>
         <div class="iseg" id="d-access">
           <button data-v="libre" class="${d.access==='libre'?'active':''}" onclick="setDraft('access','libre')">${ico('globe')}<span>Libre</span></button>
@@ -2160,15 +2175,27 @@ function renderCreatePlan(){
 }
 function setDraft(key,v){
   state.draft[key]=v;
-  const id={cover:'cover-pick',size:'d-size',cat:'d-cat',price:'d-price',access:'d-access'}[key];
+  const id={cover:'cover-pick',size:'d-size',cat:'d-cat',price:'d-price',access:'d-access',policy:'d-policy'}[key];
   const c=id&&document.getElementById(id);
   if(c) c.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.v===v));
+  if(key==='price'){ const o=document.getElementById('paid-opts'); if(o) o.hidden = v!=='pago'; }
+  if(key==='policy'){ const h=document.getElementById('policy-hint'); if(h) h.textContent = policyHint(v); }
   if(key==='access'){ const h=document.getElementById('access-hint'); if(h) h.textContent = v==='aprobacion'
     ? 'Recibirás solicitudes de asistencia y decides a quién aceptas.'
     : 'Cualquiera puede asistir; al llegar, cada persona escanea tu QR de llegada.'; }
 }
+// Lo que recibe el anfitrión por plaza, a la vista mientras pone el precio.
+function priceHint(v){ const n = parseFloat(String(v || '').replace(',', '.')); if (!(n > 0)) return 'Te llega el 85 % de cada plaza 48 h después del plan. La comisión del 15 % lleva el IVA incluido.';
+  const sp = splitFor(n); return `Por cada plaza de ${money(n)} te llegan ${money2(sp.net)} (comisión ${money2(sp.fee)}, IVA incluido), 48 h después del plan.`; }
+function policyHint(k){ const t = CANCEL_POLICIES[k || 'flexible'].text; return t[0].toUpperCase() + t.slice(1) + ' Si cancelas tú o no se celebra, se devuelve el 100 %. Los planes de pago siempre llevan reserva.'; }
+function updatePriceHint(){ const h = document.getElementById('price-hint'); if (h) h.textContent = priceHint(val('f-price')); }
 function publishPlan(){
   if (!requireVerified('Verifica tu identidad para organizar un plan', () => publishPlan())) return;
+  if (state.draft.price === 'pago'){
+    const n = parseFloat(String(val('f-price')).replace(',', '.'));
+    if (!(n >= 1 && n <= 500)){ toast('Pon un precio por plaza entre 1 y 500 €'); return; }
+    if (!payoutsReady()){ state.draft.priceValue = val('f-price'); toast('Para publicar un plan de pago, configura antes tus cobros'); go('cobros'); return; }
+  }
   if (!userMod('me').canHost){ toast('Moderación te ha retirado la opción de organizar planes. Mira Ajustes ▸ Estado de tu cuenta'); return; }
   const title = clip(val('f-title'), 'planTitle') || 'Plan sin título';
   const desc = clip(val('f-desc'), 'planDesc') || 'Plan creado desde el prototipo.';
@@ -2180,7 +2207,7 @@ function commitPlan(title, desc, flag){
   const dateRaw = val('f-date');
   const when = dateRaw ? new Date(dateRaw) : new Date(Date.now()+24*3600*1000);
   const paid = d.price==='pago';
-  const price = paid ? (parseInt(val('f-price'),10) || 10) : 0;
+  const price = paid ? round2(parseFloat(String(val('f-price')).replace(',', '.')) || 10) : 0;
   const ranges = { intimo:[2,8], mediano:[6,20], grande:[15,60] }[d.size];
   const groupId = val('f-group') || null;
   const access = d.access;
@@ -2188,15 +2215,16 @@ function commitPlan(title, desc, flag){
     id:'np'+Date.now(), title, summary:desc, placeId, category:d.cat, gradient:d.cover,
     level:2, paid, price, recurring:false, secret:false,
     host:{ name:ME.name, business:ME.type==='profesional', verified:ME.verified, rating:5.0, reliability:reliability().pct },
-    hostId:'me', photo: d.photo || null, status:'activo', waitlist:[], cancelPolicy:'flexible',
+    hostId:'me', photo: d.photo || null, status:'activo', waitlist:[], cancelPolicy: paid ? (d.policy || 'flexible') : 'flexible',
     when, groupMin:ranges[0], groupMax:ranges[1], joined:0, attended:0, publicAttendees:[], attendedPrivate:0,
-    joinType: access==='libre' ? 'libre' : 'apuntado',
-    approval: access==='aprobacion' ? 'manual' : (access==='libre' ? 'libre' : 'automatica'),
+    // Un plan de pago siempre es "apuntado": hay que reservar (y pagar) la plaza.
+    joinType: access==='libre' && !paid ? 'libre' : 'apuntado',
+    approval: access==='aprobacion' ? 'manual' : (access==='libre' && !paid ? 'libre' : 'automatica'),
     groupId, held: !!flag || undefined,
   };
   PLANS.unshift(plan);
   if (groupId){ const g=getGroup(groupId); if(g) g.planIds.unshift(plan.id); }
-  state.pendingGroup = null; d.photo = null;
+  state.pendingGroup = null; d.photo = null; d.priceValue = "";
   ensurePlanChat(plan.id);
   saveState();
   if (plan.approval === 'manual' && !flag) setTimeout(() => simulateIncomingRequest(plan.id), 5000);   // demo: llega una solicitud
@@ -2386,6 +2414,8 @@ function router(){
     case 'mis-reportes': renderMyReports(); showView('page'); scrollTop('page'); break;
     case 'estado-cuenta': renderAccountStatus(); showView('page'); scrollTop('page'); break;
     case 'mis-datos': renderMyData(); showView('page'); scrollTop('page'); break;
+    case 'pagos': renderPayments(); showView('page'); scrollTop('page'); break;
+    case 'cobros': renderPayouts(); showView('page'); scrollTop('page'); break;
     case 'moderacion': renderModeration(arg); showView('page'); scrollTop('page'); break;
     case 'nuevo-perfil': renderNewProfile(); showView('page'); scrollTop('page'); break;
     case 'editar-perfil': renderEditProfile(); showView('page'); scrollTop('page'); break;

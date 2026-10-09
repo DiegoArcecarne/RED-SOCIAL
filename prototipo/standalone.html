@@ -937,6 +937,43 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
 .au-shared{display:flex;gap:9px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.45;color:var(--ink-soft);margin:4px 0 14px}
 .au-shared > .ico{font-size:16px;color:var(--ink);flex:none;margin-top:1px}
 
+/* ======================= Pagos y cobros ======================= */
+.ck-plan{display:flex;gap:12px;align-items:center}
+.ck-plan > span:last-child{display:flex;flex-direction:column;font-size:14px;line-height:1.35}
+.ck-row{display:flex;justify-content:space-between;align-items:center;font-size:15px;padding:10px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.ck-two{display:flex;gap:10px}
+.ck-two .field{flex:1}
+.pay-note{display:flex;gap:10px;align-items:flex-start;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.45;color:var(--ink-soft)}
+.pay-note > .ico{font-size:17px;color:var(--ink);flex:none;margin-top:1px}
+.pay-note b{color:var(--ink)}
+.pay-wallet{margin-top:0}
+.pay-or{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-dim)}
+.pay-or::before,.pay-or::after{content:"";flex:1;height:1px;background:var(--line)}
+.pay-opt{display:flex;align-items:center;gap:10px;width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;color:var(--ink);font:inherit;font-size:14px;cursor:pointer;text-align:left}
+.pay-opt > span:last-child{display:flex;flex-direction:column}
+.pay-opt.on{border-color:var(--accent)}
+.pay-opt.on .rep-dot{border-color:var(--accent);background:radial-gradient(var(--accent) 45%, transparent 50%)}
+.pay-err{display:flex;gap:7px;align-items:center;font-size:13px;color:#f0b9bd}
+.pay-line{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);margin-top:8px}
+.pay-line span{flex:1}
+.pay-line .link-btn{font-size:13px}
+.pay-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.pay-kpis div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:3px}
+.pay-kpis b{font-size:17px}
+.pay-kpis span{font-size:11.5px;color:var(--ink-soft);line-height:1.3}
+.pay-card{margin-bottom:10px}
+.st-pay-retenido,.st-pay-pendiente,.st-pay-en_revision{border-color:var(--accent)}
+.st-pay-pagado,.st-pay-liberado{color:var(--ink)}
+.sub-l{display:block;margin-top:12px;font-size:12px;font-weight:700;color:var(--ink-soft)}
+.rcpt{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:13px;line-height:1.5;color:var(--ink-soft)}
+.rcpt-h{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:6px;color:var(--ink)}
+.rcpt-h b{font-size:18px}
+.rcpt table{width:100%;border-collapse:collapse;margin:6px 0 8px}
+.rcpt th,.rcpt td{text-align:left;padding:5px 0;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
+.rcpt th{font-weight:500;color:var(--ink-dim);width:42%}
+.rcpt td{color:var(--ink)}
+.set-group > .hint{font-size:12.5px;color:var(--ink-soft);line-height:1.45;margin:6px 2px 0}
+
   </style>
 </head>
 <body>
@@ -1507,6 +1544,21 @@ const USER_MOD = { alexv: { strikes:1 } };
 // Alertas SOS, planes compartidos con contactos de confianza y avisos de "he llegado bien".
 const SAFETY_EVENTS = [];
 
+/* Pagos (pagos.js; en la app real, Stripe Connect). Cada pago es una reserva de un plan de
+   pago: el dinero queda retenido hasta que el plan se celebra y después se paga al
+   anfitrión, menos la comisión del 15 %. status: pendiente (aceptado, falta pagar) |
+   retenido | liberado (celebrado, en camino al anfitrión) | pagado | reembolsado |
+   reembolso_parcial | en_revision (reclamación abierta). */
+const PAYMENT_METHODS = [ { id:'pm1', brand:'Visa', last4:'4242', exp:'12/28', isDefault:true } ];
+const PAYMENTS = [
+  { id:'pay1', planId:'p9', planTitle:'Cata de vinos naturales', hostName:'Vinos Vivos', userId:'me', amount:22, refunded:0,
+    status:'retenido', method:'Visa ···· 4242', at: minsAgo(3 * 1440), receiptNo:'PL-2026-000118' },
+  { id:'pay2', planId:'p3', planTitle:'Rooftop Sunset Sessions · edición de septiembre', hostName:'Azotea Círculo', userId:'me', amount:18, refunded:0,
+    status:'pagado', method:'Visa ···· 4242', at: minsAgo(26 * 1440), paidOutAt: minsAgo(22 * 1440), receiptNo:'PL-2026-000097', past:true },
+  { id:'pay3', planId:'p7', planTitle:'Jazz íntimo en Clamores · edición de agosto', hostName:'Sala Clamores', userId:'me', amount:14, refunded:14,
+    status:'reembolsado', method:'Visa ···· 4242', at: minsAgo(50 * 1440), refundedAt: minsAgo(47 * 1440), refundReason:'Cancelaste con más de 24 h: reembolso completo', receiptNo:'PL-2026-000061', past:true },
+];
+
 /* Notificaciones. type: recordatorio | solicitud | mensaje | cambio | plaza | fiabilidad.
    min: minutos desde que llegó (las nuevas guardan "at"). */
 const NOTIFICATIONS = [
@@ -1530,7 +1582,7 @@ if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
     STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, FOLLOW_REQUESTS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
-    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS,
+    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }
@@ -1823,6 +1875,7 @@ function freshWorld(){
   ME.mentions = {}; ME.mentionPolicy = 'todos'; ME.recentSearches = []; ME.stats = { noShows:0, lateCancels:0 }; ME.joinedPlanIds = []; ME.notifPrefs = undefined;
   ME.trustedContacts = []; ME.shareTrips = false; ME.safeCheck = false; ME.consents = undefined; ME.consentLog = [];
   drop(MOD_ACTIONS, a => a.targetUserId === 'me'); drop(SAFETY_EVENTS, () => true); delete USER_MOD.me;
+  drop(PAYMENTS, x => x.userId === 'me'); drop(PAYMENT_METHODS, () => true); ME.payouts = undefined;
   PLANS.forEach(p => { p.waitlist = (p.waitlist || []).filter(x => x !== 'me'); });
 }
 
@@ -2141,10 +2194,11 @@ const LATE_CANCEL_HOURS = 24;          // cancelar con menos de 24 h es una canc
 const CHECKIN_BEFORE_MIN = 60, CHECKIN_AFTER_MIN = 240;
 const CHECKIN_WINDOW_MS = 10 * 60 * 1000;   // el código de llegada cambia cada 10 minutos
 const DEMO_CHECKIN_ANYTIME = true;     // en la demo se puede registrar la llegada a cualquier hora
+// Las de PRODUCTO.md (Modelo económico). Las elige el anfitrión al publicar un plan de pago.
 const CANCEL_POLICIES = {
-  flexible: { label:'Flexible', text:'Reembolso completo hasta 24 h antes; después, sin reembolso.' },
-  moderada: { label:'Moderada', text:'Reembolso completo hasta 5 días antes; después, el 50 %.' },
-  estricta: { label:'Estricta', text:'El 50 % hasta 7 días antes; después, sin reembolso.' },
+  flexible: { label:'Flexible', text:'reembolso completo hasta 24 h antes; después, sin reembolso.' },
+  moderada: { label:'Moderada', text:'reembolso completo hasta 48 h antes, el 50 % entre 48 y 24 h, y sin reembolso en las últimas 24 h.' },
+  estricta: { label:'Estricta', text:'reembolso completo hasta 7 días antes; después, sin reembolso.' },
 };
 const QR_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
 
@@ -2211,12 +2265,18 @@ function clearPlanPhoto(){ state.draft.photo = null; const pv = document.getElem
 function joinPlan(id){
   const p = getPlan(id); if (!p || isCancelled(p)) return;
   if (!requireVerified('Verifica tu identidad para apuntarte', () => joinPlan(id))) return;
-  if (isFull(p)) return joinWaitlist(id);
-  state.joined.add(id); p.joined = (p.joined || 0) + 1;
+  const pay = p.paid && myPayment(id);
+  if (isFull(p) && !(pay && pay.status === 'pendiente')) return joinWaitlist(id);
+  if (p.paid && !(pay && pay.status === 'retenido')) return openCheckout(id);   // de pago: primero se paga (pagos.js)
+  completeJoin(id, 'Apuntado · te esperamos');
+}
+function completeJoin(id, msg){
+  const p = getPlan(id); if (!p) return;
+  if (!state.joined.has(id)){ state.joined.add(id); p.joined = (p.joined || 0) + 1; }
   ensurePlanChat(id);
   remindJoined(p);
   saveState();
-  toast(p.paid ? `Plaza reservada · ${p.price} € retenidos hasta el plan` : 'Apuntado · te esperamos');
+  toast(msg);
   renderDetail(id);
 }
 // Recordatorio al apuntarse: si es en las próximas 24 h, ya; si no, se programaría para el día antes.
@@ -2237,7 +2297,10 @@ function releaseSpot(id){
   const p = getPlan(id); if (!p) return;
   const next = p.waitlist.shift();
   if (!next){ return; }
-  if (next === 'me'){
+  if (next === 'me' && p.paid){   // de pago: la plaza se guarda 24 h para que pagues
+    const x = newPayment(p, 'me', 'pendiente'); x.dueAt = Date.now() + PAY_WINDOW_HOURS * 3600000;
+    notify('plaza', `¡Hay plaza para ti en ${p.title}! Paga en las próximas ${PAY_WINDOW_HOURS} h para confirmarla.`, { planId: id });
+  } else if (next === 'me'){
     state.joined.add(id); ensurePlanChat(id);
     notify('plaza', `¡Tienes plaza en ${p.title}! Ya estás apuntado.`, { planId: id });
   } else p.joined = (p.joined || 0) + 1;
@@ -2252,7 +2315,7 @@ function demoSomeoneCancels(id){
 function refundFor(p){
   if (!p.paid) return null;
   const h = hoursTo(p), pol = p.cancelPolicy || 'flexible';
-  const pct = pol === 'flexible' ? (h >= 24 ? 100 : 0) : pol === 'moderada' ? (h >= 120 ? 100 : 50) : (h >= 168 ? 50 : 0);
+  const pct = pol === 'flexible' ? (h >= 24 ? 100 : 0) : pol === 'moderada' ? (h >= 48 ? 100 : (h >= 24 ? 50 : 0)) : (h >= 168 ? 100 : 0);
   return { pct, amount: Math.round(p.price * pct) / 100, policy: CANCEL_POLICIES[pol] };
 }
 function openCancel(id){
@@ -2262,7 +2325,7 @@ function openCancel(id){
     <div class="sheet-h"><span>Cancelar asistencia</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list">
       <p class="hint"><b>${escapeHtml(p.title)}</b> · ${fmtWhen(new Date(p.when))}</p>
-      ${rf ? `<div class="vg-note">${ico('euro')}<p>Política ${rf.policy.label.toLowerCase()}: ${rf.policy.text}<br><b>Si cancelas ahora te devolvemos ${rf.amount} € (${rf.pct} %).</b></p></div>` : ''}
+      ${rf && (myPayment(id) || {}).status === 'retenido' ? `<div class="vg-note">${ico('euro')}<p>Política ${rf.policy.label.toLowerCase()}: ${rf.policy.text}<br><b>${rf.pct ? `Si cancelas ahora te devolvemos ${money(rf.amount)} (${rf.pct} %).` : 'Si cancelas ahora no hay reembolso.'}</b></p></div>` : ''}
       ${late ? `<div class="vg-note">${ico('clock')}<p>Falta menos de un día: cuenta como <b>cancelación tardía</b> en tu fiabilidad. No es lo mismo que no presentarse, pero se ve.</p></div>`
         : `<p class="hint">Avisar con tiempo no afecta a tu fiabilidad.</p>`}
       ${p.waitlist.length ? `<p class="hint">Tu plaza pasará a la primera persona de la lista de espera.</p>` : ''}
@@ -2277,9 +2340,10 @@ function confirmCancel(id){
   p.joined = Math.max(0, (p.joined || 0) - 1);
   if (late){ ME.stats = ME.stats || {}; ME.stats.lateCancels = (ME.stats.lateCancels || 0) + 1; }
   leavePlanChat(id);
+  const paid = rf && refundMyPayment(p, rf);
   releaseSpot(id);
   saveState(); closeOverlay();
-  toast('Asistencia cancelada' + (rf ? ` · te devolvemos ${rf.amount} €` : '') + (late ? ' · cancelación tardía' : ''));
+  toast('Asistencia cancelada' + (paid && rf.pct ? ` · te devolvemos ${money(rf.amount)}` : '') + (late ? ' · cancelación tardía' : ''));
   renderDetail(id);
 }
 
@@ -2410,6 +2474,7 @@ function reliability(){
 // Demo: simula que el plan ya ha pasado. Sin llegada registrada, cuenta como no presentado.
 function demoPlanEnded(id){
   const p = getPlan(id); if (!p) return;
+  if (p.paid){ releasePlanPayments(id); saveState(); }   // celebrado: el dinero va camino del anfitrión
   if (state.attended.has(id)){ notify('fiabilidad', `¿Qué tal ${p.title}? Valóralo para ayudar a otros a decidir.`, { planId: id, action: `openRatingSheet('${id}')` }); toast('Asististe: suma a tu fiabilidad'); return; }
   if (!state.joined.has(id)) return;
   ME.stats = ME.stats || {}; ME.stats.noShows = (ME.stats.noShows || 0) + 1;
@@ -2461,6 +2526,7 @@ function openCancelPlan(id){
 function confirmCancelPlan(id){
   const p = getPlan(id); if (!p) return;
   p.status = 'cancelado'; planChatSystem(id, 'El anfitrión ha cancelado el plan.');
+  if (p.paid) refundAllForPlan(p, 'El anfitrión canceló el plan: reembolso completo');
   saveState(); closeOverlay(); toast(`Plan cancelado · avisamos a ${p.joined || 0} personas`); renderDetail(id);
 }
 
@@ -2490,8 +2556,9 @@ const NOTIF_TYPES = {
   fiabilidad:   ['check','Después del plan','Llegadas, no presentados y valoraciones'],
   seguidor:     ['user','Seguidores','Solicitudes para seguirte y respuestas a las tuyas'],
   mencion:      ['at','Menciones','Cuando te mencionan o te etiquetan'],
+  pago:         ['card','Pagos','Pagos, reembolsos, recibos y cobros'],
 };
-function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true, seguidor:true, mencion:true }, ME.notifPrefs || {}); }
+function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true, seguidor:true, mencion:true, pago:true }, ME.notifPrefs || {}); }
 // "seguridad" (SOS, decisiones de moderación, resultado de tus reportes) no se puede desactivar.
 function notify(type, text, ref){
   if (type !== 'seguridad' && !notifPrefs()[type]) return null;
@@ -2561,7 +2628,11 @@ function simulateHostDecision(planId, decision){
   const p = getPlan(planId), r = REQUESTS.find(x => x.planId === planId && x.userId === 'me' && x.status === 'pendiente');
   if (!p || !r) return;
   r.status = decision || 'aceptada'; state.requested.delete(planId);
-  if (r.status === 'aceptada'){ state.joined.add(planId); p.joined = (p.joined || 0) + 1; ensurePlanChat(planId); notify('solicitud', `Te han aceptado en ${p.title}. Ya estás apuntado.`, { planId }); }
+  if (r.status === 'aceptada' && p.paid){   // de pago: aceptado, falta pagar (24 h)
+    const x = newPayment(p, 'me', 'pendiente'); x.dueAt = Date.now() + PAY_WINDOW_HOURS * 3600000;
+    notify('solicitud', `Te han aceptado en ${p.title}. Paga ${money(p.price)} en las próximas ${PAY_WINDOW_HOURS} h para confirmar tu plaza.`, { planId });
+  }
+  else if (r.status === 'aceptada'){ state.joined.add(planId); p.joined = (p.joined || 0) + 1; ensurePlanChat(planId); notify('solicitud', `Te han aceptado en ${p.title}. Ya estás apuntado.`, { planId }); }
   else notify('solicitud', `No hay plaza para ti en ${p.title} esta vez.`, { planId });
   saveState();
   if (location.hash === '#/plan/' + planId) renderDetail(planId);
@@ -3238,6 +3309,7 @@ const MOD_ACTION_TYPES = {
   suspender30:['clock', 'Suspender la cuenta 30 días'],
   expulsar:   ['lock', 'Cerrar la cuenta para siempre'],
   autoridades:['shield', 'Escalar a las autoridades'],
+  reembolsar: ['euro', 'Reembolsar al asistente (no se paga al anfitrión)'],
   retener:    ['clock', 'Retenido por el filtro automático'],
 };
 // Exposición de motivos (art. 17 de la Ley de Servicios Digitales): qué, por qué, con qué
@@ -3259,6 +3331,8 @@ function applyModAction(reportId, action){
   if (action === 'expulsar') setUserMod(uid, { status:'expulsada', until:null });
   if (action === 'autoridades') rp.escalated = true;
   const dismissed = action === 'desestimar' || action === 'publicar';
+  // Reclamación de un pago (pagos.js): si se le da la razón, se reembolsa; si no, sigue el pago al anfitrión.
+  if (rp.paymentId) resolveClaim(rp.paymentId, !dismissed);
   rp.status = dismissed ? 'desestimado' : 'resuelto'; rp.resolution = action; rp.resolvedAt = Date.now();
   // Lo retenido por el filtro: la decisión del equipo sustituye a la automática.
   const held = rp.modActionId && MOD_ACTIONS.find(a => a.id === rp.modActionId);
@@ -3370,14 +3444,15 @@ function modCard(rp){
     ${rp.evidence ? `<blockquote class="nudge-q">${escapeHtml(rp.evidence)}</blockquote>` : ''}
     <div class="mod-meta">${escapeHtml(u.name)} ${escapeHtml(u.handle || '')} · ${reps} ${reps === 1 ? 'reporte' : 'reportes'} · ${prior} ${prior === 1 ? 'sanción vigente' : 'sanciones vigentes'}${userMod(rp.targetUserId).strikes ? ' · ' + userMod(rp.targetUserId).strikes + (userMod(rp.targetUserId).strikes === 1 ? ' aviso' : ' avisos') : ''}</div>
     <div class="mod-meta dim">${reporter}</div>
-    <div class="mod-acts">${held ? `<button class="ph-btn" onclick="applyModAction('${rp.id}','publicar')">Publicar</button>` : `<button class="ph-btn" onclick="applyModAction('${rp.id}','desestimar')">Desestimar</button>`}
+    ${rp.paymentId ? (() => { const x = PAYMENTS.find(y => y.id === rp.paymentId); return x ? `<div class="mod-meta">${ico('euro')} Reclamación de un pago de ${money2(x.amount)} · ${escapeHtml(PAY_STATUS[x.status])}. El pago al anfitrión está en pausa.</div>` : ''; })() : ''}
+    <div class="mod-acts">${rp.paymentId ? `<button class="ph-btn" onclick="applyModAction('${rp.id}','desestimar')">No procede</button><button class="ph-btn primary" onclick="applyModAction('${rp.id}','reembolsar')">Reembolsar</button>` : `${held ? `<button class="ph-btn" onclick="applyModAction('${rp.id}','publicar')">Publicar</button>` : `<button class="ph-btn" onclick="applyModAction('${rp.id}','desestimar')">Desestimar</button>`}
       ${c ? `<button class="ph-btn" onclick="applyModAction('${rp.id}','retirar')">Retirar</button>` : ''}
-      <button class="ph-btn primary" onclick="openModActions('${rp.id}')">Más acciones</button></div></div>`;
+      <button class="ph-btn primary" onclick="openModActions('${rp.id}')">Más acciones</button>`}</div></div>`;
 }
 function openModActions(reportId){
   const rp = REPORTS.find(r => r.id === reportId); if (!rp) return;
   const c = contentOf(rp);
-  const opts = ['desestimar', c && c.held ? 'publicar' : null, c ? 'retirar' : null, 'aviso', 'alcance', 'organizar', 'suspender7', 'suspender30', 'expulsar', 'autoridades'].filter(Boolean);
+  const opts = ['desestimar', rp.paymentId ? 'reembolsar' : null, c && c.held ? 'publicar' : null, c ? 'retirar' : null, 'aviso', 'alcance', 'organizar', 'suspender7', 'suspender30', 'expulsar', 'autoridades'].filter(Boolean);
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Decidir">
     <div class="sheet-h"><span>Decidir</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list">${opts.map(k => `<button class="sh-row ${['expulsar','suspender30'].includes(k) ? 'danger' : ''}" onclick="applyModAction('${reportId}','${k}')">${ico(MOD_ACTION_TYPES[k][0])}<span>${MOD_ACTION_TYPES[k][1]}</span>${ico('chevR')}</button>`).join('')}
@@ -3559,6 +3634,8 @@ function buildExport(){
     reportesEnviados: myReports().map(({ reporterId, ...r }) => r),
     decisionesSobreTi: MOD_ACTIONS.filter(x => x.targetUserId === 'me'),
     seguridad: { contactosDeConfianza: trustedContacts(), eventos: SAFETY_EVENTS },
+    pagos: PAYMENTS.filter(x => x.userId === 'me'), formasDePago: PAYMENT_METHODS.map(({ brand, last4, exp }) => ({ brand, last4, exp })),
+    cobros: ME.payouts ? { ...ME.payouts, iban: maskIban(ME.payouts.iban), ventas: hostSales() } : null,
     consentimientos: { marketing: consentValue('marketing'), ubicacion: consentValue('ubicacion'), analitica: consentValue('analitica'), personalizacion: consentValue('personalizacion'), registro: ME.consentLog || [] },
   };
 }
@@ -3568,6 +3645,382 @@ function exportMyData(){
   saveFile(new Blob([json], { type:'application/json' }), `planes-mis-datos-${new Date().toISOString().slice(0, 10)}.json`).then(r => {
     if (r === 'saved') toast('Copia de tus datos descargada'); else if (r !== 'declined') toast('No se ha podido guardar el archivo');
   });
+}
+
+
+/* =========================================================================
+   Pagos (simulado en el navegador). En la app real: Stripe Connect, con el cobro en la
+   plataforma y la transferencia al anfitrión después del plan. Ver docs/pagos.md.
+   - Reservar y pagar un plan (tarjeta guardada o nueva, pago con el móvil, 3D Secure).
+   - Dinero retenido hasta el plan; se paga al anfitrión 48 h después, menos el 15 %.
+   - Reembolsos según la política de cancelación; el 100 % si cancela el anfitrión.
+   - Reclamaciones: pausan el pago al anfitrión y van al panel de moderación.
+   - Cobros del anfitrión: alta (datos fiscales, IBAN, verificación), saldo y facturas.
+   - Recibos de cada pago y factura mensual de la comisión.
+   ========================================================================= */
+const COMMISSION = 0.15;            // comisión de planes (IVA incluido)
+const VAT = 0.21;                   // IVA de la comisión
+const RELEASE_HOURS = 48;           // se paga al anfitrión 48 h después del plan, si nadie reclama
+const PAY_WINDOW_HOURS = 24;        // aceptado en un plan de pago: 24 h para pagar
+const STRIPE_FEE = { pct: 0.015, fixed: 0.25 };   // tarjetas europeas (orientativo): lo asume planes
+// Tarjetas de prueba (las de Stripe): cualquier otra válida se acepta.
+const TEST_CARDS = { '4000002760003184': '3ds', '4000000000000002': 'rechazada', '4000000000009995': 'fondos' };
+
+const round2 = (n) => Math.round(n * 100) / 100;
+const money = (n) => (round2(n) % 1 ? round2(n).toFixed(2) : String(round2(n))).replace('.', ',') + ' €';
+const money2 = (n) => round2(n).toFixed(2).replace('.', ',') + ' €';   // en recibos y facturas, siempre con céntimos
+// Reparto de un importe cobrado: comisión (con su IVA) y lo que recibe el anfitrión.
+function splitFor(gross){
+  const fee = round2(gross * COMMISSION), base = round2(fee / (1 + VAT));
+  return { gross: round2(gross), fee, feeBase: base, feeVat: round2(fee - base), net: round2(gross - fee), stripe: gross ? round2(gross * STRIPE_FEE.pct + STRIPE_FEE.fixed) : 0 };
+}
+const myPayment = (planId) => PAYMENTS.filter(x => x.userId === 'me' && x.planId === planId && !x.past).slice(-1)[0] || null;
+const PAY_STATUS = { pendiente:'Falta pagar', retenido:'Retenido hasta el plan', liberado:'Celebrado · en camino al anfitrión', pagado:'Pagado al anfitrión',
+  reembolsado:'Reembolsado', reembolso_parcial:'Reembolso parcial', en_revision:'Reclamación en revisión' };
+function nextReceiptNo(){
+  const n = PAYMENTS.reduce((m, x) => Math.max(m, parseInt(String(x.receiptNo || '').split('-').pop(), 10) || 0), 117) + 1;
+  return 'PL-' + new Date().getFullYear() + '-' + String(n).padStart(6, '0');
+}
+function newPayment(p, userId, status){
+  const x = { id: newId('pay'), planId: p.id, planTitle: p.title, hostName: (p.host || {}).name || '', userId, amount: p.price, refunded: 0,
+    status, at: Date.now(), receiptNo: nextReceiptNo(), intent: 'pi_' + Math.random().toString(36).slice(2, 12) };
+  PAYMENTS.push(x); return x;
+}
+
+/* ---------- reservar y pagar ---------- */
+// Política de cancelación de un plan, con números (la misma que se enseña antes de pagar).
+function policyLine(p){ const pol = CANCEL_POLICIES[p.cancelPolicy || 'flexible']; return `Cancelación ${pol.label.toLowerCase()}: ${pol.text}`; }
+function openCheckout(planId){
+  const p = getPlan(planId); if (!p) return;
+  state.checkout = state.checkout && state.checkout.planId === planId ? state.checkout
+    : { planId, method: (PAYMENT_METHODS.find(m => m.isDefault) || PAYMENT_METHODS[0] || { id:'nueva' }).id, save: true, err: '' };
+  renderCheckout();
+}
+function renderCheckout(){
+  const ck = state.checkout, p = getPlan(ck.planId); if (!p) return;
+  const place = getPlace(p.placeId), pend = myPayment(p.id);
+  const methods = PAYMENT_METHODS.map(m => `<button class="pay-opt ${ck.method === m.id ? 'on' : ''}" role="radio" aria-checked="${ck.method === m.id}" onclick="setCheckout('method','${m.id}')">
+      <span class="rep-dot"></span>${ico('card')}<span>${escapeHtml(m.brand)} ···· ${escapeHtml(m.last4)}<span class="or-s">Caduca ${escapeHtml(m.exp)}</span></span></button>`).join('');
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Pagar la reserva">
+    <div class="sheet-h"><span>Reservar plaza</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list form">
+      <div class="ck-plan"><span class="mini-thumb ${p.gradient}">${coverImg(p.photo, 120)}</span><span><b>${escapeHtml(p.title)}</b>
+        <span class="or-s">${fmtWhen(new Date(p.when))} · ${escapeHtml(p.secret ? 'Zona aproximada' : (place ? place.name : 'Madrid'))}</span></span></div>
+      <div class="ck-row"><span>1 plaza</span><b>${money2(p.price)}</b></div>
+      ${pend && pend.status === 'pendiente' ? `<p class="hint">${ico('clock')} Te han aceptado: paga antes de ${fmtWhen(new Date(pend.dueAt))} para confirmar tu plaza.</p>` : ''}
+      <div class="pay-note">${ico('shield')}<p><b>Pago protegido.</b> Lo retenemos hasta el plan; al anfitrión le llega después de celebrarse. Si no se celebra, te devolvemos el 100 %.</p></div>
+      <p class="hint">${escapeHtml(policyLine(p))}</p>
+      <button class="btn-ghost pay-wallet" onclick="payWithWallet()">${ico('phone')} Pagar con el móvil (Apple Pay o Google Pay)</button>
+      <div class="pay-or"><span>o con tarjeta</span></div>
+      <div class="rep-list" role="radiogroup">${methods}
+        <button class="pay-opt ${ck.method === 'nueva' ? 'on' : ''}" role="radio" aria-checked="${ck.method === 'nueva'}" onclick="setCheckout('method','nueva')"><span class="rep-dot"></span>${ico('plus')}<span>Tarjeta nueva</span></button></div>
+      ${ck.method === 'nueva' ? `<div class="field"><label for="f-card">Número de tarjeta</label><input id="f-card" inputmode="numeric" autocomplete="cc-number" placeholder="1234 1234 1234 1234" maxlength="23" value="${escapeHtml(ck.card || '')}"></div>
+        <div class="ck-two"><div class="field"><label for="f-exp">Caducidad</label><input id="f-exp" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AA" maxlength="5" value="${escapeHtml(ck.exp || '')}"></div>
+          <div class="field"><label for="f-cvc">CVC</label><input id="f-cvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="4"></div></div>
+        <div class="opt-row" onclick="setCheckout('save', ${!ck.save})"><span class="or-ic">${ico('lock')}</span><span class="or-l">Guardar para la próxima vez</span><span class="switch ${ck.save ? 'on' : ''}"><span class="knob"></span></span></div>
+        <p class="hint">Demo: 4242 4242 4242 4242 paga; 4000 0027 6000 3184 pide confirmar en tu banco; 4000 0000 0000 0002 es rechazada.</p>` : ''}
+      ${ck.err ? `<p class="pay-err" role="alert">${ico('alert')} ${escapeHtml(ck.err)}</p>` : ''}
+      <button class="btn-primary" onclick="payNow()">Pagar ${money2(p.price)}</button>
+      <p class="hint">Los datos de la tarjeta van directamente al procesador de pagos (Stripe); planes no los guarda.</p>
+    </div></div>`);
+}
+function setCheckout(k, v){ captureCard(); state.checkout[k] = v; state.checkout.err = ''; renderCheckout(); }
+function captureCard(){ const ck = state.checkout; if (!ck || ck.method !== 'nueva') return; ck.card = val('f-card'); ck.exp = val('f-exp'); }
+function luhn(num){ let sum = 0; num.split('').reverse().forEach((d, i) => { let n = +d; if (i % 2){ n *= 2; if (n > 9) n -= 9; } sum += n; }); return sum % 10 === 0; }
+function cardBrand(num){ return /^4/.test(num) ? 'Visa' : (/^(5[1-5]|2[2-7])/.test(num) ? 'Mastercard' : (/^3[47]/.test(num) ? 'American Express' : 'Tarjeta')); }
+// Comprueba la tarjeta como haría el formulario de Stripe. Devuelve un error o null.
+function cardError(num, exp, cvc){
+  if (!/^\d{13,19}$/.test(num) || !luhn(num)) return 'El número de la tarjeta no es válido.';
+  const m = exp.match(/^(\d{2})\/(\d{2})$/); if (!m || +m[1] < 1 || +m[1] > 12) return 'Escribe la caducidad como MM/AA.';
+  const end = new Date(2000 + +m[2], +m[1], 1); if (end <= new Date()) return 'La tarjeta está caducada.';
+  if (!/^\d{3,4}$/.test(cvc)) return 'El CVC son los 3 o 4 números de detrás.';
+  return null;
+}
+function payNow(){
+  const ck = state.checkout; if (!ck) return;
+  captureCard();
+  let method = PAYMENT_METHODS.find(m => m.id === ck.method), outcome = 'ok';
+  if (ck.method === 'nueva'){
+    const num = (ck.card || '').replace(/\D/g, ''), exp = (ck.exp || '').trim(), cvc = val('f-cvc').trim();
+    const err = cardError(num, exp, cvc); if (err){ ck.err = err; renderCheckout(); return; }
+    outcome = TEST_CARDS[num] || 'ok';
+    method = { id: newId('pm'), brand: cardBrand(num), last4: num.slice(-4), exp, isDefault: !PAYMENT_METHODS.length };
+    ck.newMethod = method;
+  }
+  if (!method){ ck.err = 'Elige cómo pagar.'; renderCheckout(); return; }
+  if (outcome === 'rechazada'){ ck.err = 'Tu banco ha rechazado el pago. Prueba con otra tarjeta.'; renderCheckout(); return; }
+  if (outcome === 'fondos'){ ck.err = 'La tarjeta no tiene saldo suficiente.'; renderCheckout(); return; }
+  if (outcome === '3ds') return open3ds(method);
+  completePayment(method);
+}
+// Autenticación reforzada (PSD2 / 3D Secure): el banco pide confirmar el pago.
+function open3ds(method){
+  state.checkout.pending = method;
+  showOverlay('ov-sheet', `<div class="sheet-bg"></div><div class="sheet" role="dialog" aria-label="Confirma el pago">
+    <div class="sheet-h"><span>Confirma el pago en tu banco</span></div>
+    <div class="sheet-list form"><div class="pay-note">${ico('lock')}<p>Tu banco pide confirmar este pago de <b>${money2(getPlan(state.checkout.planId).price)}</b> (autenticación reforzada). En el móvil se abriría la app de tu banco.</p></div>
+      <button class="btn-primary" onclick="completePayment(state.checkout.pending)">Confirmar el pago</button>
+      <button class="btn-ghost" onclick="state.checkout.err='Has cancelado la confirmación: no se ha cobrado nada.';renderCheckout()">Cancelar</button></div></div>`);
+}
+function payWithWallet(){ completePayment({ id:'wallet', brand:'Pago con el móvil', last4:'', exp:'' }); }
+function completePayment(method){
+  const ck = state.checkout, p = ck && getPlan(ck.planId); if (!p) return;
+  if (ck.newMethod && ck.save && method === ck.newMethod){
+    if (!PAYMENT_METHODS.length) method.isDefault = true;
+    PAYMENT_METHODS.push(method);
+  }
+  const label = method.last4 ? `${method.brand} ···· ${method.last4}` : method.brand;
+  let x = myPayment(p.id);
+  if (x && x.status === 'pendiente'){ x.status = 'retenido'; x.at = Date.now(); delete x.dueAt; }
+  else x = newPayment(p, 'me', 'retenido');
+  x.method = label;
+  state.checkout = null; closeOverlay();
+  notify('pago', `Pago de ${money2(x.amount)} para ${p.title}. Lo retenemos hasta el plan. Recibo ${x.receiptNo}.`, { route:'pagos' });
+  completeJoin(p.id, `Plaza reservada · ${money(x.amount)} retenidos hasta el plan`);
+}
+
+/* ---------- cancelaciones y reembolsos ---------- */
+// Al cancelar tu asistencia: se reembolsa según la política del plan.
+function refundMyPayment(p, rf){
+  const x = myPayment(p.id); if (!x || !['retenido','pendiente'].includes(x.status)) return null;
+  if (x.status === 'pendiente'){ PAYMENTS.splice(PAYMENTS.indexOf(x), 1); return null; }
+  x.refunded = round2(rf.amount);
+  x.status = rf.pct >= 100 ? 'reembolsado' : (rf.pct > 0 ? 'reembolso_parcial' : 'retenido');
+  x.refundReason = rf.pct >= 100 ? 'Cancelaste a tiempo: reembolso completo' : (rf.pct > 0 ? `Política ${rf.policy.label.toLowerCase()}: reembolso del ${rf.pct} %` : `Política ${rf.policy.label.toLowerCase()}: sin reembolso`);
+  if (rf.pct > 0){ x.refundedAt = Date.now(); notify('pago', `Te devolvemos ${money2(x.refunded)} de ${p.title}. Llega a tu tarjeta en 5-10 días hábiles.`, { route:'pagos' }); }
+  if (rf.pct === 0) x.cancelled = true;   // la plaza se pierde y el importe va al anfitrión tras el plan
+  return x;
+}
+// El anfitrión cancela (o el plan no llega al mínimo): reembolso completo a todos.
+function refundAllForPlan(p, reason){
+  PAYMENTS.filter(x => x.planId === p.id && !x.past && ['retenido','reembolso_parcial','pendiente','en_revision','liberado'].includes(x.status)).forEach(x => {
+    x.refunded = x.amount; x.status = 'reembolsado'; x.refundedAt = Date.now(); x.refundReason = reason;
+    if (x.userId === 'me') notify('pago', `${p.title} se ha cancelado: te devolvemos ${money2(x.amount)} (el 100 %).`, { route:'pagos' });
+  });
+}
+
+/* ---------- después del plan: liberar y pagar al anfitrión ---------- */
+function releasePlanPayments(planId){
+  PAYMENTS.filter(x => x.planId === planId && !x.past && ['retenido','reembolso_parcial'].includes(x.status)).forEach(x => {
+    x.status = 'liberado'; x.releaseAt = Date.now() + RELEASE_HOURS * 3600000;
+  });
+}
+function payoutPlan(planId){
+  PAYMENTS.filter(x => x.planId === planId && x.status === 'liberado').forEach(x => { x.status = 'pagado'; x.paidOutAt = Date.now(); });
+}
+// Demo: el anfitrión da el plan por celebrado; a las 48 h se le paga.
+function demoHostPlanDone(planId){
+  const p = getPlan(planId); if (!p) return;
+  releasePlanPayments(planId); saveState();
+  toast(`Plan celebrado: los cobros te llegarán en ${RELEASE_HOURS} h si nadie reclama`);
+  if (location.hash.startsWith('#/cobros')) renderPayouts(); else renderDetail(planId);
+}
+function demoPayout(planId){
+  payoutPlan(planId); saveState();
+  const net = hostSales(planId).reduce((s, x) => s + splitFor(x.amount - x.refunded).net, 0);
+  notify('pago', `Te hemos pagado ${money2(net)} de ${(getPlan(planId) || {}).title || 'tu plan'} a tu cuenta ${maskIban((ME.payouts || {}).iban)}.`, { route:'cobros' });
+  renderPayouts();
+}
+// Demo: llegan reservas a un plan de pago tuyo.
+function demoSales(planId, n){
+  const p = getPlan(planId); if (!p || !p.paid) return;
+  const buyers = USERS.filter(u => u.id !== 'me' && !u.managedBy && u.type !== 'profesional').slice(0, n || 3);
+  buyers.forEach(u => { const x = newPayment(p, u.id, 'retenido'); x.method = 'Tarjeta'; p.joined = (p.joined || 0) + 1; });
+  saveState(); notify('pago', `${buyers.length} reservas nuevas en ${p.title}: ${money2(buyers.length * p.price)} retenidos hasta el plan.`, { route:'cobros' });
+  if (location.hash.startsWith('#/cobros')) renderPayouts(); else renderDetail(planId);
+}
+
+/* ---------- reclamaciones ---------- */
+const CLAIM_REASONS = [['no_celebrado','El plan no se celebró'], ['distinto','Era muy distinto de lo anunciado'], ['cobro','Me han cobrado mal'], ['otro','Otro problema']];
+const canClaim = (x) => x.userId === 'me' && ['retenido','liberado'].includes(x.status) && !x.past && !x.cancelled;
+function openClaim(payId){
+  const x = PAYMENTS.find(y => y.id === payId); if (!x) return;
+  state.claim = { payId, reason: null };
+  renderClaim();
+}
+function renderClaim(){
+  const c = state.claim, x = PAYMENTS.find(y => y.id === c.payId); if (!x) return;
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Tengo un problema con este plan">
+    <div class="sheet-h"><span>Tengo un problema</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list rep"><p class="hint"><b>${escapeHtml(x.planTitle)}</b> · ${money2(x.amount)}. Mientras lo revisamos, no se paga al anfitrión.</p>
+      <div class="rep-list" role="radiogroup">${CLAIM_REASONS.map(([v, l]) => `<button class="rep-opt ${c.reason === v ? 'on' : ''}" role="radio" aria-checked="${c.reason === v}" onclick="state.claim.reason='${v}';renderClaim()"><span class="rep-dot"></span>${l}</button>`).join('')}</div>
+      <div class="field"><label for="f-claim">Cuéntanos qué pasó ${counter('f-claim','message','')}</label><textarea ${lim('f-claim','message')} rows="3"></textarea></div>
+      <button class="btn-primary" ${c.reason ? '' : 'disabled'} onclick="submitClaim()">Enviar</button></div></div>`);
+}
+function submitClaim(){
+  const c = state.claim, x = c && PAYMENTS.find(y => y.id === c.payId); if (!x || !c.reason) return;
+  const p = getPlan(x.planId) || {}, hostId = p.hostId || (USERS.find(u => u.name === x.hostName) || {}).id || null;
+  const text = clip(val('f-claim'), 'message');
+  x.prevStatus = x.status; x.status = 'en_revision';
+  REPORTS.push({ id: newId('rp'), reporterId:'me', targetUserId: hostId, objectType:'plan', planId: x.planId, reason: c.reason === 'cobro' ? 'otro' : 'estafa',
+    evidence: `${CLAIM_REASONS.find(r => r[0] === c.reason)[1]}. ${text}`.trim(), source:'usuario', status:'en_cola', at: Date.now(), paymentId: x.id });
+  state.claim = null; saveState(); closeOverlay();
+  toast('Reclamación enviada: pausamos el pago al anfitrión mientras la revisamos');
+  if (location.hash === '#/pagos') renderPayments();
+}
+// Lo usa el panel de moderación (confianza.js) al resolver una reclamación.
+function resolveClaim(paymentId, refund){
+  const x = PAYMENTS.find(y => y.id === paymentId); if (!x || x.status !== 'en_revision') return;
+  if (refund){ x.refunded = x.amount; x.status = 'reembolsado'; x.refundedAt = Date.now(); x.refundReason = 'Reclamación aceptada: reembolso completo';
+    if (x.userId === 'me') notify('pago', `Reclamación aceptada: te devolvemos ${money2(x.amount)} de ${x.planTitle}.`, { route:'pagos' }); }
+  else { x.status = x.prevStatus || 'retenido'; if (x.userId === 'me') notify('pago', `Hemos revisado tu reclamación sobre ${x.planTitle} y no procede el reembolso.`, { route:'pagos' }); }
+  delete x.prevStatus;
+}
+
+/* ---------- Ajustes ▸ Pagos y reembolsos ---------- */
+function renderPayments(){
+  const view = document.getElementById('view-page');
+  const mine = PAYMENTS.filter(x => x.userId === 'me').sort((a, b) => b.at - a.at);
+  view.innerHTML = pageHead('Pagos y reembolsos') + `<div class="page-body">
+    <div class="set-group"><div class="set-title">Formas de pago</div>
+      ${PAYMENT_METHODS.map(m => `<div class="set-row static"><span class="sr-ic">${ico('card')}</span><span class="sr-l">${escapeHtml(m.brand)} ···· ${escapeHtml(m.last4)}<span class="or-s">Caduca ${escapeHtml(m.exp)}${m.isDefault ? ' · principal' : ''}</span></span>
+        ${m.isDefault ? '' : `<button class="ph-btn sm" onclick="setDefaultMethod('${m.id}')">Principal</button>`}<button class="ph-btn sm" onclick="removeMethod('${m.id}')">Quitar</button></div>`).join('')
+        || '<p class="hint">No tienes tarjetas guardadas. Se guardan al pagar, si quieres.</p>'}
+      <p class="hint">Apple Pay y Google Pay se eligen al pagar. Los datos de las tarjetas los guarda Stripe, no planes.</p></div>
+    <div class="set-group"><div class="set-title">Tus pagos</div>
+      ${mine.map(x => `<div class="mod-card pay-card"><div class="mod-top"><b>${escapeHtml(x.planTitle)}</b><span class="st st-pay-${x.status}">${PAY_STATUS[x.status]}</span></div>
+        <div class="mod-meta">${money2(x.amount)}${x.refunded ? ` · reembolsado ${money2(x.refunded)}` : ''} · ${escapeHtml(x.method || '')} · ${dayLabel(x.at)}</div>
+        ${x.refundReason ? `<p class="hint">${escapeHtml(x.refundReason)}${x.refunded && x.status !== 'retenido' ? '. Llega en 5-10 días hábiles.' : ''}</p>` : ''}
+        ${x.status === 'pendiente' ? `<p class="hint">${ico('clock')} Te han aceptado: paga antes de ${fmtWhen(new Date(x.dueAt))} o la plaza pasa a otra persona.</p>` : ''}
+        <div class="mod-acts">${x.status === 'pendiente' ? `<button class="ph-btn primary" onclick="openCheckout('${x.planId}')">Pagar ${money(x.amount)}</button>`
+          : `<button class="ph-btn" onclick="openReceipt('${x.id}')">Recibo</button>`}${canClaim(x) ? `<button class="ph-btn" onclick="openClaim('${x.id}')">Tengo un problema</button>` : ''}</div></div>`).join('')
+        || `<div class="empty-tab"><span class="empty-ic">${ico('card')}</span><p>Aún no has pagado ningún plan.</p></div>`}
+      <p class="hint">El dinero queda retenido hasta el plan y al anfitrión le llega 48 h después de celebrarse. Si se cancela o no se celebra, te lo devolvemos entero.</p></div>
+  </div>`;
+}
+function setDefaultMethod(id){ PAYMENT_METHODS.forEach(m => { m.isDefault = m.id === id; }); saveState(); renderPayments(); }
+function removeMethod(id){
+  const i = PAYMENT_METHODS.findIndex(m => m.id === id); if (i < 0) return;
+  const wasDefault = PAYMENT_METHODS[i].isDefault; PAYMENT_METHODS.splice(i, 1);
+  if (wasDefault && PAYMENT_METHODS[0]) PAYMENT_METHODS[0].isDefault = true;
+  saveState(); toast('Tarjeta quitada'); renderPayments();
+}
+
+/* ---------- recibos y facturas ---------- */
+const PLATFORM = { name:'planes (razón social pendiente)', nif:'B00000000', address:'Madrid, España' };   // provisional
+function receiptHtml(x){
+  const host = USERS.find(u => u.name === x.hostName) || {};
+  const biz = host.type === 'profesional';
+  const rows = [['Plan', x.planTitle], ['Organiza', x.hostName + (biz ? ' (empresa)' : '')], ['Fecha del pago', new Date(x.at).toLocaleDateString('es-ES')],
+    ['Forma de pago', x.method || ''], ['Importe', money2(x.amount)]].concat(x.refunded ? [['Reembolsado', '− ' + money2(x.refunded)], ['Total', money2(x.amount - x.refunded)]] : []);
+  return `<div class="rcpt"><div class="rcpt-h"><b>planes</b><span>Recibo ${escapeHtml(x.receiptNo)}</span></div>
+    <table>${rows.map(([k, v]) => `<tr><th>${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`).join('')}</table>
+    <p>Cobrado por ${escapeHtml(PLATFORM.name)} (NIF ${PLATFORM.nif}) en nombre de ${escapeHtml(x.hostName)}, a través de Stripe. ${biz ? 'La factura de la entrada la emite el organizador; pídesela desde aquí.' : 'IVA incluido si corresponde.'}</p></div>`;
+}
+function openReceipt(id){
+  const x = PAYMENTS.find(y => y.id === id); if (!x) return;
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Recibo">
+    <div class="sheet-h"><span>Recibo</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list">${receiptHtml(x)}
+      <button class="btn-primary" onclick="downloadDoc('${x.receiptNo}', 'receipt', '${x.id}')">${ico('download')} Descargar</button>
+      <button class="btn-ghost" onclick="toast('En la app real te pediríamos el NIF y la dirección para emitir la factura completa')">Pedir factura con mis datos</button></div></div>`);
+}
+// Factura mensual de la comisión que planes emite al anfitrión.
+function commissionInvoice(month){
+  const sales = PAYMENTS.filter(x => isHostOf(x) && ['liberado','pagado'].includes(x.status) && new Date(x.paidOutAt || x.releaseAt || x.at).toISOString().slice(0, 7) === month);
+  const gross = sales.reduce((s, x) => s + (x.amount - x.refunded), 0), sp = splitFor(gross);
+  return { no: `PLC-${month.replace('-', '')}-${String((ME.payouts || {}).accountNo || 1).padStart(4, '0')}`, month, sales, ...sp };
+}
+function invoiceHtml(inv){
+  const p = ME.payouts || {};
+  return `<div class="rcpt"><div class="rcpt-h"><b>planes</b><span>Factura ${escapeHtml(inv.no)}</span></div>
+    <p>Emisor: ${escapeHtml(PLATFORM.name)} · NIF ${PLATFORM.nif} · ${escapeHtml(PLATFORM.address)}<br>Cliente: ${escapeHtml(p.legalName || ME.name)} · ${escapeHtml(p.taxId || '')}</p>
+    <table><tr><th>Concepto</th><td>Comisión por intermediación (15 %) · ${escapeHtml(inv.month)} · ${inv.sales.length} reservas</td></tr>
+      <tr><th>Ventas del mes</th><td>${money2(inv.gross)}</td></tr><tr><th>Base imponible</th><td>${money2(inv.feeBase)}</td></tr>
+      <tr><th>IVA 21 %</th><td>${money2(inv.feeVat)}</td></tr><tr><th>Total comisión</th><td>${money2(inv.fee)}</td></tr>
+      <tr><th>Pagado a tu cuenta</th><td>${money2(inv.net)}</td></tr></table>
+    <p>La comisión ya se ha descontado de lo que te hemos pagado. No tienes que pagar nada más.</p></div>`;
+}
+function openInvoice(month){
+  const inv = commissionInvoice(month);
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Factura de la comisión">
+    <div class="sheet-h"><span>Factura de la comisión</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list">${invoiceHtml(inv)}<button class="btn-primary" onclick="downloadDoc('${inv.no}', 'invoice', '${month}')">${ico('download')} Descargar</button></div></div>`);
+}
+// Descarga el recibo o la factura como página HTML imprimible (en la app real, PDF).
+function downloadDoc(no, kind, ref){
+  const body = kind === 'receipt' ? receiptHtml(PAYMENTS.find(y => y.id === ref)) : invoiceHtml(commissionInvoice(ref));
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${escapeHtml(no)}</title><style>body{font-family:system-ui,sans-serif;max-width:640px;margin:40px auto;padding:0 16px;color:#111}
+    .rcpt-h{display:flex;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:12px}table{width:100%;border-collapse:collapse;margin:12px 0}
+    th,td{text-align:left;padding:6px 0;border-bottom:1px solid #ddd;font-size:14px}th{color:#555;font-weight:500;width:40%}p{font-size:13px;color:#333;line-height:1.5}</style></head><body>${body}`;   // sin etiquetas de cierre: son opcionales en HTML
+  if (typeof Blob === 'undefined'){ toast('Este navegador no puede generar el archivo'); return; }
+  saveFile(new Blob([html], { type:'text/html' }), `${no}.html`).then(r => { if (r === 'saved') toast('Descargado'); else if (r !== 'declined') toast('No se ha podido guardar'); });
+}
+
+/* ---------- cobros del anfitrión (Stripe Connect) ---------- */
+const payoutsReady = () => !!(ME.payouts && ME.payouts.status === 'activa');
+const isHostOf = (x) => { const p = getPlan(x.planId); return !!p && p.hostId === 'me' && x.userId !== 'me'; };
+const hostSales = (planId) => PAYMENTS.filter(x => isHostOf(x) && (!planId || x.planId === planId));
+function maskIban(iban){ const s = String(iban || '').replace(/\s/g, ''); return s ? s.slice(0, 4) + ' ···· ' + s.slice(-4) : ''; }
+// NIF/NIE español: letra de control.
+function validTaxId(id){
+  const s = String(id || '').toUpperCase().replace(/[\s-]/g, '');
+  const L = 'TRWAGMYFPDXBNJZSQVHLCKE';
+  if (/^\d{8}[A-Z]$/.test(s)) return L[+s.slice(0, 8) % 23] === s[8];
+  if (/^[XYZ]\d{7}[A-Z]$/.test(s)) return L[+(('XYZ'.indexOf(s[0])) + s.slice(1, 8)) % 23] === s[8];
+  return /^[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]$/.test(s);   // CIF de empresa: formato
+}
+// IBAN: dígitos de control (módulo 97).
+function validIban(iban){
+  const s = String(iban || '').toUpperCase().replace(/\s/g, '');
+  if (!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(s) || (s.startsWith('ES') && s.length !== 24)) return false;
+  const r = (s.slice(4) + s.slice(0, 4)).replace(/[A-Z]/g, c => String(c.charCodeAt(0) - 55));
+  let m = 0; for (const ch of r) m = (m * 10 + +ch) % 97;
+  return m === 1;
+}
+function renderPayouts(){
+  const view = document.getElementById('view-page'), a = ME.payouts;
+  if (!a || a.status === 'borrador') return renderPayoutSetup();
+  const sales = hostSales(), sum = (st) => sales.filter(x => st.includes(x.status)).reduce((s, x) => s + splitFor(x.amount - x.refunded).net, 0);
+  const plans = PLANS.filter(p => p.hostId === 'me' && p.paid);
+  const months = Array.from(new Set(sales.filter(x => ['liberado','pagado'].includes(x.status)).map(x => new Date(x.paidOutAt || x.releaseAt || x.at).toISOString().slice(0, 7)))).sort().reverse();
+  view.innerHTML = pageHead('Cobros') + `<div class="page-body">
+    ${a.status !== 'activa' ? `<div class="acct-ok warn">${ico('clock')}<div><b>Estamos verificando tus datos</b><p>Stripe comprueba tu identidad y tu cuenta bancaria. Suele tardar unos minutos.</p></div></div>` : ''}
+    <div class="pay-kpis"><div><b>${money(sum(['retenido','reembolso_parcial']))}</b><span>Retenido hasta el plan</span></div><div><b>${money(sum(['liberado']))}</b><span>En camino</span></div><div><b>${money(sum(['pagado']))}</b><span>Pagado</span></div></div>
+    <div class="set-group"><div class="set-title">Tus planes de pago</div>
+      ${plans.map(p => { const s = hostSales(p.id), live = s.filter(x => x.status !== 'reembolsado'), gross = live.reduce((t, x) => t + x.amount - x.refunded, 0), sp = splitFor(gross);
+        const st = s.some(x => x.status === 'liberado') ? 'liberado' : (s.some(x => x.status === 'pagado') ? 'pagado' : (isCancelled(p) ? 'reembolsado' : 'retenido'));
+        return `<div class="mod-card pay-card"><div class="mod-top"><b>${escapeHtml(p.title)}</b><span class="st st-pay-${st}">${isCancelled(p) ? 'Cancelado · reembolsado' : PAY_STATUS[st]}</span></div>
+          <div class="mod-meta">${live.length} ${live.length === 1 ? 'reserva' : 'reservas'} · ventas ${money2(sp.gross)} · comisión ${money2(sp.fee)} · <b>para ti ${money2(sp.net)}</b></div>
+          ${isCancelled(p) ? '' : `<div class="mod-acts">${st === 'retenido' ? `<button class="ph-btn" onclick="demoSales('${p.id}', 3)">Demo: llegan 3 reservas</button><button class="ph-btn" onclick="demoHostPlanDone('${p.id}')">Demo: se ha celebrado</button>` : ''}
+            ${st === 'liberado' ? `<button class="ph-btn" onclick="demoPayout('${p.id}')">Demo: pasan 48 h</button>` : ''}</div>`}</div>`; }).join('')
+        || `<p class="hint">Aún no has publicado planes de pago. Al crear un plan, elige "De pago".</p>`}</div>
+    <div class="set-group"><div class="set-title">Facturas de la comisión</div>
+      ${months.map(m => `<button class="set-row" onclick="openInvoice('${m}')"><span class="sr-ic">${ico('doc')}</span><span class="sr-l">${new Date(m + '-15').toLocaleDateString('es-ES', { month:'long', year:'numeric' })}</span><span class="pl-arrow">${ico('chevR')}</span></button>`).join('')
+        || '<p class="hint">Cada mes te enviamos la factura de la comisión de los planes celebrados.</p>'}</div>
+    <div class="set-group"><div class="set-title">Cuenta de cobro</div>
+      <div class="set-row static"><span class="sr-ic">${ico('card')}</span><span class="sr-l">${escapeHtml(maskIban(a.iban))}<span class="or-s">${escapeHtml(a.legalName)} · ${a.kind === 'empresa' ? 'Autónomo o empresa' : 'Particular'} · ${escapeHtml(a.taxId)}</span></span></div>
+      <p class="hint">Te pagamos el 85 % de cada reserva 48 h después del plan (la comisión del 15 % lleva el IVA incluido). Por ley (DAC7), cada año informamos a Hacienda de lo que cobras con planes.</p></div>
+  </div>`;
+}
+// Alta de cobros: tipo, datos fiscales, cuenta bancaria y verificación (Stripe Connect Express).
+function renderPayoutSetup(){
+  const view = document.getElementById('view-page'), d = state.payoutForm || (state.payoutForm = { kind:'particular' });
+  if (!isVerified()){ view.innerHTML = pageHead('Cobros') + `<div class="empty-tab"><span class="empty-ic">${ico('shield')}</span><h3>Primero, verifica tu identidad</h3><p>Para cobrar planes hace falta tener la identidad verificada.</p>
+    <button class="btn-primary" style="margin-top:14px" onclick="requireVerified('Verifica tu identidad para cobrar', () => renderPayouts())">Verificar ahora</button></div>`; return; }
+  view.innerHTML = pageHead('Configura tus cobros') + `<div class="page-body form">
+    <div class="pay-note">${ico('euro')}<p>Para cobrar planes de pago. Las personas pagan al reservar; lo retenemos hasta el plan y te llega el <b>85 %</b> a tu cuenta 48 h después de celebrarse. Los pagos los gestiona Stripe.</p></div>
+    <div class="field"><label>Cobras como</label><div class="iseg">${[['particular','Particular','user'],['empresa','Autónomo o empresa','briefcase']].map(([v, l, n]) => `<button class="${d.kind === v ? 'active' : ''}" onclick="capturePayout();state.payoutForm.kind='${v}';renderPayoutSetup()">${ico(n)}<span>${l}</span></button>`).join('')}</div>
+      <p class="hint">${d.kind === 'particular' ? 'Para planes ocasionales. Si organizas de forma habitual, tienes que darte de alta como autónomo.' : 'Emitirás la factura de cada entrada; nosotros te facturamos la comisión.'}</p></div>
+    <div class="field"><label for="f-legal">${d.kind === 'empresa' ? 'Nombre o razón social' : 'Nombre y apellidos (como en tu DNI)'}</label><input id="f-legal" autocomplete="name" value="${escapeHtml(d.legalName || '')}"></div>
+    <div class="field"><label for="f-taxid">${d.kind === 'empresa' ? 'NIF o CIF' : 'DNI o NIE'}</label><input id="f-taxid" autocapitalize="characters" value="${escapeHtml(d.taxId || '')}"></div>
+    <div class="field"><label for="f-addr">Dirección fiscal</label><input id="f-addr" autocomplete="street-address" value="${escapeHtml(d.address || '')}"></div>
+    <div class="field"><label for="f-iban">Cuenta bancaria (IBAN)</label><input id="f-iban" autocapitalize="characters" placeholder="ES00 0000 0000 0000 0000 0000" value="${escapeHtml(d.iban || '')}"></div>
+    ${d.err ? `<p class="pay-err" role="alert">${ico('alert')} ${escapeHtml(d.err)}</p>` : ''}
+    <button class="btn-primary" onclick="submitPayoutSetup()">Enviar a verificar</button>
+    <p class="hint">Stripe comprobará tu identidad (ya verificada en planes) y que la cuenta es tuya. Al seguir aceptas el Acuerdo de cuentas conectadas de Stripe.</p>
+  </div>`;
+}
+function capturePayout(){ const d = state.payoutForm; if (!d) return; d.legalName = val('f-legal'); d.taxId = val('f-taxid'); d.address = val('f-addr'); d.iban = val('f-iban'); }
+function submitPayoutSetup(){
+  capturePayout(); const d = state.payoutForm;
+  d.err = !d.legalName.trim() ? 'Escribe tu nombre o razón social.' : (!validTaxId(d.taxId) ? 'El DNI, NIE o NIF no es válido.' : (!d.address.trim() ? 'Escribe la dirección fiscal.' : (!validIban(d.iban) ? 'El IBAN no es válido.' : '')));
+  if (d.err) return renderPayoutSetup();
+  ME.payouts = { kind: d.kind, legalName: d.legalName.trim(), taxId: d.taxId.toUpperCase().replace(/[\s-]/g, ''), address: d.address.trim(),
+    iban: d.iban.toUpperCase().replace(/\s/g, ''), status: 'en_revision', accountNo: 1, at: Date.now(), stripeId: 'acct_' + Math.random().toString(36).slice(2, 12) };
+  state.payoutForm = null; saveState(); renderPayouts();
+  setTimeout(() => { if (ME.payouts && ME.payouts.status === 'en_revision'){ ME.payouts.status = 'activa'; saveState();
+    notify('pago', 'Tus cobros están activos: ya puedes publicar planes de pago.', { route:'cobros' }); if (location.hash === '#/cobros') renderPayouts(); } }, 3000);   // demo: Stripe lo verifica
 }
 
 
@@ -3754,8 +4207,8 @@ function saveState(){
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
             city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom,
-            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog },
-      modActions: MOD_ACTIONS, userMod: USER_MOD, safety: SAFETY_EVENTS,
+            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts },
+      modActions: MOD_ACTIONS, userMod: USER_MOD, safety: SAFETY_EVENTS, payments: PAYMENTS, paymentMethods: PAYMENT_METHODS,
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
       notifications: NOTIFICATIONS,
@@ -3786,6 +4239,8 @@ function loadState(){
   if (Array.isArray(snap.notifications)) NOTIFICATIONS.splice(0, NOTIFICATIONS.length, ...snap.notifications);
   if (Array.isArray(snap.modActions)) MOD_ACTIONS.splice(0, MOD_ACTIONS.length, ...snap.modActions);
   if (Array.isArray(snap.safety)) SAFETY_EVENTS.splice(0, SAFETY_EVENTS.length, ...snap.safety);
+  if (Array.isArray(snap.payments)) PAYMENTS.splice(0, PAYMENTS.length, ...snap.payments);
+  if (Array.isArray(snap.paymentMethods)) PAYMENT_METHODS.splice(0, PAYMENT_METHODS.length, ...snap.paymentMethods);
   if (snap.userMod){ Object.keys(USER_MOD).forEach(k => delete USER_MOD[k]); Object.assign(USER_MOD, snap.userMod); }
   if (snap.me) Object.assign(ME, snap.me);
   (snap.extraProfiles || []).forEach(x => { if (!USERS.some(u => u.id === x.id)) USERS.push(x); });
@@ -4990,7 +5445,7 @@ function requestAttendance(id){
   state.requested.add(id);
   REQUESTS.push({ id:'r'+Date.now(), planId:id, userId:'me', status:'pendiente', message:'Solicitud enviada desde el prototipo.' });
   saveState();
-  toast('Solicitud de asistencia enviada · pendiente de aprobación');
+  toast('Solicitud de asistencia enviada · pendiente de aprobación' + (getPlan(id).paid ? '. Si te aceptan, tendrás 24 h para pagar' : ''));
   setTimeout(() => simulateHostDecision(id, 'aceptada'), 4000);   // demo: el anfitrión responde
   renderDetail(id);
 }
@@ -5020,18 +5475,20 @@ function renderDetail(id){
   const view = document.getElementById('view-detail');
 
   const host = canRunPlan(p), waiting = waitPos(p), full = isFull(p);
+  const pay = p.paid ? myPayment(p.id) : null, toPay = pay && pay.status === 'pendiente';
   let cta;
   if (isCancelled(p)) cta = `<button class="btn-join done" disabled>${ico('close')} Plan cancelado</button>`;
   else if (isHost(p)) cta = `<button class="btn-join" onclick="openHostQr('${p.id}')">${ico('grid')} Mostrar QR de llegada</button>`;
   else if (!isVerified() && !attended && !joined) cta = `<button class="btn-join" onclick="requireVerified('Verifica tu identidad para ir a este plan', () => renderDetail('${p.id}'))">${ico('shield')} Verifícate para ir</button>`;
   else if (attended) cta = `<button class="btn-join done" disabled>${ico('check')} Asististe · verificado</button>`;
   else if (libre || joined) cta = `<button class="btn-join" onclick="openCheckin('${p.id}')">${ico('geo')} Registrar mi llegada</button>`;
+  else if (toPay) cta = `<button class="btn-join" onclick="openCheckout('${p.id}')">${ico('card')} Pagar ${money(p.price)} y confirmar</button>`;
   else if (waiting) cta = `<button class="btn-join done" disabled>${ico('clock')} Lista de espera · puesto ${waiting}</button>`;
   else if (manual) cta = requested
       ? `<button class="btn-join done" disabled>${ico('clock')} Solicitud enviada</button>`
       : `<button class="btn-join" onclick="requestAttendance('${p.id}')">Solicitar asistencia</button>`;
   else if (full) cta = `<button class="btn-join" onclick="joinWaitlist('${p.id}')">${ico('clock')} Apuntarme a la lista de espera</button>`;
-  else cta = `<button class="btn-join" onclick="toggleJoin('${p.id}')">Apuntarme</button>`;
+  else cta = `<button class="btn-join" onclick="toggleJoin('${p.id}')">${p.paid ? `Reservar · ${money(p.price)}` : 'Apuntarme'}</button>`;
 
   // Avisos: plan cancelado y reconfirmación del día.
   const cancelBanner = isCancelled(p) ? `<div class="pl-banner bad">${ico('alert')}<div><b>El anfitrión ha cancelado este plan.</b><p>${p.paid ? 'Si pagaste, te devolvemos el 100 % en 5-10 días.' : 'Te hemos avisado a ti y al resto del grupo.'}</p></div></div>` : '';
@@ -5041,15 +5498,18 @@ function renderDetail(id){
       <div class="pl-banner-b"><button class="ph-btn primary" onclick="reconfirm('${p.id}')">Sí, voy</button><button class="ph-btn" onclick="openCancel('${p.id}')">Ya no puedo</button></div></div></div>` : '';
   // Tu asistencia: estado, cancelar y, en la demo, simular el final del plan.
   const myBlock = (joined && !attended && !isCancelled(p)) ? `<div class="block"><h4>Tu asistencia</h4>
-      <p class="hint">${state.reconfirmed.has(p.id) ? `${ico('check')} Apuntado y reconfirmado.` : 'Apuntado.'} ${p.paid ? `Política de cancelación ${CANCEL_POLICIES[p.cancelPolicy || 'flexible'].label.toLowerCase()}: ${CANCEL_POLICIES[p.cancelPolicy || 'flexible'].text}` : 'Si no puedes ir, cancela con tiempo: deja la plaza a otra persona.'}</p>
+      <p class="hint">${state.reconfirmed.has(p.id) ? `${ico('check')} Apuntado y reconfirmado.` : 'Apuntado.'} ${p.paid ? escapeHtml(policyLine(p)) : 'Si no puedes ir, cancela con tiempo: deja la plaza a otra persona.'}</p>
+      ${pay && pay.status !== 'pendiente' ? `<div class="pay-line">${ico('card')}<span>Pagado ${money2(pay.amount)} · ${PAY_STATUS[pay.status].toLowerCase()}</span><button class="link-btn" onclick="openReceipt('${pay.id}')">Recibo</button></div>` : ''}
       <div class="pl-actions"><button class="link-btn" onclick="openCancel('${p.id}')">Cancelar asistencia</button><button class="link-btn dim" onclick="demoPlanEnded('${p.id}')">Demo: simular que el plan ha terminado</button></div></div>`
+    : (toPay ? `<div class="block"><h4>Tu plaza</h4><p class="hint">${ico('clock')} Te guardamos la plaza hasta ${fmtWhen(new Date(pay.dueAt))}. Paga para confirmarla; si no, pasa a la siguiente persona.</p></div>`
     : (waiting ? `<div class="block"><h4>Lista de espera</h4><p class="hint">Eres el puesto ${waiting}. Si alguien cancela, la plaza es tuya y te avisamos.</p>
-      <div class="pl-actions"><button class="link-btn" onclick="leaveWaitlist('${p.id}')">Salir de la lista</button><button class="link-btn dim" onclick="demoSomeoneCancels('${p.id}')">Demo: alguien cancela</button></div></div>` : '');
+      <div class="pl-actions"><button class="link-btn" onclick="leaveWaitlist('${p.id}')">Salir de la lista</button><button class="link-btn dim" onclick="demoSomeoneCancels('${p.id}')">Demo: alguien cancela</button></div></div>` : ''));
   // Organización (anfitrión o admin del grupo): QR, llegadas, solicitudes, editar y cancelar.
   const hostBlock = host && !isCancelled(p) ? `<div class="block"><h4>Organización</h4>
       <div class="pl-host">
         <button class="sh-row" onclick="openHostQr('${p.id}')">${ico('grid')}<span>QR de llegada</span>${ico('chevR')}</button>
         <button class="sh-row" onclick="openManualArrivals('${p.id}')">${ico('users')}<span>Marcar llegadas a mano</span>${ico('chevR')}</button>
+        ${isHost(p) && p.paid ? `<button class="sh-row" onclick="go('cobros')">${ico('euro')}<span>Cobros · ${hostSales(p.id).filter(x => x.status !== 'reembolsado').length} reservas</span>${ico('chevR')}</button>` : ''}
         ${isHost(p) ? `<button class="sh-row" onclick="go('editar-plan/${p.id}')">${ico('doc')}<span>Editar fecha, hora o lugar</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openCancelPlan('${p.id}')">${ico('close')}<span>Cancelar el plan</span>${ico('chevR')}</button>` : ''}
       </div></div>` : '';
@@ -5144,7 +5604,7 @@ function renderDetail(id){
         ${REVIEWS.map(r=>`<div class="review"><div class="top"><span>${r.author}</span><span class="st">${Array(r.stars).fill(ico('star')).join('')}</span></div><p>${r.text}</p></div>`).join('')}
       </div>
       <div class="action-bar">
-        <div class="pr"><div class="v">${p.paid?p.price+' €':'Gratis'}</div><div class="k">${p.paid?'pago seguro · escrow':(libre?'plan libre':'sin coste')}</div></div>
+        <div class="pr"><div class="v">${p.paid?money(p.price):'Gratis'}</div><div class="k">${p.paid?'pago protegido hasta el plan':(libre?'plan libre':'sin coste')}</div></div>
         ${cta}
       </div>
     </div>`;
@@ -5583,7 +6043,8 @@ function renderSettings(){
         <button class="set-row" onclick="go('notificaciones')"><span class="sr-ic">${ico('bell')}</span><span class="sr-l">Notificaciones</span><span class="pl-arrow">${ico('chevR')}</span></button>
         <button class="set-row" onclick="go('seguridad')"><span class="sr-ic">${ico('shield')}</span><span class="sr-l">Seguridad y acceso</span><span class="pl-arrow">${ico('chevR')}</span></button>
         <button class="set-row" onclick="go('mis-datos')"><span class="sr-ic">${ico('doc')}</span><span class="sr-l">Tus datos y privacidad</span><span class="pl-arrow">${ico('chevR')}</span></button>
-        ${row('card','Pagos y reembolsos')}
+        <button class="set-row" onclick="go('pagos')"><span class="sr-ic">${ico('card')}</span><span class="sr-l">Pagos y reembolsos</span><span class="pl-arrow">${ico('chevR')}</span></button>
+        <button class="set-row" onclick="go('cobros')"><span class="sr-ic">${ico('euro')}</span><span class="sr-l">Cobros<span class="or-s">si organizas planes de pago</span></span><span class="soon">${payoutsReady() ? 'Activos' : (ME.payouts ? 'En revisión' : 'Sin configurar')}</span><span class="pl-arrow">${ico('chevR')}</span></button>
       </div>
       <div class="set-group"><div class="set-title">Prototipo</div>
         <div class="set-row static"><span class="sr-ic">${ico('image')}</span><span class="sr-l">Fotos de Unsplash (licencia Unsplash)</span></div>
@@ -5719,7 +6180,14 @@ function renderCreatePlan(){
         <div class="iseg" id="d-price">
           <button data-v="gratis" class="${d.price==='gratis'?'active':''}" onclick="setDraft('price','gratis')">${ico('ticket')}<span>Gratis</span></button>
           <button data-v="pago" class="${d.price==='pago'?'active':''}" onclick="setDraft('price','pago')">${ico('euro')}<span>De pago</span></button></div>
-        <input id="f-price" type="number" min="0" placeholder="Precio en € (si es de pago)" style="margin-top:8px" /></div>
+        <div id="paid-opts" ${d.price === 'pago' ? '' : 'hidden'}>
+          <input id="f-price" type="number" min="1" max="500" step="0.5" placeholder="Precio por plaza en €" style="margin-top:8px" oninput="updatePriceHint()" value="${escapeHtml(d.priceValue || '')}" />
+          <p class="hint" id="price-hint">${priceHint(d.priceValue)}</p>
+          <label class="sub-l">Política de cancelación</label>
+          <div class="iseg" id="d-policy">${Object.entries(CANCEL_POLICIES).map(([k, v]) => `<button data-v="${k}" class="${(d.policy || 'flexible') === k ? 'active' : ''}" onclick="setDraft('policy','${k}')"><span>${v.label}</span></button>`).join('')}</div>
+          <p class="hint" id="policy-hint">${escapeHtml(policyHint(d.policy))}</p>
+          ${payoutsReady() ? '' : `<button class="vg-inline" onclick="state.draft.priceValue=val('f-price');go('cobros')">${ico('euro')} Para cobrar, configura antes tus cobros (datos fiscales y cuenta bancaria).</button>`}
+        </div></div>
       <div class="field"><label>Tipo de asistencia</label>
         <div class="iseg" id="d-access">
           <button data-v="libre" class="${d.access==='libre'?'active':''}" onclick="setDraft('access','libre')">${ico('globe')}<span>Libre</span></button>
@@ -5733,15 +6201,27 @@ function renderCreatePlan(){
 }
 function setDraft(key,v){
   state.draft[key]=v;
-  const id={cover:'cover-pick',size:'d-size',cat:'d-cat',price:'d-price',access:'d-access'}[key];
+  const id={cover:'cover-pick',size:'d-size',cat:'d-cat',price:'d-price',access:'d-access',policy:'d-policy'}[key];
   const c=id&&document.getElementById(id);
   if(c) c.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.v===v));
+  if(key==='price'){ const o=document.getElementById('paid-opts'); if(o) o.hidden = v!=='pago'; }
+  if(key==='policy'){ const h=document.getElementById('policy-hint'); if(h) h.textContent = policyHint(v); }
   if(key==='access'){ const h=document.getElementById('access-hint'); if(h) h.textContent = v==='aprobacion'
     ? 'Recibirás solicitudes de asistencia y decides a quién aceptas.'
     : 'Cualquiera puede asistir; al llegar, cada persona escanea tu QR de llegada.'; }
 }
+// Lo que recibe el anfitrión por plaza, a la vista mientras pone el precio.
+function priceHint(v){ const n = parseFloat(String(v || '').replace(',', '.')); if (!(n > 0)) return 'Te llega el 85 % de cada plaza 48 h después del plan. La comisión del 15 % lleva el IVA incluido.';
+  const sp = splitFor(n); return `Por cada plaza de ${money(n)} te llegan ${money2(sp.net)} (comisión ${money2(sp.fee)}, IVA incluido), 48 h después del plan.`; }
+function policyHint(k){ const t = CANCEL_POLICIES[k || 'flexible'].text; return t[0].toUpperCase() + t.slice(1) + ' Si cancelas tú o no se celebra, se devuelve el 100 %. Los planes de pago siempre llevan reserva.'; }
+function updatePriceHint(){ const h = document.getElementById('price-hint'); if (h) h.textContent = priceHint(val('f-price')); }
 function publishPlan(){
   if (!requireVerified('Verifica tu identidad para organizar un plan', () => publishPlan())) return;
+  if (state.draft.price === 'pago'){
+    const n = parseFloat(String(val('f-price')).replace(',', '.'));
+    if (!(n >= 1 && n <= 500)){ toast('Pon un precio por plaza entre 1 y 500 €'); return; }
+    if (!payoutsReady()){ state.draft.priceValue = val('f-price'); toast('Para publicar un plan de pago, configura antes tus cobros'); go('cobros'); return; }
+  }
   if (!userMod('me').canHost){ toast('Moderación te ha retirado la opción de organizar planes. Mira Ajustes ▸ Estado de tu cuenta'); return; }
   const title = clip(val('f-title'), 'planTitle') || 'Plan sin título';
   const desc = clip(val('f-desc'), 'planDesc') || 'Plan creado desde el prototipo.';
@@ -5753,7 +6233,7 @@ function commitPlan(title, desc, flag){
   const dateRaw = val('f-date');
   const when = dateRaw ? new Date(dateRaw) : new Date(Date.now()+24*3600*1000);
   const paid = d.price==='pago';
-  const price = paid ? (parseInt(val('f-price'),10) || 10) : 0;
+  const price = paid ? round2(parseFloat(String(val('f-price')).replace(',', '.')) || 10) : 0;
   const ranges = { intimo:[2,8], mediano:[6,20], grande:[15,60] }[d.size];
   const groupId = val('f-group') || null;
   const access = d.access;
@@ -5761,15 +6241,16 @@ function commitPlan(title, desc, flag){
     id:'np'+Date.now(), title, summary:desc, placeId, category:d.cat, gradient:d.cover,
     level:2, paid, price, recurring:false, secret:false,
     host:{ name:ME.name, business:ME.type==='profesional', verified:ME.verified, rating:5.0, reliability:reliability().pct },
-    hostId:'me', photo: d.photo || null, status:'activo', waitlist:[], cancelPolicy:'flexible',
+    hostId:'me', photo: d.photo || null, status:'activo', waitlist:[], cancelPolicy: paid ? (d.policy || 'flexible') : 'flexible',
     when, groupMin:ranges[0], groupMax:ranges[1], joined:0, attended:0, publicAttendees:[], attendedPrivate:0,
-    joinType: access==='libre' ? 'libre' : 'apuntado',
-    approval: access==='aprobacion' ? 'manual' : (access==='libre' ? 'libre' : 'automatica'),
+    // Un plan de pago siempre es "apuntado": hay que reservar (y pagar) la plaza.
+    joinType: access==='libre' && !paid ? 'libre' : 'apuntado',
+    approval: access==='aprobacion' ? 'manual' : (access==='libre' && !paid ? 'libre' : 'automatica'),
     groupId, held: !!flag || undefined,
   };
   PLANS.unshift(plan);
   if (groupId){ const g=getGroup(groupId); if(g) g.planIds.unshift(plan.id); }
-  state.pendingGroup = null; d.photo = null;
+  state.pendingGroup = null; d.photo = null; d.priceValue = "";
   ensurePlanChat(plan.id);
   saveState();
   if (plan.approval === 'manual' && !flag) setTimeout(() => simulateIncomingRequest(plan.id), 5000);   // demo: llega una solicitud
@@ -5959,6 +6440,8 @@ function router(){
     case 'mis-reportes': renderMyReports(); showView('page'); scrollTop('page'); break;
     case 'estado-cuenta': renderAccountStatus(); showView('page'); scrollTop('page'); break;
     case 'mis-datos': renderMyData(); showView('page'); scrollTop('page'); break;
+    case 'pagos': renderPayments(); showView('page'); scrollTop('page'); break;
+    case 'cobros': renderPayouts(); showView('page'); scrollTop('page'); break;
     case 'moderacion': renderModeration(arg); showView('page'); scrollTop('page'); break;
     case 'nuevo-perfil': renderNewProfile(); showView('page'); scrollTop('page'); break;
     case 'editar-perfil': renderEditProfile(); showView('page'); scrollTop('page'); break;

@@ -83,7 +83,7 @@ Modelo de cobro tipo Booking (escrow). La plataforma cobra el evento, retiene el
 
 Política de cancelación y reembolso. Sobre el escrow se montan reglas claras, mostradas siempre antes de reservar:
 
-- Cancelación del asistente, por niveles que elige el organizador al publicar (estilo Booking): flexible (reembolso íntegro hasta 24 h antes), moderada (íntegro hasta 48 h antes, 50% entre 48 y 24 h, sin reembolso dentro de 24 h) y estricta, para experiencias con coste de producción (íntegro hasta 7 días antes, después sin reembolso). Los umbrales concretos son ajustables.
+- Cancelación del asistente, por niveles que elige el organizador al publicar (estilo Booking): flexible (reembolso íntegro hasta 24 h antes), moderada (íntegro hasta 48 h antes, 50% entre 48 y 24 h, sin reembolso dentro de 24 h) y estricta, para experiencias con coste de producción (íntegro hasta 7 días antes, después sin reembolso). Los umbrales concretos son ajustables. Lo que no se reembolsa se paga al anfitrión tras el plan, menos la comisión.
 - Cancelación o no-show del anfitrión, o evento no celebrado: reembolso íntegro a todos los asistentes desde el escrow, con independencia de la política del plan, porque el dinero no llega al organizador hasta después del evento. El anfitrión sufre penalización de reputación; la reiteración retira su capacidad de organizar y, si hubo fraude, el pago se retiene y entra en la vía de moderación.
 - Mínimo de grupo no alcanzado: si a la hora de corte el plan no llega a su tamaño mínimo, se cancela automáticamente y se reembolsa íntegro.
 - Desvelo en planes gratuitos saturados o especiales: si el evento no se celebra, el micropago se reembolsa; si el usuario no se presenta, no se reembolsa, que es justo su función de filtro de compromiso.
@@ -91,6 +91,15 @@ Política de cancelación y reembolso. Sobre el escrow se montan reglas claras, 
 Comisión sobre experiencias de pago. 15% propio, en el extremo bajo del rango de mercado 15-30% (Fever cobra en ese rango). Se elige el suelo del rango como palanca de captación de oferta: un 15% es más atractivo para organizadores y locales que la comisión de los marketplaces grandes, baja la barrera de entrada de la oferta de pago en el arranque y deja margen para subir más adelante si el producto lo justifica. Es la fuente principal de ingresos, concentrada en el Nivel 3.
 
 Micropago de desvelo (1-2 €), solo plataforma. No es un peaje sobre planes gratis. Se aplica únicamente a eventos exclusivos, especiales o saturados: planes de mucha demanda y planes muy especiales donde el secreto es parte del producto (lugar secreto, ubicación revelada poco antes). Si el plan es de pago, no hay micropago de desvelo: la ubicación forma parte de la reserva y se gestiona dentro del flujo escrow. En planes gratuitos saturados o especiales, el micropago funciona además como filtro suave de compromiso: solo paga quien de verdad va a ir.
+
+Cómo funciona (prototipo y especificación en [docs/pagos.md](docs/pagos.md)):
+
+- Cobro con Stripe Connect, con cargos y transferencias separados: la plataforma cobra la reserva, la retiene hasta el plan y la transfiere al anfitrión 48 h después de celebrarse, si nadie reclama. Al anfitrión le llega el 85 %. La comisión del 15 % lleva el IVA incluido y de ella salen los costes de Stripe.
+- Al reservar se ve siempre la política de cancelación. Se paga con Apple Pay, Google Pay o tarjeta (con 3D Secure). En los planes con aprobación y en la lista de espera no se cobra hasta que hay plaza; entonces hay 24 h para pagar.
+- Reclamaciones ("Tengo un problema" en Ajustes ▸ Pagos): pausan el pago al anfitrión y van al panel de moderación, que reembolsa o no.
+- Anfitriones: para publicar un plan de pago hace falta la identidad verificada y los cobros activos. En Ajustes ▸ Cobros se dan los datos fiscales y el IBAN, y Stripe verifica a la persona y la cuenta. El anfitrión ve lo retenido, lo que está en camino, lo pagado y la factura mensual de la comisión. Por DAC7, cada año se informa a Hacienda de lo que cobra cada anfitrión.
+- Recibo de cada pago para quien reserva. La factura de la entrada la emite el organizador, si es empresa o autónomo; propuesta: emitirla en su nombre.
+- Propuesta para el piloto: planes de pago solo de anfitriones profesionales y hasta 100 €. Los particulares que cobran, más adelante. Sin micropago de desvelo.
 
 Fuentes de ingreso, resumidas: comisión de experiencias de pago (principal), micropago de desvelo en planes especiales/saturados, las capas de cuenta de negocio (CPA por asistente confirmado y suscripción de herramientas, ver sección propia) y, a futuro, la publicidad (espacios destacados o patrocinados de marcas y locales). Los planes gratuitos de usuario no generan ingreso directo: su trabajo es crear la red, el contenido y la retención.
 
@@ -366,7 +375,8 @@ Estructura del menú de ajustes:
 - Seguridad: contraseña, verificación en dos pasos, dispositivos y sesiones activas, estado de verificación de identidad.
 - Notificaciones, granular: planes cerca de ti, recordatorios y reconfirmación del día, mensajes, nuevos seguidores, actualizaciones de planes que sigues.
 - Descubrimiento: intereses y categorías, rango de edad preferido, radio geográfico, idioma de los planes.
-- Pagos: métodos de pago, historial de reservas, reembolsos.
+- Pagos: métodos de pago, historial de reservas, reembolsos, recibos y reclamaciones.
+- Cobros (si organizas planes de pago): alta con datos fiscales e IBAN, lo retenido, lo que está en camino y lo pagado, y las facturas de la comisión.
 - Tu seguridad: contactos de confianza y SOS, cuentas bloqueadas, tus reportes (con su estado) y estado de tu cuenta (decisiones de moderación sobre ti, con sus motivos y la opción de apelar).
 - Tus datos y privacidad: descargar una copia de tus datos, consentimientos (con su historial), corregir tus datos, términos y política de privacidad, eliminar cuenta.
 
@@ -654,7 +664,11 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Inscripción. Relación Usuario–Plan para la participación, solo en planes apuntados. plan_id, usuario_id, estado (solicitada, aprobada, rechazada, confirmada, en lista de espera con su posición, cancelada, cancelada tarde, asistió, no-show), reconfirmación del día (bool, con fecha), pago_id (nulo en planes gratuitos), importe reembolsado, fecha. Es la entidad donde viven la lista de espera con sobreasignación y la reconfirmación.
 - Solicitud de asistencia. Relación Usuario–Plan en los planes con aprobación manual. plan_id, usuario_id, estado (pendiente, aceptada, rechazada), mensaje de presentación, fecha. La aceptan el anfitrión o los admins del grupo organizador; una solicitud aceptada equivale a una inscripción aprobada.
 - Asistencia real. Relación Usuario–Plan que registra la asistencia verificada por geolocalización. plan_id, usuario_id, fecha y hora, método (QR del anfitrión en el piloto, marcada a mano por el anfitrión, o geolocalización más adelante), visibilidad (pública o privada). Es distinta de la Inscripción: un plan libre no tiene inscripciones pero sí asistencias reales; un plan apuntado tiene ambas. Alimenta el recuento de asistentes reales del plan y las Vividas del perfil; los registros con visibilidad privada no se listan por identidad y solo cuentan en el total a partir del umbral de anonimato.
-- Pago. id, inscripción_id, usuario_id, importe, comisión (15% en planes de pago), tipo (reserva de evento, desvelo, boost de publicidad, suscripción, CPA), estado de escrow (retenido, liberado, reembolsado), método de pago, fecha de liberación, fecha de reembolso. Centraliza el modelo escrow y las reglas de cancelación.
+- Pago. id, inscripción_id, usuario_id, importe, comisión (15% en planes de pago, IVA incluido), tipo (reserva de evento, desvelo, boost de publicidad, suscripción, CPA), estado (pendiente de pago, retenido, liberado, pagado al anfitrión, reembolsado, reembolso parcial, en revisión por reclamación), importe reembolsado y motivo, método de pago, número de recibo, id del PaymentIntent de Stripe, fecha de liberación, de pago al anfitrión y de reembolso. Centraliza el modelo escrow y las reglas de cancelación.
+- Método de pago. usuario_id, marca, últimos 4 dígitos, caducidad, principal (bool). Los datos de la tarjeta los guarda Stripe.
+- Cuenta de cobro. usuario_id (anfitrión), tipo (particular o autónomo/empresa), nombre legal, NIF, dirección fiscal, IBAN (cifrado), id de la cuenta conectada de Stripe, estado (en revisión, activa, faltan datos, desactivada).
+- Transferencia. cuenta de cobro, plan, importe neto, fecha, id de Stripe; con su reversión si hay reembolso posterior.
+- Factura. emisor, destinatario, serie y número, tipo (recibo de reserva, factura de la entrada, factura mensual de la comisión), base, IVA, total, fecha, PDF.
 - Reseña. id, plan_id, autor_id, sujeto_id (anfitrión o asistente reseñado), estrellas, texto, fecha. Post-plan. Alimenta la reputación del usuario y, agregada, la del lugar.
 - Valoración de plan. id, plan_id, autor_id (asistente), estrellas (1–5), opinión (máx. 500), visibilidad (pública / privada / nula = la configuración general del autor), fecha. Se muestra en la pestaña Valoraciones del perfil según las preferencias del autor (Usuario: valoraciones por defecto y audiencia de las públicas y de las privadas). Cuenta, anónima, en la media del plan.
 

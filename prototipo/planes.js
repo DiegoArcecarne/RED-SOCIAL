@@ -11,10 +11,11 @@ const LATE_CANCEL_HOURS = 24;          // cancelar con menos de 24 h es una canc
 const CHECKIN_BEFORE_MIN = 60, CHECKIN_AFTER_MIN = 240;
 const CHECKIN_WINDOW_MS = 10 * 60 * 1000;   // el código de llegada cambia cada 10 minutos
 const DEMO_CHECKIN_ANYTIME = true;     // en la demo se puede registrar la llegada a cualquier hora
+// Las de PRODUCTO.md (Modelo económico). Las elige el anfitrión al publicar un plan de pago.
 const CANCEL_POLICIES = {
-  flexible: { label:'Flexible', text:'Reembolso completo hasta 24 h antes; después, sin reembolso.' },
-  moderada: { label:'Moderada', text:'Reembolso completo hasta 5 días antes; después, el 50 %.' },
-  estricta: { label:'Estricta', text:'El 50 % hasta 7 días antes; después, sin reembolso.' },
+  flexible: { label:'Flexible', text:'reembolso completo hasta 24 h antes; después, sin reembolso.' },
+  moderada: { label:'Moderada', text:'reembolso completo hasta 48 h antes, el 50 % entre 48 y 24 h, y sin reembolso en las últimas 24 h.' },
+  estricta: { label:'Estricta', text:'reembolso completo hasta 7 días antes; después, sin reembolso.' },
 };
 const QR_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
 
@@ -81,12 +82,18 @@ function clearPlanPhoto(){ state.draft.photo = null; const pv = document.getElem
 function joinPlan(id){
   const p = getPlan(id); if (!p || isCancelled(p)) return;
   if (!requireVerified('Verifica tu identidad para apuntarte', () => joinPlan(id))) return;
-  if (isFull(p)) return joinWaitlist(id);
-  state.joined.add(id); p.joined = (p.joined || 0) + 1;
+  const pay = p.paid && myPayment(id);
+  if (isFull(p) && !(pay && pay.status === 'pendiente')) return joinWaitlist(id);
+  if (p.paid && !(pay && pay.status === 'retenido')) return openCheckout(id);   // de pago: primero se paga (pagos.js)
+  completeJoin(id, 'Apuntado · te esperamos');
+}
+function completeJoin(id, msg){
+  const p = getPlan(id); if (!p) return;
+  if (!state.joined.has(id)){ state.joined.add(id); p.joined = (p.joined || 0) + 1; }
   ensurePlanChat(id);
   remindJoined(p);
   saveState();
-  toast(p.paid ? `Plaza reservada · ${p.price} € retenidos hasta el plan` : 'Apuntado · te esperamos');
+  toast(msg);
   renderDetail(id);
 }
 // Recordatorio al apuntarse: si es en las próximas 24 h, ya; si no, se programaría para el día antes.
@@ -107,7 +114,10 @@ function releaseSpot(id){
   const p = getPlan(id); if (!p) return;
   const next = p.waitlist.shift();
   if (!next){ return; }
-  if (next === 'me'){
+  if (next === 'me' && p.paid){   // de pago: la plaza se guarda 24 h para que pagues
+    const x = newPayment(p, 'me', 'pendiente'); x.dueAt = Date.now() + PAY_WINDOW_HOURS * 3600000;
+    notify('plaza', `¡Hay plaza para ti en ${p.title}! Paga en las próximas ${PAY_WINDOW_HOURS} h para confirmarla.`, { planId: id });
+  } else if (next === 'me'){
     state.joined.add(id); ensurePlanChat(id);
     notify('plaza', `¡Tienes plaza en ${p.title}! Ya estás apuntado.`, { planId: id });
   } else p.joined = (p.joined || 0) + 1;
@@ -122,7 +132,7 @@ function demoSomeoneCancels(id){
 function refundFor(p){
   if (!p.paid) return null;
   const h = hoursTo(p), pol = p.cancelPolicy || 'flexible';
-  const pct = pol === 'flexible' ? (h >= 24 ? 100 : 0) : pol === 'moderada' ? (h >= 120 ? 100 : 50) : (h >= 168 ? 50 : 0);
+  const pct = pol === 'flexible' ? (h >= 24 ? 100 : 0) : pol === 'moderada' ? (h >= 48 ? 100 : (h >= 24 ? 50 : 0)) : (h >= 168 ? 100 : 0);
   return { pct, amount: Math.round(p.price * pct) / 100, policy: CANCEL_POLICIES[pol] };
 }
 function openCancel(id){
@@ -132,7 +142,7 @@ function openCancel(id){
     <div class="sheet-h"><span>Cancelar asistencia</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list">
       <p class="hint"><b>${escapeHtml(p.title)}</b> · ${fmtWhen(new Date(p.when))}</p>
-      ${rf ? `<div class="vg-note">${ico('euro')}<p>Política ${rf.policy.label.toLowerCase()}: ${rf.policy.text}<br><b>Si cancelas ahora te devolvemos ${rf.amount} € (${rf.pct} %).</b></p></div>` : ''}
+      ${rf && (myPayment(id) || {}).status === 'retenido' ? `<div class="vg-note">${ico('euro')}<p>Política ${rf.policy.label.toLowerCase()}: ${rf.policy.text}<br><b>${rf.pct ? `Si cancelas ahora te devolvemos ${money(rf.amount)} (${rf.pct} %).` : 'Si cancelas ahora no hay reembolso.'}</b></p></div>` : ''}
       ${late ? `<div class="vg-note">${ico('clock')}<p>Falta menos de un día: cuenta como <b>cancelación tardía</b> en tu fiabilidad. No es lo mismo que no presentarse, pero se ve.</p></div>`
         : `<p class="hint">Avisar con tiempo no afecta a tu fiabilidad.</p>`}
       ${p.waitlist.length ? `<p class="hint">Tu plaza pasará a la primera persona de la lista de espera.</p>` : ''}
@@ -147,9 +157,10 @@ function confirmCancel(id){
   p.joined = Math.max(0, (p.joined || 0) - 1);
   if (late){ ME.stats = ME.stats || {}; ME.stats.lateCancels = (ME.stats.lateCancels || 0) + 1; }
   leavePlanChat(id);
+  const paid = rf && refundMyPayment(p, rf);
   releaseSpot(id);
   saveState(); closeOverlay();
-  toast('Asistencia cancelada' + (rf ? ` · te devolvemos ${rf.amount} €` : '') + (late ? ' · cancelación tardía' : ''));
+  toast('Asistencia cancelada' + (paid && rf.pct ? ` · te devolvemos ${money(rf.amount)}` : '') + (late ? ' · cancelación tardía' : ''));
   renderDetail(id);
 }
 
@@ -280,6 +291,7 @@ function reliability(){
 // Demo: simula que el plan ya ha pasado. Sin llegada registrada, cuenta como no presentado.
 function demoPlanEnded(id){
   const p = getPlan(id); if (!p) return;
+  if (p.paid){ releasePlanPayments(id); saveState(); }   // celebrado: el dinero va camino del anfitrión
   if (state.attended.has(id)){ notify('fiabilidad', `¿Qué tal ${p.title}? Valóralo para ayudar a otros a decidir.`, { planId: id, action: `openRatingSheet('${id}')` }); toast('Asististe: suma a tu fiabilidad'); return; }
   if (!state.joined.has(id)) return;
   ME.stats = ME.stats || {}; ME.stats.noShows = (ME.stats.noShows || 0) + 1;
@@ -331,6 +343,7 @@ function openCancelPlan(id){
 function confirmCancelPlan(id){
   const p = getPlan(id); if (!p) return;
   p.status = 'cancelado'; planChatSystem(id, 'El anfitrión ha cancelado el plan.');
+  if (p.paid) refundAllForPlan(p, 'El anfitrión canceló el plan: reembolso completo');
   saveState(); closeOverlay(); toast(`Plan cancelado · avisamos a ${p.joined || 0} personas`); renderDetail(id);
 }
 
@@ -360,8 +373,9 @@ const NOTIF_TYPES = {
   fiabilidad:   ['check','Después del plan','Llegadas, no presentados y valoraciones'],
   seguidor:     ['user','Seguidores','Solicitudes para seguirte y respuestas a las tuyas'],
   mencion:      ['at','Menciones','Cuando te mencionan o te etiquetan'],
+  pago:         ['card','Pagos','Pagos, reembolsos, recibos y cobros'],
 };
-function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true, seguidor:true, mencion:true }, ME.notifPrefs || {}); }
+function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true, seguidor:true, mencion:true, pago:true }, ME.notifPrefs || {}); }
 // "seguridad" (SOS, decisiones de moderación, resultado de tus reportes) no se puede desactivar.
 function notify(type, text, ref){
   if (type !== 'seguridad' && !notifPrefs()[type]) return null;
@@ -431,7 +445,11 @@ function simulateHostDecision(planId, decision){
   const p = getPlan(planId), r = REQUESTS.find(x => x.planId === planId && x.userId === 'me' && x.status === 'pendiente');
   if (!p || !r) return;
   r.status = decision || 'aceptada'; state.requested.delete(planId);
-  if (r.status === 'aceptada'){ state.joined.add(planId); p.joined = (p.joined || 0) + 1; ensurePlanChat(planId); notify('solicitud', `Te han aceptado en ${p.title}. Ya estás apuntado.`, { planId }); }
+  if (r.status === 'aceptada' && p.paid){   // de pago: aceptado, falta pagar (24 h)
+    const x = newPayment(p, 'me', 'pendiente'); x.dueAt = Date.now() + PAY_WINDOW_HOURS * 3600000;
+    notify('solicitud', `Te han aceptado en ${p.title}. Paga ${money(p.price)} en las próximas ${PAY_WINDOW_HOURS} h para confirmar tu plaza.`, { planId });
+  }
+  else if (r.status === 'aceptada'){ state.joined.add(planId); p.joined = (p.joined || 0) + 1; ensurePlanChat(planId); notify('solicitud', `Te han aceptado en ${p.title}. Ya estás apuntado.`, { planId }); }
   else notify('solicitud', `No hay plaza para ti en ${p.title} esta vez.`, { planId });
   saveState();
   if (location.hash === '#/plan/' + planId) renderDetail(planId);

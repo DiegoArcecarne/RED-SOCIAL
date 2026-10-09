@@ -507,8 +507,13 @@ check('lista de espera: puesto 4', pl.run('waitPos(getPlan("p7"))') === 4 && pl.
 pl.run('demoSomeoneCancels("p7"); demoSomeoneCancels("p7"); demoSomeoneCancels("p7")');
 check('lista de espera: avanza', pl.run('waitPos(getPlan("p7"))') === 1 && !pl.run('state.joined.has("p7")'));
 pl.run('demoSomeoneCancels("p7")');
-check('lista de espera: plaza para ti y aviso', pl.run('state.joined.has("p7")') && pl.run('NOTIFICATIONS[0].type') === 'plaza' && !!pl.run('planChat("p7")'));
-check('política de cancelación: moderada a 52 h = 50 %', pl.run('refundFor(getPlan("p3")).pct') === 50);
+check('lista de espera (plan de pago): plaza guardada 24 h para pagar y aviso', pl.run('myPayment("p7").status') === 'pendiente' && pl.run('NOTIFICATIONS[0].type') === 'plaza' && !pl.run('state.joined.has("p7")')
+  && (pl.nav('plan/p7'), pl.html('view-detail').includes('Pagar 14 € y confirmar')));
+pl.run('openCheckout("p7"); payNow()');
+check('lista de espera: al pagar, plaza y chat', pl.run('state.joined.has("p7")') && pl.run('myPayment("p7").status') === 'retenido' && !!pl.run('planChat("p7")'));
+const pol = (k, h) => pl.run(`refundFor({ paid:true, price:20, cancelPolicy:"${k}", when: new Date(Date.now() + ${h} * 3600000) }).pct`);
+check('políticas de cancelación (PRODUCTO.md): flexible, moderada y estricta', pol('flexible', 30) === 100 && pol('flexible', 10) === 0 && pol('moderada', 50) === 100 && pol('moderada', 30) === 50
+  && pol('moderada', 10) === 0 && pol('estricta', 200) === 100 && pol('estricta', 100) === 0);
 pl.run('openCancel("p9")'); h = pl.html('overlay'); rendered += h;
 check('cancelar con menos de 24 h: avisa de cancelación tardía', h.includes('cancelación tardía') && h.includes('Cancelar mi asistencia'));
 const j9 = pl.run('getPlan("p9").joined');
@@ -516,6 +521,8 @@ pl.run('confirmCancel("p9")');
 check('cancelar: libera la plaza, cuenta como tardía y sale del chat', !pl.run('state.joined.has("p9")') && pl.run('getPlan("p9").joined') === j9 - 1
   && pl.run('reliability().late') === 1 && !(pl.run('planChat("p9") && planChat("p9").members.includes("me")')));
 pl.run('joinPlan("p12")');
+check('plan de pago: apuntarse abre el pago', pl.html('overlay').includes('Reservar plaza') && !pl.run('state.joined.has("p12")'));
+pl.run('payNow()');
 check('apuntarse: entra en el chat del plan', pl.run('state.joined.has("p12")') && pl.run('planChat("p12").members.includes("me")'));
 pl.run('openCheckin("p12")'); h = pl.html('overlay'); rendered += h;
 check('llegada: escanear QR o escribir el código', h.includes('Código del anfitrión') && h.includes('QR de llegada'));
@@ -551,9 +558,11 @@ check('cancelar el plan: aviso y fuera de Descubrir', h.includes('ha cancelado e
 pl.run('requestAttendance("p4")');
 check('solicitar ir a un plan con aprobación', pl.run('state.requested.has("p4")'));
 pl.run('simulateHostDecision("p4", "aceptada")');
-check('te aceptan: apuntado, chat y notificación', pl.run('state.joined.has("p4")') && !!pl.run('planChat("p4")') && pl.run('NOTIFICATIONS[0].text').includes('Te han aceptado'));
+check('te aceptan en un plan de pago: 24 h para pagar', pl.run('myPayment("p4").status') === 'pendiente' && pl.run('NOTIFICATIONS[0].text').includes('Te han aceptado') && pl.run('NOTIFICATIONS[0].text').includes('Paga'));
+pl.run('joinPlan("p4"); payNow()');
+check('te aceptan: apuntado, chat y notificación', pl.run('state.joined.has("p4")') && !!pl.run('planChat("p4")') && pl.run('NOTIFICATIONS.some(n => n.text.includes("Te han aceptado"))'));
 pl.run('demoPlanEnded("p4")');
-check('no presentarse cuenta en la fiabilidad', pl.run('reliability().noShows') === 1 && pl.run('reliability().pct') < 100 && pl.run('NOTIFICATIONS[0].type') === 'fiabilidad');
+check('no presentarse cuenta en la fiabilidad (y el pago va al anfitrión)', pl.run('reliability().noShows') === 1 && pl.run('reliability().pct') < 100 && pl.run('NOTIFICATIONS[0].type') === 'fiabilidad' && pl.run('myPayment("p4").status') === 'liberado');
 pl.nav('perfil');
 check('perfil: fiabilidad agregada (sin decir a qué planes)', pl.html('view-perfil').includes('Fiabilidad') && pl.html('view-perfil').includes('1 no presentado'));
 const pl2 = createEnv(pst);
@@ -894,6 +903,78 @@ const t2 = createEnv(tst);
 check('persisten decisiones, apelaciones, sanciones, SOS, contactos y consentimientos', t2.run('MOD_ACTIONS.find(a => a.id === "ma1").status') === 'revocada' && t2.run('isSanctioned("alexv")')
   && t2.run('SAFETY_EVENTS.some(e => e.type === "sos")') && t2.run('trustedContacts().length') === 2 && t2.run('consentValue("analitica")') === true && t2.run('REPORTS.some(r => r.reporterId === "me")'));
 check('persisten los comentarios retirados y retenidos', !t2.run('visibleComments(POSTS.find(p => p.id === "po7")).some(c => c.id === "cm-a1")'));
+
+// --- Pagos: reservar con dinero retenido, 15 % de comisión, reembolsos, reclamaciones, cobros del anfitrión y facturas ---
+const pyst = {};
+const py = createEnv(pyst);
+const sp22 = py.run('splitFor(22)');
+check('reparto: 15 % de comisión con el IVA dentro; el resto, para el anfitrión', sp22.fee === 3.3 && sp22.net === 18.7 && sp22.feeBase === 2.73 && sp22.feeVat === 0.57);
+check('validación: DNI, NIE e IBAN (dígitos de control)', py.run('validTaxId("12345678Z") && validTaxId("X1234567L") && !validTaxId("12345678A")') && py.run('validIban("ES91 2100 0418 4502 0005 1332") && !validIban("ES91 2100 0418 4502 0005 1333")'));
+py.nav('plan/p12'); h = py.html('view-detail'); rendered += h;
+check('ficha de un plan de pago: "Reservar · precio" y pago protegido', h.includes('Reservar · 12 €') && h.includes('pago protegido hasta el plan'));
+py.run('joinPlan("p12")'); h = py.html('overlay'); rendered += h;
+check('pagar: política, dinero retenido, móvil y tarjeta guardada', h.includes('Cancelación flexible') && h.includes('Lo retenemos hasta el plan') && h.includes('Apple Pay o Google Pay') && h.includes('Visa ···· 4242') && h.includes('Pagar 12,00 €'));
+py.run('setCheckout("method", "nueva")'); set(py, 'f-card', '4242 4242 4242 4241'); set(py, 'f-exp', '12/30'); set(py, 'f-cvc', '123'); py.run('payNow()');
+check('tarjeta con un número mal escrito: error y no se cobra', py.html('overlay').includes('no es válido') && !py.run('myPayment("p12")'));
+set(py, 'f-card', '4242424242424242'); set(py, 'f-exp', '01/20'); set(py, 'f-cvc', '123'); py.run('payNow()');
+check('tarjeta caducada: error', py.html('overlay').includes('caducada'));
+set(py, 'f-card', '4000 0000 0000 0002'); set(py, 'f-exp', '12/30'); set(py, 'f-cvc', '123'); py.run('payNow()');
+check('tarjeta rechazada por el banco: error y no se apunta', py.html('overlay').includes('rechazado el pago') && !py.run('state.joined.has("p12")'));
+set(py, 'f-card', '4000 0027 6000 3184'); set(py, 'f-exp', '12/30'); set(py, 'f-cvc', '123'); py.run('payNow()');
+check('3D Secure: el banco pide confirmar', py.html('overlay').includes('Confirma el pago en tu banco') && !py.run('myPayment("p12")'));
+py.run('completePayment(state.checkout.pending)');
+check('pago confirmado: retenido, apuntado, recibo y tarjeta guardada', py.run('myPayment("p12").status') === 'retenido' && py.run('state.joined.has("p12")') && /^PL-\d{4}-\d{6}$/.test(py.run('myPayment("p12").receiptNo'))
+  && py.run('PAYMENT_METHODS.length') === 2 && py.run('NOTIFICATIONS[0].type') === 'pago');
+check('ficha: pagado y recibo', py.html('view-detail').includes('Pagado 12,00 €') && py.html('view-detail').includes('openReceipt('));
+py.run('openCancel("p12")'); check('cancelar con tiempo (flexible): te devolvemos todo', py.html('overlay').includes('te devolvemos 12 €'));
+py.run('confirmCancel("p12")');
+check('reembolso completo: estado, importe y aviso', py.run('PAYMENTS.find(x => x.planId === "p12" && x.userId === "me").status') === 'reembolsado' && py.run('PAYMENTS.find(x => x.planId === "p12" && x.userId === "me").refunded') === 12 && py.run('NOTIFICATIONS[0].text').includes('Te devolvemos 12,00 €'));
+py.run('joinPlan("p3"); payWithWallet()');
+check('pagar con el móvil (Apple Pay o Google Pay)', py.run('myPayment("p3").method') === 'Pago con el móvil' && py.run('state.joined.has("p3")'));
+py.run('getPlan("p3").when = new Date(Date.now() + 30 * 3600000); confirmCancel("p3")');
+check('cancelar en la franja del 50 % (moderada): reembolso parcial', py.run('myPayment("p3").status') === 'reembolso_parcial' && py.run('myPayment("p3").refunded') === 9);
+py.run('joinPlan("p9")'); py.run('getPlan("p12").status = "activo"'); py.run('joinPlan("p12"); payNow()'); py.run('confirmCancelPlan("p12")');
+check('cancela el anfitrión: reembolso del 100 % aunque la política no lo diera', py.run('myPayment("p12").status') === 'reembolsado' && py.run('myPayment("p12").refundReason').includes('canceló'));
+py.nav('pagos'); h = py.html('view-page'); rendered += h;
+check('pagos y reembolsos: tarjetas, pagos con su estado, recibos y reclamar', h.includes('Visa ···· 4242') && h.includes('Retenido hasta el plan') && h.includes('Reembolso parcial') && h.includes('Pagado al anfitrión')
+  && h.includes('Recibo') && h.includes("openClaim('pay1')"));
+py.run('openReceipt("pay1")'); h = py.html('overlay'); rendered += h;
+check('recibo: número, plan, importe y quién cobra', h.includes('PL-2026-000118') && h.includes('Cata de vinos naturales') && h.includes('22,00 €') && h.includes('en nombre de Vinos Vivos'));
+py.run('openClaim("pay1"); state.claim.reason = "no_celebrado"'); set(py, 'f-claim', 'No había nadie en el sitio'); py.run('submitClaim()');
+const claimRep = py.run('REPORTS.slice(-1)[0]');
+check('reclamar: pausa el pago al anfitrión y va a moderación', py.run('PAYMENTS.find(x => x.id === "pay1").status') === 'en_revision' && claimRep.paymentId === 'pay1' && claimRep.objectType === 'plan' && claimRep.evidence.includes('No había nadie'));
+py.nav('moderacion'); h = py.html('view-page');
+check('panel: la reclamación con su pago y "Reembolsar"', h.includes('Reclamación de un pago de 22,00 €') && h.includes(`applyModAction('${claimRep.id}','reembolsar')`));
+py.run(`applyModAction("${claimRep.id}", "reembolsar")`);
+check('reclamación aceptada: reembolso completo y aviso', py.run('PAYMENTS.find(x => x.id === "pay1").status') === 'reembolsado' && py.run('NOTIFICATIONS.some(n => n.text.startsWith("Reclamación aceptada"))'));
+// Cobros del anfitrión
+py.nav('crear-plan'); py.run('setDraft("price", "pago")'); set(py, 'f-price', '20'); set(py, 'f-title', 'Taller de cerámica'); py.run('publishPlan()');
+check('plan de pago sin cobros configurados: no se publica y lleva a configurarlos', py.run('PLANS[0].title') !== 'Taller de cerámica' && py.run('location.hash') === '#/cobros');
+py.nav('cobros'); h = py.html('view-page'); rendered += h;
+check('alta de cobros: tipo, datos fiscales e IBAN', h.includes('Configura tus cobros') && h.includes('Particular') && h.includes('Autónomo o empresa') && h.includes('f-iban') && h.includes('85 %'));
+set(py, 'f-legal', 'Marina López'); set(py, 'f-taxid', '12345678A'); set(py, 'f-addr', 'Calle Mayor 1, Madrid'); set(py, 'f-iban', 'ES9121000418450200051332'); py.run('submitPayoutSetup()');
+check('alta de cobros: DNI no válido', py.html('view-page').includes('no es válido') && !py.run('ME.payouts'));
+set(py, 'f-taxid', '12345678Z'); py.run('submitPayoutSetup()');
+check('alta de cobros: en revisión (Stripe verifica)', py.run('ME.payouts.status') === 'en_revision' && py.html('view-page').includes('Estamos verificando'));
+py.run('ME.payouts.status = "activa"');
+py.nav('crear-plan'); h = py.html('view-page'); rendered += h;
+check('crear plan de pago: lo que te llega y política de cancelación', h.includes('Política de cancelación') && h.includes('d-policy') && py.run('priceHint("20")').includes('te llegan 17,00 €'));
+py.run('setDraft("price", "pago"); setDraft("policy", "estricta"); state.draft.access = "libre"'); set(py, 'f-price', '20'); set(py, 'f-title', 'Taller de cerámica'); py.run('publishPlan()');
+const tp = py.run('PLANS[0]');
+check('plan de pago publicado: precio, política elegida y con reserva', tp.title === 'Taller de cerámica' && tp.paid && tp.price === 20 && tp.cancelPolicy === 'estricta' && tp.joinType === 'apuntado');
+py.run(`demoSales("${tp.id}", 3)`); py.nav('cobros'); h = py.html('view-page'); rendered += h;
+check('cobros: reservas, ventas, comisión y lo que te llega', h.includes('3 reservas') && h.includes('ventas 60,00 €') && h.includes('comisión 9,00 €') && h.includes('para ti 51,00 €') && h.includes('Retenido hasta el plan'));
+py.run(`demoHostPlanDone("${tp.id}")`); check('plan celebrado: los cobros van en camino (48 h)', py.run(`hostSales("${tp.id}").every(x => x.status === "liberado")`));
+py.run(`demoPayout("${tp.id}")`);
+check('pago al anfitrión: a su cuenta, con aviso', py.run(`hostSales("${tp.id}").every(x => x.status === "pagado")`) && py.run('NOTIFICATIONS[0].text').includes('Te hemos pagado 51,00 €') && py.run('NOTIFICATIONS[0].text').includes('ES91 ···· 1332'));
+const inv = py.run(`commissionInvoice(new Date().toISOString().slice(0, 7))`);
+check('factura mensual de la comisión: base, IVA y total', inv.fee === 9 && inv.feeBase === 7.44 && inv.feeVat === 1.56 && inv.net === 51 && /^PLC-\d{6}-0001$/.test(inv.no));
+py.run(`openInvoice("${inv.month}")`); h = py.html('overlay'); rendered += h;
+check('factura: emisor, cliente con su NIF e IVA', h.includes('Comisión por intermediación') && h.includes('12345678Z') && h.includes('IVA 21 %'));
+py.nav('ajustes'); check('ajustes: pagos y cobros', py.html('view-page').includes("go('pagos')") && py.html('view-page').includes("go('cobros')") && py.html('view-page').includes('Activos'));
+check('tus datos (RGPD): incluyen pagos, tarjetas (sin el número) y cobros (IBAN oculto)', py.run('buildExport().pagos.length') > 0 && !JSON.stringify(py.run('buildExport().formasDePago')).includes('4242424242') && py.run('buildExport().cobros.iban') === 'ES91 ···· 1332');
+const py2 = createEnv(pyst);
+check('persisten pagos, tarjetas y cobros', py2.run('PAYMENTS.length') === py.run('PAYMENTS.length') && py2.run('PAYMENT_METHODS.length') === 2 && py2.run('payoutsReady()'));
 
 const pdir0 = path.join(__dirname, '..', 'prototipo');
 // --- Compartir: web pública con vista previa, enlaces que abren la app y menú nativo ---

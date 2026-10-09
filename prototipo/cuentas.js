@@ -285,6 +285,7 @@ function freshWorld(){
   ME.mentions = {}; ME.mentionPolicy = 'todos'; ME.recentSearches = []; ME.stats = { noShows:0, lateCancels:0 }; ME.joinedPlanIds = []; ME.notifPrefs = undefined;
   ME.trustedContacts = []; ME.shareTrips = false; ME.safeCheck = false; ME.consents = undefined; ME.consentLog = [];
   drop(MOD_ACTIONS, a => a.targetUserId === 'me'); drop(SAFETY_EVENTS, () => true); delete USER_MOD.me;
+  drop(PAYMENTS, x => x.userId === 'me'); drop(PAYMENT_METHODS, () => true); ME.payouts = undefined;
   PLANS.forEach(p => { p.waitlist = (p.waitlist || []).filter(x => x !== 'me'); });
 }
 

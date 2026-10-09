@@ -213,6 +213,7 @@ const MOD_ACTION_TYPES = {
   suspender30:['clock', 'Suspender la cuenta 30 días'],
   expulsar:   ['lock', 'Cerrar la cuenta para siempre'],
   autoridades:['shield', 'Escalar a las autoridades'],
+  reembolsar: ['euro', 'Reembolsar al asistente (no se paga al anfitrión)'],
   retener:    ['clock', 'Retenido por el filtro automático'],
 };
 // Exposición de motivos (art. 17 de la Ley de Servicios Digitales): qué, por qué, con qué
@@ -234,6 +235,8 @@ function applyModAction(reportId, action){
   if (action === 'expulsar') setUserMod(uid, { status:'expulsada', until:null });
   if (action === 'autoridades') rp.escalated = true;
   const dismissed = action === 'desestimar' || action === 'publicar';
+  // Reclamación de un pago (pagos.js): si se le da la razón, se reembolsa; si no, sigue el pago al anfitrión.
+  if (rp.paymentId) resolveClaim(rp.paymentId, !dismissed);
   rp.status = dismissed ? 'desestimado' : 'resuelto'; rp.resolution = action; rp.resolvedAt = Date.now();
   // Lo retenido por el filtro: la decisión del equipo sustituye a la automática.
   const held = rp.modActionId && MOD_ACTIONS.find(a => a.id === rp.modActionId);
@@ -345,14 +348,15 @@ function modCard(rp){
     ${rp.evidence ? `<blockquote class="nudge-q">${escapeHtml(rp.evidence)}</blockquote>` : ''}
     <div class="mod-meta">${escapeHtml(u.name)} ${escapeHtml(u.handle || '')} · ${reps} ${reps === 1 ? 'reporte' : 'reportes'} · ${prior} ${prior === 1 ? 'sanción vigente' : 'sanciones vigentes'}${userMod(rp.targetUserId).strikes ? ' · ' + userMod(rp.targetUserId).strikes + (userMod(rp.targetUserId).strikes === 1 ? ' aviso' : ' avisos') : ''}</div>
     <div class="mod-meta dim">${reporter}</div>
-    <div class="mod-acts">${held ? `<button class="ph-btn" onclick="applyModAction('${rp.id}','publicar')">Publicar</button>` : `<button class="ph-btn" onclick="applyModAction('${rp.id}','desestimar')">Desestimar</button>`}
+    ${rp.paymentId ? (() => { const x = PAYMENTS.find(y => y.id === rp.paymentId); return x ? `<div class="mod-meta">${ico('euro')} Reclamación de un pago de ${money2(x.amount)} · ${escapeHtml(PAY_STATUS[x.status])}. El pago al anfitrión está en pausa.</div>` : ''; })() : ''}
+    <div class="mod-acts">${rp.paymentId ? `<button class="ph-btn" onclick="applyModAction('${rp.id}','desestimar')">No procede</button><button class="ph-btn primary" onclick="applyModAction('${rp.id}','reembolsar')">Reembolsar</button>` : `${held ? `<button class="ph-btn" onclick="applyModAction('${rp.id}','publicar')">Publicar</button>` : `<button class="ph-btn" onclick="applyModAction('${rp.id}','desestimar')">Desestimar</button>`}
       ${c ? `<button class="ph-btn" onclick="applyModAction('${rp.id}','retirar')">Retirar</button>` : ''}
-      <button class="ph-btn primary" onclick="openModActions('${rp.id}')">Más acciones</button></div></div>`;
+      <button class="ph-btn primary" onclick="openModActions('${rp.id}')">Más acciones</button>`}</div></div>`;
 }
 function openModActions(reportId){
   const rp = REPORTS.find(r => r.id === reportId); if (!rp) return;
   const c = contentOf(rp);
-  const opts = ['desestimar', c && c.held ? 'publicar' : null, c ? 'retirar' : null, 'aviso', 'alcance', 'organizar', 'suspender7', 'suspender30', 'expulsar', 'autoridades'].filter(Boolean);
+  const opts = ['desestimar', rp.paymentId ? 'reembolsar' : null, c && c.held ? 'publicar' : null, c ? 'retirar' : null, 'aviso', 'alcance', 'organizar', 'suspender7', 'suspender30', 'expulsar', 'autoridades'].filter(Boolean);
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Decidir">
     <div class="sheet-h"><span>Decidir</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list">${opts.map(k => `<button class="sh-row ${['expulsar','suspender30'].includes(k) ? 'danger' : ''}" onclick="applyModAction('${reportId}','${k}')">${ico(MOD_ACTION_TYPES[k][0])}<span>${MOD_ACTION_TYPES[k][1]}</span>${ico('chevR')}</button>`).join('')}
@@ -534,6 +538,8 @@ function buildExport(){
     reportesEnviados: myReports().map(({ reporterId, ...r }) => r),
     decisionesSobreTi: MOD_ACTIONS.filter(x => x.targetUserId === 'me'),
     seguridad: { contactosDeConfianza: trustedContacts(), eventos: SAFETY_EVENTS },
+    pagos: PAYMENTS.filter(x => x.userId === 'me'), formasDePago: PAYMENT_METHODS.map(({ brand, last4, exp }) => ({ brand, last4, exp })),
+    cobros: ME.payouts ? { ...ME.payouts, iban: maskIban(ME.payouts.iban), ventas: hostSales() } : null,
     consentimientos: { marketing: consentValue('marketing'), ubicacion: consentValue('ubicacion'), analitica: consentValue('analitica'), personalizacion: consentValue('personalizacion'), registro: ME.consentLog || [] },
   };
 }

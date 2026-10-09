@@ -135,6 +135,15 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    sin sesión te lleva a él al entrar. Con la web instalada en Android, *planes* sale en el
    menú de compartir de la galería (crea una publicación) y captura los enlaces.
    Especificación: [`../docs/compartir.md`](../docs/compartir.md).
+17. **Pagos** (simulados, sin cobros reales) — *Reservar · 12 €* abre el pago: política de
+   cancelación, dinero retenido hasta el plan, Apple Pay o Google Pay, tarjeta guardada o
+   nueva (prueba 4242 4242 4242 4242; 4000 0027 6000 3184 pide confirmar en el banco;
+   4000 0000 0000 0002 es rechazada). Reembolsos según la política (100 % si cancela el
+   anfitrión); en planes con aprobación o lista de espera, 24 h para pagar. *Ajustes ▸ Pagos
+   y reembolsos*: tarjetas, pagos con su estado, recibos y "Tengo un problema" (va al panel
+   de moderación). *Ajustes ▸ Cobros*: alta del anfitrión (DNI/NIE e IBAN), lo retenido, en
+   camino y pagado, y la factura mensual de la comisión del 15 %.
+   Especificación: [`../docs/pagos.md`](../docs/pagos.md).
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.
@@ -144,7 +153,7 @@ condiciones de las cuentas profesionales están pendientes de decidir.
 
 ## Para desarrollar
 
-Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `app.js`).
+Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `pagos.js`, `app.js`).
 `standalone.html` y `web/` se generan; no los edites a mano. Desde la raíz del repositorio:
 
 ```bash

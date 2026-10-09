@@ -51,8 +51,10 @@ Estados de la inscripción: `solicitada` → `aprobada` / `rechazada`; `confirma
 | Política | Reembolso |
 |---|---|
 | Flexible | 100 % hasta 24 h antes; después, nada |
-| Moderada | 100 % hasta 5 días antes; después, 50 % |
-| Estricta | 50 % hasta 7 días antes; después, nada |
+| Moderada | 100 % hasta 48 h antes; 50 % entre 48 y 24 h; nada en las últimas 24 h |
+| Estricta | 100 % hasta 7 días antes; después, nada |
+
+Son las de PRODUCTO.md (el prototipo usaba otros plazos hasta el bloque de pagos). El detalle del cobro y los reembolsos está en [`pagos.md`](pagos.md).
 
 - **El anfitrión cancela el plan**: aviso a todos, reembolso del 100 % y mensaje en el chat. Cuenta en la fiabilidad del anfitrión.
 

@@ -489,6 +489,21 @@ const USER_MOD = { alexv: { strikes:1 } };
 // Alertas SOS, planes compartidos con contactos de confianza y avisos de "he llegado bien".
 const SAFETY_EVENTS = [];
 
+/* Pagos (pagos.js; en la app real, Stripe Connect). Cada pago es una reserva de un plan de
+   pago: el dinero queda retenido hasta que el plan se celebra y después se paga al
+   anfitrión, menos la comisión del 15 %. status: pendiente (aceptado, falta pagar) |
+   retenido | liberado (celebrado, en camino al anfitrión) | pagado | reembolsado |
+   reembolso_parcial | en_revision (reclamación abierta). */
+const PAYMENT_METHODS = [ { id:'pm1', brand:'Visa', last4:'4242', exp:'12/28', isDefault:true } ];
+const PAYMENTS = [
+  { id:'pay1', planId:'p9', planTitle:'Cata de vinos naturales', hostName:'Vinos Vivos', userId:'me', amount:22, refunded:0,
+    status:'retenido', method:'Visa ···· 4242', at: minsAgo(3 * 1440), receiptNo:'PL-2026-000118' },
+  { id:'pay2', planId:'p3', planTitle:'Rooftop Sunset Sessions · edición de septiembre', hostName:'Azotea Círculo', userId:'me', amount:18, refunded:0,
+    status:'pagado', method:'Visa ···· 4242', at: minsAgo(26 * 1440), paidOutAt: minsAgo(22 * 1440), receiptNo:'PL-2026-000097', past:true },
+  { id:'pay3', planId:'p7', planTitle:'Jazz íntimo en Clamores · edición de agosto', hostName:'Sala Clamores', userId:'me', amount:14, refunded:14,
+    status:'reembolsado', method:'Visa ···· 4242', at: minsAgo(50 * 1440), refundedAt: minsAgo(47 * 1440), refundReason:'Cancelaste con más de 24 h: reembolso completo', receiptNo:'PL-2026-000061', past:true },
+];
+
 /* Notificaciones. type: recordatorio | solicitud | mensaje | cambio | plaza | fiabilidad.
    min: minutos desde que llegó (las nuevas guardan "at"). */
 const NOTIFICATIONS = [
@@ -512,7 +527,7 @@ if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
     STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, FOLLOW_REQUESTS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
-    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS,
+    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }
