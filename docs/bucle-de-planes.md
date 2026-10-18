@@ -27,7 +27,7 @@ Mensajería, Alcance del MVP), [`cuentas-y-acceso.md`](cuentas-y-acceso.md)
   - Foto de la cámara o de la galería. Se reduce a 1.200 px de lado mayor en JPEG, y el servidor genera miniaturas y la pasa por la moderación automática.
   - Título (máx. 60), descripción (máx. 1.000), lugar, fecha, tamaño, tema, precio, tipo de asistencia (libre, apuntarse o con aprobación) y grupo organizador.
   - Al publicarlo se crea su chat, con el anfitrión dentro.
-- **Editar** (solo el anfitrión): si cambian la fecha, la hora o el lugar, se avisa a todos los apuntados, se escribe el cambio en el chat del plan y se pide **reconfirmar** otra vez.
+- **Editar** (solo el anfitrión): si cambian la fecha, la hora o el lugar, queda en las **Novedades** del plan con el antes y el después, se avisa a todos los apuntados, se escribe el cambio en el chat del plan y se pide **reconfirmar** otra vez. El anfitrión también puede publicar avisos en Novedades: ver [`novedades.md`](novedades.md).
 
 ## Chispas: posibles planes
 
@@ -187,10 +187,10 @@ Reglas de privacidad y seguridad (el servidor las aplica en cada consulta):
 
 | Tipo | Cuándo |
 |---|---|
-| Recordatorio | Al apuntarse a un plan de las próximas 24 h; programado el día antes y 2 h antes; reconfirmación |
+| Recordatorio | De los planes a los que vas y de los que organizas: el día antes (con la reconfirmación), 2 h antes (lugar, o lugar desvelado en los secretos, y QR de llegada) y 15 min antes. Cada uno se puede desactivar en las preferencias. Si te apuntas tarde, solo llega el más cercano; si cambia la fecha o la hora, se reprograman |
 | Solicitud | Te aceptan o no; alguien quiere ir a tu plan |
 | Mensaje | Mensajes nuevos en tus chats (agrupados) |
-| Cambio | El anfitrión cambia la fecha, la hora o el lugar, o cancela |
+| Novedades | El anfitrión cambia la fecha, la hora o el lugar, cancela o publica un aviso en las Novedades del plan ([`novedades.md`](novedades.md)) |
 | Lista de espera | Hay plaza para ti |
 | Después del plan | Llegada registrada, no presentado, valora el plan |
 
@@ -198,7 +198,7 @@ Reglas de privacidad y seguridad (el servidor las aplica en cada consulta):
 - **Preferencias** por tipo. Los avisos de seguridad (SOS, cambios de última hora en un plan al que vas) no se pueden desactivar.
 - **Push**:
   - el servidor guarda los tokens de cada dispositivo y envía con APNs/FCM (app nativa) o Web Push con VAPID (web instalable; en iPhone, desde iOS 16.4 y solo con la app añadida a la pantalla de inicio);
-  - los recordatorios se programan con una cola de tareas;
+  - los recordatorios se programan con una cola de tareas al apuntarse (o al crear el plan, para el anfitrión) y se cancelan o reprograman si la inscripción se cancela o el plan cambia de hora; cada envío se registra para no repetirlo;
   - horario de silencio por la noche, salvo cambios de última hora.
 
 ## API (borrador)

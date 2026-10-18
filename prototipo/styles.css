@@ -1198,3 +1198,17 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
 .ag-entry > .ico{color:var(--ink-dim);font-size:15px;flex:none}
 .ag-feed{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;overflow-wrap:anywhere}
 .ag-feed code{font-size:12px;color:var(--ink-soft)}
+
+/* ---------- novedades del plan (planes.js) ---------- */
+.upd-list{display:flex;flex-direction:column;margin-bottom:6px}
+.upd{display:flex;gap:11px;padding:10px 0;border-top:1px solid var(--line)}
+.upd:first-child{border-top:none;padding-top:2px}
+.upd-ic{flex:none;width:32px;height:32px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center;font-size:15px;color:var(--ink-soft)}
+.upd.imp .upd-ic{border-color:var(--accent);color:var(--ink)}
+.upd-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.upd-b b{font-size:13px;display:flex;align-items:center;gap:6px}
+.upd-b p{font-size:13.5px;line-height:1.45;color:var(--ink)}
+.upd-b > span{font-size:11.5px;color:var(--ink-dim)}
+.upd-new{font-style:normal;font-size:10.5px;font-weight:700;color:#fff;background:var(--accent);border-radius:999px;padding:1px 7px}
+.upd-n{font-size:11px;font-weight:700;color:var(--ink-soft);border:1px solid var(--accent);border-radius:999px;padding:1px 8px;margin-left:6px;text-transform:none;letter-spacing:0;vertical-align:middle}
+#novedades > .btn-ghost{margin-top:6px}

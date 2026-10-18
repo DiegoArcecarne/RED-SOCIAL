@@ -174,6 +174,15 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    chispas con día) y tu historial. *Añadir al calendario del móvil* descarga un .ics; el
    botón de arriba da también la dirección para suscribirse (revocable). Ver
    [`docs/agenda.md`](../docs/agenda.md).
+22. **Novedades del plan** — en la ficha, debajo de la descripción: cambios de fecha, hora y
+   lugar (con el antes y el después), cancelaciones y avisos del anfitrión, con *Nuevo* en
+   lo que no habías visto. Cada novedad avisa a los apuntados y sale en el chat del plan;
+   los cambios importantes llegan aunque desactives las novedades. Pruébalo en *Cata de
+   vinos naturales* (*Demo: el anfitrión cambia la hora*) o en un plan tuyo (*Publicar una
+   novedad*, o *Editar* con "Explica el cambio"). Ver [`docs/novedades.md`](../docs/novedades.md).
+   **Recordatorios** de los planes a los que vas y de los tuyos: el día antes (con la
+   reconfirmación), 2 h antes (lugar y QR) y 15 min antes; se eligen en *Notificaciones ▸
+   preferencias* y se reprograman si cambia la hora (*Demo: recordatorio de 2 h antes*).
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.

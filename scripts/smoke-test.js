@@ -550,7 +550,8 @@ check('marcar una llegada a mano', pl.run(`getPlan("${npId}").attended`) === an 
 pl.run('closeOverlay()');
 pl.nav('editar-plan/' + npId); rendered += pl.html('view-page');
 pl.run(`document.getElementById("f-edate").value = "2030-06-20T21:30"; document.getElementById("f-eplace").value = PLACES[1].id; saveEditPlan("${npId}")`);
-check('editar fecha y lugar: avisa por el chat del plan', pl.run(`getPlan("${npId}").placeId`) === pl.run('PLACES[1].id') && pl.run(`planChat("${npId}").messages.some(m => m.from === "system" && m.text.startsWith("Cambio en el plan"))`));
+check('editar fecha y lugar: queda en novedades y avisa por el chat del plan', pl.run(`getPlan("${npId}").placeId`) === pl.run('PLACES[1].id') && pl.run(`planChat("${npId}").messages.some(m => m.from === "system" && m.text.startsWith("Cambio de fecha u hora: Nueva fecha:"))`)
+  && pl.run(`planChat("${npId}").messages.some(m => m.from === "system" && m.text.startsWith("Cambio de lugar: Nuevo lugar:"))`) && pl.run(`planUpdates(getPlan("${npId}")).map(u => u.type).join()`) === 'lugar,fecha');
 pl.nav('chat/' + pl.run(`planChat("${npId}").id`));
 check('chat del plan: mensajes del sistema', pl.html('view-page').includes('msg-sys'));
 pl.run(`confirmCancelPlan("${npId}")`); h = pl.html('view-detail');
@@ -1252,6 +1253,82 @@ const ag2 = createEnv(ags);
 check('persiste la dirección del calendario', ag2.run('ME.calToken') === ag.run('ME.calToken'));
 ag.run('delete getPlan("p10").hostId; freshWorld()');
 check('cuenta nueva: agenda vacía', ag.run('agendaItems().filter(i => i.kind !== "chispa").length') === 0);
+
+// --- Novedades del plan: registro de cambios y avisos, con notificación a los apuntados ---
+const nvs = {};
+const nv = createEnv(nvs);
+nv.nav('plan/p9'); h = nv.html('view-detail'); rendered += h;
+check('ficha: sección Novedades con los cambios y avisos del anfitrión', h.includes('id="novedades"') && h.includes('<h4>Novedades') && h.includes('Habrá algo de picar') && h.includes('Cambio de fecha u hora') && h.includes('Vinos Vivos ·'));
+check('novedades: marca lo que no habías visto', count(h, /class="upd-new"/g) === 1 && h.includes('1 sin ver'));
+nv.nav('feed'); nv.nav('plan/p9'); h = nv.html('view-detail');
+check('novedades: al volver, ya vistas', !h.includes('class="upd-new"') && !h.includes('sin ver'));
+const nN = nv.run('NOTIFICATIONS.length');
+nv.run('demoHostUpdate("p9")'); h = nv.html('view-detail');
+check('cambio de hora del anfitrión: novedad, notificación y chat', nv.run('planUpdates(getPlan("p9"))[0].type') === 'fecha' && nv.run('NOTIFICATIONS.length') === nN + 1
+  && nv.run('NOTIFICATIONS[0].text').startsWith('Cata de vinos naturales · cambio de fecha u hora: Nueva fecha:') && nv.run('NOTIFICATIONS[0].planId') === 'p9' && nv.run('planChat("p9").messages.slice(-1)[0].text').startsWith('Cambio de fecha u hora'));
+check('cambio de hora: hay que volver a reconfirmar y la agenda se mueve', !nv.run('state.reconfirmed.has("p9")') && nv.run('agendaItems().find(i => i.planId === "p9").start.getTime()') === nv.run('new Date(getPlan("p9").when).getTime()'));
+nv.run('ME.notifPrefs = Object.assign(notifPrefs(), { cambio:false })');
+const nN2 = nv.run('NOTIFICATIONS.length');
+nv.run('addPlanUpdate(getPlan("p9"), "aviso", "Traed chaqueta", { by:"host" })');
+check('con las novedades desactivadas no llegan los avisos…', nv.run('NOTIFICATIONS.length') === nN2);
+nv.run('addPlanUpdate(getPlan("p9"), "lugar", "Nuevo lugar: Sala Clamores, planta baja.", { by:"host" })');
+check('…pero los cambios de lugar, hora y las cancelaciones llegan siempre', nv.run('NOTIFICATIONS.length') === nN2 + 1);
+nv.run('addPlanUpdate(getPlan("p8"), "aviso", "Traed esterilla", { by:"host" })');
+check('a quien no va al plan no le llegan', nv.run('NOTIFICATIONS.length') === nN2 + 1);
+nv.run('getPlan("p8").waitlist = ["me"]; addPlanUpdate(getPlan("p8"), "fecha", "Nueva fecha: domingo.", { by:"host" })');
+check('los cambios importantes también llegan a la lista de espera', nv.run('NOTIFICATIONS.length') === nN2 + 2);
+nv.nav('plan/p9'); h = nv.html('view-detail');
+check('novedades: se muestran 3 y "Ver todas"', count(h, /class="upd /g) === 3 && h.includes('Ver todas ('));
+nv.run('state.updAll = "p9"; renderDetail("p9")');
+check('ver todas', count(nv.html('view-detail'), /class="upd /g) === nv.run('planUpdates(getPlan("p9")).length'));
+// El anfitrión publica una novedad
+nv.nav('crear'); nv.run("setDraft('access','libre')"); set(nv, 'f-title', 'Paseo nocturno por el Retiro'); set(nv, 'f-desc', 'Ruta tranquila.'); nv.run('publishPlan()');
+const hp = nv.run('PLANS[0].id');
+nv.nav('plan/' + hp); h = nv.html('view-detail');
+check('anfitrión: Novedades vacía con "Publicar una novedad"', h.includes('Aún no hay novedades') && h.includes('Publicar una novedad'));
+nv.run(`openPlanUpdate("${hp}")`); set(nv, 'f-upd', 'Traed linterna: la vuelta es de noche'); nv.run(`publishPlanUpdate("${hp}")`);
+check('anfitrión: publicar una novedad (en Novedades y en el chat)', nv.run(`planUpdates(getPlan("${hp}"))[0].text`) === 'Traed linterna: la vuelta es de noche' && nv.run(`planUpdates(getPlan("${hp}"))[0].by`) === 'me' && nv.html('view-detail').includes('Traed linterna'));
+nv.run(`openPlanUpdate("${hp}")`); set(nv, 'f-upd', 'Te voy a matar'); nv.run(`publishPlanUpdate("${hp}")`);
+check('el filtro también vale para las novedades', nv.run(`planUpdates(getPlan("${hp}")).length`) === 1);
+nv.nav('editar-plan/' + hp); set(nv, 'f-edate', '2030-06-20T21:30'); set(nv, 'f-enote', 'Por el calor, mejor más tarde.'); nv.run(`saveEditPlan("${hp}")`);
+check('editar la hora con explicación: queda el antes, el después y el motivo', nv.run(`planUpdates(getPlan("${hp}"))[0].text`).includes('(antes: ') && nv.run(`planUpdates(getPlan("${hp}"))[0].text`).endsWith('Por el calor, mejor más tarde.'));
+nv.run(`confirmCancelPlan("${hp}")`);
+check('cancelar el plan queda en Novedades', nv.run(`planUpdates(getPlan("${hp}"))[0].type`) === 'cancelado');
+nv.run('state.joined.add("p11"); adminPlan("p11", "cancelar")');
+check('cancelación del equipo: novedad y aviso a quien va', nv.run('planUpdates(getPlan("p11"))[0].by') === 'equipo' && nv.run('NOTIFICATIONS[0].text').startsWith('Mercado de diseño independiente · plan cancelado'));
+const nv2 = createEnv(nvs);
+check('persisten las novedades y lo visto', nv2.run(`planUpdates(getPlan("${hp}")).length`) === 3 && nv2.run('ME.seenUpdates.p9') > 0);
+
+// --- Recordatorios de los planes a los que vas ---
+const rms = {};
+const rm = createEnv(rms);
+check('recordatorios: el del día antes de la cata no se repite al abrir', rm.run('NOTIFICATIONS.filter(n => n.type === "recordatorio" && n.planId === "p9").length') === 1);
+const nR = rm.run('NOTIFICATIONS.length');
+rm.run('getPlan("p1").when = new Date(Date.now() + 5 * 3600000); state.joined.add("p1"); checkReminders()');
+check('apuntarse a un plan de hoy: llega solo el recordatorio más cercano (el del día)', rm.run('NOTIFICATIONS.length') === nR + 1 && rm.run('NOTIFICATIONS[0].text').startsWith('Hoy a las') && rm.run('NOTIFICATIONS[0].text').includes('Reconfirma que vas') && rm.run('NOTIFICATIONS[0].planId') === 'p1');
+rm.run('checkReminders()');
+check('cada recordatorio se envía una vez', rm.run('NOTIFICATIONS.length') === nR + 1);
+rm.run('getPlan("p1").when = new Date(Date.now() + 90 * 60000); checkReminders()');
+check('2 h antes: lugar y QR de llegada', rm.run('NOTIFICATIONS.length') === nR + 2 && /^En (1 h|2 h|90 min): El himno de la Victoria · Vermutería Victoria\. Al llegar, registra tu llegada/.test(rm.run('NOTIFICATIONS[0].text')));
+rm.run('getPlan("p1").when = new Date(Date.now() + 10 * 60000); checkReminders()');
+check('al empezar (15 min antes)', rm.run('NOTIFICATIONS.length') === nR + 3 && rm.run('NOTIFICATIONS[0].text').startsWith('Empieza en 10 min: El himno de la Victoria'));
+rm.run('addPlanUpdate(getPlan("p1"), "fecha", "Nueva fecha: más tarde.", { by:"host" }); getPlan("p1").when = new Date(Date.now() + 100 * 60000); checkReminders()');
+check('si cambia la hora, los recordatorios se vuelven a programar', rm.run('NOTIFICATIONS[0].text').startsWith('En ') && rm.run('NOTIFICATIONS[0].type') === 'recordatorio');
+rm.run('getPlan("p10").hostId = "me"; getPlan("p10").when = new Date(Date.now() + 100 * 60000); checkReminders()');
+check('quien organiza también recibe los suyos', rm.run('NOTIFICATIONS[0].text').includes('empieza Running club al anochecer. Ten a mano el QR de llegada'));
+rm.run('openNotifPrefs()'); h = rm.html('overlay');
+check('preferencias: recordatorios el día antes, 2 h antes y al empezar', h.includes('Recordatorios de tus planes') && h.includes('El día antes') && h.includes('2 horas antes') && h.includes('Al empezar') && h.includes("toggleReminderPref('horas')"));
+rm.run("toggleReminderPref('horas')"); const nR2 = rm.run('NOTIFICATIONS.length');
+rm.run('getPlan("p2").when = new Date(Date.now() + 100 * 60000); state.joined.add("p2"); checkReminders()');
+check('sin el de 2 h antes, no llega (pero queda como enviado)', rm.run('NOTIFICATIONS.length') === nR2 && rm.run('ME.remindersSent.p2.horas') === true);
+const nR6 = rm.run('NOTIFICATIONS.length'); rm.run('getPlan("p6").when = new Date(Date.now() + 100 * 60000); checkReminders()');
+check('a los planes a los que no vas no llegan', rm.run('NOTIFICATIONS.length') === nR6);
+rm.nav('plan/p9'); h = rm.html('view-detail');
+check('ficha: demo del recordatorio de 2 h antes', h.includes("demoReminder('p9')"));
+rm.run("toggleReminderPref('horas'); demoReminder('p9')");
+check('demo: llega el recordatorio de 2 h antes', rm.run('NOTIFICATIONS[0].planId') === 'p9' && rm.run('NOTIFICATIONS[0].text').startsWith('En 2 h: Cata de vinos naturales · Sala Clamores'));
+const rm2 = createEnv(rms);
+check('persiste qué recordatorios se han enviado', rm2.run('ME.remindersSent.p1.horas') === true && rm2.run('ME.remindersSent.p10.horas') === true && rm2.run('reminderPrefs().horas') === true);
 
 const pdir0 = path.join(__dirname, '..', 'prototipo');
 // --- Compartir: web pública con vista previa, enlaces que abren la app y menú nativo ---

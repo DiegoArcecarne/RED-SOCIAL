@@ -48,6 +48,9 @@ const PLANS = [
     when: hoursFromNow(28), groupMin: 4, groupMax: 15, joined: 9,
     gradient: 'g-sunset',
     summary: 'Quedada para ver el mejor atardecer de Madrid. Traed manta y algo para picar.',
+    updates: [
+      { id:'up4', type:'lugar', text:'Nos vemos en la escalera del lado del Parque del Oeste, no en la entrada principal.', at: Date.now() - 5 * 3600000, by:'host' },
+    ],
     secret: false,
   },
   {
@@ -57,6 +60,9 @@ const PLANS = [
     when: hoursFromNow(52), groupMin: 20, groupMax: 80, joined: 63,
     gradient: 'g-grape',
     summary: 'DJ set al atardecer en una de las mejores azoteas del centro. Primera consumición incluida.',
+    updates: [
+      { id:'up5', type:'aviso', text:'Confirmado el cartel: abre Lúa B2B y cierra Nacho Sol. Puerta hasta las 21:30.', at: Date.now() - 30 * 3600000, by:'host' },
+    ],
     secret: false,
   },
   {
@@ -112,6 +118,12 @@ const PLANS = [
     gradient: 'g-wine',
     summary: 'Seis referencias de vino natural con un sumiller que te lo cuenta sin pretensiones.',
     secret: false,
+    // Novedades del plan (planes.js): cambios y avisos, de la más reciente a la más antigua.
+    updates: [
+      { id:'up3', type:'aviso', text:'Habrá algo de picar con cada vino. Si tienes alguna alergia, dínoslo por el chat del plan.', at: Date.now() - 50 * 60000, by:'host' },
+      { id:'up2', type:'fecha', text:'Empezamos media hora más tarde para que dé tiempo a salir del trabajo.', at: Date.now() - 26 * 3600000, by:'host' },
+      { id:'up1', type:'plazas', text:'Abrimos 4 plazas más: ahora somos 24.', at: Date.now() - 3 * 86400000, by:'host' },
+    ],
   },
   {
     id: 'p10', title: 'Running club al anochecer', placeId: 'retiro', category: 'deporte',
@@ -226,7 +238,9 @@ const USERS = [
     bio:'Viajera y runner. Outdoor y gastronomía por Madrid.',
     profilePublic:true, presencePublic:true, followers:184, following:156,
     ratings:{ default:'publica', publica:'todos', privada:'amigos' },
-    joinedPlanIds:['p9'],   // apuntada a la cata de mañana (toca reconfirmar)
+    joinedPlanIds:['p9'],
+    seenUpdates:{ p9: Date.now() - 2 * 3600000 },
+    remindersSent:{ p9:{ dia:true } },   // recordatorios ya enviados por plan (el del día antes de la cata, en las notificaciones)   // novedades vistas por plan (la más reciente de la cata está sin ver)   // apuntada a la cata de mañana (toca reconfirmar)
     stats:{ noShows:0, lateCancels:0 },
     dmMode:'solicitud',   // quién puede escribirte: cerrado | solicitud | abierto (por defecto, bajo solicitud)
     attendedPlanIds:['p1','p5','p8','p2','p3','p6','p9'] },

@@ -92,6 +92,8 @@ erDiagram
     REPORTE ||--o| APELACION : "quien reporta pide revisar"
     PERSONA ||--o{ SOLICITUD_DATOS : "pide (RGPD)"
     USUARIO ||--o| SUSCRIPCION_CALENDARIO : "agenda en el movil"
+    PLAN ||--o{ NOVEDAD_PLAN : registra
+    USUARIO ||--o{ NOVEDAD_PLAN : publica
 
     CUENTA_EMPRESA ||--o{ SUSCRIPCION_NEGOCIO : contrata
     USUARIO ||--o{ CAMPANA_BOOST : anuncia
@@ -499,6 +501,17 @@ erDiagram
         string enlace "exportacion, firmado y caducable"
         datetime fecha
         datetime completada
+    }
+    NOVEDAD_PLAN {
+        uuid id PK
+        uuid plan_id FK
+        uuid autor_id FK "anfitrion, admin del grupo o equipo"
+        string tipo "fecha|lugar|cancelado|desvelo|aviso|plazas|info"
+        string texto "max 280 en avisos"
+        json antes_despues "en cambios"
+        bool importante "llega siempre"
+        string estado "publicada|retirada"
+        datetime fecha
     }
     SUSCRIPCION_CALENDARIO {
         uuid id PK

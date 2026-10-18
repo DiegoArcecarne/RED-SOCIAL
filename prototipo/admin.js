@@ -192,7 +192,7 @@ function adminPlan(id, action){
   if (action === 'aprobar') p.held = false;
   if (action === 'retirar') p.removed = true;
   if (action === 'restaurar') p.removed = false;
-  if (action === 'cancelar'){ p.status = 'cancelado'; planChatSystem(id, 'El equipo de planes ha cancelado este plan.'); if (p.paid) refundAllForPlan(p, 'Cancelado por planes: reembolso completo'); }
+  if (action === 'cancelar'){ p.status = 'cancelado'; addPlanUpdate(p, 'cancelado', `El equipo de planes ha cancelado este plan.${p.paid ? ' Os devolvemos el 100 % de lo pagado.' : ''}`, { by:'equipo' }); if (p.paid) refundAllForPlan(p, 'Cancelado por planes: reembolso completo'); }
   adminLog({ destacar: p.featured ? 'Destaca el plan' : 'Quita el plan de destacados', aprobar:'Aprueba el plan retenido', retirar:'Retira el plan de Descubrir', restaurar:'Restaura el plan', cancelar:'Cancela el plan' }[action], p.title);
   saveState(); closeOverlay(); toast('Hecho'); renderAdmin('planes');
 }

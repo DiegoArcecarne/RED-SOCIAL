@@ -43,6 +43,8 @@ Cada Plan se define por estos atributos:
 - Recurrencia: puntual o ancla recurrente.
 - Objeto media: el post (foto o vídeo) que representa el plan.
 
+**Novedades.** Cada plan lleva una sección de novedades: un registro de sus cambios (fecha, hora, lugar, cancelación, desvelo del lugar, plazas) y de los avisos del anfitrión, con el antes y el después en los cambios. Lo que publica el anfitrión, o lo que cambia, avisa a quienes se han apuntado; los cambios de fecha, hora o lugar y las cancelaciones llegan siempre, aunque se hayan desactivado las notificaciones de novedades. Especificación en [`docs/novedades.md`](docs/novedades.md).
+
 Cada Plan vive en dos estados principales. Próximo: perecedero y reservable. Pasado: evergreen, convertido en aftermovie que alimenta el feed social y vende la siguiente edición del plan equivalente. Entre ambos hay un momento intermedio —el plan en curso, mientras se celebra— en el que se activan las stories en vivo y las herramientas de seguridad presencial (check-in, SOS, reporte desde el chat).
 
 ## Chispas: posibles planes
@@ -785,6 +787,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Verificación de negocio. cuenta de empresa, lugar que reclama (opcional), NIF, documentos (CIF, licencia de actividad, titularidad del local, seguro de responsabilidad civil), estado (pendiente, faltan documentos, verificado, rechazado), motivo, quién la decidió y fechas.
 - Equipo y registro. Miembro del equipo (correo de trabajo, roles: administración, moderación, soporte, análisis; 2FA obligatoria), registro de cada acción del equipo (quién, rol, qué, sobre qué, antes y después, motivo, IP, fecha; solo inserción) y notas internas sobre usuarios. Ver [`docs/herramientas-internas.md`](docs/herramientas-internas.md).
 - Métrica semanal. semana, ciudad, registros, activos, planes, apuntados y asistencias verificadas; agregada cada noche a partir de eventos de producto propios.
+- Novedad del plan. plan_id, tipo (cambio de fecha u hora, de lugar, cancelación, desvelo, aviso, plazas, detalles), texto, antes y después, autor (anfitrión, admin del grupo o equipo), importante, estado (publicada o retirada), fecha. Junto con la última visita de cada usuario a cada plan, para marcar lo no visto.
 - Suscripción de calendario. usuario_id, token (aleatorio, 128 bits), fecha de creación y de revocación. La agenda en sí no se guarda: se calcula a partir de inscripciones, solicitudes, pagos, listas de espera, invitaciones de chispas y asistencias.
 - Notificación. usuario_id, tipo (recordatorio y reconfirmación, solicitud, mensaje, cambio en un plan, plaza de la lista de espera, después del plan, seguidor, mención y seguridad —resultado de tus reportes, decisiones de moderación y SOS—; y más adelante planes cerca), referencia (plan, conversación o ruta), texto, leída, fecha. Las preferencias por tipo viven en el Usuario. Los avisos de seguridad no se pueden desactivar.
 

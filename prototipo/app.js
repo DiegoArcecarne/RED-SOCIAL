@@ -132,7 +132,7 @@ function typeBadge(u){ return u.type==='profesional' ? `<span class="pro-ic" tit
    enseñan un contador "n/máx" y al guardar se recorta por si acaso. */
 const LIMITS = {
   name:30, username:30, bio:150, web:100, address:120,
-  planTitle:60, planDesc:1000, caption:2200, alt:250, comment:500,
+  planTitle:60, planDesc:1000, planUpdate:280, caption:2200, alt:250, comment:500,
   liveTitle:60, liveMsg:200, groupName:50, groupAbout:300, rating:500, message:1000,
 };
 const USERNAME_MIN = 3;
@@ -184,7 +184,7 @@ function saveState(){
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
             city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom,
-            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged, calToken: ME.calToken },
+            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged, calToken: ME.calToken, seenUpdates: ME.seenUpdates, remindersSent: ME.remindersSent, reminderPrefs: ME.reminderPrefs },
       modActions: MOD_ACTIONS, userMod: USER_MOD, safety: SAFETY_EVENTS, payments: PAYMENTS, paymentMethods: PAYMENT_METHODS, ideas: IDEAS,
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
@@ -1454,6 +1454,7 @@ function accessTag(p){
 }
 function renderDetail(id){
   const p = getPlan(id);
+  visitUpdates(p);   // novedades sin ver desde tu última visita (planes.js)
   const place = getPlace(p.placeId);
   const cat = getCategory(p.category);
   const libre = p.joinType==='libre';
@@ -1492,7 +1493,7 @@ function renderDetail(id){
       <p class="hint">${state.reconfirmed.has(p.id) ? `${ico('check')} Apuntado y reconfirmado.` : 'Apuntado.'} ${p.paid ? escapeHtml(policyLine(p)) : 'Si no puedes ir, cancela con tiempo: deja la plaza a otra persona.'}</p>
       ${pay && pay.status !== 'pendiente' ? `<div class="pay-line">${ico('card')}<span>Pagado ${money2(pay.amount)} · ${PAY_STATUS[pay.status].toLowerCase()}</span><button class="link-btn" onclick="openReceipt('${pay.id}')">Recibo</button></div>` : ''}
       ${agendaActions(p)}
-      <div class="pl-actions"><button class="link-btn" onclick="openCancel('${p.id}')">Cancelar asistencia</button><button class="link-btn dim" onclick="demoPlanEnded('${p.id}')">Demo: simular que el plan ha terminado</button></div></div>`
+      <div class="pl-actions"><button class="link-btn" onclick="openCancel('${p.id}')">Cancelar asistencia</button><button class="link-btn dim" onclick="demoReminder('${p.id}')">Demo: recordatorio de 2 h antes</button><button class="link-btn dim" onclick="demoPlanEnded('${p.id}')">Demo: simular que el plan ha terminado</button></div></div>`
     : (toPay ? `<div class="block"><h4>Tu plaza</h4><p class="hint">${ico('clock')} Te guardamos la plaza hasta ${fmtWhen(new Date(pay.dueAt))}. Paga para confirmarla; si no, pasa a la siguiente persona.</p></div>`
     : (waiting ? `<div class="block"><h4>Lista de espera</h4><p class="hint">Eres el puesto ${waiting}. Si alguien cancela, la plaza es tuya y te avisamos.</p>
       <div class="pl-actions"><button class="link-btn" onclick="leaveWaitlist('${p.id}')">Salir de la lista</button><button class="link-btn dim" onclick="demoSomeoneCancels('${p.id}')">Demo: alguien cancela</button></div></div>` : ''));
@@ -1561,6 +1562,7 @@ function renderDetail(id){
         ${p.meetPoint ? `<p class="hint">${ico('pin')} Punto de encuentro: <b>${escapeHtml(p.meetPoint)}</b></p>` : ''}
         <p class="hint">${manual?'Plan con aprobación: envía una solicitud; el creador o los admins la aceptan o rechazan.':(libre?'Plan libre: no hace falta apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.':'Plan apuntado: hay que apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.')}</p>
       </div>
+      ${updatesBlock(p)}
       ${p.held ? `<div class="pl-banner">${ico('clock')}<div><b>En revisión</b><p>El filtro automático ha retenido este plan: solo lo ves tú hasta que lo revise una persona del equipo. Puedes apelar en Ajustes ▸ Estado de tu cuenta.</p></div></div>` : ''}
       ${cancelBanner}${reconfirmBanner}${inviteBanner(p)}
       ${myBlock}
@@ -2466,9 +2468,10 @@ function showView(name){
 }
 function scrollTop(v){ const el=document.getElementById('view-'+v); if(el) el.scrollTop=0; }
 function router(){
-  stopMusic(); updateDmBadge(); updateNotifBadge(); setChromeHidden(false);
+  stopMusic(); checkReminders(); updateDmBadge(); updateNotifBadge(); setChromeHidden(false);
   const hash = location.hash.replace(/^#\//,'') || 'feed';
   const [route,arg] = hash.split('/');
+  if (route !== 'plan'){ state.updVisit = null; state.updAll = null; }   // al volver a la ficha, se recalculan las novedades sin ver
   switch(route){
     case 'mapa':    state.navTab='mapa'; renderMap(); showView('mapa'); break;
     case 'grupos':  state.navTab='grupos'; renderGroups(); showView('grupos'); break;
@@ -2532,6 +2535,8 @@ function init(){
   if (acc){ loadState(); loadAdmin(); }   // loadAdmin: lo que ha cambiado el equipo (admin.js)
   if (!acc || !acc.onboarded) rememberDestino();   // enlace compartido: se abre al entrar
   registerServiceWorker();
+  // Recordatorios de tus planes cada minuto (unref: no retiene el proceso fuera del navegador).
+  const remTimer = setInterval(checkReminders, 60000); if (remTimer && remTimer.unref) remTimer.unref();
   window.addEventListener('pagehide', saveState);
   document.addEventListener('visibilitychange', () => { if (document.hidden) stopMusic(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !overlayEl().hidden) (liveState.host ? endLive() : closeOverlay()); });

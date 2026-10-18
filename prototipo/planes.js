@@ -91,15 +91,48 @@ function completeJoin(id, msg){
   const p = getPlan(id); if (!p) return;
   if (!state.joined.has(id)){ state.joined.add(id); p.joined = (p.joined || 0) + 1; }
   ensurePlanChat(id);
-  remindJoined(p);
+  checkReminders();   // si es en las próximas 24 h, el recordatorio llega ya
   saveState();
   toast(msg);
   renderDetail(id);
 }
-// Recordatorio al apuntarse: si es en las próximas 24 h, ya; si no, se programaría para el día antes.
-function remindJoined(p){
-  if (hoursTo(p) <= RECONFIRM_HOURS) notify('recordatorio', `${dayWord(p)} a las ${fmtHour(new Date(p.when))}: ${p.title}. Reconfirma que vas.`, { planId: p.id });
+/* ---------- recordatorios de tus planes ----------
+   Para los planes a los que vas y los que organizas: el día antes (con la reconfirmación),
+   2 h antes (lugar y QR de llegada) y 15 min antes. Cada uno se envía una vez y, si te
+   apuntas tarde, solo el más cercano. Si cambian la fecha o la hora, se vuelven a programar.
+   En la app real los programa el servidor (docs/bucle-de-planes.md, Recordatorios); aquí se
+   comprueban al abrir la app, al navegar y cada minuto. */
+const REMINDERS = [['dia', 24 * 60, 'El día antes', 'Con la reconfirmación'], ['horas', 120, '2 horas antes', 'Lugar y QR de llegada'], ['empieza', 15, 'Al empezar', '15 minutos antes']];
+function reminderPrefs(){ return Object.assign({ dia:true, horas:true, empieza:true }, ME.reminderPrefs || {}); }
+function toggleReminderPref(k){ ME.reminderPrefs = Object.assign(reminderPrefs(), { [k]: !reminderPrefs()[k] }); saveState(); openNotifPrefs(); }
+const inLabel = (ms) => { const m = Math.max(1, Math.round(ms / 60000)); return m < 60 ? `${m} min` : `${Math.round(m / 60)} h`; };
+function reminderText(p, slot, msLeft){
+  const host = isHost(p), hour = fmtHour(new Date(p.when)), left = inLabel(msLeft || new Date(p.when) - Date.now());
+  if (slot === 'dia') return host ? `Tu plan es ${dayWord(p).toLowerCase()} a las ${hour}: ${p.title}. Hay ${p.joined || 0} personas apuntadas.`
+    : `${dayWord(p)} a las ${hour}: ${p.title}. ${state.reconfirmed.has(p.id) ? 'Ya has reconfirmado: te esperan.' : 'Reconfirma que vas para no perder tu plaza.'}`;
+  if (slot === 'horas') return host ? `En ${left} empieza ${p.title}. Ten a mano el QR de llegada.`
+    : `En ${left}: ${p.title} · ${p.secret ? 'el lugar ya está desvelado en la ficha' : agWhere(p)}. Al llegar, registra tu llegada con el QR del anfitrión.`;
+  return host ? `Empieza en ${left}: ${p.title}. Abre el QR de llegada.` : `Empieza en ${left}: ${p.title}. Si al final no puedes ir, cancela y deja tu plaza a otra persona.`;
 }
+function sendReminder(p, slot, msLeft){
+  ME.remindersSent = Object.assign({}, ME.remindersSent, { [p.id]: Object.assign({}, (ME.remindersSent || {})[p.id], { [slot]: true }) });
+  return reminderPrefs()[slot] ? notify('recordatorio', reminderText(p, slot, msLeft), { planId: p.id }) : null;
+}
+function checkReminders(){
+  if (typeof ME === 'undefined' || !ME.name) return;
+  const now = Date.now();
+  PLANS.forEach(p => {
+    if (isCancelled(p) || state.attended.has(p.id) || !(state.joined.has(p.id) || isHost(p))) return;
+    const start = new Date(p.when).getTime(), sent = (ME.remindersSent || {})[p.id] || {};
+    if (start <= now) return;
+    const due = REMINDERS.filter(([k, min]) => now >= start - min * 60000 && !sent[k]);
+    if (!due.length) return;
+    due.slice(0, -1).forEach(([k]) => { ME.remindersSent = Object.assign({}, ME.remindersSent, { [p.id]: Object.assign({}, (ME.remindersSent || {})[p.id], { [k]: true }) }); });
+    sendReminder(p, due[due.length - 1][0]);   // solo el más cercano: los anteriores ya no tienen sentido
+  });
+}
+// Demo: llega el recordatorio de 2 h antes sin esperar.
+function demoReminder(id){ const p = getPlan(id); if (!p) return; sendReminder(p, 'horas', 2 * 3600000); toast('Te llega el recordatorio de 2 h antes'); }
 function joinWaitlist(id){
   const p = getPlan(id); if (!p) return;
   if (!requireVerified('Verifica tu identidad para apuntarte a la lista de espera', () => joinWaitlist(id))) return;
@@ -310,7 +343,8 @@ function renderEditPlan(id){
     <div class="field"><label for="f-edesc">Descripción ${counter('f-edesc','planDesc',p.summary)}</label><textarea ${lim('f-edesc','planDesc')} rows="3">${escapeHtml(p.summary || '')}</textarea></div>
     <div class="field"><label for="f-edate">Fecha y hora</label><input id="f-edate" type="datetime-local" value="${local}" /></div>
     <div class="field"><label for="f-eplace">Lugar</label><select id="f-eplace">${PLACES.map(pl => `<option value="${pl.id}" ${pl.id === p.placeId ? 'selected' : ''}>${escapeHtml(pl.name)} · ${pl.city}</option>`).join('')}</select></div>
-    <p class="hint">Si cambias la fecha, la hora o el lugar, avisamos a todas las personas apuntadas.</p>
+    <div class="field"><label for="f-enote">Explica el cambio (opcional) ${counter('f-enote','planUpdate','')}</label><textarea ${lim('f-enote','planUpdate')} rows="2" placeholder="Ej. Lo retrasamos media hora por la lluvia"></textarea></div>
+    <p class="hint">Si cambias la fecha, la hora o el lugar, queda en las Novedades del plan y avisamos a todas las personas apuntadas.</p>
     <div class="form-actions"><button class="btn-primary" onclick="saveEditPlan('${id}')">${ico('check')} Guardar cambios</button></div>
   </div>`;
 }
@@ -318,14 +352,16 @@ function saveEditPlan(id){
   const p = getPlan(id); if (!p) return;
   const title = clip(val('f-etitle'), 'planTitle') || p.title, summary = clip(val('f-edesc'), 'planDesc') || p.summary;
   const raw = val('f-edate'), when = raw ? new Date(raw) : p.when, placeId = val('f-eplace') || p.placeId;
-  const changes = [];
-  if (when.getTime() !== new Date(p.when).getTime()) changes.push(`ahora es el ${fmtWhen(when)}`);
-  if (placeId !== p.placeId){ const pl = getPlace(placeId); changes.push(`nuevo lugar: ${pl ? pl.name : ''}`); }
+  const note = clip(val('f-enote'), 'planUpdate'), why = note ? ' ' + note : '';
+  const old = { when: new Date(p.when), placeId: p.placeId, title: p.title, summary: p.summary };
   Object.assign(p, { title, summary, when, placeId });
-  if (changes.length){
-    planChatSystem(id, 'Cambio en el plan: ' + changes.join(' · '));
-    state.reconfirmed = new Set([...state.reconfirmed].filter(x => x !== id));   // con un cambio importante, se vuelve a reconfirmar
-  }
+  // Cada cambio queda en las Novedades del plan; los de fecha, hora y lugar avisan a los apuntados.
+  const changes = [];
+  if (when.getTime() !== old.when.getTime()) changes.push(addPlanUpdate(p, 'fecha', `Nueva fecha: ${whenLong(when)} (antes: ${whenLong(old.when)}).${why}`));
+  if (placeId !== old.placeId){ const a = getPlace(placeId), b = getPlace(old.placeId); changes.push(addPlanUpdate(p, 'lugar', `Nuevo lugar: ${a ? a.name : 'Madrid'} (antes: ${b ? b.name : 'Madrid'}).${changes.length ? '' : why}`)); }
+  if (!changes.length && (title !== old.title || summary !== old.summary)) addPlanUpdate(p, 'info', `Ha actualizado ${title !== old.title ? 'el título' : 'la descripción'}.${why}`, { notify:false });
+  else if (!changes.length && note) addPlanUpdate(p, 'aviso', note);
+  if (changes.length) state.reconfirmed = new Set([...state.reconfirmed].filter(x => x !== id));   // con un cambio importante, se vuelve a reconfirmar
   saveState();
   toast(changes.length ? `Guardado · avisamos a ${p.joined || 0} personas del cambio` : 'Guardado');
   go('plan/' + id);
@@ -342,9 +378,88 @@ function openCancelPlan(id){
 }
 function confirmCancelPlan(id){
   const p = getPlan(id); if (!p) return;
-  p.status = 'cancelado'; planChatSystem(id, 'El anfitrión ha cancelado el plan.');
+  p.status = 'cancelado'; addPlanUpdate(p, 'cancelado', `El anfitrión ha cancelado el plan.${p.paid ? ' Te devolvemos el 100 % de lo pagado.' : ''}`);
   if (p.paid) refundAllForPlan(p, 'El anfitrión canceló el plan: reembolso completo');
   saveState(); closeOverlay(); toast(`Plan cancelado · avisamos a ${p.joined || 0} personas`); renderDetail(id);
+}
+
+/* ---------- novedades del plan ----------
+   Cada plan lleva su registro de cambios y avisos (p.updates, de la más reciente a la más
+   antigua). Todo lo que se publica avisa a quien va al plan y queda también en su chat.
+   Los cambios de fecha, hora o lugar y la cancelación ("importantes") avisan siempre, aunque
+   se hayan desactivado las novedades en Ajustes, y también a quien espera plaza o respuesta.
+   En la app real: docs/novedades.md. */
+const UPDATE_TYPES = {   // icono, título, importante
+  fecha:['clock','Cambio de fecha u hora',true], lugar:['pin','Cambio de lugar',true], cancelado:['close','Plan cancelado',true], desvelo:['lock','Lugar desvelado',true],
+  aviso:['bell','Aviso',false], plazas:['users','Plazas',false], info:['doc','Detalles actualizados',false],
+};
+const planUpdates = (p) => (p && p.updates) || [];
+function whenLong(d){ d = new Date(d); return `${dayTitle(d)}, a las ${hhmm(d)}`; }
+// ¿Me llega? Si voy; si es importante, también si estoy en lista de espera, con solicitud o con plaza por confirmar.
+function updateReachesMe(p, important){
+  if (state.joined.has(p.id)) return true;
+  return important && ((p.waitlist || []).includes('me') || state.requested.has(p.id) || (p.ideaInvites || []).some(v => v.userId === 'me' && v.status === 'pendiente'));
+}
+function addPlanUpdate(p, type, text, opts){
+  opts = opts || {};
+  const u = { id: newId('up'), type, text, at: Date.now(), by: opts.by || (isHost(p) ? 'me' : 'host') };
+  p.updates = [u].concat(planUpdates(p));
+  if (type === 'fecha' && ME.remindersSent) delete ME.remindersSent[p.id];   // nueva hora: los recordatorios se vuelven a programar
+  if (opts.notify === false) return u;
+  const [, label, important] = UPDATE_TYPES[type] || [];
+  if (state.joined.has(p.id) || isHost(p)) ensurePlanChat(p.id);   // si vas o lo organizas, el chat del plan existe
+  planChatSystem(p.id, `${label}: ${text}`);
+  if (u.by !== 'me' && updateReachesMe(p, important)) notify('cambio', `${p.title} · ${label.toLowerCase()}: ${text}`, { planId: p.id, force: important });
+  return u;
+}
+const updateBy = (p, u) => u.by === 'me' ? 'Tú' : (u.by === 'equipo' ? 'Equipo de planes' : ((p.host || {}).name || 'El anfitrión'));
+// Lo que no habías visto: se calcula al entrar en la ficha y se marca como visto.
+function visitUpdates(p){
+  if (state.updVisit === p.id) return;
+  state.updVisit = p.id; state.updSince = (ME.seenUpdates || {})[p.id] || 0;
+  ME.seenUpdates = Object.assign({}, ME.seenUpdates, { [p.id]: Date.now() }); saveState();
+}
+const unseenUpdates = (p) => planUpdates(p).filter(u => u.at > (state.updSince || 0) && u.by !== 'me');
+function updatesBlock(p){
+  const list = planUpdates(p), host = isHost(p) && !isCancelled(p), nNew = unseenUpdates(p).length;
+  if (!list.length && !host) return '';
+  const shown = state.updAll === p.id ? list : list.slice(0, 3);
+  const row = (u) => { const [icon, label, imp] = UPDATE_TYPES[u.type] || ['bell','Novedad',false], isNew = u.at > (state.updSince || 0) && u.by !== 'me';
+    return `<div class="upd ${imp ? 'imp' : ''}"><span class="upd-ic">${ico(icon)}</span><div class="upd-b"><b>${label}${isNew ? ' <em class="upd-new">Nuevo</em>' : ''}</b>
+      <p>${escapeHtml(u.text)}</p><span>${escapeHtml(updateBy(p, u))} · ${dayLabel(u.at)}</span></div></div>`; };
+  return `<div class="block" id="novedades"><h4>Novedades${nNew ? ` <span class="upd-n">${nNew} sin ver</span>` : ''}</h4>
+    ${list.length ? `<div class="upd-list">${shown.map(row).join('')}</div>` : '<p class="hint">Aún no hay novedades. Lo que cambies o anuncies saldrá aquí y avisará a quien va.</p>'}
+    ${list.length > shown.length ? `<button class="link-btn" onclick="state.updAll='${p.id}';renderDetail('${p.id}')">Ver todas (${list.length})</button>` : ''}
+    ${host ? `<button class="btn-ghost" onclick="openPlanUpdate('${p.id}')">${ico('bell')} Publicar una novedad</button>` : ''}
+    ${!host && state.joined.has(p.id) && !isCancelled(p) ? `<div class="pl-actions"><button class="link-btn dim" onclick="demoHostUpdate('${p.id}')">Demo: el anfitrión cambia la hora</button></div>` : ''}
+  </div>`;
+}
+function openPlanUpdate(id){
+  const p = getPlan(id); if (!p) return;
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Publicar una novedad">
+    <div class="sheet-h"><span>Publicar una novedad</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list form">
+      <div class="field"><label for="f-upd">Qué hay de nuevo ${counter('f-upd','planUpdate','')}</label><textarea ${lim('f-upd','planUpdate')} rows="3" placeholder="Ej. Traed linterna: la vuelta es de noche"></textarea></div>
+      <p class="hint">Sale en Novedades y en el chat del plan${p.joinType === 'libre' ? '. Es un plan libre, sin apuntados: lo verá quien abra el plan' : `, y avisamos a las ${p.joined || 0} personas apuntadas`}. Para cambiar la fecha, la hora o el lugar, usa Editar el plan: así queda el antes y el después.</p>
+      <button class="btn-primary" onclick="publishPlanUpdate('${id}')">${ico('send')} ${p.joinType === 'libre' ? 'Publicar' : 'Publicar y avisar'}</button>
+    </div></div>`);
+}
+function publishPlanUpdate(id){
+  const p = getPlan(id), text = clip(val('f-upd'), 'planUpdate'); if (!p) return;
+  if (!text){ toast('Escribe la novedad'); return; }
+  guardText(text, { kind:'novedad', onEdit: () => openPlanUpdate(id) }, (flag) => {
+    if (flag){ closeOverlay(); toast('No se ha publicado: parece ' + flag.label); return null; }
+    addPlanUpdate(p, 'aviso', text); saveState(); closeOverlay(); state.updAll = null;
+    toast(p.joinType === 'libre' ? 'Publicado en Novedades' : `Publicado · avisamos a ${p.joined || 0} personas`); renderDetail(id); return null;
+  });
+}
+// Demo: el anfitrión de un plan al que vas lo retrasa media hora (te llega la notificación).
+function demoHostUpdate(id){
+  const p = getPlan(id); if (!p) return;
+  const old = new Date(p.when), when = new Date(old.getTime() + 30 * 60000); p.when = when;
+  addPlanUpdate(p, 'fecha', `Nueva fecha: ${whenLong(when)} (antes: ${whenLong(old)}). Lo retrasamos media hora.`, { by:'host' });
+  state.reconfirmed = new Set([...state.reconfirmed].filter(x => x !== id));
+  saveState(); toast('Te llega la notificación del cambio'); renderDetail(id);
 }
 
 /* ---------- chat del plan ---------- */
@@ -368,7 +483,7 @@ const NOTIF_TYPES = {
   recordatorio: ['clock','Recordatorios','Antes de tus planes y para reconfirmar'],
   solicitud:    ['users','Solicitudes','Si te aceptan, o si alguien quiere ir a tu plan'],
   mensaje:      ['chat','Mensajes','Chats y chats de tus planes'],
-  cambio:       ['alert','Cambios en planes','Hora, lugar o cancelaciones'],
+  cambio:       ['alert','Novedades de tus planes','Avisos del anfitrión (los cambios de fecha, hora o lugar y las cancelaciones llegan siempre)'],
   plaza:        ['ticket','Lista de espera','Cuando quede una plaza para ti'],
   fiabilidad:   ['check','Después del plan','Llegadas, no presentados y valoraciones'],
   seguidor:     ['user','Seguidores','Solicitudes para seguirte y respuestas a las tuyas'],
@@ -380,7 +495,7 @@ const NOTIF_TYPES = {
 function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true, seguidor:true, mencion:true, pago:true, aqui:true, chispa:true }, ME.notifPrefs || {}); }
 // "seguridad" (SOS, decisiones de moderación, resultado de tus reportes) no se puede desactivar.
 function notify(type, text, ref){
-  if (type !== 'seguridad' && !notifPrefs()[type]) return null;
+  if (type !== 'seguridad' && !(ref && ref.force) && !notifPrefs()[type]) return null;   // force: cambios de fecha, hora o lugar y cancelaciones
   const n = Object.assign({ id:'n' + Date.now() + Math.random().toString(36).slice(2, 5), type, text, at: Date.now(), read:false }, ref || {});
   NOTIFICATIONS.unshift(n);
   if (NOTIFICATIONS.length > 60) NOTIFICATIONS.length = 60;
@@ -438,7 +553,9 @@ function openNotifPrefs(){
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Preferencias de notificaciones">
     <div class="sheet-h"><span>Qué te avisamos</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list">${Object.entries(NOTIF_TYPES).map(([k, [icon, l, sub]]) => `<div class="opt-row" onclick="toggleNotifPref('${k}')"><span class="or-ic">${ico(icon)}</span><span class="or-l">${l}<span class="or-s">${sub}</span></span><span class="switch ${pr[k] ? 'on' : ''}"><span class="knob"></span></span></div>`).join('')}
-      <p class="hint">Los avisos de seguridad (SOS, decisiones de moderación y el resultado de tus reportes) no se pueden desactivar.</p></div></div>`);
+      <div class="set-title" style="margin-top:12px">Recordatorios de tus planes</div>
+      ${REMINDERS.map(([k, , l, sub]) => `<div class="opt-row ${pr.recordatorio ? '' : 'off'}" onclick="toggleReminderPref('${k}')"><span class="or-ic">${ico('clock')}</span><span class="or-l">${l}<span class="or-s">${sub}</span></span><span class="switch ${pr.recordatorio && reminderPrefs()[k] ? 'on' : ''}"><span class="knob"></span></span></div>`).join('')}
+      <p class="hint">Los avisos de seguridad (SOS, decisiones de moderación y el resultado de tus reportes) y los cambios de fecha, hora o lugar de tus planes no se pueden desactivar.</p></div></div>`);
 }
 function toggleNotifPref(k){ ME.notifPrefs = Object.assign(notifPrefs(), { [k]: !notifPrefs()[k] }); saveState(); openNotifPrefs(); }
 
