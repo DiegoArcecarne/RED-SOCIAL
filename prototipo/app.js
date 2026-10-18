@@ -2568,6 +2568,9 @@ function init(){
   if (acc){ loadState(); loadAdmin(); }   // loadAdmin: lo que ha cambiado el equipo (admin.js)
   if (!acc || !acc.onboarded) rememberDestino();   // enlace compartido: se abre al entrar
   registerServiceWorker();
+  // Altura real de la pantalla visible (en el móvil, 100vh incluye la zona de la barra del navegador).
+  const fitApp = () => { try { const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight; if (h) document.documentElement.style.setProperty('--app-h', Math.round(h) + 'px'); } catch (e) {} };
+  fitApp(); window.addEventListener('resize', fitApp); if (window.visualViewport && window.visualViewport.addEventListener) window.visualViewport.addEventListener('resize', fitApp);
   // Recordatorios de tus planes cada minuto (unref: no retiene el proceso fuera del navegador).
   const remTimer = setInterval(checkReminders, 60000); if (remTimer && remTimer.unref) remTimer.unref();
   window.addEventListener('pagehide', saveState);

@@ -37,14 +37,15 @@
   font-family:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
+/* La app ocupa justo la pantalla visible (sin la barra del navegador): solo se desplaza dentro de cada vista. */
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 body{background:#000;color:var(--ink);display:flex;justify-content:center;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 
 .phone{
-  position:relative;width:100%;max-width:var(--maxw);min-height:100vh;min-height:100dvh;background:var(--bg);
+  position:relative;width:100%;max-width:var(--maxw);height:100vh;height:100dvh;height:var(--app-h,100dvh);background:var(--bg);
   display:flex;flex-direction:column;overflow:hidden;border-left:1px solid var(--line);border-right:1px solid var(--line);
 }
-@media(min-width:480px){ .phone{margin:24px 0;min-height:calc(100vh - 48px);border-radius:28px;border:1px solid var(--line)} }
+@media(min-width:480px){ .phone{margin:24px 0;height:calc(100vh - 48px);height:calc(var(--app-h,100vh) - 48px);border-radius:28px;border:1px solid var(--line)} }
 
 /* Iconos */
 .ico{display:inline-flex;width:1em;height:1em;line-height:0;vertical-align:-2px}
@@ -70,7 +71,7 @@ body{background:#000;color:var(--ink);display:flex;justify-content:center;-webki
 .content-tabs button.active::after{content:"";position:absolute;left:18%;right:18%;bottom:-1px;height:2px;background:var(--ink);border-radius:2px}
 
 /* Scroll */
-.view{flex:1;overflow-y:auto;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+.view{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 .view.hidden{display:none}
 #view-feed,#view-mapa,#view-perfil{padding-left:0;padding-right:0}
 
@@ -1242,7 +1243,7 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
 .call-facts > div > .ico{font-size:17px;color:var(--ink);flex:none;margin-top:1px}
 .call-facts b{display:block;color:var(--ink);font-size:13.5px}
 /* la sala */
-.room{display:flex;flex-direction:column;gap:10px;min-height:calc(100vh - 140px);padding:10px 12px 14px;background:#000}
+.room{display:flex;flex-direction:column;gap:10px;min-height:100%;padding:10px 12px 14px;background:#000}
 .room-top{display:flex;align-items:center;gap:10px}
 .room-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .room-t b{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -8438,6 +8439,9 @@ function init(){
   if (acc){ loadState(); loadAdmin(); }   // loadAdmin: lo que ha cambiado el equipo (admin.js)
   if (!acc || !acc.onboarded) rememberDestino();   // enlace compartido: se abre al entrar
   registerServiceWorker();
+  // Altura real de la pantalla visible (en el móvil, 100vh incluye la zona de la barra del navegador).
+  const fitApp = () => { try { const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight; if (h) document.documentElement.style.setProperty('--app-h', Math.round(h) + 'px'); } catch (e) {} };
+  fitApp(); window.addEventListener('resize', fitApp); if (window.visualViewport && window.visualViewport.addEventListener) window.visualViewport.addEventListener('resize', fitApp);
   // Recordatorios de tus planes cada minuto (unref: no retiene el proceso fuera del navegador).
   const remTimer = setInterval(checkReminders, 60000); if (remTimer && remTimer.unref) remTimer.unref();
   window.addEventListener('pagehide', saveState);
