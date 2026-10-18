@@ -999,6 +999,46 @@ check('en un chat no se esconden', ui.run('chromeState.hidden') === false);
 ui.run('__v.querySelector = () => null; chromeState.lock = 0; __v.scrollTop = 600; onViewScroll({ target: __v })'); ui.nav('mapa');
 check('al cambiar de pantalla vuelven a verse', ui.run('chromeState.hidden') === false);
 
+// --- Quién está en el plan: visibilidad, chinchetas en el plan y en el mapa, y saludos ---
+const prs = {};
+const pr = createEnv(prs);
+pr.nav('plan/p2'); h = pr.html('view-detail'); rendered += h;
+check('antes de llegar: no ves a nadie, solo el aviso', pr.run('peopleHere("p2").length') === 0 && h.includes('Cuando registres tu llegada verás quién más está'));
+check('tu presencia: quién te ve (todos, amigos, nadie) y si vas solo o en grupo', ['Todos los del plan', 'Amigos', 'Nadie', 'Voy solo', 'Voy en grupo', 'No decirlo'].every((x) => h.includes(x)));
+pr.run('setPlanPresence("p2", "mode", "solo")'); check('elegir "voy solo"', pr.run('myPresence("p2").mode') === 'solo');
+pr.run('registerArrival("p2")');
+const here = pr.run('peopleHere("p2").map(e => e.u.id)');
+check('al llegar: ves a los visibles; nunca a quien eligió "nadie"', here.includes('lucia') && here.includes('marco') && here.includes('nora') && !here.includes('david'));
+check('"solo amigos": solo si sois amigos', here.includes('ana') === pr.run('areFriends("me", "ana")'));
+pr.run('blockUser("nora", true)'); check('bloqueados: no salen', !pr.run('peopleHere("p2").some(e => e.u.id === "nora")')); pr.run('unblockUser("nora")');
+pr.nav('plan/p2'); h = pr.html('view-detail'); rendered += h;
+check('aquí ahora: chinchetas en el punto del plan con enlace al perfil, y la tuya', h.includes('Aquí ahora') && h.includes('here-pin') && h.includes("go('u/lucia')") && h.includes('here-me') && h.includes('nunca en vuestra ubicación exacta'));
+check('aquí ahora: quién ha venido solo', h.includes('Va solo') && /han venido solos|ha venido solo/.test(h));
+check('al llegar visible para todos: sale en la lista pública', pr.run('getPlan("p2").publicAttendees.includes(ME.initials)'));
+pr.run('setPlanPresence("p2", "vis", "nadie")'); h = pr.html('view-detail');
+check('visibilidad "nadie": sin tu chincheta y fuera de la lista pública', !h.includes('here-me') && h.includes('Ahora no te ven') && !pr.run('getPlan("p2").publicAttendees.includes(ME.initials)'));
+pr.run('setPlanPresence("p2", "vis", "todos")');
+pr.run('sendPing("marco", "p2")');
+const pc = pr.run('dmWith("marco").messages.slice(-1)[0]');
+check('saludo "yo también estoy aquí": llega como mensaje con la chincheta animada', pc.ping === 'p2' && pc.from === 'me' && pr.run('dmWith("marco").status') === 'aceptada' && pr.run('pinged("p2", "marco")'));
+const nMsgs = pr.run('dmWith("marco").messages.length'); pr.run('sendPing("marco", "p2")');
+check('un saludo por persona y plan', pr.run('dmWith("marco").messages.length') === nMsgs && pr.html('view-detail').includes('Saludado'));
+check('en la bandeja: "Yo también estoy en el plan"', pr.run('msgPreview(dmWith("marco").messages.slice(-1)[0], dmWith("marco"))') === 'Tú: Yo también estoy en el plan');
+pr.run('location.hash = "#/chat/" + dmWith("marco").id; renderChat(dmWith("marco").id)'); h = pr.html('view-page'); rendered += h;
+check('en el chat: el saludo con la chincheta', h.includes('ping-msg') && h.includes('ping-ring') && h.includes('Yo también estoy en'));
+pr.run('location.hash = "#/feed"; pingBack("marco", "p2")');
+check('te devuelven el saludo: aviso "En el plan"', pr.run('NOTIFICATIONS[0].type') === 'aqui' && pr.run('NOTIFICATIONS[0].text').includes('te ha saludado'));
+pr.run('registerArrival("p3")'); pr.run('location.hash = "#/chat/c2"; renderChat("c2")');
+check('chat del plan: "Estoy aquí"', pr.html('view-page').includes("pingPlanChat('p3','c2')"));
+pr.run('pingPlanChat("p3", "c2")'); check('aviso al grupo de que estás', pr.run('getConversation("c2").messages.slice(-1)[0].ping') === 'p3' && !pr.html('view-page').includes("pingPlanChat('p3','c2')"));
+pr.nav('mapa'); h = pr.html('map'); rendered += h;
+check('mapa: tu chincheta animada en el lugar del plan, con cuántos estáis', /class="pin public\s+live"/.test(h) && h.includes('pin-here') && h.includes('estás aquí'));
+pr.run('selectPlace("debod")'); h = pr.html('map-sheet');
+check('mapa: quién está contigo, con enlace a su perfil', h.includes('Estás en Atardecer en el Templo de Debod') && h.includes("go('u/lucia')"));
+check('solo ves a otros en planes donde has registrado la llegada', pr.run('peopleHere("p9").length') === 0 && pr.run('peopleHere("p12").length') === 0);
+const pr2 = createEnv(prs);
+check('persisten tu visibilidad por plan y los saludos', pr2.run('myPresence("p2").mode') === 'solo' && pr2.run('pinged("p2", "marco")'));
+
 const pdir0 = path.join(__dirname, '..', 'prototipo');
 // --- Compartir: web pública con vista previa, enlaces que abren la app y menú nativo ---
 const wdir = path.join(__dirname, '..', 'prototipo', 'web');

@@ -489,6 +489,16 @@ const USER_MOD = { alexv: { strikes:1 } };
 // Alertas SOS, planes compartidos con contactos de confianza y avisos de "he llegado bien".
 const SAFETY_EVENTS = [];
 
+/* Quién está ahora en cada plan (ha registrado su llegada), con su visibilidad: todos los
+   del plan, solo amigos o nadie; y si va solo o en grupo. Salen en el punto del plan, nunca
+   en su posición exacta, y solo los ve quien también está en el plan (planes.js). */
+const PLAN_PRESENCE = {
+  p2: [ { userId:'lucia', vis:'todos', mode:'grupo' }, { userId:'marco', vis:'todos', mode:'solo' }, { userId:'nora', vis:'todos', mode:'solo' },
+        { userId:'ana', vis:'amigos', mode:'grupo' }, { userId:'david', vis:'nadie', mode:'solo' } ],
+  p3: [ { userId:'sara', vis:'todos', mode:'grupo' }, { userId:'marco', vis:'todos', mode:'solo' }, { userId:'irene', vis:'amigos', mode:'solo' } ],
+  p12:[ { userId:'nora', vis:'todos', mode:'solo' }, { userId:'lucia', vis:'todos', mode:'grupo' } ],
+};
+
 /* Pagos (pagos.js; en la app real, Stripe Connect). Cada pago es una reserva de un plan de
    pago: el dinero queda retenido hasta que el plan se celebra y después se paga al
    anfitrión, menos la comisión del 15 %. status: pendiente (aceptado, falta pagar) |
@@ -527,7 +537,7 @@ if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
     STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, FOLLOW_REQUESTS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
-    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS,
+    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS, PLAN_PRESENCE,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }

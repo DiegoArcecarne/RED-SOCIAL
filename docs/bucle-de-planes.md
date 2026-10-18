@@ -70,9 +70,47 @@ Son las de PRODUCTO.md (el prototipo usaba otros plazos hasta el bloque de pagos
   - Se limitan los intentos: 5 por minuto.
 - **Llegadas a mano**: el anfitrión puede marcar a quien no pueda escanear. Queda registrado quién lo marcó (`metodo = manual_anfitrion`).
 - La llegada respeta la **privacidad de presencia**:
-  - pública: aparece en la lista;
-  - privada: solo cuenta en el total;
+  - visible para todos los del plan: aparece en la lista;
+  - solo amigos o nadie: solo cuenta en el total;
   - por debajo de 10 asistentes, solo se cuentan los visibles.
+
+## Quién está en el plan: chinchetas y saludos
+
+Da igual ir solo o en grupo. Al llegar, cada persona elige para ese plan:
+
+- **Quién la ve en el plan y en el mapa**:
+  - *todos los del plan*;
+  - *solo amigos* (os seguís los dos);
+  - *nadie*.
+
+  El valor por defecto sale de Ajustes ▸ Presencia por defecto.
+- **Cómo va**: *voy solo*, *voy en grupo* o *no decirlo*. Decir que vas solo anima a otros a saludarte.
+
+Mientras dura el plan, quienes han **registrado la llegada** se ven entre sí:
+
+- **En la ficha del plan**, el bloque *Aquí ahora*:
+  - un mapa pequeño del punto del plan con la chincheta de cada persona (su foto, con enlace a su perfil) y la tuya;
+  - la lista con "va solo" o "va en grupo";
+  - para cada persona, *Yo también* (saludar) y *Mensaje*.
+- **En el mapa**, el lugar del plan lleva tu chincheta animada y cuántos estáis. Al tocarlo, ves quién está contigo.
+- **Saludo "yo también estoy en este plan"**: un mensaje directo con una chincheta animada, sin texto.
+  - Uno por persona y plan.
+  - Estar en el mismo plan cuenta como conoceros, así que llega directo y no como solicitud.
+  - En el chat del plan, *Estoy aquí* avisa a todo el grupo.
+
+Reglas de privacidad y seguridad (el servidor las aplica en cada consulta):
+
+- **Nunca se muestra la posición exacta de nadie**: todas las chinchetas van en el punto del plan.
+- **Solo te ven**:
+  - quienes han registrado la llegada a **ese** plan;
+  - y solo durante la ventana del plan (desde 1 h antes hasta 4 h después del inicio).
+  - Al terminar, desaparece.
+- **Quién no ve a quién**:
+  - Quien no está en el plan no ve a nadie: ni chinchetas ni nombres; solo el recuento habitual.
+  - Los bloqueos ocultan en los dos sentidos.
+  - Las cuentas suspendidas no salen.
+- **Con *nadie***: sigues viendo a los demás y puedes saludar, y al saludar esa persona sabe que estás.
+- **Límites y reportes**: un saludo por persona y plan, y un máximo de saludos por plan (propuesta: 20). Los saludos y mensajes se pueden reportar como cualquier mensaje.
 
 ## Índice de fiabilidad
 
@@ -120,6 +158,9 @@ POST /solicitudes/:id/decidir        { decision: aceptada | rechazada }
 GET  /planes/:id/llegada/qr          (anfitrión) → { payload, codigo, caduca }
 POST /planes/:id/llegada             { codigo, ubicacion? }
 POST /planes/:id/llegada/manual      (anfitrión) { usuario_id }
+PUT  /planes/:id/presencia           { visibilidad: todos|amigos|nadie, modo: solo|grupo|null }
+GET  /planes/:id/aqui                → personas visibles para ti (solo si has registrado la llegada y el plan está en marcha)
+POST /planes/:id/saludos             { usuario_id }   (uno por persona y plan)
 GET  /notificaciones   ·   POST /notificaciones/leidas   ·   PUT /notificaciones/preferencias
 POST /dispositivos                   { token_push, plataforma }
 WS   /chat/:conversacion             (tiempo real)

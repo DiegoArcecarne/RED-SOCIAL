@@ -203,7 +203,8 @@ erDiagram
         uuid usuario_id FK
         datetime fecha_hora
         string metodo "qr_anfitrion|manual_anfitrion|geolocalizacion"
-        string visibilidad "publica|privada"
+        string visibilidad "todos|amigos|nadie (en el plan y en el mapa)"
+        string modo "solo|grupo|null"
     }
     SOLICITUD_ASISTENCIA {
         uuid id PK
@@ -390,6 +391,7 @@ erDiagram
         string texto "max 1000"
         string media "foto, difuminada si es de un desconocido"
         string compartido "publicacion o plan, opcional"
+        uuid saludo_plan_id FK "saludo yo-tambien-estoy, opcional"
         string estado "solicitud|aceptado"
         bool leido
     }
@@ -493,7 +495,7 @@ erDiagram
     NOTIFICACION {
         uuid id PK
         uuid usuario_id FK
-        string tipo "recordatorio|solicitud|mensaje|cambio|plaza|despues_plan|seguidor|mencion|seguridad|pago"
+        string tipo "recordatorio|solicitud|mensaje|cambio|plaza|despues_plan|seguidor|mencion|seguridad|pago|aqui"
         string referencia "plan, conversacion o ruta"
         string texto
         bool leida

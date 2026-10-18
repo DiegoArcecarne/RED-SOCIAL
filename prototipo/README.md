@@ -146,6 +146,12 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    de moderación). *Ajustes ▸ Cobros*: alta del anfitrión (DNI/NIE e IBAN), lo retenido, en
    camino y pagado, y la factura mensual de la comisión del 15 %.
    Especificación: [`../docs/pagos.md`](../docs/pagos.md).
+18. **Quién está en el plan** — al registrar tu llegada eliges quién te ve (todos los del
+   plan, amigos o nadie) y si vas solo o en grupo. En la ficha, *Aquí ahora*: chinchetas en
+   el punto del plan con enlace a cada perfil, *Yo también* (un saludo con una chincheta
+   animada) y *Mensaje*; en el mapa, tu chincheta y cuántos estáis. Nunca la ubicación
+   exacta y solo entre quienes están en el plan. Pruébalo en *Atardecer en el Templo de
+   Debod*: *Registrar mi llegada* (el código está en "¿Pruebas con un solo móvil?").
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.

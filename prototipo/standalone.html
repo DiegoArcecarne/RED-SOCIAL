@@ -628,7 +628,7 @@ body{background:#000;color:var(--ink);display:flex;justify-content:center;-webki
 .msg-img.blur .cover-img{filter:blur(18px);transform:scale(1.15)}
 .msg-reveal{position:absolute;inset:auto 8px 8px 8px;background:rgba(0,0,0,.6);border:none;color:#fff;border-radius:10px;padding:7px 8px;font:inherit;font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer}
 .chat-foot{position:sticky;bottom:var(--tbo);background:rgba(0,0,0,.9);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:8px 12px}
-.view#view-page:has(.chat-foot){padding-bottom:0;display:flex;flex-direction:column}
+.view#view-page:not(.hidden):has(.chat-foot){padding-bottom:0;display:flex;flex-direction:column}
 .chat-body{flex:1 0 auto}
 .chat-in{display:flex;align-items:center;gap:8px}
 .chat-in input{flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;color:var(--ink);padding:11px 15px;font:inherit;font-size:14px;outline:none}
@@ -1004,6 +1004,44 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
 .phone.chrome-hidden .tabbar{transform:translateY(100%)}
 @media (prefers-reduced-motion: reduce){ .appbar,.tabbar,.action-bar{transition:none} .filter-panel{animation:none} }
 .filter-foot .link-btn{font-size:13px}
+
+/* ======================= Aquí ahora: chinchetas y saludos ======================= */
+.ping-ic{position:relative;display:inline-grid;place-items:center;width:30px;height:30px;flex:none;color:var(--accent);font-size:17px}
+.ping-ic.sm{width:22px;height:22px;font-size:14px}
+.ping-ic > .ico{position:relative;z-index:1;animation:ping-bob 1.6s ease-in-out infinite}
+.ping-ring{position:absolute;left:50%;bottom:2px;width:60%;height:24%;margin-left:-30%;border-radius:50%;border:1.5px solid var(--accent);opacity:0;animation:ping-ring 1.6s ease-out infinite}
+.ping-ring.r2{animation-delay:.8s}
+@keyframes ping-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes ping-ring{0%{transform:scale(.4);opacity:.9}100%{transform:scale(2.2);opacity:0}}
+.ping-msg{display:inline-flex;align-items:center;gap:8px}
+.here-map{position:relative;height:190px;border-radius:14px;overflow:hidden;border:1px solid var(--line);margin:4px 0 8px;
+  background:radial-gradient(circle at 50% 52%, rgba(61,111,179,.22), transparent 42%),repeating-linear-gradient(0deg, transparent 0 23px, rgba(255,255,255,.03) 23px 24px),repeating-linear-gradient(90deg, transparent 0 23px, rgba(255,255,255,.03) 23px 24px),var(--surface-2)}
+.here-venue{position:absolute;left:10px;top:9px;display:inline-flex;gap:5px;align-items:center;font-size:11.5px;font-weight:700;color:var(--ink-soft);background:rgba(0,0,0,.45);border-radius:999px;padding:3px 9px}
+.here-pin{position:absolute;transform:translate(-50%,-50%);background:none;border:none;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.here-pin .avatar.sm{width:32px;height:32px;font-size:11px;border:2px solid var(--surface);box-shadow:0 3px 10px rgba(0,0,0,.5)}
+.here-pin.me{z-index:2}
+.here-pin.me .ping-ic{width:34px;height:34px;font-size:22px}
+.here-me{font-size:10.5px;font-weight:800;color:var(--ink);background:var(--accent);border-radius:999px;padding:1px 7px}
+.here-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line)}
+.here-row .conv-main{flex:1;min-width:0}
+.ping-btn{flex:none;display:inline-flex;align-items:center;gap:2px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:2px 10px 2px 2px;color:var(--ink);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.ping-btn.done{color:var(--ink-dim);cursor:default}
+.ping-btn.done .ping-ring,.ping-btn.done .ico{animation:none}
+.pin-here{position:absolute;top:-16px;left:-22px;display:flex;align-items:center;background:var(--surface);border:1px solid var(--accent);border-radius:999px;padding:0 6px 0 0;z-index:2}
+.pin-here em{font-style:normal;font-size:10.5px;font-weight:800;color:var(--ink)}
+.pin.live .pin-dot{outline:2px solid var(--accent);outline-offset:2px}
+.here-strip{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--accent);border-radius:12px;padding:8px 10px;margin:8px 0 10px}
+.here-t{flex:1;min-width:0;display:flex;flex-direction:column;font-size:12.5px;line-height:1.35}
+.here-t span{color:var(--ink-soft)}
+.here-avs{display:flex}
+.here-avs .avatar.sm{width:26px;height:26px;font-size:9.5px;margin-left:-6px;border:2px solid var(--surface-2);cursor:pointer}
+.block .sb-l{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin:6px 0 6px}
+@media (prefers-reduced-motion: reduce){ .ping-ic > .ico,.ping-ring{animation:none} .ping-ring{opacity:0} }
+
+.msg.me .ping-ic{color:#fff}
+.msg.me .ping-ring{border-color:#fff}
+.here-row .conv-main b,.here-row .conv-main span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.here-msg{flex:none;width:34px;height:34px;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--line);border-radius:50%;color:var(--ink);font-size:16px;cursor:pointer}
 
   </style>
 </head>
@@ -1575,6 +1613,16 @@ const USER_MOD = { alexv: { strikes:1 } };
 // Alertas SOS, planes compartidos con contactos de confianza y avisos de "he llegado bien".
 const SAFETY_EVENTS = [];
 
+/* Quién está ahora en cada plan (ha registrado su llegada), con su visibilidad: todos los
+   del plan, solo amigos o nadie; y si va solo o en grupo. Salen en el punto del plan, nunca
+   en su posición exacta, y solo los ve quien también está en el plan (planes.js). */
+const PLAN_PRESENCE = {
+  p2: [ { userId:'lucia', vis:'todos', mode:'grupo' }, { userId:'marco', vis:'todos', mode:'solo' }, { userId:'nora', vis:'todos', mode:'solo' },
+        { userId:'ana', vis:'amigos', mode:'grupo' }, { userId:'david', vis:'nadie', mode:'solo' } ],
+  p3: [ { userId:'sara', vis:'todos', mode:'grupo' }, { userId:'marco', vis:'todos', mode:'solo' }, { userId:'irene', vis:'amigos', mode:'solo' } ],
+  p12:[ { userId:'nora', vis:'todos', mode:'solo' }, { userId:'lucia', vis:'todos', mode:'grupo' } ],
+};
+
 /* Pagos (pagos.js; en la app real, Stripe Connect). Cada pago es una reserva de un plan de
    pago: el dinero queda retenido hasta que el plan se celebra y después se paga al
    anfitrión, menos la comisión del 15 %. status: pendiente (aceptado, falta pagar) |
@@ -1613,7 +1661,7 @@ if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
     STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, FOLLOW_REQUESTS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
-    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS,
+    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS, PLAN_PRESENCE,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }
@@ -1907,6 +1955,7 @@ function freshWorld(){
   ME.trustedContacts = []; ME.shareTrips = false; ME.safeCheck = false; ME.consents = undefined; ME.consentLog = [];
   drop(MOD_ACTIONS, a => a.targetUserId === 'me'); drop(SAFETY_EVENTS, () => true); delete USER_MOD.me;
   drop(PAYMENTS, x => x.userId === 'me'); drop(PAYMENT_METHODS, () => true); ME.payouts = undefined;
+  ME.planPresence = {}; ME.pinged = {};
   PLANS.forEach(p => { p.waitlist = (p.waitlist || []).filter(x => x !== 'me'); });
 }
 
@@ -2413,7 +2462,7 @@ function openCheckin(id){
       <p class="hint ck-err" id="ck-err"></p>
       <button class="link-btn ck-demo" onclick="document.getElementById('ck-demo').hidden=false">¿Pruebas con un solo móvil? Ver el código del anfitrión</button>
       <p class="hint" id="ck-demo" hidden>Demo: el código ahora es <b>${checkinCode(id)}</b>. Con dos móviles, abre en el otro el plan como anfitrión y escanea su QR.</p>
-      <p class="hint">${state.presencePublic ? 'Aparecerás entre los asistentes (presencia pública).' : 'Contarás en el total, sin aparecer en la lista (presencia privada).'}</p>
+      <p class="hint">${{ todos:'Te verán los demás que estén en el plan, en el plan y en el mapa.', amigos:'Solo te verán tus amigos que estén en el plan.', nadie:'Contarás en el total, sin que nadie vea que estás.' }[myPresence(id).vis]} Lo puedes cambiar en la ficha.</p>
     </div></div>`);
 }
 function submitCheckin(id){
@@ -2588,8 +2637,9 @@ const NOTIF_TYPES = {
   seguidor:     ['user','Seguidores','Solicitudes para seguirte y respuestas a las tuyas'],
   mencion:      ['at','Menciones','Cuando te mencionan o te etiquetan'],
   pago:         ['card','Pagos','Pagos, reembolsos, recibos y cobros'],
+  aqui:         ['pin','En el plan','Quién más está en tu plan y te saluda'],
 };
-function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true, seguidor:true, mencion:true, pago:true }, ME.notifPrefs || {}); }
+function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true, seguidor:true, mencion:true, pago:true, aqui:true }, ME.notifPrefs || {}); }
 // "seguridad" (SOS, decisiones de moderación, resultado de tus reportes) no se puede desactivar.
 function notify(type, text, ref){
   if (type !== 'seguridad' && !notifPrefs()[type]) return null;
@@ -2675,6 +2725,112 @@ function simulateIncomingRequest(planId){
   REQUESTS.push({ id:'r' + Date.now(), planId, userId: who.id, status:'pendiente', message:'¡Hola! Me encantaría ir. Es mi primera vez en un plan así.' });
   notify('solicitud', `${who.name} quiere ir a ${p.title}.`, { planId, route:'solicitudes/' + planId });
   saveState();
+}
+
+/* ---------- quién está en el plan: visibilidad, chinchetas y saludos ----------
+   Al registrar tu llegada eliges quién te ve en el plan y en el mapa (todos los del plan,
+   solo amigos o nadie) y si vas solo o en grupo. Los que estáis en el plan os veis como
+   chinchetas en el punto del plan (nunca en la posición exacta de nadie), con enlace al
+   perfil. Se puede enviar un mensaje o solo un saludo: una chincheta animada que dice
+   "yo también estoy en este plan". Solo mientras dura el plan. Ver docs/bucle-de-planes.md. */
+const PLAN_VIS = [['todos','Todos los del plan','globe'],['amigos','Amigos','heartO'],['nadie','Nadie','lock']];
+const PLAN_MODE = [['solo','Voy solo','user'],['grupo','Voy en grupo','users'],['','No decirlo','close']];
+const VIS_HINT = {
+  todos: 'Te ven todos los que han registrado su llegada a este plan, en el plan y en el mapa, y pueden saludarte.',
+  amigos: 'Solo te ven tus amigos (os seguís los dos) que estén en el plan.',
+  nadie: 'No apareces. Cuentas en el total del plan, pero nadie ve que estás. Puedes ver a los demás y saludar: al saludar, esa persona sabrá que estás.',
+};
+function myPresence(planId){ return Object.assign({ vis: state.presencePublic ? 'todos' : 'nadie', mode: '' }, (ME.planPresence || {})[planId] || {}); }
+function setPlanPresence(planId, k, v){
+  ME.planPresence = Object.assign({}, ME.planPresence, { [planId]: Object.assign(myPresence(planId), { [k]: v }) });
+  const p = getPlan(planId);
+  // La lista pública de asistentes solo muestra a quien es visible para todos.
+  if (p && state.attended.has(planId) && k === 'vis'){
+    const listed = p.publicAttendees.includes(ME.initials);
+    if (v === 'todos' && !listed){ p.publicAttendees.unshift(ME.initials); p.attendedPrivate = Math.max(0, (p.attendedPrivate || 0) - 1); }
+    if (v !== 'todos' && listed){ p.publicAttendees = p.publicAttendees.filter(x => x !== ME.initials); p.attendedPrivate = (p.attendedPrivate || 0) + 1; }
+  }
+  saveState(); if (location.hash === '#/plan/' + planId) renderDetail(planId);
+}
+// El plan está en marcha (en la demo, siempre que hayas registrado tu llegada).
+function planLive(p){ return !!p && !isCancelled(p) && (DEMO_CHECKIN_ANYTIME || (Date.now() >= p.when - CHECKIN_BEFORE_MIN * 60000 && Date.now() <= p.when.getTime() + CHECKIN_AFTER_MIN * 60000)); }
+const amHere = (planId) => state.attended.has(planId) && planLive(getPlan(planId));
+// Quién ves tú en el plan: solo si tú también estás, y según la visibilidad de cada uno.
+function peopleHere(planId){
+  if (!amHere(planId)) return [];
+  return (PLAN_PRESENCE[planId] || []).filter(e => {
+    const u = getUser(e.userId);
+    if (!u || (ME.blocked || []).includes(u.id) || isSanctioned(u.id)) return false;
+    return e.vis === 'todos' || (e.vis === 'amigos' && areFriends('me', u.id));
+  }).map(e => Object.assign({ u: getUser(e.userId) }, e));
+}
+const pinged = (planId, uid) => !!((ME.pinged || {})[planId + ':' + uid]);
+// Posición de cada chincheta alrededor del punto del plan (fija para cada persona).
+function pinSpot(uid, i){
+  let h = 0; for (const ch of String(uid)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const a = (h % 360) * Math.PI / 180, r = 18 + (h % 17) + i * 2;
+  return { x: 50 + Math.cos(a) * r * 1.3, y: 52 + Math.sin(a) * r };
+}
+const modeLabel = (m) => m === 'solo' ? 'Va solo' : (m === 'grupo' ? 'Va en grupo' : '');
+function pingIcon(cls){ return `<span class="ping-ic ${cls || ''}" aria-hidden="true"><i class="ping-ring"></i><i class="ping-ring r2"></i>${ico('pin')}</span>`; }
+// Bloque "Tu presencia en el plan" de la ficha.
+function presenceBlock(p){
+  const me = myPresence(p.id);
+  const seg = (k, opts) => `<div class="iseg">${opts.map(([v, l, n]) => `<button class="${me[k] === v ? 'active' : ''}" onclick="setPlanPresence('${p.id}','${k}','${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div>`;
+  return `<div class="block"><h4>Tu presencia en el plan</h4>
+    <span class="sb-l">Quién te ve en el plan y en el mapa</span>${seg('vis', PLAN_VIS)}
+    <p class="hint">${VIS_HINT[me.vis]}</p>
+    <span class="sb-l">Cómo vas</span>${seg('mode', PLAN_MODE)}
+    <p class="hint">Da igual ir solo o en grupo. Si vas solo, decirlo ayuda a que otros se animen a saludarte.</p></div>`;
+}
+// Bloque "Aquí ahora": chinchetas en el punto del plan y la lista para saludar o escribir.
+function hereNowBlock(p){
+  const place = getPlace(p.placeId);
+  if (!amHere(p.id)) return (state.joined.has(p.id) || p.joinType === 'libre') && planLive(p) && !isCancelled(p)
+    ? `<div class="block"><h4>Aquí ahora</h4><p class="hint">${ico('geo')} Cuando registres tu llegada verás quién más está en el plan y podrás saludar.</p></div>` : '';
+  const people = peopleHere(p.id), me = myPresence(p.id);
+  const pins = people.map((e, i) => { const s = pinSpot(e.u.id, i);
+    return `<button class="here-pin" style="left:${s.x.toFixed(1)}%;top:${s.y.toFixed(1)}%" onclick="go('u/${e.u.id}')" aria-label="Perfil de ${escapeHtml(e.u.name)}"><span class="avatar sm">${escapeHtml(e.u.initials || initials(e.u.name))}</span></button>`; }).join('');
+  const mine = me.vis !== 'nadie' ? `<button class="here-pin me" style="left:50%;top:52%" onclick="go('perfil')" aria-label="Tú">${pingIcon('sm')}<span class="here-me">Tú</span></button>` : '';
+  const solos = people.filter(e => e.mode === 'solo').length;
+  return `<div class="block"><h4>Aquí ahora · ${people.length + 1} ${people.length ? 'personas' : 'persona'}</h4>
+    <div class="here-map" aria-label="Quién está en el plan"><span class="here-venue">${ico('pin')} ${escapeHtml(p.secret ? 'Punto del plan' : (place ? place.name : 'Punto del plan'))}</span>${pins}${mine}</div>
+    <p class="hint">Todos aparecéis en el punto del plan, nunca en vuestra ubicación exacta. Solo os veis quienes habéis registrado la llegada, y solo mientras dura.${solos ? ` ${solos} ${solos === 1 ? 'ha venido solo' : 'han venido solos'}: buen momento para saludar.` : ''}</p>
+    ${me.vis === 'nadie' ? `<p class="hint">${ico('lock')} Ahora no te ven. Si saludas a alguien, sabrá que estás.</p>` : ''}
+    ${people.map(e => `<div class="here-row"><button class="avatar conv-av" onclick="go('u/${e.u.id}')" aria-label="Perfil de ${escapeHtml(e.u.name)}">${escapeHtml(e.u.initials || initials(e.u.name))}</button>
+      <button class="conv-main lnk" onclick="go('u/${e.u.id}')"><b>${escapeHtml(e.u.name)}</b><span>${escapeHtml([modeLabel(e.mode), areFriends('me', e.u.id) ? 'Amigos' : ''].filter(Boolean).join(' · ') || e.u.handle)}</span></button>
+      <button class="ping-btn ${pinged(p.id, e.u.id) ? 'done' : ''}" onclick="sendPing('${e.u.id}','${p.id}')" ${pinged(p.id, e.u.id) ? 'disabled' : ''} aria-label="Decirle a ${escapeHtml(e.u.name)} que tú también estás aquí">${pingIcon()}<span>${pinged(p.id, e.u.id) ? 'Saludado' : 'Yo también'}</span></button>
+      <button class="here-msg" onclick="openDm('${e.u.id}')" aria-label="Enviar un mensaje a ${escapeHtml(e.u.name)}">${ico('chat')}</button></div>`).join('')
+      || '<p class="hint">Aún no hay nadie visible. Si alguien llega y se deja ver, aparecerá aquí.</p>'}
+  </div>`;
+}
+// Saludo: un mensaje con la chincheta animada, "yo también estoy en este plan". Uno por persona y plan.
+function sendPing(uid, planId){
+  const p = getPlan(planId), u = getUser(uid);
+  if (!p || !u || pinged(planId, uid) || !amHere(planId)) return;
+  const c = dmWith(uid, true);
+  if (c.status !== 'aceptada') c.status = 'aceptada';   // estar en el mismo plan cuenta como conoceros
+  c.messages.push({ id: newId('m'), from:'me', ping: planId, min:0 });
+  ME.pinged = Object.assign({}, ME.pinged, { [planId + ':' + uid]: Date.now() });
+  saveState(); toast(`${u.name.split(' ')[0]} sabe que tú también estás aquí`);
+  if (location.hash === '#/plan/' + planId) renderDetail(planId);
+  setTimeout(() => pingBack(uid, planId), 2500);   // demo: te devuelve el saludo
+}
+function pingBack(uid, planId){
+  const p = getPlan(planId), u = getUser(uid), c = dmWith(uid, false); if (!p || !u || !c) return;
+  c.messages.push({ id: newId('m'), from: uid, ping: planId, min:0 });
+  if (location.hash === '#/chat/' + c.id) renderChat(c.id);
+  else { c.unread = (c.unread || 0) + 1; updateDmBadge(); notify('aqui', `${u.name} también está en ${p.title} y te ha saludado.`, { convId: c.id }); }
+  saveState();
+}
+// En el chat del plan: avisar a todos de que ya estás.
+function pingPlanChat(planId, convId){
+  const c = getConversation(convId); if (!c || !amHere(planId) || c.messages.some(m => m.from === 'me' && m.ping === planId)) return;
+  c.messages.push({ id: newId('m'), from:'me', ping: planId, min:0 }); saveState(); renderChat(convId);
+}
+function pingBubble(m){
+  const p = getPlan(m.ping) || { title:'el plan' };
+  return `<span class="bubble ping-msg">${pingIcon('anim')}<span>${m.from === 'me' ? 'Yo también' : 'También'} estoy en <b>${escapeHtml(p.title)}</b></span></span>`;
 }
 
 
@@ -3665,6 +3821,7 @@ function buildExport(){
     reportesEnviados: myReports().map(({ reporterId, ...r }) => r),
     decisionesSobreTi: MOD_ACTIONS.filter(x => x.targetUserId === 'me'),
     seguridad: { contactosDeConfianza: trustedContacts(), eventos: SAFETY_EVENTS },
+    presenciaEnPlanes: ME.planPresence || {}, saludosEnviados: Object.keys(ME.pinged || {}),
     pagos: PAYMENTS.filter(x => x.userId === 'me'), formasDePago: PAYMENT_METHODS.map(({ brand, last4, exp }) => ({ brand, last4, exp })),
     cobros: ME.payouts ? { ...ME.payouts, iban: maskIban(ME.payouts.iban), ventas: hostSales() } : null,
     consentimientos: { marketing: consentValue('marketing'), ubicacion: consentValue('ubicacion'), analitica: consentValue('analitica'), personalizacion: consentValue('personalizacion'), registro: ME.consentLog || [] },
@@ -4239,7 +4396,7 @@ function saveState(){
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
             city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom,
-            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts },
+            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged },
       modActions: MOD_ACTIONS, userMod: USER_MOD, safety: SAFETY_EVENTS, payments: PAYMENTS, paymentMethods: PAYMENT_METHODS,
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
@@ -4720,7 +4877,7 @@ function convAvatar(c, cls=''){
 function msgPreview(m, c){
   if (!m) return 'Aún no hay mensajes';
   const who = m.from === 'me' ? 'Tú: ' : (c.type === 'plan' ? ((getUser(m.from) || { name:'' }).name.split(' ')[0] + ': ') : '');
-  const what = m.text ? m.text : (m.share ? (String(m.share).startsWith('plan:') ? 'Ha compartido un plan' : (String(m.share).startsWith('u:') ? 'Ha compartido un perfil' : 'Ha compartido una publicación')) : (m.img ? 'Foto' : ''));
+  const what = m.ping ? 'Yo también estoy en el plan' : m.text ? m.text : (m.share ? (String(m.share).startsWith('plan:') ? 'Ha compartido un plan' : (String(m.share).startsWith('u:') ? 'Ha compartido un perfil' : 'Ha compartido una publicación')) : (m.img ? 'Foto' : ''));
   return who + what;
 }
 function updateDmBadge(){
@@ -4799,12 +4956,14 @@ function renderChat(id){
   const place = plan && getPlace(plan.placeId);
   const pinned = plan ? `<div class="chat-pin">${ico('pin')}<span><b>Punto de encuentro</b> ${escapeHtml(plan.secret ? 'se desvela el día del plan' : (place ? place.name : 'Madrid'))} · ${fmtWhen(plan.when)}</span>
       <button class="vis-chip ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'solid' : ''}" onclick="confirmDay('${plan.id}','${c.id}')">${ico('check')} ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'Confirmado' : 'Confirmo que voy'}</button>
+      ${amHere(plan.id) && !c.messages.some(m => m.from === 'me' && m.ping === plan.id) ? `<button class="vis-chip" onclick="pingPlanChat('${plan.id}','${c.id}')">${ico('pin')} Estoy aquí</button>` : ''}
       <button class="vis-chip sos-chip" onclick="openSos('${plan.id}')" aria-label="SOS: pedir ayuda">SOS</button></div>` : '';
   let prev = null;
   const bubbles = c.messages.map((m, i) => {
     if (m.from === 'system'){ prev = null; return `<div class="msg-sys">${escapeHtml(m.text)}</div>`; }
     if (m.removed || (m.held && m.from !== 'me')) return '';
     const mine = m.from === 'me';
+    if (m.ping){ const whoP = (!mine && c.type === 'plan' && prev !== m.from) ? `<span class="msg-who">${escapeHtml((getUser(m.from) || { name:'' }).name)}</span>` : ''; prev = m.from; return `<div class="msg ${mine ? 'me' : ''}">${whoP}${pingBubble(m)}</div>`; }
     const who = (!mine && c.type === 'plan' && prev !== m.from) ? `<span class="msg-who">${escapeHtml((getUser(m.from) || { name:'' }).name)}</span>` : '';
     prev = m.from;
     const blurred = m.img && !mine && (st === 'solicitud' || !knows('me', m.from)) && !m.revealed;
@@ -5422,8 +5581,11 @@ function renderMap(){
   const pins = PLACES.map(pl=>{
     const sel = state.selectedPlace===pl.id ? 'selected' : '';
     const inner = pl.secret ? ico('lock') : (pl.kind==='negocio' ? ico('shield') : ico('pin'));
-    return `<button class="pin ${placeKindClass(pl)} ${sel}" style="left:${pl.x}%;top:${pl.y}%" onclick="selectPlace('${pl.id}')" aria-label="${escapeHtml(pl.name)}">
-      <span class="pin-dot">${inner}</span><span class="pin-cap">${pl.secret?'·····':escapeHtml(pl.name)}</span></button>`;
+    // Si estás en un plan aquí: tu chincheta y cuántos de los que ves están contigo.
+    const live = PLANS.find(p => p.placeId === pl.id && amHere(p.id));
+    const here = live ? `<span class="pin-here">${pingIcon('sm')}<em>${peopleHere(live.id).length + 1}</em></span>` : '';
+    return `<button class="pin ${placeKindClass(pl)} ${sel} ${live ? 'live' : ''}" style="left:${pl.x}%;top:${pl.y}%" onclick="selectPlace('${pl.id}')" aria-label="${escapeHtml(pl.name)}${live ? ' · estás aquí' : ''}">
+      ${here}<span class="pin-dot">${inner}</span><span class="pin-cap">${pl.secret?'·····':escapeHtml(pl.name)}</span></button>`;
   }).join('');
   map.innerHTML = `
     <div class="map-hint">${ico('pin')} Madrid · ${PLACES.length} lugares cerca · toca un pin</div>
@@ -5444,9 +5606,13 @@ function renderMapSheet(){
   }
   const pl = getPlace(state.selectedPlace);
   const plans = PLANS.filter(p=>p.placeId===pl.id);
+  const live = plans.find(p => amHere(p.id)), people = live ? peopleHere(live.id) : [];
   sheet.innerHTML = `
     <h3>${pl.secret?'Lugar por desvelar':escapeHtml(pl.name)} ${pl.verified?`<span class="vchk">${ico('check')}</span>`:''}</h3>
     <div class="sub">${pl.kind==='negocio'?'Negocio verificado':'Lugar público'} · ${pl.city} · ${rating(pl.rating)} · ${pl.hashtag}</div>
+    ${live ? `<div class="here-strip">${pingIcon('sm')}<span class="here-t"><b>Estás en ${escapeHtml(live.title)}</b><span>${people.length ? `Contigo, ${people.length} que puedes ver` : 'Aún no ves a nadie más'}</span></span>
+      <span class="here-avs">${people.slice(0, 5).map(e => `<button class="avatar sm" onclick="go('u/${e.u.id}')" aria-label="Perfil de ${escapeHtml(e.u.name)}">${escapeHtml(e.u.initials || initials(e.u.name))}</button>`).join('')}</span>
+      <button class="ph-btn sm" onclick="go('plan/${live.id}')">Ver</button></div>` : ''}
     ${plans.length?plans.map(miniPlan).join(''):'<div class="sub">Sin planes próximos en este lugar.</div>'}`;
 }
 function miniPlan(p){
@@ -5459,17 +5625,18 @@ function miniPlan(p){
 function selectPlace(id){ state.selectedPlace = state.selectedPlace===id ? null : id; renderMap(); }
 
 /* ---------- asistencia + presencia ---------- */
-function togglePresence(id){ state.presencePublic = !state.presencePublic; renderDetail(id); }
+function togglePresence(id){ setPlanPresence(id, 'vis', myPresence(id).vis === 'nadie' ? 'todos' : 'nadie'); }
 function registerArrival(id){
   if (!requireVerified('Verifica tu identidad para registrar tu llegada', () => registerArrival(id))) return;
   const p = getPlan(id);
   if (state.attended.has(id)) return;
   state.attended.add(id); p.attended = (p.attended||0)+1;
-  if (state.presencePublic){ if(!p.publicAttendees.includes(ME.initials)) p.publicAttendees.unshift(ME.initials); }
+  const vis = myPresence(id).vis;   // solo sale en la lista pública quien es visible para todos
+  if (vis === 'todos'){ if(!p.publicAttendees.includes(ME.initials)) p.publicAttendees.unshift(ME.initials); }
   else { p.attendedPrivate = (p.attendedPrivate||0)+1; }
   if (!ME.attendedPlanIds.includes(id)) ME.attendedPlanIds.push(id);
   saveState();
-  toast(state.presencePublic ? 'Llegada registrada con el QR del anfitrión · presencia pública' : 'Llegada registrada con el QR del anfitrión · presencia privada');
+  toast('Llegada registrada · ' + ({ todos:'te ven los demás del plan', amigos:'te ven tus amigos del plan', nadie:'nadie ve que estás' }[vis]));
   renderDetail(id);
 }
 function requestAttendance(id){
@@ -5547,15 +5714,7 @@ function renderDetail(id){
         <button class="sh-row danger" onclick="openCancelPlan('${p.id}')">${ico('close')}<span>Cancelar el plan</span>${ico('chevR')}</button>` : ''}
       </div></div>` : '';
 
-  const pub = state.presencePublic;
-  const presence = `
-    <div class="block"><h4>Tu presencia</h4>
-      <div class="toggle-row" onclick="togglePresence('${p.id}')">
-        <span class="tg-ic">${ico(pub?'globe':'lock')}</span>
-        <span class="tg-info"><span class="tg-n">${pub?'Pública':'Privada'}</span>
-          <span class="tg-s">${pub?'Apareces entre los asistentes del plan':'Solo en tu perfil; no se te lista en el plan'}</span></span>
-        <span class="switch ${pub?'on':''}"><span class="knob"></span></span>
-      </div></div>`;
+  const presence = isCancelled(p) ? '' : presenceBlock(p);   // quién te ve y si vas solo o en grupo (planes.js)
 
   const pubList = p.publicAttendees.slice(0,6);
   const av = attendanceView(p);
@@ -5614,6 +5773,7 @@ function renderDetail(id){
       ${myBlock}
       ${hostBlock}
       ${manageBlock}
+      ${hereNowBlock(p)}
       ${whoBlock}
       ${presence}
       <div class="block"><h4>Anfitrión</h4>

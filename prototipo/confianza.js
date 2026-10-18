@@ -538,6 +538,7 @@ function buildExport(){
     reportesEnviados: myReports().map(({ reporterId, ...r }) => r),
     decisionesSobreTi: MOD_ACTIONS.filter(x => x.targetUserId === 'me'),
     seguridad: { contactosDeConfianza: trustedContacts(), eventos: SAFETY_EVENTS },
+    presenciaEnPlanes: ME.planPresence || {}, saludosEnviados: Object.keys(ME.pinged || {}),
     pagos: PAYMENTS.filter(x => x.userId === 'me'), formasDePago: PAYMENT_METHODS.map(({ brand, last4, exp }) => ({ brand, last4, exp })),
     cobros: ME.payouts ? { ...ME.payouts, iban: maskIban(ME.payouts.iban), ventas: hostSales() } : null,
     consentimientos: { marketing: consentValue('marketing'), ubicacion: consentValue('ubicacion'), analitica: consentValue('analitica'), personalizacion: consentValue('personalizacion'), registro: ME.consentLog || [] },

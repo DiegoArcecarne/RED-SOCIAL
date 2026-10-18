@@ -222,6 +222,13 @@ Dónde se refleja la asistencia. En dos sitios: como número de asistentes reale
 
 Privacidad de presencia, por asistencia. Cada usuario decide, para su asistencia, si es pública o privada. Pública: aparece listado entre los asistentes del plan. Privada: su asistencia solo es visible en su propio perfil y no se lista en el plan. Decisión de diseño: los asistentes en privado cuentan en el agregado del plan, pero no se muestran por identidad; así el recuento sigue siendo honesto sin exponer a quien no quiere aparecer. El valor por defecto lo fija el usuario en ajustes.
 
+Quién está en el plan: chinchetas y saludos. Da igual ir solo o en grupo. Al llegar, cada persona elige para ese plan quién la ve en el plan y en el mapa (todos los del plan, solo amigos o nadie) y, si quiere, si va sola o en grupo. Mientras dura el plan, quienes han registrado la llegada se ven entre sí:
+
+- como chinchetas en el punto del plan, con enlace a su perfil, en la ficha ("Aquí ahora") y en el mapa;
+- nunca en su ubicación exacta.
+
+Desde ahí se puede enviar un mensaje o solo un saludo: una chincheta animada que dice "yo también estoy en este plan". Es uno por persona y plan, y llega directo porque estar en el mismo plan cuenta como conoceros. En el chat del plan, "Estoy aquí" avisa a todo el grupo. Quien no está en el plan no ve a nadie, los bloqueos se respetan y al terminar el plan desaparece todo. Detalle en [docs/bucle-de-planes.md](docs/bucle-de-planes.md).
+
 Umbral de anonimato en planes pequeños. Contar a los privados en el total tiene un límite: en un plan de cuatro personas con tres caras visibles, "4 asistentes" delata que hubo alguien más y, a menudo, quién. Por eso, por debajo de un umbral (propuesta: 10 asistentes) el plan solo cuenta y muestra a los asistentes visibles; a partir del umbral muestra el total real y cuántos fueron en privado. El valor exacto del umbral es una decisión abierta; el prototipo usa 10.
 
 Método de verificación en el piloto (recomendación). La geolocalización automática implica ubicación en segundo plano, consentimientos RGPD, consumo de batería y riesgo de ubicación falseada. Para el piloto y el MVP se recomienda un check-in más barato y más difícil de falsear: un código QR que el anfitrión muestra en el sitio, o su confirmación manual. La geolocalización automática queda como objetivo de producto una vez validado el bucle.

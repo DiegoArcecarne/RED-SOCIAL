@@ -199,7 +199,7 @@ function openCheckin(id){
       <p class="hint ck-err" id="ck-err"></p>
       <button class="link-btn ck-demo" onclick="document.getElementById('ck-demo').hidden=false">¿Pruebas con un solo móvil? Ver el código del anfitrión</button>
       <p class="hint" id="ck-demo" hidden>Demo: el código ahora es <b>${checkinCode(id)}</b>. Con dos móviles, abre en el otro el plan como anfitrión y escanea su QR.</p>
-      <p class="hint">${state.presencePublic ? 'Aparecerás entre los asistentes (presencia pública).' : 'Contarás en el total, sin aparecer en la lista (presencia privada).'}</p>
+      <p class="hint">${{ todos:'Te verán los demás que estén en el plan, en el plan y en el mapa.', amigos:'Solo te verán tus amigos que estén en el plan.', nadie:'Contarás en el total, sin que nadie vea que estás.' }[myPresence(id).vis]} Lo puedes cambiar en la ficha.</p>
     </div></div>`);
 }
 function submitCheckin(id){
@@ -374,8 +374,9 @@ const NOTIF_TYPES = {
   seguidor:     ['user','Seguidores','Solicitudes para seguirte y respuestas a las tuyas'],
   mencion:      ['at','Menciones','Cuando te mencionan o te etiquetan'],
   pago:         ['card','Pagos','Pagos, reembolsos, recibos y cobros'],
+  aqui:         ['pin','En el plan','Quién más está en tu plan y te saluda'],
 };
-function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true, seguidor:true, mencion:true, pago:true }, ME.notifPrefs || {}); }
+function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true, seguidor:true, mencion:true, pago:true, aqui:true }, ME.notifPrefs || {}); }
 // "seguridad" (SOS, decisiones de moderación, resultado de tus reportes) no se puede desactivar.
 function notify(type, text, ref){
   if (type !== 'seguridad' && !notifPrefs()[type]) return null;
@@ -461,4 +462,110 @@ function simulateIncomingRequest(planId){
   REQUESTS.push({ id:'r' + Date.now(), planId, userId: who.id, status:'pendiente', message:'¡Hola! Me encantaría ir. Es mi primera vez en un plan así.' });
   notify('solicitud', `${who.name} quiere ir a ${p.title}.`, { planId, route:'solicitudes/' + planId });
   saveState();
+}
+
+/* ---------- quién está en el plan: visibilidad, chinchetas y saludos ----------
+   Al registrar tu llegada eliges quién te ve en el plan y en el mapa (todos los del plan,
+   solo amigos o nadie) y si vas solo o en grupo. Los que estáis en el plan os veis como
+   chinchetas en el punto del plan (nunca en la posición exacta de nadie), con enlace al
+   perfil. Se puede enviar un mensaje o solo un saludo: una chincheta animada que dice
+   "yo también estoy en este plan". Solo mientras dura el plan. Ver docs/bucle-de-planes.md. */
+const PLAN_VIS = [['todos','Todos los del plan','globe'],['amigos','Amigos','heartO'],['nadie','Nadie','lock']];
+const PLAN_MODE = [['solo','Voy solo','user'],['grupo','Voy en grupo','users'],['','No decirlo','close']];
+const VIS_HINT = {
+  todos: 'Te ven todos los que han registrado su llegada a este plan, en el plan y en el mapa, y pueden saludarte.',
+  amigos: 'Solo te ven tus amigos (os seguís los dos) que estén en el plan.',
+  nadie: 'No apareces. Cuentas en el total del plan, pero nadie ve que estás. Puedes ver a los demás y saludar: al saludar, esa persona sabrá que estás.',
+};
+function myPresence(planId){ return Object.assign({ vis: state.presencePublic ? 'todos' : 'nadie', mode: '' }, (ME.planPresence || {})[planId] || {}); }
+function setPlanPresence(planId, k, v){
+  ME.planPresence = Object.assign({}, ME.planPresence, { [planId]: Object.assign(myPresence(planId), { [k]: v }) });
+  const p = getPlan(planId);
+  // La lista pública de asistentes solo muestra a quien es visible para todos.
+  if (p && state.attended.has(planId) && k === 'vis'){
+    const listed = p.publicAttendees.includes(ME.initials);
+    if (v === 'todos' && !listed){ p.publicAttendees.unshift(ME.initials); p.attendedPrivate = Math.max(0, (p.attendedPrivate || 0) - 1); }
+    if (v !== 'todos' && listed){ p.publicAttendees = p.publicAttendees.filter(x => x !== ME.initials); p.attendedPrivate = (p.attendedPrivate || 0) + 1; }
+  }
+  saveState(); if (location.hash === '#/plan/' + planId) renderDetail(planId);
+}
+// El plan está en marcha (en la demo, siempre que hayas registrado tu llegada).
+function planLive(p){ return !!p && !isCancelled(p) && (DEMO_CHECKIN_ANYTIME || (Date.now() >= p.when - CHECKIN_BEFORE_MIN * 60000 && Date.now() <= p.when.getTime() + CHECKIN_AFTER_MIN * 60000)); }
+const amHere = (planId) => state.attended.has(planId) && planLive(getPlan(planId));
+// Quién ves tú en el plan: solo si tú también estás, y según la visibilidad de cada uno.
+function peopleHere(planId){
+  if (!amHere(planId)) return [];
+  return (PLAN_PRESENCE[planId] || []).filter(e => {
+    const u = getUser(e.userId);
+    if (!u || (ME.blocked || []).includes(u.id) || isSanctioned(u.id)) return false;
+    return e.vis === 'todos' || (e.vis === 'amigos' && areFriends('me', u.id));
+  }).map(e => Object.assign({ u: getUser(e.userId) }, e));
+}
+const pinged = (planId, uid) => !!((ME.pinged || {})[planId + ':' + uid]);
+// Posición de cada chincheta alrededor del punto del plan (fija para cada persona).
+function pinSpot(uid, i){
+  let h = 0; for (const ch of String(uid)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const a = (h % 360) * Math.PI / 180, r = 18 + (h % 17) + i * 2;
+  return { x: 50 + Math.cos(a) * r * 1.3, y: 52 + Math.sin(a) * r };
+}
+const modeLabel = (m) => m === 'solo' ? 'Va solo' : (m === 'grupo' ? 'Va en grupo' : '');
+function pingIcon(cls){ return `<span class="ping-ic ${cls || ''}" aria-hidden="true"><i class="ping-ring"></i><i class="ping-ring r2"></i>${ico('pin')}</span>`; }
+// Bloque "Tu presencia en el plan" de la ficha.
+function presenceBlock(p){
+  const me = myPresence(p.id);
+  const seg = (k, opts) => `<div class="iseg">${opts.map(([v, l, n]) => `<button class="${me[k] === v ? 'active' : ''}" onclick="setPlanPresence('${p.id}','${k}','${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div>`;
+  return `<div class="block"><h4>Tu presencia en el plan</h4>
+    <span class="sb-l">Quién te ve en el plan y en el mapa</span>${seg('vis', PLAN_VIS)}
+    <p class="hint">${VIS_HINT[me.vis]}</p>
+    <span class="sb-l">Cómo vas</span>${seg('mode', PLAN_MODE)}
+    <p class="hint">Da igual ir solo o en grupo. Si vas solo, decirlo ayuda a que otros se animen a saludarte.</p></div>`;
+}
+// Bloque "Aquí ahora": chinchetas en el punto del plan y la lista para saludar o escribir.
+function hereNowBlock(p){
+  const place = getPlace(p.placeId);
+  if (!amHere(p.id)) return (state.joined.has(p.id) || p.joinType === 'libre') && planLive(p) && !isCancelled(p)
+    ? `<div class="block"><h4>Aquí ahora</h4><p class="hint">${ico('geo')} Cuando registres tu llegada verás quién más está en el plan y podrás saludar.</p></div>` : '';
+  const people = peopleHere(p.id), me = myPresence(p.id);
+  const pins = people.map((e, i) => { const s = pinSpot(e.u.id, i);
+    return `<button class="here-pin" style="left:${s.x.toFixed(1)}%;top:${s.y.toFixed(1)}%" onclick="go('u/${e.u.id}')" aria-label="Perfil de ${escapeHtml(e.u.name)}"><span class="avatar sm">${escapeHtml(e.u.initials || initials(e.u.name))}</span></button>`; }).join('');
+  const mine = me.vis !== 'nadie' ? `<button class="here-pin me" style="left:50%;top:52%" onclick="go('perfil')" aria-label="Tú">${pingIcon('sm')}<span class="here-me">Tú</span></button>` : '';
+  const solos = people.filter(e => e.mode === 'solo').length;
+  return `<div class="block"><h4>Aquí ahora · ${people.length + 1} ${people.length ? 'personas' : 'persona'}</h4>
+    <div class="here-map" aria-label="Quién está en el plan"><span class="here-venue">${ico('pin')} ${escapeHtml(p.secret ? 'Punto del plan' : (place ? place.name : 'Punto del plan'))}</span>${pins}${mine}</div>
+    <p class="hint">Todos aparecéis en el punto del plan, nunca en vuestra ubicación exacta. Solo os veis quienes habéis registrado la llegada, y solo mientras dura.${solos ? ` ${solos} ${solos === 1 ? 'ha venido solo' : 'han venido solos'}: buen momento para saludar.` : ''}</p>
+    ${me.vis === 'nadie' ? `<p class="hint">${ico('lock')} Ahora no te ven. Si saludas a alguien, sabrá que estás.</p>` : ''}
+    ${people.map(e => `<div class="here-row"><button class="avatar conv-av" onclick="go('u/${e.u.id}')" aria-label="Perfil de ${escapeHtml(e.u.name)}">${escapeHtml(e.u.initials || initials(e.u.name))}</button>
+      <button class="conv-main lnk" onclick="go('u/${e.u.id}')"><b>${escapeHtml(e.u.name)}</b><span>${escapeHtml([modeLabel(e.mode), areFriends('me', e.u.id) ? 'Amigos' : ''].filter(Boolean).join(' · ') || e.u.handle)}</span></button>
+      <button class="ping-btn ${pinged(p.id, e.u.id) ? 'done' : ''}" onclick="sendPing('${e.u.id}','${p.id}')" ${pinged(p.id, e.u.id) ? 'disabled' : ''} aria-label="Decirle a ${escapeHtml(e.u.name)} que tú también estás aquí">${pingIcon()}<span>${pinged(p.id, e.u.id) ? 'Saludado' : 'Yo también'}</span></button>
+      <button class="here-msg" onclick="openDm('${e.u.id}')" aria-label="Enviar un mensaje a ${escapeHtml(e.u.name)}">${ico('chat')}</button></div>`).join('')
+      || '<p class="hint">Aún no hay nadie visible. Si alguien llega y se deja ver, aparecerá aquí.</p>'}
+  </div>`;
+}
+// Saludo: un mensaje con la chincheta animada, "yo también estoy en este plan". Uno por persona y plan.
+function sendPing(uid, planId){
+  const p = getPlan(planId), u = getUser(uid);
+  if (!p || !u || pinged(planId, uid) || !amHere(planId)) return;
+  const c = dmWith(uid, true);
+  if (c.status !== 'aceptada') c.status = 'aceptada';   // estar en el mismo plan cuenta como conoceros
+  c.messages.push({ id: newId('m'), from:'me', ping: planId, min:0 });
+  ME.pinged = Object.assign({}, ME.pinged, { [planId + ':' + uid]: Date.now() });
+  saveState(); toast(`${u.name.split(' ')[0]} sabe que tú también estás aquí`);
+  if (location.hash === '#/plan/' + planId) renderDetail(planId);
+  setTimeout(() => pingBack(uid, planId), 2500);   // demo: te devuelve el saludo
+}
+function pingBack(uid, planId){
+  const p = getPlan(planId), u = getUser(uid), c = dmWith(uid, false); if (!p || !u || !c) return;
+  c.messages.push({ id: newId('m'), from: uid, ping: planId, min:0 });
+  if (location.hash === '#/chat/' + c.id) renderChat(c.id);
+  else { c.unread = (c.unread || 0) + 1; updateDmBadge(); notify('aqui', `${u.name} también está en ${p.title} y te ha saludado.`, { convId: c.id }); }
+  saveState();
+}
+// En el chat del plan: avisar a todos de que ya estás.
+function pingPlanChat(planId, convId){
+  const c = getConversation(convId); if (!c || !amHere(planId) || c.messages.some(m => m.from === 'me' && m.ping === planId)) return;
+  c.messages.push({ id: newId('m'), from:'me', ping: planId, min:0 }); saveState(); renderChat(convId);
+}
+function pingBubble(m){
+  const p = getPlan(m.ping) || { title:'el plan' };
+  return `<span class="bubble ping-msg">${pingIcon('anim')}<span>${m.from === 'me' ? 'Yo también' : 'También'} estoy en <b>${escapeHtml(p.title)}</b></span></span>`;
 }
