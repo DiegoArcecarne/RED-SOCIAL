@@ -327,7 +327,7 @@ function renderSearchResults(){
   const person = (u) => `<button class="conv" onclick="saveRecentSearch(state.search.q);go('u/${u.id}')"><span class="avatar conv-av">${escapeHtml(u.initials || initials(u.name))}</span>
     <span class="conv-main"><b>${escapeHtml(u.name)} ${u.verified ? `<span class="vchk">${ico('check')}</span>` : ''}${typeBadge(u)}</b><span>${escapeHtml(u.handle)}${isPrivate(u) ? ' · Cuenta privada' : ''}${follows('me', u.id) ? ' · Le sigues' : ''}</span></span></button>`;
   const plan = (p) => { const pl = getPlace(p.placeId);
-    return `<button class="conv" onclick="saveRecentSearch(state.search.q);go('plan/${p.id}')"><span class="conv-av plan ${p.gradient}">${coverImg(p.photo, 120)}</span>
+    return `<button class="conv" onclick="saveRecentSearch(state.search.q);go('plan/${p.id}')"><span class="conv-av plan ${p.gradient}">${coverImg(planCover(p), 120)}</span>
       <span class="conv-main"><b>${escapeHtml(p.title)}</b><span>${fmtWhen(new Date(p.when))} · ${escapeHtml(isOnline(p) ? 'Videollamada' : (p.secret ? 'Zona aproximada' : (pl ? pl.name : 'Madrid')))}${p.paid ? ' · ' + p.price + ' €' : ' · Gratis'}</span></span></button>`; };
   const tag = (x) => `<button class="conv" onclick="saveRecentSearch(state.search.q);go('tema/${encodeURIComponent(x.tag)}')"><span class="conv-av tag-av">${ico('hash')}</span>
     <span class="conv-main"><b>#${escapeHtml(x.tag)}</b><span>${x.n} ${x.n === 1 ? 'publicación' : 'publicaciones'}</span></span></button>`;
@@ -346,7 +346,7 @@ function renderTag(tag){
   const places = PLACES.filter(pl => (pl.hashtag || '').replace(/^#/, '').toLowerCase() === tag);
   const plans = PLANS.filter(p => !isCancelled(p) && places.some(pl => pl.id === p.placeId));
   document.getElementById('view-page').innerHTML = pageHead('#' + tag) + `<div class="page-body"><p class="hint">${posts.length} ${posts.length === 1 ? 'publicación' : 'publicaciones'}${places.length ? ` · tema de ${escapeHtml(places[0].name)}` : ''}</p></div>
-    ${plans.length ? `<div class="page-body"><div class="notif-h"><span>Planes aquí</span></div>${plans.map(p => `<button class="conv" onclick="go('plan/${p.id}')"><span class="conv-av plan ${p.gradient}">${coverImg(p.photo, 120)}</span><span class="conv-main"><b>${escapeHtml(p.title)}</b><span>${fmtWhen(new Date(p.when))}</span></span></button>`).join('')}</div>` : ''}
+    ${plans.length ? `<div class="page-body"><div class="notif-h"><span>Planes aquí</span></div>${plans.map(p => `<button class="conv" onclick="go('plan/${p.id}')"><span class="conv-av plan ${p.gradient}">${coverImg(planCover(p), 120)}</span><span class="conv-main"><b>${escapeHtml(p.title)}</b><span>${fmtWhen(new Date(p.when))}</span></span></button>`).join('')}</div>` : ''}
     ${postGrid(posts, 'Aún no hay publicaciones con este tema.')}`;
 }
 // Menciones y temas en los textos: tocables.

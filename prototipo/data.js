@@ -159,9 +159,9 @@ const PLANS = [
     id: 'p13', title: 'Debate: ¿se hacen amigos después de los 30?', placeId: null, category: 'social',
     level: 2, paid: false, price: 0, recurring: false, hostId: 'lucia',
     host: { name: 'Lucía R.', business: false, verified: true, rating: 4.8, reliability: 95 },
-    when: hoursFromNow(-0.25), durationMin: 75, groupMin: 2, groupMax: 8, joined: 6,
+    when: hoursFromNow(-0.25), durationMin: 120, groupMin: 2, groupMax: 8, joined: 6,
     joinType: 'apuntado', approval: 'manual', online: { visibility: 'publica', comments: true, join: 'aprobacion' },
-    gradient: 'g-grape', photo: null,
+    gradient: 'g-grape',
     summary: 'Conversación tranquila: cada persona cuenta cómo ha hecho amigos de adulta y qué le ha funcionado. Quien quiera hablar, pide unirse; el resto puede mirar y comentar.',
     secret: false,
     callComments: [
@@ -176,7 +176,7 @@ const PLANS = [
     host: { name: 'Marco T.', business: false, verified: true, rating: 4.9, reliability: 99 },
     when: hoursFromNow(30), durationMin: 60, groupMin: 2, groupMax: 12, joined: 7,
     joinType: 'apuntado', approval: 'automatica', online: { visibility: 'publica', comments: false, join: 'libre' },
-    gradient: 'g-dark', photo: null,
+    gradient: 'g-dark',
     summary: 'Clase para empezar desde cero: movimientos, primeras aperturas y una partida comentada. Con cámara, hasta 12 personas; si solo quieres mirar, entra sin apuntarte.',
     secret: false,
   },
@@ -186,7 +186,7 @@ const PLANS = [
     host: { name: 'Sara M.', business: false, verified: true, rating: 4.7, reliability: 97 },
     when: hoursFromNow(50), durationMin: 90, groupMin: 2, groupMax: 6, joined: 4,
     joinType: 'apuntado', approval: 'manual', online: { visibility: 'privada', comments: false, join: 'aprobacion' },
-    gradient: 'g-sunset', photo: null,
+    gradient: 'g-sunset',
     summary: 'Comentamos la novela de Andrea Abreu. Grupo pequeño y privado: solo entra quien está apuntado.',
     secret: false,
   },
@@ -267,6 +267,9 @@ const PLAN_PHOTO = {
   p10:'1571008887538-b36bb32f4571', // running
   p11:'1555396273-367ea4eb4db5',    // mercado de diseño
   p12:'1489599849927-2ee91cede3ba', // cine
+  p13:'1588196749597-9ff075ee6b5b', // videollamada en un portátil
+  p14:'1586165368502-1bad197a6461', // ajedrez
+  p15:'1543002588-bfa74002ed7e',    // libro abierto
 };
 PLANS.forEach((p) => { p.photo = PLAN_PHOTO[p.id] || ''; });
 

@@ -120,6 +120,15 @@ function uimg(slug,s){ s=s||500; return `https://images.unsplash.com/photo-${slu
 // Imagen de portada sobre el degradado; si no carga se elimina y queda el degradado (fallback).
 // Foto subida (data:/blob:/http) o slug de Unsplash.
 function imgSrc(slug,s){ if (String(slug).startsWith('m:')) return mediaUrl(slug); return /^(data:|blob:|https?:)/.test(slug) ? slug : uimg(slug,s); }
+// Portada del plan: su foto o, si no tiene, una del tema (las videollamadas, la de una llamada).
+const ONLINE_COVER = '1588196749597-9ff075ee6b5b', DEFAULT_COVER = '1529156069898-49953e39b3ac';   // Unsplash
+function planCover(p){
+  if (!p) return null;
+  if (p.photo) return p.photo;
+  if (isOnline(p)) return ONLINE_COVER;
+  const same = PLANS.find(x => x.photo && x.category === p.category && !isOnline(x) && !/^(data:|blob:|m:)/.test(x.photo));
+  return same ? same.photo : DEFAULT_COVER;
+}
 function coverImg(slug,s){ const src = slug ? imgSrc(slug,s) : ''; return src ? `<img class="cover-img" src="${src}" alt="" loading="lazy" onerror="this.remove()">` : ''; }
 function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function val(id){ const el=document.getElementById(id); return el?el.value:''; }
@@ -263,7 +272,7 @@ function gridCell(p){
   const loc = isOnline(p) ? 'Videollamada' : (p.secret ? 'Zona aprox.' : (place ? place.name : 'Madrid'));
   return `
   <button class="cell ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">
-    ${coverImg(p.photo,500)}
+    ${coverImg(planCover(p),500)}
     <span class="cell-scrim"></span>
     <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>${callLive(p) ? `<span class="cell-feat live">${ico('live')} En directo</span>` : (p.featured ? '<span class="cell-feat">Destacado</span>' : (isOnline(p) ? `<span class="cell-feat">${ico('video')} Online</span>` : ''))}
     <span class="cell-info">
@@ -381,7 +390,7 @@ function injectedPlan(seen, used){
   const place = getPlace(pick.placeId);
   const seats = pick.joinType==='libre' ? 'Plan libre' : `Quedan ${Math.max(0, pick.groupMax - pick.joined)} plazas`;
   return `<button class="inject ${pick.gradient}" onclick="go('plan/${pick.id}')">
-    ${coverImg(pick.photo,700)}<span class="inject-scrim"></span>
+    ${coverImg(planCover(pick),700)}<span class="inject-scrim"></span>
     <span class="inject-tag">Puedes hacerlo tú</span>
     <span class="inject-info">
       <span class="inject-t">${escapeHtml(pick.title)}</span>
@@ -668,7 +677,7 @@ function canWrite(c){ return c.status !== 'solicitud' && !(c.status === 'enviada
 const lastOf = (c) => c.messages[c.messages.length - 1];
 function convTitle(c){ if (c.type === 'plan'){ const p = getPlan(c.planId); return p ? p.title : 'Plan'; } return (getUser(c.with) || { name:'' }).name; }
 function convAvatar(c, cls=''){
-  if (c.type === 'plan'){ const p = getPlan(c.planId) || {}; return `<span class="conv-av plan ${p.gradient||'g-dark'} ${cls}">${coverImg(p.photo,120)}</span>`; }
+  if (c.type === 'plan'){ const p = getPlan(c.planId) || {}; return `<span class="conv-av plan ${p.gradient||'g-dark'} ${cls}">${coverImg(planCover(p),120)}</span>`; }
   const u = getUser(c.with) || { name:'?' }; return `<span class="avatar conv-av ${cls}">${escapeHtml(u.initials || initials(u.name))}</span>`;
 }
 function msgPreview(m, c){
@@ -726,8 +735,8 @@ function msgShareCard(key){
   if (isProfile(x)) return `<button class="msg-card" onclick="go('u/${x.id}')"><span class="mc-img mc-av"><span class="avatar">${escapeHtml(x.initials || initials(x.name))}</span></span>
     <span class="mc-txt"><b>${escapeHtml(x.name)}</b><span>${escapeHtml(x.handle)}${x.bio ? ' · ' + escapeHtml(x.bio.slice(0, 60)) : ''}</span></span></button>`;
   if (isPlan(x)){ const place = getPlace(x.placeId);
-    return `<button class="msg-card" onclick="go('plan/${x.id}')"><span class="mc-img ${x.gradient}">${coverImg(x.photo,400)}</span>
-      <span class="mc-txt"><b>${escapeHtml(x.title)}</b><span>${fmtWhen(x.when)} · ${escapeHtml(x.secret ? 'Zona aproximada' : (place ? place.name : 'Madrid'))}</span></span></button>`; }
+    return `<button class="msg-card" onclick="go('plan/${x.id}')"><span class="mc-img ${x.gradient}">${coverImg(planCover(x),400)}</span>
+      <span class="mc-txt"><b>${escapeHtml(x.title)}</b><span>${fmtWhen(x.when)} · ${escapeHtml(isOnline(x) ? 'Videollamada' : x.secret ? 'Zona aproximada' : (place ? place.name : 'Madrid'))}</span></span></button>`; }
   const u = getUser(x.authorId) || { name:'' };
   return `<button class="msg-card" onclick="openPost('${x.id}')"><span class="mc-img ${(x.media||[])[0]||'g-dark'}">${coverImg((x.imgs||[])[0],400)}</span>
     <span class="mc-txt"><b>${escapeHtml(u.name)}</b><span>${escapeHtml((x.caption||'').slice(0,80))}</span></span></button>`;
@@ -1414,7 +1423,7 @@ function renderMapSheet(){
 }
 function miniPlan(p){
   return `<button class="mini-plan" onclick="go('plan/${p.id}')">
-    <span class="mini-thumb ${p.gradient}">${coverImg(p.photo,120)}</span>
+    <span class="mini-thumb ${p.gradient}">${coverImg(planCover(p),120)}</span>
     <span class="mini-info"><span class="mini-t">${escapeHtml(p.title)}</span>
       <span class="mini-m">${fmtWhen(p.when)} · ${sizeLabel(p)} · ${ico('geo')} ${attendanceView(p).n}</span></span>
     <span class="mini-corner">${freeIcon(p)}</span></button>`;
@@ -1545,7 +1554,7 @@ function renderDetail(id){
 
   view.innerHTML = `
     <div class="detail-hero ${p.gradient}">
-      ${coverImg(p.photo,820)}
+      ${coverImg(planCover(p),820)}
       <span class="hero-scrim"></span>
       <button class="back-btn" onclick="history.back()" aria-label="Atrás">${ico('chevL')}</button>
       <button class="back-btn share-btn" onclick="openShare('plan:${p.id}')" aria-label="Compartir plan">${ico('send')}</button>
@@ -1594,7 +1603,7 @@ function renderDetail(id){
       </div>
       ${isOnline(p) ? '' : `<div class="block"><h4>Lugar</h4>
         <button class="place-link" onclick="go('mapa');selectPlace('${place?place.id:''}')">
-          <span class="mini-thumb ${p.gradient}">${coverImg(p.photo,120)}</span>
+          <span class="mini-thumb ${p.gradient}">${coverImg(planCover(p),120)}</span>
           <span class="pl-info"><span class="pl-n">${p.secret?'Zona aproximada · centro de Madrid':(hideExact?'Zona aproximada · verifícate para ver el sitio':(place?place.name:'Madrid'))}</span>
             <span class="pl-s">${place?place.city+' · '+(place.kind==='negocio'?'Negocio verificado':'Lugar público')+' · '+place.hashtag:''}</span></span>
           <span class="pl-arrow">${ico('chevR')}</span></button>
@@ -1681,7 +1690,7 @@ function profileGridVividas(u){
   if (!plans.length) return `<div class="empty-tab"><span class="empty-ic">${ico('play')}</span><p>Aún no hay Vividas.</p></div>`;
   return `<div class="grid">${plans.map(p=>`
     <button class="cell ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">
-      ${coverImg(p.photo,500)}
+      ${coverImg(planCover(p),500)}
       <span class="cell-scrim"></span><span class="cell-corner">${freeIcon(p)}</span>
       <span class="cell-info"><span class="cell-title">${escapeHtml(p.title)}</span></span></button>`).join('')}</div>`;
 }
@@ -1771,7 +1780,7 @@ function visChip(r){
 function ratingCard(r, own){
   const p = getPlan(r.planId); if (!p) return '';
   return `<div class="rating">
-    <button class="r-thumb ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">${coverImg(p.photo,200)}</button>
+    <button class="r-thumb ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">${coverImg(planCover(p),200)}</button>
     <div class="r-body">
       <button class="r-title" onclick="go('plan/${p.id}')">${escapeHtml(p.title)}</button>
       <div class="r-meta">${stars(r.stars)}<span>hace ${r.daysAgo || 0} d</span></div>
@@ -1792,7 +1801,7 @@ function profileRatings(u, me){
   const pending = (ME.attendedPlanIds || []).filter(id => !mine.some(r => r.planId === id)).map(getPlan).filter(Boolean);
   return `<div class="ratings">
     <button class="r-prefs" onclick="go('ajustes')">${ico('eye')}<span>Por defecto, <b>${pr.default==='publica'?'públicas':'privadas'}</b>. Públicas: ${AUD_LABEL[pr.publica]} · Privadas: ${AUD_LABEL[pr.privada]}</span>${ico('chevR')}</button>
-    ${pending.map(p => `<div class="rating pending"><span class="r-thumb ${p.gradient}">${coverImg(p.photo,200)}</span>
+    ${pending.map(p => `<div class="rating pending"><span class="r-thumb ${p.gradient}">${coverImg(planCover(p),200)}</span>
       <div class="r-body"><span class="r-title">${escapeHtml(p.title)}</span><span class="r-meta">Asististe · sin valorar</span>
       <button class="vis-chip solid" onclick="openRatingSheet('${p.id}')">${ico('star')} Valorar</button></div></div>`).join('')}
     ${mine.map(r => ratingCard(r, true)).join('')}
@@ -2169,7 +2178,7 @@ function renderCreatePlan(){
         <div class="cover-pick" id="cover-pick">${covers.map(c=>`<button class="sw ${c} ${d.cover===c?'active':''}" data-v="${c}" onclick="setDraft('cover','${c}')"></button>`).join('')}
           <label class="add-media">${ico('image')} ${d.photo ? 'Cambiar foto' : 'Subir foto'}<input type="file" accept="image/*" hidden onchange="pickPlanPhoto(this)"></label></div>
         <div class="photo-prev" id="photo-prev">${d.photo ? `<img src="${d.photo}" alt="Portada del plan"><button class="sv-x pv-x" onclick="clearPlanPhoto()" aria-label="Quitar foto">${ico('close')}</button>` : ''}</div>
-        <p class="hint">Haz una foto o elígela de la galería. Si no subes ninguna, se usa el color.</p></div>
+        <p class="hint">Haz una foto o elígela de la galería. Si no subes ninguna, ponemos una del tema (o de videollamada).</p></div>
       ${d.fromIdea ? `<div class="pl-banner">${ico('spark')}<div><b>Convirtiendo tu chispa en plan</b><p>Al publicarlo entran los que se animaron y su chat del plan.</p></div></div>` : ''}
       <div class="field"><label for="f-title">Título ${counter('f-title','planTitle',pf.title)}</label><input ${lim('f-title','planTitle')} placeholder="Ej. Atardecer en el mirador" value="${escapeHtml(pf.title || '')}" /></div>
       <div class="field"><label for="f-desc">Descripción ${counter('f-desc','planDesc',pf.desc)}</label><textarea ${lim('f-desc','planDesc')} rows="3" placeholder="¿En qué consiste el plan?">${escapeHtml(pf.desc || '')}</textarea></div>

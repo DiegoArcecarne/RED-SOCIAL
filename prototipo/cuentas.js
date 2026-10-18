@@ -136,7 +136,7 @@ function renderAuth(){
 
 /* ---------- pantallas ---------- */
 function auWelcome(){
-  const pics = PLANS.slice(0, 6).map(p => `<span class="au-pic ${p.gradient}">${coverImg(p.photo, 300)}</span>`).join('');
+  const pics = PLANS.slice(0, 6).map(p => `<span class="au-pic ${p.gradient}">${coverImg(planCover(p), 300)}</span>`).join('');
   return `<div class="au-hero">${pics}<span class="au-shade"></span></div>
     <div class="au-body">
       <span class="au-logo">planes</span>

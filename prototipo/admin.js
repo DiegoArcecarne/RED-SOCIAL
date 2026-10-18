@@ -166,7 +166,7 @@ function renderAdminPlans(){
   const reps = (p) => REPORTS.filter(r => r.planId === p.id).length;
   const list = PLANS.filter(p => f === 'todos' || (f === 'reportes' && reps(p)) || (f === 'revision' && (p.held || p.removed)) || (f === 'pago' && p.paid) || (f === 'destacados' && p.featured));
   return `<div class="adm-tabs adm-filt">${PLAN_FILTERS.map(([v, l]) => `<button class="${f === v ? 'active' : ''}" onclick="state.adminPlanFilter='${v}';renderAdmin('planes')"><span>${l}</span></button>`).join('')}</div>
-    ${list.map(p => `<button class="adm-row" onclick="openAdminPlan('${p.id}')"><span class="mini-thumb ${p.gradient}">${coverImg(p.photo, 120)}</span>
+    ${list.map(p => `<button class="adm-row" onclick="openAdminPlan('${p.id}')"><span class="mini-thumb ${p.gradient}">${coverImg(planCover(p), 120)}</span>
       <span class="conv-main"><b>${escapeHtml(p.title)}${p.featured ? ' · destacado' : ''}</b><span>${escapeHtml((p.host || {}).name || '')} · ${fmtWhen(new Date(p.when))} · ${p.joined || 0} apuntados · ${p.attended || 0} asistencias${reps(p) ? ` · ${reps(p)} reportes` : ''}${p.paid ? ' · ' + money(p.price) : ''}</span></span>
       <span class="st ${planAdminState(p) === 'Activo' || planAdminState(p) === 'Pasado' ? '' : 'st-bad'}">${planAdminState(p)}</span></button>`).join('') || '<p class="hint">Ningún plan con este filtro.</p>'}`;
 }

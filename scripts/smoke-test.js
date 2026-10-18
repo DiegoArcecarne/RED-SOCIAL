@@ -1378,6 +1378,8 @@ check('crear: "Dónde" (en persona o videollamada) y sus opciones', h.includes('
 vc.run("setDraft('mode','online'); setDraft('ovis','privada'); setDraft('ojoin','aprobacion')"); set(vc, 'f-olimit', '5'); set(vc, 'f-odur', '45'); set(vc, 'f-title', 'Tertulia de cine'); set(vc, 'f-desc', 'Hablamos de pelis.');
 vc.run('publishPlan()'); const vp = vc.run('PLANS[0]');
 check('publicar: privada, sin comentarios, con aprobación, límite y duración', vp.title === 'Tertulia de cine' && vp.placeId === null && vp.online.visibility === 'privada' && vp.online.comments === false && vp.online.join === 'aprobacion' && vp.groupMax === 5 && vp.approval === 'manual' && vp.durationMin === 45);
+check('portada: las videollamadas de ejemplo tienen foto; sin foto, una de videollamada o del tema', vc.run('["p13","p14","p15"].every(id => !!getPlan(id).photo)') && vc.run(`planCover(getPlan("${vp.id}"))`) === vc.run('ONLINE_COVER')
+  && vc.run('planCover({ category:"gastro" })') === vc.run('getPlan("p1").photo') && vc.run('planCover({ category:"nueva" })') === vc.run('DEFAULT_COVER'));
 check('privada: no tiene página pública con vista previa', vc.run(`postIsPublic(getPlan("${vp.id}"))`) === false && vc.run('postIsPublic(getPlan("p14"))') === true);
 vc.run(`getPlan("${vp.id}").when = new Date(Date.now() - 60000); enterCall("${vp.id}")`); vc.nav('sala/' + vp.id); h = vc.html('view-page');
 check('anfitrión: entra y puede gestionar', vc.run('state.call.role') === 'participante' && h.includes('Gestionar'));
