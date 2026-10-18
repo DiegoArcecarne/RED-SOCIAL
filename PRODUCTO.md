@@ -65,8 +65,19 @@ Antes de un plan muchas veces hay solo una idea: "Estoy pensando ir a pescar el 
   - Una cena: máximo 6 para reservar mesa.
   - Una visita cultural: grupos de 4.
   - Una fiesta: sin límite.
-- **Respuestas**: "Me apunto" (hace falta estar verificado, como para ir a un plan) o "Quizás". Con "decido yo quién va", las respuestas llegan como solicitudes.
-- **Cuando se llega al mínimo**, quien la lanzó recibe un aviso y "Convertir en plan" abre el formulario de plan ya relleno. Al publicarlo, quienes se apuntaron entran en el plan y en su chat.
+- **Respuestas**: "Me apunto" (hace falta estar verificado, como para ir a un plan) o "Quizás".
+  - Si la chispa está abierta a cualquiera, "decido yo quién va" viene activado por defecto: el botón es "Quiero ir" y la respuesta llega como solicitud.
+  - Con amigos o seguidores, "Me apunto" entra directo.
+  - Quien la lanza puede cambiarlo.
+- **Cuando se llega al mínimo**, quien la lanzó recibe "Ya sois 3: ¿lo hacemos?" y **Confirmar el plan** le pide solo lo que falta:
+  - día y hora (con una propuesta según el "cuándo");
+  - punto de encuentro;
+  - lugar del mapa, opcional;
+  - quién pasa al plan, con todos marcados.
+
+  Con "Más opciones" se abre el formulario completo (foto, precio, grupo). No es automático por defecto: quien la confirma pasa a ser anfitrión, responde del plan y cuenta para su fiabilidad.
+- **Opción automática**: al lanzarla, "Hacerlo plan automáticamente". Solo con día concreto y zona; al llegar al mínimo, el plan se crea solo.
+- **Los apuntados confirman**: dijeron sí a algo vago ("este finde"), así que, cuando ya es plan con día, hora y punto de encuentro, reciben "Ya es plan: ¿vas?". Tienen 24 h para confirmar ("Sí, voy" o "No puedo"); si no, su plaza queda libre. Así el recuento del plan es honesto.
 - **Dónde se ven**: en una tira "Chispas · ¿quién se anima?" arriba de Disponibles, y en Crear ▸ Chispa.
 - **Seguridad**: pasan por los mismos filtros automáticos, se pueden reportar y respetan bloqueos y suspensiones. No llevan dirección exacta ni pago.
 - **Caducidad**: en la fecha elegida o, sin fecha, a los 7 días.

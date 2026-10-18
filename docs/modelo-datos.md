@@ -203,7 +203,8 @@ erDiagram
         int maximo "null = sin limite"
         int minimo
         string quien "todos|seguidores|amigos"
-        bool aprobacion
+        bool aprobacion "por defecto si quien=todos"
+        bool automatica "plan al llegar al minimo; requiere fecha y zona"
         string gastos "gratis|a_escote|cada_uno"
         string estado "abierta|convertida|caducada|descartada"
         uuid plan_id FK "al convertirse"
@@ -218,7 +219,7 @@ erDiagram
         uuid id PK
         uuid plan_id FK
         uuid usuario_id FK
-        string estado "solicitada|aprobada|rechazada|confirmada|lista_espera|cancelada|cancelada_tarde|asistio|no_show"
+        string estado "por_confirmar (desde una chispa, 24 h)|solicitada|aprobada|rechazada|confirmada|lista_espera|cancelada|cancelada_tarde|asistio|no_show"
         int posicion_espera "si lista_espera"
         bool reconfirmado_dia
         decimal reembolsado

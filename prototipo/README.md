@@ -155,8 +155,10 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
 19. **Chispas** (posibles planes) — "Estoy pensando ir a pescar, ¿alguien se anima?". Arriba
    de Disponibles y en *Crear ▸ Chispa*: plazas sin límite o con máximo, mínimo para
    hacerlo, cuándo, zona aproximada, quién puede apuntarse (y "decido yo quién va") y
-   gastos; cada tema propone su configuración. "Me apunto" o "Quizás"; al llegar al
-   mínimo, *Convertir en plan* (sale relleno y entran los que se animaron, con su chat).
+   gastos; cada tema propone su configuración. "Me apunto" (o "Quiero ir", solicitud por
+   defecto si está abierta a cualquiera) o "Quizás". Al llegar al mínimo, *Confirmar el
+   plan* pide solo día, hora y punto de encuentro, y eliges quién pasa; o se hace solo, si
+   lo activas. Los apuntados confirman en 24 h ("Sí, voy"); si no, su plaza queda libre.
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.

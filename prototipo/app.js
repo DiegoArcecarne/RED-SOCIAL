@@ -1470,6 +1470,7 @@ function renderDetail(id){
   else if (!isVerified() && !attended && !joined) cta = `<button class="btn-join" onclick="requireVerified('Verifica tu identidad para ir a este plan', () => renderDetail('${p.id}'))">${ico('shield')} Verifícate para ir</button>`;
   else if (attended) cta = `<button class="btn-join done" disabled>${ico('check')} Asististe · verificado</button>`;
   else if (libre || joined) cta = `<button class="btn-join" onclick="openCheckin('${p.id}')">${ico('geo')} Registrar mi llegada</button>`;
+  else if (((p.ideaInvites || []).find(v => v.userId === 'me') || {}).status === 'pendiente') cta = `<button class="btn-join" onclick="answerPlanInvite('${p.id}','me',true)">${ico('check')} Sí, voy</button>`;
   else if (toPay) cta = `<button class="btn-join" onclick="openCheckout('${p.id}')">${ico('card')} Pagar ${money(p.price)} y confirmar</button>`;
   else if (waiting) cta = `<button class="btn-join done" disabled>${ico('clock')} Lista de espera · puesto ${waiting}</button>`;
   else if (manual) cta = requested
@@ -1543,7 +1544,7 @@ function renderDetail(id){
           ${p.secret?`<span class="tag tag-line">${ico('lock')} Secreto</span>`:''}
         </div>
         <h2>${escapeHtml(p.title)}</h2>
-        <div class="hero-loc">${ico('pin')} ${p.secret||hideExact?'Zona aprox. · Madrid':(place?place.name+' · '+place.city:'Madrid')}</div>
+        <div class="hero-loc">${ico('pin')} ${p.secret||hideExact?'Zona aprox. · Madrid':(place?place.name+' · '+place.city:escapeHtml(p.meetPoint||'Madrid'))}</div>
       </div>
     </div>
     <div class="detail-body">
@@ -1554,12 +1555,14 @@ function renderDetail(id){
       </div>
       ${p.secret?`<div class="secret-note"><span class="sn-ic">${ico('lock')}</span><p>La ubicación exacta se revela 2 horas antes del plan. El secreto es parte de la experiencia.</p></div>`:''}
       <div class="block"><h4>El plan</h4><p>${escapeHtml(p.summary)}</p>
+        ${p.meetPoint ? `<p class="hint">${ico('pin')} Punto de encuentro: <b>${escapeHtml(p.meetPoint)}</b></p>` : ''}
         <p class="hint">${manual?'Plan con aprobación: envía una solicitud; el creador o los admins la aceptan o rechazan.':(libre?'Plan libre: no hace falta apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.':'Plan apuntado: hay que apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.')}</p>
       </div>
       ${p.held ? `<div class="pl-banner">${ico('clock')}<div><b>En revisión</b><p>El filtro automático ha retenido este plan: solo lo ves tú hasta que lo revise una persona del equipo. Puedes apelar en Ajustes ▸ Estado de tu cuenta.</p></div></div>` : ''}
-      ${cancelBanner}${reconfirmBanner}
+      ${cancelBanner}${reconfirmBanner}${inviteBanner(p)}
       ${myBlock}
       ${hostBlock}
+      ${inviteHostBlock(p)}
       ${manageBlock}
       ${hereNowBlock(p)}
       ${whoBlock}

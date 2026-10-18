@@ -1056,3 +1056,4 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
 .ideas-list{margin-top:12px}
 .page-body.form > p.hint:first-child{font-size:13px;line-height:1.45;margin-bottom:14px;color:var(--ink-soft)}
 .idea-page > .hint{font-size:12.5px;line-height:1.45;color:var(--ink-soft)}
+.opt-row.off{opacity:.55}

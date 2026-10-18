@@ -58,15 +58,25 @@ Una chispa es un plan posible: "Estoy pensando ir a pescar, ¿alguien se anima?"
 
 - **Respuestas**:
   - Hay tres: `si`, `quizas` y `pendiente` (si la chispa es con aprobación).
+  - La aprobación ("decido yo quién va") viene **activada por defecto si la chispa está abierta a cualquiera**, y desactivada si es para amigos o seguidores. El botón es "Quiero ir" cuando es solicitud.
   - "Me apunto" exige identidad verificada y plaza libre: se comprueba en el servidor, en la misma operación.
   - Se puede cambiar o retirar la respuesta.
 - **Avisos** (tipo `chispa`): a quien la lanza, cuando alguien se apunta o quiere ir, y al llegar al mínimo ("Ya sois 3: ¿lo convertís en plan?"). A quien respondió, cuando le aceptan y cuando la chispa se convierte en plan o caduca.
-- **Convertir en plan**:
-  - crea el plan con los datos de la chispa (que se pueden editar);
-  - es siempre de los que hay que apuntarse;
-  - quienes respondieron `si` quedan inscritos y entran en el chat del plan;
-  - la chispa pasa a `convertida`, con enlace al plan;
-  - si el plan es de pago, cada persona tiene que pagar su plaza (ver pagos.md).
+- **Al llegar al mínimo**: aviso a quien la lanzó ("¿lo hacemos?"). Si al lanzarla activó la opción automática (requiere día concreto y zona), el plan se crea solo.
+- **Confirmar el plan** (`POST /chispas/:id/confirmar`):
+  - Pide solo lo que falta:
+    - día y hora, con una propuesta según el "cuándo": finde, el sábado a las 11; esta semana, en dos días a las 19…;
+    - punto de encuentro;
+    - lugar del mapa, opcional;
+    - quién pasa al plan, todos marcados.
+  - El plan es siempre de los que hay que apuntarse; guarda el punto de encuentro y la chispa de la que viene.
+  - La chispa pasa a `convertida`, con enlace al plan.
+  - Si el plan es de pago (desde "Más opciones"), cada persona paga su plaza al confirmar (ver pagos.md).
+- **Reconfirmación de los apuntados**:
+  - Cada persona elegida queda en el plan con estado `por_confirmar` y 24 h para responder "Sí, voy" o "No puedo".
+  - Al confirmar, queda inscrita y entra en el chat del plan.
+  - Si no responde, a las 24 h pasa a `caducada` y su plaza queda libre (proceso programado del servidor).
+  - El anfitrión ve quién ha confirmado; las respuestas aparecen como mensajes del sistema en el chat.
 - **Estados**: `abierta`, `convertida`, `caducada` (en la fecha o a los 7 días sin fecha) y `descartada` (por quien la lanzó).
 - **Privacidad y seguridad**:
   - la visibilidad sigue "quién puede apuntarse";
@@ -209,7 +219,8 @@ POST /chispas                        { titulo, texto, tema, cuando, fecha?, zona
 GET  /chispas?cerca=&tema=           (abiertas que puedes ver)
 POST /chispas/:id/respuesta          { estado: si | quizas | null }
 POST /chispas/:id/respuestas/:usuario { aceptar: bool }   (con aprobación)
-POST /chispas/:id/convertir          → plan_id
+POST /chispas/:id/confirmar          { fecha, punto_encuentro, lugar_id?, usuarios[] } → plan_id
+POST /planes/:id/invitacion          { voy: bool }   (apuntados de la chispa, en 24 h)
 POST /chispas/:id/descartar
 PUT  /planes/:id/presencia           { visibilidad: todos|amigos|nadie, modo: solo|grupo|null }
 GET  /planes/:id/aqui                → personas visibles para ti (solo si has registrado la llegada y el plan está en marcha)

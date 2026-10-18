@@ -1056,7 +1056,7 @@ ch.run('answerIdea("ch1", null)'); check('ya no me interesa', ch.run('myIdeaStat
 ch.run('IDEAS.push({ id:"chf", authorId:"lucia", title:"Llena", text:"x", category:"cultura", when:"finde", limit:true, max:2, min:2, who:"todos", approval:false, cost:"gratis", people:[{ userId:"ana", status:"si" }], status:"abierta", at:Date.now() })');
 ch.nav('chispa/chf'); ch.run('answerIdea("chf", "si")');
 check('con límite de plazas: completa, no se puede apuntar', ch.run('ideaFull(getIdea("chf"))') && ch.run('myIdeaStatus(getIdea("chf"))') === null && ch.html('view-page').includes('Completa'));
-ch.nav('chispa/ch3'); ch.run('answerIdea("ch3", "si")');
+ch.nav('chispa/ch3'); check('con "decido yo quién va", el botón es "Quiero ir"', ch.html('view-page').includes('Quiero ir')); ch.run('answerIdea("ch3", "si")');
 check('"decido yo quién va": tu respuesta queda pendiente', ch.run('myIdeaStatus(getIdea("ch3"))') === 'pendiente' && ch.html('view-page').includes('Pendiente de Sara'));
 ch.run('simulateIdeaAccept("ch3")'); check('te aceptan: aviso de chispa', ch.run('myIdeaStatus(getIdea("ch3"))') === 'si' && ch.run('NOTIFICATIONS[0].type') === 'chispa');
 ch.run('IDEAS.push({ id:"cho", authorId:"marco", title:"Vieja", text:"x", category:"social", when:"sin_fecha", limit:false, min:2, who:"todos", approval:false, cost:"gratis", people:[], status:"abierta", at: Date.now() - 8 * 86400000 })');
@@ -1075,15 +1075,53 @@ set(ch, 'f-imin', '3'); ch.run('publishIdea()');
 const myIdea = ch.run('IDEAS[0]');
 check('chispa lanzada con su configuración', myIdea.authorId === 'me' && myIdea.title === 'Ir a pescar al pantano' && myIdea.max === 4 && myIdea.min === 3 && myIdea.zone === 'Pantano de San Juan' && myIdea.status === 'abierta');
 ch.run(`getIdea("${myIdea.id}").people.push({ userId:"nora", status:"si" }, { userId:"marco", status:"si" }); renderIdea("${myIdea.id}")`); h = ch.html('view-page'); rendered += h;
-check('quien la lanza: llega al mínimo y puede convertirla en plan', h.includes('Ya sois 3') && h.includes('Convertir en plan') && h.includes('Descartar'));
+check('quien la lanza: llega al mínimo y puede confirmar el plan', h.includes('Ya sois 3') && h.includes('Confirmar el plan') && h.includes('Descartar'));
 ch.run(`convertIdea("${myIdea.id}")`); ch.nav('crear-plan'); h = ch.html('view-page');
 check('convertir: el plan sale relleno con la chispa', h.includes('Convirtiendo tu chispa en plan') && h.includes('value="Ir a pescar al pantano"'));
 ch.run('publishPlan()');
 const fromIdea = ch.run('PLANS[0]');
-check('plan publicado: con reserva, entran los que se animaron y su chat', fromIdea.title === 'Ir a pescar al pantano' && fromIdea.joinType === 'apuntado' && fromIdea.joined === 2
-  && ch.run(`planChat("${fromIdea.id}").members.includes("nora") && planChat("${fromIdea.id}").members.includes("marco")`));
+check('plan publicado (más opciones): con reserva; los apuntados, pendientes de confirmar', fromIdea.title === 'Ir a pescar al pantano' && fromIdea.joinType === 'apuntado' && fromIdea.joined === 0
+  && ch.run(`getPlan("${fromIdea.id}").ideaInvites.filter(v => v.status === "pendiente").length`) === 2);
+ch.run(`answerPlanInvite("${fromIdea.id}", "nora", true)`);
+check('al confirmar, entra en el plan y en su chat', ch.run(`getPlan("${fromIdea.id}").joined`) === 1 && ch.run(`planChat("${fromIdea.id}").members.includes("nora")`) && !ch.run(`planChat("${fromIdea.id}").members.includes("marco")`));
 ch.nav('chispa/' + myIdea.id);
 check('la chispa ya es plan, con enlace', ch.run(`getIdea("${myIdea.id}").status`) === 'convertida' && ch.html('view-page').includes('¡Ya es un plan!') && ch.html('view-page').includes(`go('plan/${fromIdea.id}')`));
+// Solicitud por defecto si está abierta a cualquiera
+ch.run('state.ideaDraft = null'); ch.nav('crear-chispa');
+check('abierta a cualquiera: "decido yo quién va" activado por defecto', ch.run('state.ideaDraft.approval') === true && ch.html('view-page').includes('recomendado si la abres a cualquiera'));
+ch.run('setIdeaField("who", "amigos")'); check('con amigos o seguidores: entra directo', ch.run('state.ideaDraft.approval') === false);
+ch.run('setIdeaField("who", "todos")'); check('vuelve a cualquiera: otra vez con solicitud', ch.run('state.ideaDraft.approval') === true);
+ch.run('setIdeaField("approval", false); setIdeaField("who", "amigos"); setIdeaField("who", "todos")'); check('si lo cambias tú, se respeta', ch.run('state.ideaDraft.approval') === false);
+// Confirmar el plan: solo lo que falta y quién pasa
+ch.run('state.ideaDraft = null'); ch.nav('crear-chispa'); set(ch, 'f-ititle', 'Pachanga de fútbol'); set(ch, 'f-itext', '¿Partidillo el jueves?'); set(ch, 'f-izone', 'Parque del Oeste'); ch.run('setIdeaCategory("deporte")'); ch.run('publishIdea()');
+const id2 = ch.run('IDEAS[0].id');
+ch.run(`getIdea("${id2}").people.push({ userId:"nora", status:"si" }, { userId:"marco", status:"si" }, { userId:"lucia", status:"si" }); checkIdeaReady(getIdea("${id2}"))`);
+check('al llegar al mínimo: aviso "¿lo hacemos?"', ch.run('NOTIFICATIONS[0].text').includes('¿lo hacemos? Confirma el plan'));
+ch.run(`openConfirmIdea("${id2}")`); h = ch.html('overlay'); rendered += h;
+check('confirmar el plan: solo día y hora, punto de encuentro y quién pasa (todos marcados)', h.includes('Día y hora') && h.includes('Punto de encuentro') && h.includes('Quién pasa al plan') && count(h, /class="switch on"/g) === 3 && h.includes('Más opciones'));
+ch.run('toggleIdeaPick("lucia")'); set(ch, 'f-cdate', '2030-05-10T19:00'); set(ch, 'f-cmeet', 'Puerta del parque'); ch.run(`confirmIdeaPlan("${id2}")`);
+const plc = ch.run('PLANS[0]');
+check('plan creado con el día y el punto de encuentro; solo pasan los elegidos', plc.title === 'Pachanga de fútbol' && plc.meetPoint === 'Puerta del parque' && plc.ideaInvites.length === 2 && !plc.ideaInvites.some(v => v.userId === 'lucia') && ch.run(`getIdea("${id2}").status`) === 'convertida');
+ch.nav('plan/' + plc.id); h = ch.html('view-detail'); rendered += h;
+check('ficha del plan: punto de encuentro y quién ha confirmado', h.includes('Punto de encuentro: <b>Puerta del parque</b>') && h.includes('De la chispa') && h.includes('Por confirmar') && h.includes('Demo: pasan 24 h'));
+ch.run(`answerPlanInvite("${plc.id}", "nora", true); expirePlanInvites("${plc.id}")`);
+check('quien no confirma en 24 h pierde la plaza', ch.run(`getPlan("${plc.id}").ideaInvites.find(v => v.userId === "marco").status`) === 'caducada' && ch.run(`getPlan("${plc.id}").joined`) === 1);
+// Automático
+ch.run('state.ideaDraft = null'); ch.nav('crear-chispa'); set(ch, 'f-ititle', 'Paella en el río'); set(ch, 'f-itext', 'x'); set(ch, 'f-izone', 'Playa de Madrid Río');
+ch.run('setIdeaField("when", "fecha")'); set(ch, 'f-idate', '2030-06-01T13:00'); ch.run('setIdeaField("auto", true); setIdeaField("approval", false)'); set(ch, 'f-ititle', 'Paella en el río'); set(ch, 'f-itext', 'x'); set(ch, 'f-izone', 'Playa de Madrid Río'); ch.run('publishIdea()');
+const id3 = ch.run('IDEAS[0].id');
+check('automática: solo con día concreto y zona', ch.run(`getIdea("${id3}").auto`) === true);
+const nPlAuto = ch.run('PLANS.length'); ch.run(`getIdea("${id3}").people.push({ userId:"nora", status:"si" }, { userId:"marco", status:"si" }); checkIdeaReady(getIdea("${id3}"))`);
+check('automática: al llegar al mínimo se hace plan sola y avisa', ch.run('PLANS.length') === nPlAuto + 1 && ch.run(`getIdea("${id3}").status`) === 'convertida' && ch.run('NOTIFICATIONS[0].text').includes('ya es plan'));
+// Te apuntas a la chispa de otra persona y se hace plan: confirmas en 24 h
+ch.nav('chispa/ch2'); ch.run('answerIdea("ch2", "si")');
+check('al apuntarte y llegar al mínimo, quien la lanzó lo confirmará', ch.run('getIdea("ch2").simConfirm') === true);
+ch.run('simulateAuthorConfirms("ch2")'); const plo = ch.run('getIdea("ch2").planId');
+check('la chispa ya es plan: te pide confirmar que vas', ch.run('NOTIFICATIONS[0].text').includes('¿Vas? Confírmalo en 24 h') && !ch.run(`state.joined.has("${plo}")`));
+ch.nav('plan/' + plo); h = ch.html('view-detail'); rendered += h;
+check('ficha: "¿vas?" con "Sí, voy" y "No puedo"', h.includes('Ya es plan: ¿vas?') && h.includes('Sí, voy') && h.includes('No puedo'));
+ch.run(`answerPlanInvite("${plo}", "me", true)`);
+check('sí, voy: apuntado y en el chat del plan', ch.run(`state.joined.has("${plo}")`) && ch.run(`planChat("${plo}").members.includes("me")`) && !ch.html('view-detail').includes('Ya es plan: ¿vas?'));
 ch.run('openReport("marco", null, { objectType:"chispa", ideaId:"ch1" })');
 check('reportar una chispa', ch.html('overlay').includes('Reportar la chispa') && ch.html('overlay').includes('Se adjunta la chispa'));
 ch.run('closeOverlay(); state.ideaDraft = null'); ch.nav('crear-chispa'); set(ch, 'f-ititle', 'Quedada'); set(ch, 'f-itext', 'Te voy a matar'); ch.run('publishIdea()');
