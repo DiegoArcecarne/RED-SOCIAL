@@ -45,6 +45,34 @@ Cada Plan se define por estos atributos:
 
 Cada Plan vive en dos estados principales. Próximo: perecedero y reservable. Pasado: evergreen, convertido en aftermovie que alimenta el feed social y vende la siguiente edición del plan equivalente. Entre ambos hay un momento intermedio —el plan en curso, mientras se celebra— en el que se activan las stories en vivo y las herramientas de seguridad presencial (check-in, SOS, reporte desde el chat).
 
+## Chispas: posibles planes
+
+Antes de un plan muchas veces hay solo una idea: "Estoy pensando ir a pescar el sábado, ¿alguien se anima?". Una **chispa** es eso: un plan posible que se lanza para ver quién se anima. Si se anima suficiente gente, se convierte en plan con un toque; si no, caduca sola. Es la forma más ligera de crear un plan: no exige fecha exacta, lugar exacto ni pago.
+
+- **Qué se configura**:
+  - qué te apetece y cuéntalo;
+  - tema;
+  - cuándo: hoy, este finde, esta semana, un día concreto o "cuando nos cuadre";
+  - dónde, de forma aproximada;
+  - **plazas**: sin límite, o un máximo contando a quien la lanza;
+  - **mínimo para hacerlo**;
+  - **quién puede apuntarse**: cualquiera, seguidores o amigos;
+  - "decido yo quién va";
+  - **gastos**: gratis, a escote o cada uno lo suyo, con una nota opcional.
+- **Configuraciones distintas según el tipo de plan**: cada tema propone la suya, y se puede cambiar.
+  - Una ruta de outdoor: máximo 8 y gasolina a escote.
+  - Un partido: mínimo 4.
+  - Una cena: máximo 6 para reservar mesa.
+  - Una visita cultural: grupos de 4.
+  - Una fiesta: sin límite.
+- **Respuestas**: "Me apunto" (hace falta estar verificado, como para ir a un plan) o "Quizás". Con "decido yo quién va", las respuestas llegan como solicitudes.
+- **Cuando se llega al mínimo**, quien la lanzó recibe un aviso y "Convertir en plan" abre el formulario de plan ya relleno. Al publicarlo, quienes se apuntaron entran en el plan y en su chat.
+- **Dónde se ven**: en una tira "Chispas · ¿quién se anima?" arriba de Disponibles, y en Crear ▸ Chispa.
+- **Seguridad**: pasan por los mismos filtros automáticos, se pueden reportar y respetan bloqueos y suspensiones. No llevan dirección exacta ni pago.
+- **Caducidad**: en la fecha elegida o, sin fecha, a los 7 días.
+
+El nombre "chispa" es provisional, como la marca.
+
 ## Los tres niveles de plan
 
 Aquí vive toda la estrategia. Los tres niveles cumplen funciones distintas y no compiten entre sí.

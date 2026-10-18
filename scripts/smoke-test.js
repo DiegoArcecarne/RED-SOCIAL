@@ -1039,6 +1039,58 @@ check('solo ves a otros en planes donde has registrado la llegada', pr.run('peop
 const pr2 = createEnv(prs);
 check('persisten tu visibilidad por plan y los saludos', pr2.run('myPresence("p2").mode') === 'solo' && pr2.run('pinged("p2", "marco")'));
 
+// --- Chispas: posibles planes ("Estoy pensando… ¿alguien se anima?") ---
+const chs = {};
+const ch = createEnv(chs);
+ch.nav('feed'); h = ch.html('feed-list'); rendered += h;
+check('Disponibles: tira de chispas con "¿quién se anima?" y "Lanza una chispa"', h.includes('Chispas · ¿quién se anima?') && h.includes("go('chispa/ch1')") && h.includes('Lanza una chispa') && count(h, /class="cell /g) === 12);
+ch.run('IDEAS.push({ id:"chx", authorId:"nora", title:"Solo amigos", text:"x", category:"social", when:"finde", limit:false, min:2, who:"amigos", approval:false, cost:"gratis", people:[], status:"abierta", at:Date.now() })');
+check('una chispa "solo amigos" no la ve quien no es amigo', !ch.run('visibleIdeas().some(x => x.id === "chx")') && ch.run('areFriends("me", "nora")') === false);
+ch.nav('chispa/ch1'); h = ch.html('view-page'); rendered += h;
+check('ficha de la chispa: quién la lanza, cuándo, dónde, plazas, mínimo y gastos', h.includes('Marco T.') && h.includes('está pensando') && h.includes('Este finde') && h.includes('La Pedriza') && h.includes('2 de 6') && h.includes('Mínimo 3') && h.includes('Gasolina a escote'));
+check('ficha: "Me apunto", "Quizás" y escribir', h.includes('Me apunto') && h.includes('Quizás') && h.includes("openDm('marco')"));
+ch.run('answerIdea("ch1", "si")');
+check('me apunto: sumas una plaza y se llega al mínimo', ch.run('myIdeaStatus(getIdea("ch1"))') === 'si' && ch.html('view-page').includes('3 de 6') && ch.html('view-page').includes('Te apuntas'));
+ch.run('answerIdea("ch1", "quizas")'); check('quizás', ch.run('myIdeaStatus(getIdea("ch1"))') === 'quizas');
+ch.run('answerIdea("ch1", null)'); check('ya no me interesa', ch.run('myIdeaStatus(getIdea("ch1"))') === null);
+ch.run('IDEAS.push({ id:"chf", authorId:"lucia", title:"Llena", text:"x", category:"cultura", when:"finde", limit:true, max:2, min:2, who:"todos", approval:false, cost:"gratis", people:[{ userId:"ana", status:"si" }], status:"abierta", at:Date.now() })');
+ch.nav('chispa/chf'); ch.run('answerIdea("chf", "si")');
+check('con límite de plazas: completa, no se puede apuntar', ch.run('ideaFull(getIdea("chf"))') && ch.run('myIdeaStatus(getIdea("chf"))') === null && ch.html('view-page').includes('Completa'));
+ch.nav('chispa/ch3'); ch.run('answerIdea("ch3", "si")');
+check('"decido yo quién va": tu respuesta queda pendiente', ch.run('myIdeaStatus(getIdea("ch3"))') === 'pendiente' && ch.html('view-page').includes('Pendiente de Sara'));
+ch.run('simulateIdeaAccept("ch3")'); check('te aceptan: aviso de chispa', ch.run('myIdeaStatus(getIdea("ch3"))') === 'si' && ch.run('NOTIFICATIONS[0].type') === 'chispa');
+ch.run('IDEAS.push({ id:"cho", authorId:"marco", title:"Vieja", text:"x", category:"social", when:"sin_fecha", limit:false, min:2, who:"todos", approval:false, cost:"gratis", people:[], status:"abierta", at: Date.now() - 8 * 86400000 })');
+check('sin convertirse en plan, caduca a los 7 días', ch.run('ideaState(getIdea("cho"))') === 'caducada' && !ch.run('visibleIdeas().some(x => x.id === "cho")'));
+// Lanzar una chispa
+ch.run('go("crear")'); ch.run('renderCreateChooser()'); check('crear: opción "Chispa"', ch.html('view-page').includes("go('crear-chispa')"));
+ch.nav('crear-chispa'); h = ch.html('view-page'); rendered += h;
+check('lanzar: qué, cuándo, dónde, plazas, mínimo, quién y gastos', ['¿Qué te apetece?', 'Cuándo', 'Dónde (aproximado)', 'Plazas', 'Sin límite', 'Con límite', 'Mínimo para hacerlo', 'Quién puede apuntarse', 'Decido yo quién va', 'Gastos', 'A escote'].every((x) => h.includes(x)));
+ch.run('setIdeaCategory("fiesta")'); check('cada tema propone su configuración: fiesta, sin límite', ch.run('state.ideaDraft.limit') === false && ch.run('state.ideaDraft.min') === 3);
+ch.run('setIdeaCategory("cultura")'); check('cultura: grupo pequeño (4)', ch.run('state.ideaDraft.limit') === true && ch.run('state.ideaDraft.max') === 4);
+ch.run('setIdeaCategory("outdoor")');
+const nIdeas = ch.run('IDEAS.length'); ch.run('publishIdea()'); check('sin título no se lanza', ch.run('IDEAS.length') === nIdeas);
+set(ch, 'f-ititle', 'Ir a pescar al pantano'); set(ch, 'f-itext', 'Estoy pensando ir a pescar el sábado temprano. ¿Alguien se anima?'); set(ch, 'f-izone', 'Pantano de San Juan'); set(ch, 'f-imax', '4'); set(ch, 'f-imin', '6');
+ch.run('publishIdea()'); check('el mínimo no puede pasar del máximo', ch.run('IDEAS.length') === nIdeas);
+set(ch, 'f-imin', '3'); ch.run('publishIdea()');
+const myIdea = ch.run('IDEAS[0]');
+check('chispa lanzada con su configuración', myIdea.authorId === 'me' && myIdea.title === 'Ir a pescar al pantano' && myIdea.max === 4 && myIdea.min === 3 && myIdea.zone === 'Pantano de San Juan' && myIdea.status === 'abierta');
+ch.run(`getIdea("${myIdea.id}").people.push({ userId:"nora", status:"si" }, { userId:"marco", status:"si" }); renderIdea("${myIdea.id}")`); h = ch.html('view-page'); rendered += h;
+check('quien la lanza: llega al mínimo y puede convertirla en plan', h.includes('Ya sois 3') && h.includes('Convertir en plan') && h.includes('Descartar'));
+ch.run(`convertIdea("${myIdea.id}")`); ch.nav('crear-plan'); h = ch.html('view-page');
+check('convertir: el plan sale relleno con la chispa', h.includes('Convirtiendo tu chispa en plan') && h.includes('value="Ir a pescar al pantano"'));
+ch.run('publishPlan()');
+const fromIdea = ch.run('PLANS[0]');
+check('plan publicado: con reserva, entran los que se animaron y su chat', fromIdea.title === 'Ir a pescar al pantano' && fromIdea.joinType === 'apuntado' && fromIdea.joined === 2
+  && ch.run(`planChat("${fromIdea.id}").members.includes("nora") && planChat("${fromIdea.id}").members.includes("marco")`));
+ch.nav('chispa/' + myIdea.id);
+check('la chispa ya es plan, con enlace', ch.run(`getIdea("${myIdea.id}").status`) === 'convertida' && ch.html('view-page').includes('¡Ya es un plan!') && ch.html('view-page').includes(`go('plan/${fromIdea.id}')`));
+ch.run('openReport("marco", null, { objectType:"chispa", ideaId:"ch1" })');
+check('reportar una chispa', ch.html('overlay').includes('Reportar la chispa') && ch.html('overlay').includes('Se adjunta la chispa'));
+ch.run('closeOverlay(); state.ideaDraft = null'); ch.nav('crear-chispa'); set(ch, 'f-ititle', 'Quedada'); set(ch, 'f-itext', 'Te voy a matar'); ch.run('publishIdea()');
+check('el filtro automático también vale para las chispas', ch.run('IDEAS[0].held') === true && !ch.run('(() => { const x = IDEAS[0]; x.authorId = "lucia"; const v = canSeeIdea(x); x.authorId = "me"; return v; })()'));
+const ch2 = createEnv(chs);
+check('persisten las chispas y las respuestas', ch2.run(`getIdea("${myIdea.id}").status`) === 'convertida' && ch2.run('myIdeaStatus(getIdea("ch3"))') === 'si');
+
 const pdir0 = path.join(__dirname, '..', 'prototipo');
 // --- Compartir: web pública con vista previa, enlaces que abren la app y menú nativo ---
 const wdir = path.join(__dirname, '..', 'prototipo', 'web');

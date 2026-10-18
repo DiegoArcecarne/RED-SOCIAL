@@ -152,6 +152,11 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    animada) y *Mensaje*; en el mapa, tu chincheta y cuántos estáis. Nunca la ubicación
    exacta y solo entre quienes están en el plan. Pruébalo en *Atardecer en el Templo de
    Debod*: *Registrar mi llegada* (el código está en "¿Pruebas con un solo móvil?").
+19. **Chispas** (posibles planes) — "Estoy pensando ir a pescar, ¿alguien se anima?". Arriba
+   de Disponibles y en *Crear ▸ Chispa*: plazas sin límite o con máximo, mínimo para
+   hacerlo, cuándo, zona aproximada, quién puede apuntarse (y "decido yo quién va") y
+   gastos; cada tema propone su configuración. "Me apunto" o "Quizás"; al llegar al
+   mínimo, *Convertir en plan* (sale relleno y entran los que se animaron, con su chat).
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.
@@ -161,7 +166,7 @@ condiciones de las cuentas profesionales están pendientes de decidir.
 
 ## Para desarrollar
 
-Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `pagos.js`, `app.js`).
+Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `pagos.js`, `chispas.js`, `app.js`).
 `standalone.html` y `web/` se generan; no los edites a mano. Desde la raíz del repositorio:
 
 ```bash

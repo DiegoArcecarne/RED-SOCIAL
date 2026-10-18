@@ -499,6 +499,23 @@ const PLAN_PRESENCE = {
   p12:[ { userId:'nora', vis:'todos', mode:'solo' }, { userId:'lucia', vis:'todos', mode:'grupo' } ],
 };
 
+/* Chispas: posibles planes ("Estoy pensando ir a pescar, ¿alguien se anima?"). Si se anima
+   suficiente gente, se convierten en plan; si no, caducan (chispas.js).
+   when: hoy | finde | semana | fecha (con date) | sin_fecha. limit: false = sin límite de plazas.
+   who: todos | seguidores | amigos; approval: decide quien la lanza. cost: gratis | a_escote | cada_uno.
+   people: { userId, status: si | quizas | pendiente }. */
+const IDEAS = [
+  { id:'ch1', authorId:'marco', title:'Subir a la Pedriza el domingo temprano', text:'Estoy pensando subir a La Pedriza el domingo a las 8. Ruta media, unas 4 horas. ¿Alguien se anima?',
+    category:'outdoor', when:'finde', zone:'La Pedriza, Manzanares el Real', limit:true, max:6, min:3, who:'todos', approval:false, cost:'a_escote', costNote:'Gasolina a escote',
+    people:[{ userId:'nora', status:'si' }, { userId:'david', status:'quizas' }], status:'abierta', at: minsAgo(180) },
+  { id:'ch2', authorId:'lucia', title:'Vermú en La Latina', text:'¿Vermú el sábado a mediodía por La Latina? Sin plan fijo, vamos viendo.',
+    category:'gastro', when:'finde', zone:'La Latina, Madrid', limit:false, min:2, who:'todos', approval:false, cost:'cada_uno',
+    people:[{ userId:'ana', status:'si' }, { userId:'sara', status:'si' }, { userId:'marco', status:'quizas' }], status:'abierta', at: minsAgo(60) },
+  { id:'ch3', authorId:'sara', title:'El Prado gratis el miércoles', text:'El Prado es gratis de 18 a 20 h. Me apetece ir el miércoles y luego tomar algo. Somos pocos para no ir en manada.',
+    category:'cultura', when:'semana', zone:'Museo del Prado', limit:true, max:4, min:2, who:'todos', approval:true, cost:'gratis',
+    people:[{ userId:'irene', status:'si' }], status:'abierta', at: minsAgo(400) },
+];
+
 /* Pagos (pagos.js; en la app real, Stripe Connect). Cada pago es una reserva de un plan de
    pago: el dinero queda retenido hasta que el plan se celebra y después se paga al
    anfitrión, menos la comisión del 15 %. status: pendiente (aceptado, falta pagar) |
@@ -537,7 +554,7 @@ if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
     STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, FOLLOW_REQUESTS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
-    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS, PLAN_PRESENCE,
+    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS, PLAN_PRESENCE, IDEAS,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }

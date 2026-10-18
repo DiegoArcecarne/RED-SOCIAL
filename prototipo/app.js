@@ -86,6 +86,7 @@ const SVG = {
   dots:'<svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4" class="fill"/><circle cx="12" cy="12" r="1.4" class="fill"/><circle cx="18.5" cy="12" r="1.4" class="fill"/></svg>',
   download:'<svg viewBox="0 0 24 24"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5"/><path d="M5 19.5h14"/></svg>',
   phone:'<svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.4"/><path d="M11 17.5h2"/></svg>',
+  spark:'<svg viewBox="0 0 24 24"><path d="M12 3.5v4M12 16.5v4M3.5 12h4M16.5 12h4M6 6l2.6 2.6M15.4 15.4 18 18M18 6l-2.6 2.6M8.6 15.4 6 18"/><circle cx="12" cy="12" r="1.6" class="fill"/></svg>',
   sliders:'<svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
 };
 function ico(name){ return `<i class="ico">${SVG[name]||''}</i>`; }
@@ -183,7 +184,7 @@ function saveState(){
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
             city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom,
             trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged },
-      modActions: MOD_ACTIONS, userMod: USER_MOD, safety: SAFETY_EVENTS, payments: PAYMENTS, paymentMethods: PAYMENT_METHODS,
+      modActions: MOD_ACTIONS, userMod: USER_MOD, safety: SAFETY_EVENTS, payments: PAYMENTS, paymentMethods: PAYMENT_METHODS, ideas: IDEAS,
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
       notifications: NOTIFICATIONS,
@@ -216,6 +217,7 @@ function loadState(){
   if (Array.isArray(snap.safety)) SAFETY_EVENTS.splice(0, SAFETY_EVENTS.length, ...snap.safety);
   if (Array.isArray(snap.payments)) PAYMENTS.splice(0, PAYMENTS.length, ...snap.payments);
   if (Array.isArray(snap.paymentMethods)) PAYMENT_METHODS.splice(0, PAYMENT_METHODS.length, ...snap.paymentMethods);
+  if (Array.isArray(snap.ideas)) IDEAS.splice(0, IDEAS.length, ...snap.ideas);
   if (snap.userMod){ Object.keys(USER_MOD).forEach(k => delete USER_MOD[k]); Object.assign(USER_MOD, snap.userMod); }
   if (snap.me) Object.assign(ME, snap.me);
   (snap.extraProfiles || []).forEach(x => { if (!USERS.some(u => u.id === x.id)) USERS.push(x); });
@@ -265,8 +267,8 @@ function renderFeed(){
   renderFilterState();
   const plans = filteredPlans();
   const cont = document.getElementById('feed-list');
-  cont.innerHTML = plans.length ? `<div class="grid">${plans.map(gridCell).join('')}</div>`
-    : emptyTab('grid','Sin planes con esos filtros','Prueba a ampliar el tamaño de grupo o el tema.');
+  cont.innerHTML = ideasStrip() + (plans.length ? `<div class="grid">${plans.map(gridCell).join('')}</div>`
+    : emptyTab('grid','Sin planes con esos filtros','Prueba a ampliar el tamaño de grupo o el tema.'));
 }
 /* ======================= MURO (Vividas), STORIES Y DIRECTOS ======================= */
 function agoLabel(h){ if (h < 1) return 'ahora'; if (h < 24) return `hace ${Math.round(h)} h`; return `hace ${Math.round(h/24)} d`; }
@@ -833,7 +835,7 @@ function openReport(uid, convId, obj){
 }
 function renderReport(){
   const r = state.report, u = getUser(r.uid) || { name:'' };
-  const what = r.obj && r.obj.objectType !== 'usuario' ? { publicacion:'la publicación', comentario:'el comentario', plan:'el plan' }[r.obj.objectType] : null;
+  const what = r.obj && r.obj.objectType !== 'usuario' ? { publicacion:'la publicación', comentario:'el comentario', plan:'el plan', chispa:'la chispa' }[r.obj.objectType] : null;
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Reportar">
     <div class="sheet-h"><span>Reportar ${what || 'a ' + escapeHtml(u.name)}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list rep">
@@ -2125,6 +2127,7 @@ function renderCreateChooser(){
     <span class="ch-tx"><span class="ch-t">${t}</span><span class="ch-s">${s}</span></span><span class="pl-arrow">${ico('chevR')}</span></button>`;
   view.innerHTML = pageHead('Crear') + `<div class="page-body">
     ${opt('pin','Plan','Organiza una quedada: libre o con aprobación','crear-plan')}
+    ${opt('spark','Chispa','Un posible plan: "Estoy pensando… ¿alguien se anima?"','crear-chispa')}
     ${opt('image','Publicación','Foto, vídeo o carrusel para tu perfil','crear-post')}
     ${opt('group','Grupo','Reúne gente con varios admins','crear-grupo')}
     ${opt('cast','Directo','Emite en vivo desde un plan en marcha','crear-directo')}
@@ -2138,6 +2141,7 @@ function renderCreatePlan(){
   const sizes=[['intimo','Íntimo','user'],['mediano','Mediano','users'],['grande','Grande','group']];
   const adminGroups = GROUPS.filter(g=>g.members.some(m=>m.userId==='me'&&m.role==='admin'));
   if (state.pendingGroup) d.group = state.pendingGroup;
+  const pf = d.prefill || {};   // al convertir una chispa en plan
   view.innerHTML = pageHead('Crear plan') + `
     <div class="page-body form">
       <div class="field"><label>Portada</label>
@@ -2145,12 +2149,13 @@ function renderCreatePlan(){
           <label class="add-media">${ico('image')} ${d.photo ? 'Cambiar foto' : 'Subir foto'}<input type="file" accept="image/*" hidden onchange="pickPlanPhoto(this)"></label></div>
         <div class="photo-prev" id="photo-prev">${d.photo ? `<img src="${d.photo}" alt="Portada del plan"><button class="sv-x pv-x" onclick="clearPlanPhoto()" aria-label="Quitar foto">${ico('close')}</button>` : ''}</div>
         <p class="hint">Haz una foto o elígela de la galería. Si no subes ninguna, se usa el color.</p></div>
-      <div class="field"><label for="f-title">Título ${counter('f-title','planTitle')}</label><input ${lim('f-title','planTitle')} placeholder="Ej. Atardecer en el mirador" /></div>
-      <div class="field"><label for="f-desc">Descripción ${counter('f-desc','planDesc')}</label><textarea ${lim('f-desc','planDesc')} rows="3" placeholder="¿En qué consiste el plan?"></textarea></div>
+      ${d.fromIdea ? `<div class="pl-banner">${ico('spark')}<div><b>Convirtiendo tu chispa en plan</b><p>Al publicarlo entran los que se animaron y su chat del plan.</p></div></div>` : ''}
+      <div class="field"><label for="f-title">Título ${counter('f-title','planTitle',pf.title)}</label><input ${lim('f-title','planTitle')} placeholder="Ej. Atardecer en el mirador" value="${escapeHtml(pf.title || '')}" /></div>
+      <div class="field"><label for="f-desc">Descripción ${counter('f-desc','planDesc',pf.desc)}</label><textarea ${lim('f-desc','planDesc')} rows="3" placeholder="¿En qué consiste el plan?">${escapeHtml(pf.desc || '')}</textarea></div>
       <div class="field"><label>Lugar</label>
         <div class="mini-map">${ico('map')} Selecciona en el mapa</div>
-        <select id="f-place">${PLACES.map(pl=>`<option value="${pl.id}">${pl.name} · ${pl.city}</option>`).join('')}</select></div>
-      <div class="field"><label>Fecha y hora</label><input id="f-date" type="datetime-local" /></div>
+        <select id="f-place">${PLACES.map(pl=>`<option value="${pl.id}" ${pf.placeId===pl.id?'selected':''}>${pl.name} · ${pl.city}</option>`).join('')}</select></div>
+      <div class="field"><label>Fecha y hora</label><input id="f-date" type="datetime-local" value="${escapeHtml(pf.date || '')}" /></div>
       <div class="field"><label>Tamaño de grupo</label>
         <div class="iseg" id="d-size">${sizes.map(([v,l,n])=>`<button data-v="${v}" class="${d.size===v?'active':''}" onclick="setDraft('size','${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div></div>
       <div class="field"><label>Tema</label>
@@ -2202,8 +2207,9 @@ function publishPlan(){
     if (!payoutsReady()){ state.draft.priceValue = val('f-price'); toast('Para publicar un plan de pago, configura antes tus cobros'); go('cobros'); return; }
   }
   if (!userMod('me').canHost){ toast('Moderación te ha retirado la opción de organizar planes. Mira Ajustes ▸ Estado de tu cuenta'); return; }
-  const title = clip(val('f-title'), 'planTitle') || 'Plan sin título';
-  const desc = clip(val('f-desc'), 'planDesc') || 'Plan creado desde el prototipo.';
+  const pf = state.draft.prefill || {};   // si viene de una chispa y el campo llega vacío
+  const title = clip(val('f-title') || pf.title, 'planTitle') || 'Plan sin título';
+  const desc = clip(val('f-desc') || pf.desc, 'planDesc') || 'Plan creado desde el prototipo.';
   guardText(title + '\n' + desc, { kind:'plan' }, flag => commitPlan(title, desc, flag));
 }
 function commitPlan(title, desc, flag){
@@ -2228,6 +2234,7 @@ function commitPlan(title, desc, flag){
     groupId, held: !!flag || undefined,
   };
   PLANS.unshift(plan);
+  if (d.fromIdea) linkIdeaToPlan(plan);   // venía de una chispa: entran los que se animaron (chispas.js)
   if (groupId){ const g=getGroup(groupId); if(g) g.planIds.unshift(plan.id); }
   state.pendingGroup = null; d.photo = null; d.priceValue = "";
   ensurePlanChat(plan.id);
@@ -2485,6 +2492,9 @@ function router(){
     case 'solicitudes': renderRequests(arg); showView('page'); scrollTop('page'); break;
     case 'crear':   renderCreateChooser(); showView('page'); scrollTop('page'); break;
     case 'crear-plan':  renderCreatePlan(); showView('page'); scrollTop('page'); break;
+    case 'crear-chispa': renderCreateIdea(); showView('page'); scrollTop('page'); break;
+    case 'chispas': renderIdeas(); showView('page'); scrollTop('page'); break;
+    case 'chispa':  renderIdea(arg); showView('page'); scrollTop('page'); break;
     case 'crear-post':  renderCreatePost(); showView('page'); scrollTop('page'); break;
     case 'crear-grupo': renderCreateGroup(); showView('page'); scrollTop('page'); break;
     case 'crear-directo': renderCreateLive(); showView('page'); scrollTop('page'); break;

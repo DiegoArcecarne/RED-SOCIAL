@@ -108,9 +108,10 @@ function contentOf(x){
   if (x.objectType === 'comentario'){ const po = POSTS.find(p => p.id === x.postId); return (po && (po.comments || []).find(c => c.id === x.commentId)) || null; }
   if (x.objectType === 'mensaje'){ const c = getConversation(x.convId); return (c && c.messages.find(m => m.id === x.msgId)) || null; }
   if (x.objectType === 'plan') return getPlan(x.planId) || null;
+  if (x.objectType === 'chispa') return IDEAS.find(i => i.id === x.ideaId) || null;
   return null;
 }
-const OBJECT_LABEL = { usuario:'Perfil', conversacion:'Mensajes', publicacion:'Publicación', comentario:'Comentario', mensaje:'Mensaje', plan:'Plan' };
+const OBJECT_LABEL = { usuario:'Perfil', conversacion:'Mensajes', publicacion:'Publicación', comentario:'Comentario', mensaje:'Mensaje', plan:'Plan', chispa:'Chispa' };
 function ensureCommentIds(po){ (po.comments || []).forEach((c, i) => { if (!c.id) c.id = po.id + '-c' + i; }); }
 // Comentarios que ves: sin los retirados, los retenidos de otros, los de cuentas bloqueadas o suspendidas.
 function commentVisible(c){
@@ -539,6 +540,7 @@ function buildExport(){
     decisionesSobreTi: MOD_ACTIONS.filter(x => x.targetUserId === 'me'),
     seguridad: { contactosDeConfianza: trustedContacts(), eventos: SAFETY_EVENTS },
     presenciaEnPlanes: ME.planPresence || {}, saludosEnviados: Object.keys(ME.pinged || {}),
+    chispas: IDEAS.filter(x => x.authorId === 'me'), respuestasAChispas: IDEAS.filter(x => x.people.some(p => p.userId === 'me')).map(x => ({ chispa: x.id, estado: myIdeaStatus(x) })),
     pagos: PAYMENTS.filter(x => x.userId === 'me'), formasDePago: PAYMENT_METHODS.map(({ brand, last4, exp }) => ({ brand, last4, exp })),
     cobros: ME.payouts ? { ...ME.payouts, iban: maskIban(ME.payouts.iban), ventas: hostSales() } : null,
     consentimientos: { marketing: consentValue('marketing'), ubicacion: consentValue('ubicacion'), analitica: consentValue('analitica'), personalizacion: consentValue('personalizacion'), registro: ME.consentLog || [] },

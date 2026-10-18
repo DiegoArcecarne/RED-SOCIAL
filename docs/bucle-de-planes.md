@@ -29,6 +29,53 @@ Mensajería, Alcance del MVP), [`cuentas-y-acceso.md`](cuentas-y-acceso.md)
   - Al publicarlo se crea su chat, con el anfitrión dentro.
 - **Editar** (solo el anfitrión): si cambian la fecha, la hora o el lugar, se avisa a todos los apuntados, se escribe el cambio en el chat del plan y se pide **reconfirmar** otra vez.
 
+## Chispas: posibles planes
+
+Una chispa es un plan posible: "Estoy pensando ir a pescar, ¿alguien se anima?". Si llega al mínimo de gente, se convierte en plan; si no, caduca.
+
+- **Campos**:
+  - título (60) y texto (300);
+  - tema;
+  - cuándo (`hoy`, `finde`, `semana`, `fecha` con su fecha, o `sin_fecha`);
+  - zona aproximada (texto o lugar);
+  - plazas (`sin límite` o máximo de 2 a 100, contando a quien la lanza);
+  - mínimo;
+  - quién puede apuntarse (`todos`, `seguidores`, `amigos`);
+  - aprobación (bool);
+  - gastos (`gratis`, `a_escote`, `cada_uno`) con una nota.
+- **Configuración por tipo de plan**: el servidor devuelve la propuesta de cada tema, y la app la aplica al elegirlo.
+
+  | Tema | Plazas | Mínimo | Gastos |
+  |---|---|---|---|
+  | Outdoor | 8 | 2 | A escote |
+  | Deporte | 10 | 4 | Gratis |
+  | Gastronomía | 6 | 2 | Cada uno lo suyo |
+  | Cultura | 4 | 2 | Cada uno lo suyo |
+  | Fiesta | Sin límite | 3 | Cada uno lo suyo |
+  | Bienestar | 8 | 2 | Gratis |
+  | Social | Sin límite | 2 | Cada uno lo suyo |
+  | Viajeros | 6 | 2 | A escote |
+
+- **Respuestas**:
+  - Hay tres: `si`, `quizas` y `pendiente` (si la chispa es con aprobación).
+  - "Me apunto" exige identidad verificada y plaza libre: se comprueba en el servidor, en la misma operación.
+  - Se puede cambiar o retirar la respuesta.
+- **Avisos** (tipo `chispa`): a quien la lanza, cuando alguien se apunta o quiere ir, y al llegar al mínimo ("Ya sois 3: ¿lo convertís en plan?"). A quien respondió, cuando le aceptan y cuando la chispa se convierte en plan o caduca.
+- **Convertir en plan**:
+  - crea el plan con los datos de la chispa (que se pueden editar);
+  - es siempre de los que hay que apuntarse;
+  - quienes respondieron `si` quedan inscritos y entran en el chat del plan;
+  - la chispa pasa a `convertida`, con enlace al plan;
+  - si el plan es de pago, cada persona tiene que pagar su plaza (ver pagos.md).
+- **Estados**: `abierta`, `convertida`, `caducada` (en la fecha o a los 7 días sin fecha) y `descartada` (por quien la lanzó).
+- **Privacidad y seguridad**:
+  - la visibilidad sigue "quién puede apuntarse";
+  - sin dirección exacta;
+  - filtros automáticos al publicar;
+  - reportable (objeto `chispa`);
+  - bloqueos y suspensiones ocultan.
+- **Límite contra el spam**: propuesta de 3 chispas abiertas por persona.
+
 ## Inscripción
 
 Estados de la inscripción: `solicitada` → `aprobada` / `rechazada`; `confirmada`
@@ -158,6 +205,12 @@ POST /solicitudes/:id/decidir        { decision: aceptada | rechazada }
 GET  /planes/:id/llegada/qr          (anfitrión) → { payload, codigo, caduca }
 POST /planes/:id/llegada             { codigo, ubicacion? }
 POST /planes/:id/llegada/manual      (anfitrión) { usuario_id }
+POST /chispas                        { titulo, texto, tema, cuando, fecha?, zona, limite, maximo?, minimo, quien, aprobacion, gastos, nota_gastos? }
+GET  /chispas?cerca=&tema=           (abiertas que puedes ver)
+POST /chispas/:id/respuesta          { estado: si | quizas | null }
+POST /chispas/:id/respuestas/:usuario { aceptar: bool }   (con aprobación)
+POST /chispas/:id/convertir          → plan_id
+POST /chispas/:id/descartar
 PUT  /planes/:id/presencia           { visibilidad: todos|amigos|nadie, modo: solo|grupo|null }
 GET  /planes/:id/aqui                → personas visibles para ti (solo si has registrado la llegada y el plan está en marcha)
 POST /planes/:id/saludos             { usuario_id }   (uno por persona y plan)

@@ -375,8 +375,9 @@ const NOTIF_TYPES = {
   mencion:      ['at','Menciones','Cuando te mencionan o te etiquetan'],
   pago:         ['card','Pagos','Pagos, reembolsos, recibos y cobros'],
   aqui:         ['pin','En el plan','Quién más está en tu plan y te saluda'],
+  chispa:       ['spark','Chispas','Quién se anima a tus chispas y si se hacen'],
 };
-function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true, seguidor:true, mencion:true, pago:true, aqui:true }, ME.notifPrefs || {}); }
+function notifPrefs(){ return Object.assign({ recordatorio:true, solicitud:true, mensaje:true, cambio:true, plaza:true, fiabilidad:true, seguidor:true, mencion:true, pago:true, aqui:true, chispa:true }, ME.notifPrefs || {}); }
 // "seguridad" (SOS, decisiones de moderación, resultado de tus reportes) no se puede desactivar.
 function notify(type, text, ref){
   if (type !== 'seguridad' && !notifPrefs()[type]) return null;

@@ -24,6 +24,10 @@ erDiagram
     USUARIO ||--o{ PLAN : "organiza (anfitrion)"
     CATEGORIA ||--o{ PLAN : clasifica
 
+    USUARIO ||--o{ CHISPA : lanza
+    CHISPA ||--o{ RESPUESTA_CHISPA : recibe
+    USUARIO ||--o{ RESPUESTA_CHISPA : responde
+    CHISPA |o--o| PLAN : "se convierte en"
     PLAN ||--o{ INSCRIPCION : recibe
     USUARIO ||--o{ INSCRIPCION : realiza
     INSCRIPCION ||--o| PAGO : genera
@@ -186,6 +190,29 @@ erDiagram
         string politica_cancelacion "flexible|moderada|estricta"
         string estado "proximo|en_curso|pasado|cancelado"
         string foto "url en almacenamiento"
+    }
+    CHISPA {
+        uuid id PK
+        uuid autor_id FK
+        string titulo "max 60"
+        string texto "max 300"
+        string tema
+        string cuando "hoy|finde|semana|fecha|sin_fecha"
+        datetime fecha "si cuando=fecha"
+        string zona "aproximada"
+        int maximo "null = sin limite"
+        int minimo
+        string quien "todos|seguidores|amigos"
+        bool aprobacion
+        string gastos "gratis|a_escote|cada_uno"
+        string estado "abierta|convertida|caducada|descartada"
+        uuid plan_id FK "al convertirse"
+    }
+    RESPUESTA_CHISPA {
+        uuid chispa_id FK
+        uuid usuario_id FK
+        string estado "si|quizas|pendiente"
+        datetime fecha
     }
     INSCRIPCION {
         uuid id PK
@@ -495,7 +522,7 @@ erDiagram
     NOTIFICACION {
         uuid id PK
         uuid usuario_id FK
-        string tipo "recordatorio|solicitud|mensaje|cambio|plaza|despues_plan|seguidor|mencion|seguridad|pago|aqui"
+        string tipo "recordatorio|solicitud|mensaje|cambio|plaza|despues_plan|seguidor|mencion|seguridad|pago|aqui|chispa"
         string referencia "plan, conversacion o ruta"
         string texto
         bool leida
