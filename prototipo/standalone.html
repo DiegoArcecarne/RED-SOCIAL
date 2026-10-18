@@ -1135,6 +1135,87 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
 .adm-docs span .ico{font-size:12px}
 .page-body.inbox > .mod-card{margin-bottom:0}
 
+/* ---------- agenda (agenda.js) ---------- */
+.pb-btns{display:flex;gap:6px}
+.ag{display:flex;flex-direction:column;gap:12px}
+.ag-seg{flex:none}
+.ag-nav{display:flex;align-items:center;gap:8px}
+.ag-nav b{flex:1;text-align:center;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-arrow{width:34px;height:34px;flex:none;border-radius:50%;background:none;border:1px solid var(--line);color:var(--ink);display:grid;place-items:center;cursor:pointer;font-size:15px}
+.ag-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:var(--ink-dim);padding-top:4px}
+.ag-legend span{display:flex;align-items:center;gap:5px}
+.ag-legend i{width:14px;height:10px;border-radius:3px;display:block}
+/* estilos por tipo: firme (relleno), a medias (borde discontinuo), pasado (apagado), cancelado (tachado) */
+.k-firm{background:var(--accent);border:1px solid var(--accent)}
+.k-pend{background:transparent;border:1px dashed var(--accent)}
+.k-past{background:var(--surface-3);border:1px solid var(--line)}
+.k-off{background:transparent;border:1px solid var(--line)}
+.ag-row{display:flex;align-items:center;gap:10px;width:100%;background:var(--surface);border:1px solid var(--line);border-left-width:3px;border-radius:10px;color:var(--ink);font:inherit;text-align:left;padding:8px 10px;cursor:pointer}
+.ag-row.k-firm{border-left-color:var(--accent);background:var(--surface)}
+.ag-row.k-pend{border-style:dashed;border-left-style:solid;border-left-color:var(--accent);background:transparent}
+.ag-row.k-past{border-left-color:var(--ink-dim);background:transparent;color:var(--ink-soft)}
+.ag-row.k-off{border-left-color:var(--line);background:transparent;color:var(--ink-dim)}
+.ag-row.k-off b{text-decoration:line-through}
+.ag-t{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;width:40px;flex:none}
+.ag-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.ag-main b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-main span{font-size:12px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-tag{flex:none;font-style:normal;font-size:10.5px;font-weight:700;color:var(--ink-soft);border:1px solid var(--line);border-radius:999px;padding:2px 7px}
+.ag-free{font-size:12.5px;color:var(--ink-dim);padding:6px 0}
+.ag-empty{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+/* día */
+.ag-day{position:relative;margin-top:4px}
+.ag-hr{position:absolute;left:0;right:0;border-top:1px solid var(--line);height:0}
+.ag-hr span{position:absolute;left:0;top:-7px;font-size:10.5px;color:var(--ink-dim);background:var(--bg);padding-right:6px;font-variant-numeric:tabular-nums}
+.ag-now{position:absolute;left:44px;right:0;border-top:2px solid var(--live);z-index:2}
+.ag-now::before{content:"";position:absolute;left:-4px;top:-5px;width:8px;height:8px;border-radius:50%;background:var(--live)}
+.ag-ev{position:absolute;z-index:1;display:flex;flex-direction:column;gap:1px;overflow:hidden;text-align:left;border-radius:8px;padding:5px 8px;font:inherit;color:#fff;cursor:pointer}
+.ag-ev b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-ev span{font-size:11px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-ev em{font-style:normal;font-size:10.5px;font-weight:700;opacity:.85}
+.ag-ev.k-firm{background:#2c5592;border-color:var(--accent)}
+.ag-ev.k-pend{background:var(--bg);color:var(--ink)}
+.ag-ev.k-past{color:var(--ink-soft)}
+.ag-ev.k-off{color:var(--ink-dim)}
+.ag-ev.k-off b{text-decoration:line-through}
+/* semana */
+.ag-week{display:flex;flex-direction:column}
+.ag-wd{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.ag-wd-h{width:44px;flex:none;display:flex;flex-direction:column;align-items:center;gap:1px;background:none;border:none;color:var(--ink);font:inherit;cursor:pointer;padding-top:4px}
+.ag-wd-h b{font-size:18px;font-variant-numeric:tabular-nums;width:32px;height:32px;border-radius:50%;display:grid;place-items:center}
+.ag-wd-h span{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px}
+.ag-wd.today .ag-wd-h b{background:var(--ink);color:var(--bg)}
+.ag-wd-items{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;justify-content:center}
+/* mes */
+.ag-mh,.ag-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.ag-mh span{text-align:center;font-size:11px;color:var(--ink-dim);font-weight:700;padding-bottom:6px}
+.ag-cell{aspect-ratio:1/1.05;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;padding-top:6px;background:none;border:none;border-top:1px solid var(--line);color:var(--ink);font:inherit;font-size:13.5px;cursor:pointer}
+.ag-cell > span{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.ag-cell.out{color:var(--ink-dim)}
+.ag-cell.today > span{background:var(--ink);color:var(--bg);font-weight:700}
+.ag-cell.sel > span{box-shadow:0 0 0 1.5px var(--accent)}
+.ag-dots{display:flex;gap:3px;height:6px}
+.ag-dots i{width:6px;height:6px;border-radius:50%;display:block}
+.ag-sel{display:flex;flex-direction:column;gap:8px}
+.ag-sel .notif-h span{text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)}
+.ag-sel .notif-h span::first-letter{text-transform:uppercase}
+/* año */
+.ag-year{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px}
+.ag-mini{display:flex;flex-direction:column;gap:6px;background:none;border:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer;padding:0}
+.ag-mini-h{display:flex;justify-content:space-between;align-items:baseline}
+.ag-mini-h b{font-size:13px;text-transform:capitalize}
+.ag-mini-h em{font-style:normal;font-size:11px;color:var(--ink-soft);font-weight:700}
+.ag-mini-g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.ag-mini-g i{font-style:normal;font-size:9.5px;color:var(--ink-dim);text-align:center;line-height:18px;border-radius:50%;font-variant-numeric:tabular-nums}
+.ag-mini-g i.on{background:var(--accent);color:#fff;font-weight:700}
+.ag-mini-g i.today{box-shadow:inset 0 0 0 1px var(--ink);color:var(--ink)}
+/* entrada desde notificaciones y exportar */
+.ag-entry{display:flex;align-items:center;gap:12px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:14px;color:var(--ink);font:inherit;text-align:left;padding:11px 12px;cursor:pointer}
+.ag-entry .notif-t b{display:block;font-size:14px;margin-bottom:1px;color:var(--ink)}
+.ag-entry > .ico{color:var(--ink-dim);font-size:15px;flex:none}
+.ag-feed{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;overflow-wrap:anywhere}
+.ag-feed code{font-size:12px;color:var(--ink-soft)}
+
   </style>
 </head>
 <body>
@@ -1243,7 +1324,8 @@ const PLACES = [
 ];
 
 // Helper: fecha futura a partir de ahora
-const hoursFromNow = (h) => new Date(Date.now() + h * 3600 * 1000);
+// Redondeado al cuarto de hora, como las horas reales de un plan.
+const hoursFromNow = (h) => new Date(Math.round((Date.now() + h * 3600 * 1000) / 900000) * 900000);
 
 // Planes (unidad atómica). level: 1 ancla recurrente, 2 usuario gratuito, 3 pago curado.
 const PLANS = [
@@ -1745,6 +1827,19 @@ const BIZ_VERIFICATIONS = [
   { id:'bv4', userId:null, name:'Sala Clamores', taxId:'B99887766', category:'Cultura', address:'Chamberí, Madrid', placeId:'clamores', claim:true, contact:'Pablo G.',
     docs:['CIF','Licencia de actividad','Titularidad del local'], status:'pendiente', at: minsAgo(30) },
 ];
+// Tu historial para la agenda (agenda.js): planes pasados con su fecha. status: asistio | cancelaste.
+const daysAgoAt = (d, h, m = 0) => { const x = new Date(); x.setDate(x.getDate() - d); x.setHours(h, m, 0, 0); return x.getTime(); };
+const AGENDA_HISTORY = [
+  { id:'h1', planId:'p1', title:'El himno de la Victoria', placeId:'victoria', when: daysAgoAt(12, 22), status:'asistio' },
+  { id:'h2', planId:'p8', title:'Yoga al sol en el Retiro', placeId:'retiro', when: daysAgoAt(19, 10), status:'asistio' },
+  { id:'h3', planId:'p3', title:'Rooftop Sunset Sessions · edición de septiembre', placeId:'azotea', when: daysAgoAt(26, 20), status:'asistio' },
+  { id:'h4', planId:'p2', title:'Atardecer en el Templo de Debod', placeId:'debod', when: daysAgoAt(33, 19, 45), status:'asistio' },
+  { id:'h5', planId:'p5', title:'Trail al amanecer en la Sierra', placeId:'sierra', when: daysAgoAt(40, 6, 30), status:'asistio' },
+  { id:'h6', planId:'p7', title:'Jazz íntimo en Clamores · edición de agosto', placeId:'clamores', when: daysAgoAt(47, 21), status:'cancelaste' },
+  { id:'h7', planId:'p6', title:'Ruta de tapas para viajeros', placeId:'lavapies', when: daysAgoAt(61, 20, 30), status:'asistio' },
+  { id:'h8', planId:'p2', title:'Atardecer en el Templo de Debod', placeId:'debod', when: daysAgoAt(95, 20, 15), status:'asistio' },
+  { id:'h9', planId:'p8', title:'Yoga al sol en el Retiro', placeId:'retiro', when: daysAgoAt(124, 10), status:'asistio' },
+];
 // Métricas del piloto por semana (simuladas: en la app real salen del registro de eventos).
 const PILOT_WEEKS = [
   { w:'Semana 1', registros:62, activos:41, planes:9,  apuntados:58,  asistencias:37 },
@@ -1793,7 +1888,7 @@ if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
     STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, FOLLOW_REQUESTS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
-    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS, PLAN_PRESENCE, IDEAS, BIZ_VERIFICATIONS, PILOT_WEEKS, PILOT_STATS,
+    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS, PLAN_PRESENCE, IDEAS, BIZ_VERIFICATIONS, PILOT_WEEKS, PILOT_STATS, AGENDA_HISTORY,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }
@@ -2087,7 +2182,7 @@ function freshWorld(){
   ME.trustedContacts = []; ME.shareTrips = false; ME.safeCheck = false; ME.consents = undefined; ME.consentLog = [];
   drop(MOD_ACTIONS, a => a.targetUserId === 'me'); drop(SAFETY_EVENTS, () => true); delete USER_MOD.me;
   drop(PAYMENTS, x => x.userId === 'me'); drop(PAYMENT_METHODS, () => true); ME.payouts = undefined;
-  ME.planPresence = {}; ME.pinged = {};
+  ME.planPresence = {}; ME.pinged = {}; ME.calToken = null; AGENDA_HISTORY.length = 0;
   drop(IDEAS, x => x.authorId === 'me'); IDEAS.forEach(x => { x.people = x.people.filter(p => p.userId !== 'me'); });
   PLANS.forEach(p => { p.waitlist = (p.waitlist || []).filter(x => x !== 'me'); });
 }
@@ -2809,8 +2904,9 @@ function renderNotifications(){
       <span class="notif-t">${escapeHtml(n.text)}<span>${minLabel(notifAge(n))}</span></span>${n.read ? '' : '<i class="conv-dot sm"></i>'}</button>`; };
   const fresh = NOTIFICATIONS.filter(n => !n.read), old = NOTIFICATIONS.filter(n => n.read);
   view.innerHTML = `<div class="page-bar"><button class="pb-back" onclick="history.back()" aria-label="Atrás">${ico('chevL')}</button>
-      <span class="pb-title">Notificaciones</span><button class="pb-back" onclick="openNotifPrefs()" aria-label="Preferencias">${ico('gear')}</button></div>
+      <span class="pb-title">Notificaciones</span><span class="pb-btns"><button class="pb-back" onclick="go('agenda')" aria-label="Agenda">${ico('calendar')}</button><button class="pb-back" onclick="openNotifPrefs()" aria-label="Preferencias">${ico('gear')}</button></span></div>
     <div class="page-body inbox">
+      ${agendaEntry()}
       ${followRequestsHtml()}
       ${perm === 'default' ? `<button class="vg-inline" onclick="askNotifPermission()">${ico('bell')} Activa los avisos en este dispositivo para enterarte aunque no tengas la app abierta.</button>` : ''}
       ${fresh.length ? `<div class="notif-h"><span>Nuevas</span><button class="link-btn" onclick="markAllNotifs()">Marcar todo como leído</button></div>${fresh.map(item).join('')}` : ''}
@@ -5053,6 +5149,231 @@ function renderAdmin(tab){
 
 
 /* =========================================================================
+   Agenda: el calendario de tus planes, con vistas de día, semana, mes y año.
+   Va aparte de las notificaciones y se llega desde ellas (y desde la ficha del plan).
+   Entra: los planes a los que vas y los que organizas, lo que está a medias (solicitud
+   enviada, plaza por pagar o por confirmar, lista de espera), las chispas con día a las
+   que te has apuntado y tu historial. Se puede llevar al calendario del móvil (.ics) o
+   suscribirse a él. En la app real: docs/agenda.md.
+   ========================================================================= */
+const AG_VIEWS = [['dia','Día'],['semana','Semana'],['mes','Mes'],['ano','Año']];
+// Tipo de entrada: etiqueta y estilo (firme = confirmado, pendiente = a medias, pasado, cancelado).
+const AG_KIND = {
+  organizas: ['Organizas','firm'], vas: ['Vas','firm'],
+  pagar: ['Falta pagar','pend'], solicitud: ['Solicitud enviada','pend'], confirmar: ['Por confirmar','pend'], espera: ['Lista de espera','pend'], chispa: ['Chispa','pend'],
+  asististe: ['Fuiste','past'], cancelado: ['Cancelado','off'],
+};
+const AG_DEFAULT_MIN = 120;   // duración si el plan no la indica
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DIAS_LARGOS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const DIAS_INI = ['L','M','X','J','V','S','D'];
+
+/* ---------- fechas ---------- */
+const pad2 = (n) => String(n).padStart(2, '0');
+function dayKey(d){ d = new Date(d); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+function parseDay(k){ const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(k || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
+function startOfDay(d){ const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
+function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function startOfWeek(d){ const x = startOfDay(d); return addDays(x, -((x.getDay() + 6) % 7)); }   // la semana empieza en lunes
+const hhmm = (d) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+const isToday = (d) => dayKey(d) === dayKey(Date.now());
+function dayTitle(d){ const x = new Date(d); return `${DIAS_LARGOS[x.getDay()]}, ${x.getDate()} de ${MESES[x.getMonth()]}${x.getFullYear() !== new Date().getFullYear() ? ' de ' + x.getFullYear() : ''}`; }
+
+/* ---------- qué hay en tu agenda ---------- */
+function planAgendaKind(p){
+  const joined = state.joined.has(p.id);
+  if (isCancelled(p)) return (joined || isHost(p)) ? 'cancelado' : null;
+  if (state.attended.has(p.id)) return 'asististe';
+  if (isHost(p)) return 'organizas';
+  if (joined) return 'vas';
+  const pay = myPayment(p.id); if (pay && pay.status === 'pendiente') return 'pagar';
+  if (state.requested.has(p.id)) return 'solicitud';
+  if ((p.ideaInvites || []).some(v => v.userId === 'me' && v.status === 'pendiente')) return 'confirmar';
+  if ((p.waitlist || []).includes('me')) return 'espera';
+  return null;
+}
+function agWhere(p){ const pl = getPlace(p.placeId); return p.secret || (pl && pl.secret) ? 'Lugar por desvelar' : (p.meetPoint || (pl ? pl.name : 'Madrid')); }
+function agendaItems(){
+  const out = [], end = (s, min) => new Date(s.getTime() + (min || AG_DEFAULT_MIN) * 60000);
+  PLANS.forEach(p => {
+    const kind = planAgendaKind(p); if (!kind) return;
+    const start = new Date(p.when);
+    out.push({ id:'pl-' + p.id, planId:p.id, title:p.title, start, end:end(start, p.durationMin), kind, where:agWhere(p), route:'plan/' + p.id });
+  });
+  IDEAS.forEach(x => {
+    if (x.status === 'convertida' || x.when !== 'fecha' || !x.date) return;
+    if (x.authorId !== 'me' && !(x.people || []).some(v => v.userId === 'me' && v.status === 'si')) return;
+    const start = new Date(x.date); if (isNaN(start)) return;
+    out.push({ id:'ch-' + x.id, ideaId:x.id, title:x.title, start, end:end(start), kind:'chispa', where:x.zone || 'Zona por decidir', route:'chispa/' + x.id });
+  });
+  AGENDA_HISTORY.forEach(h => { const start = new Date(h.when), pl = getPlace(h.placeId);
+    out.push({ id:'h-' + h.id, planId:h.planId, title:h.title, start, end:end(start), kind: h.status === 'cancelaste' ? 'cancelado' : 'asististe', where: pl ? pl.name : 'Madrid', route:'plan/' + h.planId }); });
+  return out.sort((a, b) => a.start - b.start);
+}
+const itemsOn = (items, d) => { const k = dayKey(d); return items.filter(i => dayKey(i.start) === k); };
+// Lo que viene: lo que aún no ha terminado y no está cancelado.
+function upcomingItems(){ const now = Date.now(); return agendaItems().filter(i => i.end.getTime() > now && i.kind !== 'cancelado' && i.kind !== 'asististe'); }
+
+/* ---------- la pantalla ---------- */
+function renderAgenda(arg){
+  const [v, k] = String(arg || '').split('/');
+  if (AG_VIEWS.some(x => x[0] === v)) state.agView = v;
+  const d = parseDay(k); if (d) state.agDate = d;
+  if (!state.agView) state.agView = 'semana';
+  if (!state.agDate) state.agDate = startOfDay(Date.now());
+  drawAgenda();
+}
+function agSet(view, key){ if (view) state.agView = view; if (key) state.agDate = parseDay(key); drawAgenda(); scrollTop('page'); }
+function agStep(n){
+  const d = new Date(state.agDate);
+  if (state.agView === 'dia') d.setDate(d.getDate() + n);
+  if (state.agView === 'semana') d.setDate(d.getDate() + 7 * n);
+  if (state.agView === 'mes'){ d.setDate(1); d.setMonth(d.getMonth() + n); }
+  if (state.agView === 'ano'){ d.setDate(1); d.setFullYear(d.getFullYear() + n); }
+  state.agDate = d; drawAgenda();
+}
+function agToday(){ state.agDate = startOfDay(Date.now()); drawAgenda(); }
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+// "hoy", "mañana" o el día de la semana, con la hora.
+function whenShort(d){ const k = dayKey(d); return (k === dayKey(Date.now()) ? 'hoy' : (k === dayKey(addDays(Date.now(), 1)) ? 'mañana' : DIAS_LARGOS[d.getDay()])) + ' ' + hhmm(d); }
+function agTitle(){ return cap(agTitleRaw()); }
+function agTitleRaw(){
+  const d = new Date(state.agDate);
+  if (state.agView === 'dia') return dayTitle(d);
+  if (state.agView === 'mes') return `${MESES[d.getMonth()]} ${d.getFullYear()}`;
+  if (state.agView === 'ano') return String(d.getFullYear());
+  const a = startOfWeek(d), b = addDays(a, 6), m = (x) => MESES[x.getMonth()].slice(0, 3);
+  return a.getMonth() === b.getMonth() ? `${a.getDate()} – ${b.getDate()} ${m(b)}` : `${a.getDate()} ${m(a)} – ${b.getDate()} ${m(b)}`;
+}
+function drawAgenda(){
+  const view = document.getElementById('view-page'), items = agendaItems(), v = state.agView;
+  const body = { dia: agDayView, semana: agWeekView, mes: agMonthView, ano: agYearView }[v](items);
+  view.innerHTML = `<div class="page-bar"><button class="pb-back" onclick="history.back()" aria-label="Atrás">${ico('chevL')}</button>
+      <span class="pb-title">Agenda</span><button class="pb-back" onclick="openAgendaExport()" aria-label="Llevar a tu calendario">${ico('download')}</button></div>
+    <div class="page-body ag">
+      <div class="iseg ag-seg" role="tablist">${AG_VIEWS.map(([k, l]) => `<button class="${v === k ? 'active' : ''}" role="tab" aria-selected="${v === k}" onclick="agSet('${k}')"><span>${l}</span></button>`).join('')}</div>
+      <div class="ag-nav"><button class="ag-arrow" onclick="agStep(-1)" aria-label="Anterior">${ico('chevL')}</button>
+        <b>${escapeHtml(agTitle())}</b>
+        <button class="ag-arrow" onclick="agStep(1)" aria-label="Siguiente">${ico('chevR')}</button>
+        <button class="ph-btn sm" onclick="agToday()">Hoy</button></div>
+      ${body}
+      <div class="ag-legend"><span><i class="k-firm"></i>Confirmado</span><span><i class="k-pend"></i>A medias</span><span><i class="k-past"></i>Pasado</span><span><i class="k-off"></i>Cancelado</span></div>
+    </div>`;
+}
+// Fila de una entrada (semana, mes, entrada desde notificaciones).
+function agRow(i){
+  const [label, style] = AG_KIND[i.kind];
+  return `<button class="ag-row k-${style}" onclick="go('${i.route}')"><span class="ag-t">${hhmm(i.start)}</span>
+    <span class="ag-main"><b>${escapeHtml(i.title)}</b><span>${escapeHtml(i.where)}</span></span><em class="ag-tag">${label}</em></button>`;
+}
+const agEmpty = (txt) => `<div class="ag-empty"><p>${txt}</p><button class="link-btn" onclick="go('feed')">Buscar planes</button></div>`;
+
+/* Día: franja horaria con cada plan en su hora (si coinciden, en columnas). */
+function agDayView(items){
+  const d = state.agDate, list = itemsOn(items, d), HOUR = 52;
+  const from = Math.min(8, ...list.map(i => i.start.getHours())), to = Math.min(24, Math.max(23, ...list.map(i => i.start.getHours() + Math.ceil((i.end - i.start) / 3600000))));
+  // Columnas para los que se solapan
+  const cols = []; list.forEach(i => { let c = cols.findIndex(col => col[col.length - 1].end <= i.start); if (c < 0){ cols.push([]); c = cols.length - 1; } cols[c].push(i); i.col = c; });
+  const n = Math.max(1, cols.length), top = (t) => ((t.getHours() + t.getMinutes() / 60) - from) * HOUR;
+  const hours = Array.from({ length: to - from + 1 }, (_, k) => from + k).map(h => `<div class="ag-hr" style="top:${(h - from) * HOUR}px"><span>${pad2(h % 24)}:00</span></div>`).join('');
+  const evs = list.map(i => { const [label, style] = AG_KIND[i.kind];
+    const dayEnd = new Date(startOfDay(d).getTime() + to * 3600000), e = i.end > dayEnd ? dayEnd : i.end, h = Math.max(30, top(e) - top(i.start) - 3);
+    return `<button class="ag-ev k-${style}" style="top:${top(i.start)}px;height:${h}px;left:calc(48px + (100% - 48px) * ${i.col} / ${n});width:calc((100% - 48px) / ${n} - 4px)" onclick="go('${i.route}')">
+      <b>${escapeHtml(i.title)}</b><span>${hhmm(i.start)}–${hhmm(i.end)} · ${escapeHtml(i.where)}</span><em>${label}</em></button>`; }).join('');
+  const now = new Date(), nowLine = isToday(d) && now.getHours() >= from && now.getHours() < to ? `<div class="ag-now" style="top:${top(now)}px" aria-hidden="true"></div>` : '';
+  return `${list.length ? '' : agEmpty('Nada en tu agenda este día.')}
+    <div class="ag-day" style="height:${(to - from) * HOUR + 12}px">${hours}${nowLine}${evs}</div>`;
+}
+/* Semana: los siete días, cada uno con sus planes. */
+function agWeekView(items){
+  const a = startOfWeek(state.agDate), days = Array.from({ length: 7 }, (_, k) => addDays(a, k));
+  return `<div class="ag-week">${days.map(d => { const list = itemsOn(items, d);
+    return `<div class="ag-wd ${isToday(d) ? 'today' : ''}"><button class="ag-wd-h" onclick="agSet('dia','${dayKey(d)}')" aria-label="Ver el ${escapeHtml(dayTitle(d))}"><b>${d.getDate()}</b><span>${DIAS_LARGOS[d.getDay()].slice(0, 3)}</span></button>
+      <div class="ag-wd-items">${list.map(agRow).join('') || '<span class="ag-free">Libre</span>'}</div></div>`; }).join('')}</div>`;
+}
+/* Mes: cuadrícula con un punto por plan; al tocar un día, sus planes debajo. */
+function agMonthView(items){
+  const d = state.agDate, first = new Date(d.getFullYear(), d.getMonth(), 1), start = startOfWeek(first);
+  const weeks = Math.ceil(((first.getDay() + 6) % 7 + new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()) / 7);
+  const cells = Array.from({ length: weeks * 7 }, (_, k) => addDays(start, k)).map(c => {
+    const list = itemsOn(items, c), out = c.getMonth() !== d.getMonth(), sel = dayKey(c) === dayKey(d);
+    return `<button class="ag-cell ${out ? 'out' : ''} ${isToday(c) ? 'today' : ''} ${sel ? 'sel' : ''}" onclick="agSet(null,'${dayKey(c)}')" aria-label="${escapeHtml(dayTitle(c))}${list.length ? ': ' + list.length + (list.length === 1 ? ' plan' : ' planes') : ''}">
+      <span>${c.getDate()}</span><i class="ag-dots">${list.slice(0, 3).map(i => `<i class="k-${AG_KIND[i.kind][1]}"></i>`).join('')}</i></button>`; }).join('');
+  const list = itemsOn(items, d);
+  return `<div class="ag-month"><div class="ag-mh">${DIAS_INI.map(x => `<span>${x}</span>`).join('')}</div><div class="ag-grid">${cells}</div></div>
+    <div class="ag-sel"><div class="notif-h"><span>${escapeHtml(dayTitle(d))}</span><button class="link-btn" onclick="agSet('dia')">Ver el día</button></div>
+      ${list.map(agRow).join('') || '<p class="ag-free">Nada este día.</p>'}</div>`;
+}
+/* Año: los doce meses en pequeño; los días con plan, marcados. */
+function agYearView(items){
+  const y = new Date(state.agDate).getFullYear(), has = new Set(items.filter(i => i.kind !== 'cancelado').map(i => dayKey(i.start)));
+  return `<div class="ag-year">${MESES.map((m, mi) => {
+    const first = new Date(y, mi, 1), blanks = (first.getDay() + 6) % 7, n = new Date(y, mi + 1, 0).getDate();
+    const count = items.filter(i => i.start.getFullYear() === y && i.start.getMonth() === mi && i.kind !== 'cancelado').length;
+    const days = Array.from({ length: n }, (_, k) => { const dd = new Date(y, mi, k + 1), on = has.has(dayKey(dd)); return `<i class="${on ? 'on' : ''} ${isToday(dd) ? 'today' : ''}">${k + 1}</i>`; }).join('');
+    return `<button class="ag-mini" onclick="agSet('mes','${y}-${pad2(mi + 1)}-01')" aria-label="${m} de ${y}: ${count} ${count === 1 ? 'plan' : 'planes'}"><span class="ag-mini-h"><b>${m}</b><em>${count || ''}</em></span>
+      <span class="ag-mini-g">${'<i></i>'.repeat(blanks)}${days}</span></button>`; }).join('')}</div>`;
+}
+
+/* ---------- desde las notificaciones ---------- */
+function agendaEntry(){
+  const up = upcomingItems(), next = up[0], wk = up.filter(i => i.start.getTime() < Date.now() + 7 * 86400000).length;
+  return `<button class="ag-entry" onclick="go('agenda')"><span class="notif-ic">${ico('calendar')}</span>
+    <span class="notif-t"><b>Tu agenda</b>${next ? `Próximo: ${escapeHtml(next.title)} · ${whenShort(next.start)}` : 'Sin planes a la vista'}<span>${wk} ${wk === 1 ? 'plan' : 'planes'} en los próximos 7 días</span></span>${ico('chevR')}</button>`;
+}
+// En la ficha del plan: verlo en la agenda o llevarlo al calendario del móvil.
+function agendaActions(p){
+  return `<div class="pl-actions"><button class="link-btn" onclick="go('agenda/dia/${dayKey(p.when)}')">Ver en tu agenda</button><button class="link-btn" onclick="downloadIcs('${p.id}')">Añadir al calendario del móvil</button></div>`;
+}
+
+/* ---------- al calendario del móvil (.ics) ---------- */
+// Texto iCalendar (RFC 5545): fechas en UTC, líneas plegadas a 75 caracteres y aviso 2 h antes.
+function icsEscape(s){ return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+const icsDate = (d) => new Date(d).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+function icsFold(line){ const out = []; while (line.length > 75){ out.push(line.slice(0, 75)); line = ' ' + line.slice(75); } out.push(line); return out.join('\r\n'); }
+function icsText(items){
+  const ev = items.map(i => [
+    'BEGIN:VEVENT', `UID:${i.id}@planes.app`, `DTSTAMP:${icsDate(Date.now())}`, `DTSTART:${icsDate(i.start)}`, `DTEND:${icsDate(i.end)}`,
+    `SUMMARY:${icsEscape(i.title)}`, `LOCATION:${icsEscape(i.where)}`,
+    `DESCRIPTION:${icsEscape(AG_KIND[i.kind][0] + '. Detalles y chat del plan en la app.')}`, `URL:${PUBLIC_BASE}/${i.route}`,
+    `STATUS:${i.kind === 'cancelado' ? 'CANCELLED' : (AG_KIND[i.kind][1] === 'pend' ? 'TENTATIVE' : 'CONFIRMED')}`,
+    'BEGIN:VALARM', 'ACTION:DISPLAY', 'TRIGGER:-PT2H', `DESCRIPTION:${icsEscape(i.title)}`, 'END:VALARM', 'END:VEVENT'].join('\n'));
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//planes//agenda//ES', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:Mis planes', ...ev.join('\n').split('\n')].concat('END:VCALENDAR').map(icsFold).join('\r\n') + '\r\n';
+}
+function downloadIcs(planId){
+  const items = planId ? agendaItems().filter(i => i.planId === planId && i.id === 'pl-' + planId) : upcomingItems().filter(i => ['vas','organizas'].includes(i.kind));
+  if (!items.length){ toast('No hay planes confirmados que añadir'); return; }
+  if (typeof Blob === 'undefined'){ toast('Este navegador no puede generar el archivo'); return; }
+  saveFile(new Blob([icsText(items)], { type:'text/calendar' }), planId ? `plan-${planId}.ics` : 'mis-planes.ics')
+    .then(r => { if (r === 'saved') toast('Ábrelo para añadirlo a tu calendario'); else if (r !== 'declined') toast('No se ha podido guardar'); });
+}
+// Suscripción: una dirección secreta que el calendario del móvil consulta solo (se puede revocar).
+function calToken(){ if (!ME.calToken) ME.calToken = newId('cal').replace(/[^a-z0-9]/gi, '').toLowerCase(); return ME.calToken; }
+function calFeedUrl(){ return `${PUBLIC_BASE.replace(/^https?:/, 'webcal:')}/agenda/${calToken()}.ics`; }
+function openAgendaExport(){
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Llevar a tu calendario">
+    <div class="sheet-h"><span>Llevar a tu calendario</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list">
+      <button class="sh-row" onclick="downloadIcs()">${ico('download')}<span>Descargar mis próximos planes (.ics)</span>${ico('chevR')}</button>
+      <div class="set-title" style="margin-top:8px">Suscribirse (se actualiza solo)</div>
+      <p class="hint">Añade esta dirección en Calendario (iPhone) o Google Calendar. Si un plan cambia de hora o se cancela, cambia también allí. El lugar de los planes secretos no aparece hasta que se desvela.</p>
+      <div class="ag-feed"><code>${escapeHtml(calFeedUrl())}</code></div>
+      <button class="sh-row" onclick="copyCalFeed()">${ico('link')}<span>Copiar la dirección</span>${ico('chevR')}</button>
+      <button class="sh-row danger" onclick="revokeCalFeed()">${ico('close')}<span>Revocar la dirección (deja de funcionar la anterior)</span>${ico('chevR')}</button>
+      <p class="hint">Es personal: quien la tenga ve tus planes. En la demo no hay servidor que la sirva.</p>
+    </div></div>`);
+}
+function copyCalFeed(){
+  const url = calFeedUrl();
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(() => toast('Dirección copiada'), () => toast(url));
+    else toast(url);
+  } catch (e) { toast(url); }
+}
+function revokeCalFeed(){ ME.calToken = null; calToken(); saveState(); toast('Dirección nueva: la anterior ya no funciona'); openAgendaExport(); }
+
+
+/* =========================================================================
    Prototipo visual — App de planes. Modo oscuro tipo Instagram, sin emojis.
    Vistas: feed, mapa, grupos, perfil, detalle + creación (plan/post/grupo),
    solicitudes, ajustes. Datos mock en data.js.
@@ -5138,6 +5459,7 @@ const SVG = {
   pause:'<svg viewBox="0 0 24 24"><path d="M8.5 5.5v13M15.5 5.5v13"/></svg>',
   search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.4"/><path d="M15.7 15.7 20 20"/></svg>',
   dots:'<svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4" class="fill"/><circle cx="12" cy="12" r="1.4" class="fill"/><circle cx="18.5" cy="12" r="1.4" class="fill"/></svg>',
+  calendar:'<svg viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>',
   download:'<svg viewBox="0 0 24 24"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5"/><path d="M5 19.5h14"/></svg>',
   phone:'<svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.4"/><path d="M11 17.5h2"/></svg>',
   spark:'<svg viewBox="0 0 24 24"><path d="M12 3.5v4M12 16.5v4M3.5 12h4M16.5 12h4M6 6l2.6 2.6M15.4 15.4 18 18M18 6l-2.6 2.6M8.6 15.4 6 18"/><circle cx="12" cy="12" r="1.6" class="fill"/></svg>',
@@ -5237,7 +5559,7 @@ function saveState(){
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
             city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom,
-            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged },
+            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged, calToken: ME.calToken },
       modActions: MOD_ACTIONS, userMod: USER_MOD, safety: SAFETY_EVENTS, payments: PAYMENTS, paymentMethods: PAYMENT_METHODS, ideas: IDEAS,
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
@@ -6544,6 +6866,7 @@ function renderDetail(id){
   const myBlock = (joined && !attended && !isCancelled(p)) ? `<div class="block"><h4>Tu asistencia</h4>
       <p class="hint">${state.reconfirmed.has(p.id) ? `${ico('check')} Apuntado y reconfirmado.` : 'Apuntado.'} ${p.paid ? escapeHtml(policyLine(p)) : 'Si no puedes ir, cancela con tiempo: deja la plaza a otra persona.'}</p>
       ${pay && pay.status !== 'pendiente' ? `<div class="pay-line">${ico('card')}<span>Pagado ${money2(pay.amount)} · ${PAY_STATUS[pay.status].toLowerCase()}</span><button class="link-btn" onclick="openReceipt('${pay.id}')">Recibo</button></div>` : ''}
+      ${agendaActions(p)}
       <div class="pl-actions"><button class="link-btn" onclick="openCancel('${p.id}')">Cancelar asistencia</button><button class="link-btn dim" onclick="demoPlanEnded('${p.id}')">Demo: simular que el plan ha terminado</button></div></div>`
     : (toPay ? `<div class="block"><h4>Tu plaza</h4><p class="hint">${ico('clock')} Te guardamos la plaza hasta ${fmtWhen(new Date(pay.dueAt))}. Paga para confirmarla; si no, pasa a la siguiente persona.</p></div>`
     : (waiting ? `<div class="block"><h4>Lista de espera</h4><p class="hint">Eres el puesto ${waiting}. Si alguien cancela, la plaza es tuya y te avisamos.</p>
@@ -6556,7 +6879,7 @@ function renderDetail(id){
         ${isHost(p) && p.paid ? `<button class="sh-row" onclick="go('cobros')">${ico('euro')}<span>Cobros · ${hostSales(p.id).filter(x => x.status !== 'reembolsado').length} reservas</span>${ico('chevR')}</button>` : ''}
         ${isHost(p) ? `<button class="sh-row" onclick="go('editar-plan/${p.id}')">${ico('doc')}<span>Editar fecha, hora o lugar</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openCancelPlan('${p.id}')">${ico('close')}<span>Cancelar el plan</span>${ico('chevR')}</button>` : ''}
-      </div></div>` : '';
+      </div>${agendaActions(p)}</div>` : '';
 
   const presence = isCancelled(p) ? '' : presenceBlock(p);   // quién te ve y si vas solo o en grupo (planes.js)
 
@@ -7536,6 +7859,7 @@ function router(){
     case 'tema':    renderTag(arg); showView('page'); scrollTop('page'); break;
     case 'seguidores': case 'seguidos': renderFollowList(route, arg || 'me'); showView('page'); scrollTop('page'); break;
     case 'notificaciones': renderNotifications(); showView('page'); scrollTop('page'); break;
+    case 'agenda': renderAgenda(hash.split('/').slice(1).join('/')); showView('page'); scrollTop('page'); break;
     case 'editar-plan': renderEditPlan(arg); showView('page'); scrollTop('page'); break;
     case 'seguridad': renderSecurity(); showView('page'); scrollTop('page'); break;
     case 'contactos-confianza': renderTrusted(); showView('page'); scrollTop('page'); break;

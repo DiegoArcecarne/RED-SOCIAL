@@ -249,6 +249,15 @@ Propuesta de límites, tomando como referencia lo habitual en redes sociales (In
 
 Contenido propio. Aftermovies (posts permanentes en la pestaña Vividas) y stories (efímeras), con la visibilidad que marque la configuración del perfil.
 
+## Agenda
+
+Un calendario con tus planes, **aparte de las notificaciones y accesible desde ellas** (tarjeta *Tu agenda* arriba de Notificaciones) y desde la ficha de cada plan. Vistas de **día** (franja horaria), **semana** (por defecto), **mes** (cuadrícula con puntos) y **año** (doce meses en pequeño).
+
+- Entra lo que vas a hacer (planes a los que vas y los que organizas), lo que está a medias (solicitud enviada, plaza por pagar o por confirmar, lista de espera, chispas con día) y tu historial (a los que fuiste y los cancelados). Cada entrada lleva su estado en texto y un estilo: firme, a medias, pasado o tachado.
+- Se lleva al calendario del móvil: un plan o todos en un archivo .ics, o una **suscripción** personal y revocable que se actualiza sola si un plan cambia de hora o se cancela. Los planes secretos no muestran el lugar hasta que se desvela.
+
+Especificación completa en [`docs/agenda.md`](docs/agenda.md).
+
 ## Asistencia real y privacidad de presencia
 
 El funcionamiento detallado del bucle (lista de espera, reconfirmación, cancelaciones y reembolsos, llegada con el QR del anfitrión, fiabilidad, chat del plan y notificaciones) y lo que debe hacer el servidor está en [docs/bucle-de-planes.md](docs/bucle-de-planes.md).
@@ -719,7 +728,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Plan y participación
 
-- Plan. id, tipo (social gratuito o experiencia de pago), tipo de inscripción (apuntado o libre), modo de aprobación (automática o manual, solo en apuntados), grupo_id (grupo organizador, nulo si no aplica), nivel (1 ancla recurrente / 2 usuario gratuito / 3 pago curado), anfitrión_id (Usuario o Cuenta de empresa, verificado), lugar_id o ubicación libre, ubicación oculta (bool) con zona aproximada, categoría, título, descripción, media (post foto/vídeo), fecha y hora, recurrencia (puntual o regla de recurrencia), tamaño mínimo y máximo, precio (nulo si gratuito), desvelo (importe, solo eventos especiales/saturados no de pago), requisitos de asistente (edad mínima, idioma, fiabilidad mínima, presentación requerida), política de cancelación (flexible / moderada / estricta), estado (próximo / en curso / pasado), hashtag, fecha de creación. Derivados: apuntados ahora, asistentes reales.
+- Plan. id, tipo (social gratuito o experiencia de pago), tipo de inscripción (apuntado o libre), modo de aprobación (automática o manual, solo en apuntados), grupo_id (grupo organizador, nulo si no aplica), nivel (1 ancla recurrente / 2 usuario gratuito / 3 pago curado), anfitrión_id (Usuario o Cuenta de empresa, verificado), lugar_id o ubicación libre, ubicación oculta (bool) con zona aproximada, categoría, título, descripción, media (post foto/vídeo), fecha y hora, recurrencia (puntual o regla de recurrencia), tamaño mínimo y máximo, duración en minutos (para la agenda; 2 h si no se indica), precio (nulo si gratuito), desvelo (importe, solo eventos especiales/saturados no de pago), requisitos de asistente (edad mínima, idioma, fiabilidad mínima, presentación requerida), política de cancelación (flexible / moderada / estricta), estado (próximo / en curso / pasado), hashtag, fecha de creación. Derivados: apuntados ahora, asistentes reales.
 - Inscripción. Relación Usuario–Plan para la participación, solo en planes apuntados. plan_id, usuario_id, estado (solicitada, aprobada, rechazada, confirmada, en lista de espera con su posición, cancelada, cancelada tarde, asistió, no-show), reconfirmación del día (bool, con fecha), pago_id (nulo en planes gratuitos), importe reembolsado, fecha. Es la entidad donde viven la lista de espera con sobreasignación y la reconfirmación.
 - Solicitud de asistencia. Relación Usuario–Plan en los planes con aprobación manual. plan_id, usuario_id, estado (pendiente, aceptada, rechazada), mensaje de presentación, fecha. La aceptan el anfitrión o los admins del grupo organizador; una solicitud aceptada equivale a una inscripción aprobada.
 - Asistencia real. Relación Usuario–Plan que registra la asistencia verificada por geolocalización. plan_id, usuario_id, fecha y hora, método (QR del anfitrión en el piloto, marcada a mano por el anfitrión, o geolocalización más adelante), visibilidad (pública o privada). Es distinta de la Inscripción: un plan libre no tiene inscripciones pero sí asistencias reales; un plan apuntado tiene ambas. Alimenta el recuento de asistentes reales del plan y las Vividas del perfil; los registros con visibilidad privada no se listan por identidad y solo cuentan en el total a partir del umbral de anonimato.
@@ -776,6 +785,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Verificación de negocio. cuenta de empresa, lugar que reclama (opcional), NIF, documentos (CIF, licencia de actividad, titularidad del local, seguro de responsabilidad civil), estado (pendiente, faltan documentos, verificado, rechazado), motivo, quién la decidió y fechas.
 - Equipo y registro. Miembro del equipo (correo de trabajo, roles: administración, moderación, soporte, análisis; 2FA obligatoria), registro de cada acción del equipo (quién, rol, qué, sobre qué, antes y después, motivo, IP, fecha; solo inserción) y notas internas sobre usuarios. Ver [`docs/herramientas-internas.md`](docs/herramientas-internas.md).
 - Métrica semanal. semana, ciudad, registros, activos, planes, apuntados y asistencias verificadas; agregada cada noche a partir de eventos de producto propios.
+- Suscripción de calendario. usuario_id, token (aleatorio, 128 bits), fecha de creación y de revocación. La agenda en sí no se guarda: se calcula a partir de inscripciones, solicitudes, pagos, listas de espera, invitaciones de chispas y asistencias.
 - Notificación. usuario_id, tipo (recordatorio y reconfirmación, solicitud, mensaje, cambio en un plan, plaza de la lista de espera, después del plan, seguidor, mención y seguridad —resultado de tus reportes, decisiones de moderación y SOS—; y más adelante planes cerca), referencia (plan, conversación o ruta), texto, leída, fecha. Las preferencias por tipo viven en el Usuario. Los avisos de seguridad no se pueden desactivar.
 
 ### Relaciones clave, de un vistazo

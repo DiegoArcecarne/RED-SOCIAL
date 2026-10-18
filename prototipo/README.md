@@ -168,6 +168,12 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    *Categorías* (crear, renombrar, fusionar y jubilar: cambia lo que sale al crear y al
    filtrar), *Moderación* y *Registro* de cada acción. Ver
    [`docs/herramientas-internas.md`](../docs/herramientas-internas.md).
+21. **Agenda** — desde *Notificaciones* (tarjeta *Tu agenda* o el icono de calendario) y
+   desde la ficha de un plan al que vas: vistas de día, semana, mes y año con los planes a
+   los que vas, los que organizas, lo que está a medias (solicitud, pago, lista de espera,
+   chispas con día) y tu historial. *Añadir al calendario del móvil* descarga un .ics; el
+   botón de arriba da también la dirección para suscribirse (revocable). Ver
+   [`docs/agenda.md`](../docs/agenda.md).
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.
@@ -177,7 +183,7 @@ condiciones de las cuentas profesionales están pendientes de decidir.
 
 ## Para desarrollar
 
-Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `pagos.js`, `chispas.js`, `admin.js`, `app.js`).
+Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `pagos.js`, `chispas.js`, `admin.js`, `agenda.js`, `app.js`).
 `standalone.html` y `web/` se generan; no los edites a mano. Desde la raíz del repositorio:
 
 ```bash

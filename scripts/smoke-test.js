@@ -1209,6 +1209,50 @@ const ad2 = createEnv(ads);
 check('persiste lo del equipo (categorías, negocios, verificación, registro)', ad2.run('getCategory("juegos-de-mesa").label') === 'Juegos' && !ad2.run('activeCategories().some(c => c.id === "viajeros")') && ad2.run('getPlace("clamores").verified') === true
   && ad2.run('getUser("marco").verified') === false && ad2.run('ADMIN_LOG.length') >= 10 && ad2.run('BIZ_VERIFICATIONS.find(b => b.id === "bv3").status') === 'faltan_documentos');
 
+// --- Agenda: calendario de tus planes (día, semana, mes y año) ---
+const ags = {};
+const ag = createEnv(ags);
+ag.nav('notificaciones'); h = ag.html('view-page'); rendered += h;
+check('notificaciones: acceso a la agenda (tarjeta y botón)', h.includes('Tu agenda') && h.includes("go('agenda')") && h.includes('Próximo: ') && h.includes('aria-label="Agenda"'));
+ag.nav('agenda'); h = ag.html('view-page'); rendered += h;
+check('agenda: vistas de día, semana, mes y año (semana por defecto)', ['Día','Semana','Mes','Año'].every(t => h.includes(`<span>${t}</span>`)) && h.includes('aria-selected="true" onclick="agSet(\'semana\')"') && count(h, /class="ag-wd /g) === 7 && h.includes('>Hoy<'));
+const k9 = ag.run('dayKey(getPlan("p9").when)');
+ag.nav('agenda/dia/' + k9); h = ag.html('view-page'); rendered += h;
+check('agenda ▸ día: el plan al que vas, en su hora, con lugar y estado', h.includes('class="ag-day"') && h.includes('Cata de vinos naturales') && h.includes('<em>Vas</em>') && h.includes('class="ag-hr"'));
+const d0 = ag.run('dayKey(state.agDate)'); ag.run('agStep(1)');
+check('agenda: siguiente día', ag.run('dayKey(state.agDate)') === ag.run(`dayKey(addDays(parseDay("${d0}"), 1))`));
+ag.run('state.requested.add("p6"); getPlan("p10").hostId = "me"; getPlan("p11").waitlist = ["me"]; state.joined.add("p12"); getPlan("p12").status = "cancelado"');
+check('agenda: qué entra (vas, organizas, solicitud, lista de espera, cancelado)', ag.run('planAgendaKind(getPlan("p9"))') === 'vas' && ag.run('planAgendaKind(getPlan("p10"))') === 'organizas'
+  && ag.run('planAgendaKind(getPlan("p6"))') === 'solicitud' && ag.run('planAgendaKind(getPlan("p11"))') === 'espera' && ag.run('planAgendaKind(getPlan("p12"))') === 'cancelado' && ag.run('planAgendaKind(getPlan("p4"))') === null);
+check('agenda: tu historial (fuiste y cancelaste)', ag.run('agendaItems().filter(i => i.kind === "asististe").length') === 8 && ag.run('agendaItems().filter(i => i.id.startsWith("h-") && i.kind === "cancelado").length') === 1);
+ag.nav('agenda/mes/' + k9); h = ag.html('view-page'); rendered += h;
+check('agenda ▸ mes: cuadrícula con puntos y los planes del día elegido', h.includes('class="ag-grid"') && count(h, /class="ag-cell/g) % 7 === 0 && h.includes('Cata de vinos naturales') && h.includes('Ver el día') && h.includes('k-firm'));
+ag.run('state.agView = "semana"'); ag.nav('agenda/semana/' + ag.run('dayKey(getPlan("p6").when)')); h = ag.html('view-page');
+check('agenda ▸ semana: lo pendiente se distingue (solicitud enviada)', h.includes('Solicitud enviada') && h.includes('ag-row k-pend'));
+const kh = ag.run('dayKey(AGENDA_HISTORY[2].when)');
+ag.nav('agenda/ano/' + kh); h = ag.html('view-page'); rendered += h;
+check('agenda ▸ año: doce meses con los días con plan marcados', count(h, /class="ag-mini"/g) === 12 && h.includes('class="on') && h.includes('Agenda'));
+ag.run(`agSet('mes', '${kh}')`);
+check('agenda: del año al mes', ag.run('state.agView') === 'mes' && ag.html('view-page').includes('Rooftop Sunset Sessions · edición de septiembre'));
+ag.run('state.ideaDraft = null'); ag.nav('crear-chispa'); set(ag, 'f-ititle', 'Barbacoa en la sierra'); set(ag, 'f-itext', 'x'); set(ag, 'f-izone', 'Cercedilla');
+ag.run('setIdeaField("when", "fecha")'); set(ag, 'f-idate', '2030-07-04T13:00'); set(ag, 'f-ititle', 'Barbacoa en la sierra'); set(ag, 'f-itext', 'x'); set(ag, 'f-izone', 'Cercedilla'); ag.run('publishIdea()');
+check('agenda: las chispas con día también aparecen', ag.run('agendaItems().some(i => i.kind === "chispa" && i.title === "Barbacoa en la sierra")'));
+ag.nav('plan/p9'); h = ag.html('view-detail');
+check('ficha del plan: ver en tu agenda y añadir al calendario del móvil', h.includes(`go('agenda/dia/${k9}')`) && h.includes('Añadir al calendario del móvil'));
+const ics = ag.run('icsText(agendaItems().filter(i => i.planId === "p9" || i.planId === "p6"))');
+check('.ics: calendario válido (UTC, CRLF, escapado, líneas cortas, aviso 2 h antes)', ics.startsWith('BEGIN:VCALENDAR\r\nVERSION:2.0') && ics.trim().endsWith('END:VCALENDAR') && count(ics, /BEGIN:VEVENT/g) >= 2
+  && /DTSTART:\d{8}T\d{6}Z/.test(ics) && ics.includes('TRIGGER:-PT2H') && ics.includes('STATUS:TENTATIVE') && ics.includes('STATUS:CONFIRMED') && ics.split('\r\n').every(l => l.length <= 75) && !/\r?\n(?!\s|[A-Z-]+[:;]|$)/.test(ics.replace(/\r\n/g, '\n').replace(/\n /g, '')));
+check('.ics: escapa comas y punto y coma', ag.run('icsEscape("a, b; c")') === 'a\\, b\\; c');
+ag.run('openAgendaExport()'); h = ag.html('overlay');
+const tok = ag.run('calToken()');
+check('suscripción: dirección webcal personal y revocable', h.includes('webcal://planes.app/agenda/' + tok + '.ics') && h.includes('Revocar la dirección'));
+ag.run('revokeCalFeed()');
+check('revocar cambia la dirección', ag.run('calToken()') !== tok);
+const ag2 = createEnv(ags);
+check('persiste la dirección del calendario', ag2.run('ME.calToken') === ag.run('ME.calToken'));
+ag.run('delete getPlan("p10").hostId; freshWorld()');
+check('cuenta nueva: agenda vacía', ag.run('agendaItems().filter(i => i.kind !== "chispa").length') === 0);
+
 const pdir0 = path.join(__dirname, '..', 'prototipo');
 // --- Compartir: web pública con vista previa, enlaces que abren la app y menú nativo ---
 const wdir = path.join(__dirname, '..', 'prototipo', 'web');

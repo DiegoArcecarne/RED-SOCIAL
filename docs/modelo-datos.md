@@ -91,6 +91,7 @@ erDiagram
     ACCION_MODERACION ||--o| APELACION : "se recurre con"
     REPORTE ||--o| APELACION : "quien reporta pide revisar"
     PERSONA ||--o{ SOLICITUD_DATOS : "pide (RGPD)"
+    USUARIO ||--o| SUSCRIPCION_CALENDARIO : "agenda en el movil"
 
     CUENTA_EMPRESA ||--o{ SUSCRIPCION_NEGOCIO : contrata
     USUARIO ||--o{ CAMPANA_BOOST : anuncia
@@ -193,6 +194,7 @@ erDiagram
         string recurrencia "puntual|recurrente"
         int tamano_min
         int tamano_max
+        int duracion_min "para la agenda; 120 si falta"
         decimal precio "nullable"
         decimal desvelo "solo especial/saturado no de pago"
         string politica_cancelacion "flexible|moderada|estricta"
@@ -497,6 +499,13 @@ erDiagram
         string enlace "exportacion, firmado y caducable"
         datetime fecha
         datetime completada
+    }
+    SUSCRIPCION_CALENDARIO {
+        uuid id PK
+        uuid usuario_id FK
+        string token "aleatorio, 128 bits"
+        datetime creada
+        datetime revocada "nullable"
     }
     SUSCRIPCION_NEGOCIO {
         uuid id PK

@@ -413,8 +413,9 @@ function renderNotifications(){
       <span class="notif-t">${escapeHtml(n.text)}<span>${minLabel(notifAge(n))}</span></span>${n.read ? '' : '<i class="conv-dot sm"></i>'}</button>`; };
   const fresh = NOTIFICATIONS.filter(n => !n.read), old = NOTIFICATIONS.filter(n => n.read);
   view.innerHTML = `<div class="page-bar"><button class="pb-back" onclick="history.back()" aria-label="Atrás">${ico('chevL')}</button>
-      <span class="pb-title">Notificaciones</span><button class="pb-back" onclick="openNotifPrefs()" aria-label="Preferencias">${ico('gear')}</button></div>
+      <span class="pb-title">Notificaciones</span><span class="pb-btns"><button class="pb-back" onclick="go('agenda')" aria-label="Agenda">${ico('calendar')}</button><button class="pb-back" onclick="openNotifPrefs()" aria-label="Preferencias">${ico('gear')}</button></span></div>
     <div class="page-body inbox">
+      ${agendaEntry()}
       ${followRequestsHtml()}
       ${perm === 'default' ? `<button class="vg-inline" onclick="askNotifPermission()">${ico('bell')} Activa los avisos en este dispositivo para enterarte aunque no tengas la app abierta.</button>` : ''}
       ${fresh.length ? `<div class="notif-h"><span>Nuevas</span><button class="link-btn" onclick="markAllNotifs()">Marcar todo como leído</button></div>${fresh.map(item).join('')}` : ''}

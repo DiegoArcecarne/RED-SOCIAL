@@ -84,6 +84,7 @@ const SVG = {
   pause:'<svg viewBox="0 0 24 24"><path d="M8.5 5.5v13M15.5 5.5v13"/></svg>',
   search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.4"/><path d="M15.7 15.7 20 20"/></svg>',
   dots:'<svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4" class="fill"/><circle cx="12" cy="12" r="1.4" class="fill"/><circle cx="18.5" cy="12" r="1.4" class="fill"/></svg>',
+  calendar:'<svg viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>',
   download:'<svg viewBox="0 0 24 24"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5"/><path d="M5 19.5h14"/></svg>',
   phone:'<svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.4"/><path d="M11 17.5h2"/></svg>',
   spark:'<svg viewBox="0 0 24 24"><path d="M12 3.5v4M12 16.5v4M3.5 12h4M16.5 12h4M6 6l2.6 2.6M15.4 15.4 18 18M18 6l-2.6 2.6M8.6 15.4 6 18"/><circle cx="12" cy="12" r="1.6" class="fill"/></svg>',
@@ -183,7 +184,7 @@ function saveState(){
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
             city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom,
-            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged },
+            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged, calToken: ME.calToken },
       modActions: MOD_ACTIONS, userMod: USER_MOD, safety: SAFETY_EVENTS, payments: PAYMENTS, paymentMethods: PAYMENT_METHODS, ideas: IDEAS,
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
@@ -1490,6 +1491,7 @@ function renderDetail(id){
   const myBlock = (joined && !attended && !isCancelled(p)) ? `<div class="block"><h4>Tu asistencia</h4>
       <p class="hint">${state.reconfirmed.has(p.id) ? `${ico('check')} Apuntado y reconfirmado.` : 'Apuntado.'} ${p.paid ? escapeHtml(policyLine(p)) : 'Si no puedes ir, cancela con tiempo: deja la plaza a otra persona.'}</p>
       ${pay && pay.status !== 'pendiente' ? `<div class="pay-line">${ico('card')}<span>Pagado ${money2(pay.amount)} · ${PAY_STATUS[pay.status].toLowerCase()}</span><button class="link-btn" onclick="openReceipt('${pay.id}')">Recibo</button></div>` : ''}
+      ${agendaActions(p)}
       <div class="pl-actions"><button class="link-btn" onclick="openCancel('${p.id}')">Cancelar asistencia</button><button class="link-btn dim" onclick="demoPlanEnded('${p.id}')">Demo: simular que el plan ha terminado</button></div></div>`
     : (toPay ? `<div class="block"><h4>Tu plaza</h4><p class="hint">${ico('clock')} Te guardamos la plaza hasta ${fmtWhen(new Date(pay.dueAt))}. Paga para confirmarla; si no, pasa a la siguiente persona.</p></div>`
     : (waiting ? `<div class="block"><h4>Lista de espera</h4><p class="hint">Eres el puesto ${waiting}. Si alguien cancela, la plaza es tuya y te avisamos.</p>
@@ -1502,7 +1504,7 @@ function renderDetail(id){
         ${isHost(p) && p.paid ? `<button class="sh-row" onclick="go('cobros')">${ico('euro')}<span>Cobros · ${hostSales(p.id).filter(x => x.status !== 'reembolsado').length} reservas</span>${ico('chevR')}</button>` : ''}
         ${isHost(p) ? `<button class="sh-row" onclick="go('editar-plan/${p.id}')">${ico('doc')}<span>Editar fecha, hora o lugar</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openCancelPlan('${p.id}')">${ico('close')}<span>Cancelar el plan</span>${ico('chevR')}</button>` : ''}
-      </div></div>` : '';
+      </div>${agendaActions(p)}</div>` : '';
 
   const presence = isCancelled(p) ? '' : presenceBlock(p);   // quién te ve y si vas solo o en grupo (planes.js)
 
@@ -2482,6 +2484,7 @@ function router(){
     case 'tema':    renderTag(arg); showView('page'); scrollTop('page'); break;
     case 'seguidores': case 'seguidos': renderFollowList(route, arg || 'me'); showView('page'); scrollTop('page'); break;
     case 'notificaciones': renderNotifications(); showView('page'); scrollTop('page'); break;
+    case 'agenda': renderAgenda(hash.split('/').slice(1).join('/')); showView('page'); scrollTop('page'); break;
     case 'editar-plan': renderEditPlan(arg); showView('page'); scrollTop('page'); break;
     case 'seguridad': renderSecurity(); showView('page'); scrollTop('page'); break;
     case 'contactos-confianza': renderTrusted(); showView('page'); scrollTop('page'); break;

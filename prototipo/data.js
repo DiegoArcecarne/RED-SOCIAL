@@ -27,7 +27,8 @@ const PLACES = [
 ];
 
 // Helper: fecha futura a partir de ahora
-const hoursFromNow = (h) => new Date(Date.now() + h * 3600 * 1000);
+// Redondeado al cuarto de hora, como las horas reales de un plan.
+const hoursFromNow = (h) => new Date(Math.round((Date.now() + h * 3600 * 1000) / 900000) * 900000);
 
 // Planes (unidad atómica). level: 1 ancla recurrente, 2 usuario gratuito, 3 pago curado.
 const PLANS = [
@@ -529,6 +530,19 @@ const BIZ_VERIFICATIONS = [
   { id:'bv4', userId:null, name:'Sala Clamores', taxId:'B99887766', category:'Cultura', address:'Chamberí, Madrid', placeId:'clamores', claim:true, contact:'Pablo G.',
     docs:['CIF','Licencia de actividad','Titularidad del local'], status:'pendiente', at: minsAgo(30) },
 ];
+// Tu historial para la agenda (agenda.js): planes pasados con su fecha. status: asistio | cancelaste.
+const daysAgoAt = (d, h, m = 0) => { const x = new Date(); x.setDate(x.getDate() - d); x.setHours(h, m, 0, 0); return x.getTime(); };
+const AGENDA_HISTORY = [
+  { id:'h1', planId:'p1', title:'El himno de la Victoria', placeId:'victoria', when: daysAgoAt(12, 22), status:'asistio' },
+  { id:'h2', planId:'p8', title:'Yoga al sol en el Retiro', placeId:'retiro', when: daysAgoAt(19, 10), status:'asistio' },
+  { id:'h3', planId:'p3', title:'Rooftop Sunset Sessions · edición de septiembre', placeId:'azotea', when: daysAgoAt(26, 20), status:'asistio' },
+  { id:'h4', planId:'p2', title:'Atardecer en el Templo de Debod', placeId:'debod', when: daysAgoAt(33, 19, 45), status:'asistio' },
+  { id:'h5', planId:'p5', title:'Trail al amanecer en la Sierra', placeId:'sierra', when: daysAgoAt(40, 6, 30), status:'asistio' },
+  { id:'h6', planId:'p7', title:'Jazz íntimo en Clamores · edición de agosto', placeId:'clamores', when: daysAgoAt(47, 21), status:'cancelaste' },
+  { id:'h7', planId:'p6', title:'Ruta de tapas para viajeros', placeId:'lavapies', when: daysAgoAt(61, 20, 30), status:'asistio' },
+  { id:'h8', planId:'p2', title:'Atardecer en el Templo de Debod', placeId:'debod', when: daysAgoAt(95, 20, 15), status:'asistio' },
+  { id:'h9', planId:'p8', title:'Yoga al sol en el Retiro', placeId:'retiro', when: daysAgoAt(124, 10), status:'asistio' },
+];
 // Métricas del piloto por semana (simuladas: en la app real salen del registro de eventos).
 const PILOT_WEEKS = [
   { w:'Semana 1', registros:62, activos:41, planes:9,  apuntados:58,  asistencias:37 },
@@ -577,7 +591,7 @@ if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
     STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, FOLLOW_REQUESTS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
-    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS, PLAN_PRESENCE, IDEAS, BIZ_VERIFICATIONS, PILOT_WEEKS, PILOT_STATS,
+    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS, PLAN_PRESENCE, IDEAS, BIZ_VERIFICATIONS, PILOT_WEEKS, PILOT_STATS, AGENDA_HISTORY,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }
