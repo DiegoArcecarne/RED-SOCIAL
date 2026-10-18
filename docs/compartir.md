@@ -94,6 +94,7 @@ En los planes se añade también `schema.org/Event` (JSON-LD) con la fecha, el l
   - Solo tienen página las públicas de perfiles públicos.
   - Las que son para seguidores o amigos, las de cuentas privadas, las borradas, las retiradas por moderación y las que están en revisión dan una página genérica ("Esta publicación no está disponible"), sin foto ni texto, con código 404 o 410.
 - **Perfiles privados**: solo la cabecera (nombre, foto, descripción y contadores). Ni publicaciones ni planes.
+- **Videollamadas privadas**: sin página propia ni vista previa con datos del plan; el enlace abre la app y solo deja entrar a quien está apuntado ([`videollamadas.md`](videollamadas.md)). Las públicas tienen página como cualquier plan, con "Videollamada" en lugar del lugar.
 - **Bloqueos**: la web no sabe quién la mira, así que la protección real está en la app, que comprueba los bloqueos al abrir.
 - **Cuentas suspendidas o cerradas**: página "no disponible".
 

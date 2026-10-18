@@ -110,8 +110,10 @@ function reminderText(p, slot, msLeft){
   const host = isHost(p), hour = fmtHour(new Date(p.when)), left = inLabel(msLeft || new Date(p.when) - Date.now());
   if (slot === 'dia') return host ? `Tu plan es ${dayWord(p).toLowerCase()} a las ${hour}: ${p.title}. Hay ${p.joined || 0} personas apuntadas.`
     : `${dayWord(p)} a las ${hour}: ${p.title}. ${state.reconfirmed.has(p.id) ? 'Ya has reconfirmado: te esperan.' : 'Reconfirma que vas para no perder tu plaza.'}`;
-  if (slot === 'horas') return host ? `En ${left} empieza ${p.title}. Ten a mano el QR de llegada.`
-    : `En ${left}: ${p.title} · ${p.secret ? 'el lugar ya está desvelado en la ficha' : agWhere(p)}. Al llegar, registra tu llegada con el QR del anfitrión.`;
+  if (slot === 'horas') return host ? `En ${left} empieza ${p.title}. ${isOnline(p) ? 'Abre la sala unos minutos antes.' : 'Ten a mano el QR de llegada.'}`
+    : (isOnline(p) ? `En ${left}: ${p.title}, por videollamada. La sala se abre ${CALL_OPEN_MIN} min antes: entra desde la ficha del plan.`
+    : `En ${left}: ${p.title} · ${p.secret ? 'el lugar ya está desvelado en la ficha' : agWhere(p)}. Al llegar, registra tu llegada con el QR del anfitrión.`);
+  if (isOnline(p)) return `Empieza en ${left}: ${p.title}. ${host ? 'Abre la sala' : 'Ya puedes entrar a la videollamada'} desde la ficha del plan.`;
   return host ? `Empieza en ${left}: ${p.title}. Abre el QR de llegada.` : `Empieza en ${left}: ${p.title}. Si al final no puedes ir, cancela y deja tu plaza a otra persona.`;
 }
 function sendReminder(p, slot, msLeft){

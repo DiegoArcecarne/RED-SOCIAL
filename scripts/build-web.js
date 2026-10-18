@@ -47,8 +47,11 @@ const FALLBACK_IMG = '1529156069898-49953e39b3ac';   // gente en un plan (Unspla
 const sizeBucket = (p) => (p.groupMax <= 8 ? 'intimo' : p.groupMax <= 20 ? 'mediano' : 'grande');
 const SIZE_LABEL = { intimo: 'Íntimo', mediano: 'Mediano', grande: 'Grande' };
 const isCancelled = (p) => p.status === 'cancelado';
+// Las videollamadas privadas no tienen página pública: su enlace abre la app.
+const planIsPublic = (p) => !(p.online && p.online.visibility === 'privada');
 // Planes secretos o íntimos fuera de un negocio: sin el sitio exacto.
 function planWhere(p){
+  if (p.online) return 'Videollamada';
   const place = getPlace(p.placeId);
   if (p.secret || !place) return 'Zona aproximada · Madrid';
   if (sizeBucket(p) === 'intimo' && place.kind !== 'negocio') return `Zona aproximada · ${place.city}`;
@@ -117,7 +120,7 @@ ${body}
 const files = {};
 const planPages = new Set(), postPages = new Set();
 
-PLANS.forEach((p) => {
+PLANS.filter(planIsPublic).forEach((p) => {
   const cat = getCategory(p.category);
   const host = p.host || {};
   const where = planWhere(p);
@@ -208,7 +211,7 @@ files['abrir.html'] = page({
 </script>`,
 });
 
-const upcoming = PLANS.filter((p) => !isCancelled(p)).slice(0, 8);
+const upcoming = PLANS.filter((p) => !isCancelled(p) && planIsPublic(p)).slice(0, 8);
 files['index.html'] = page({
   depth: 0, type: 'website', appRoute: 'feed', indexable: true, label: 'Abrir la app',
   title: 'Planes y gente con quien vivirlos', description: 'Descubre qué hacer hoy cerca de ti y ve con gente nueva o con tu grupo. Quien va a un plan ha verificado su identidad.',

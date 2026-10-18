@@ -55,7 +55,7 @@ function renderCheckout(){
     <div class="sheet-h"><span>Reservar plaza</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list form">
       <div class="ck-plan"><span class="mini-thumb ${p.gradient}">${coverImg(p.photo, 120)}</span><span><b>${escapeHtml(p.title)}</b>
-        <span class="or-s">${fmtWhen(new Date(p.when))} · ${escapeHtml(p.secret ? 'Zona aproximada' : (place ? place.name : 'Madrid'))}</span></span></div>
+        <span class="or-s">${fmtWhen(new Date(p.when))} · ${escapeHtml(isOnline(p) ? 'Videollamada' : (p.secret ? 'Zona aproximada' : (place ? place.name : 'Madrid')))}</span></span></div>
       <div class="ck-row"><span>1 plaza</span><b>${money2(p.price)}</b></div>
       ${pend && pend.status === 'pendiente' ? `<p class="hint">${ico('clock')} Te han aceptado: paga antes de ${fmtWhen(new Date(pend.dueAt))} para confirmar tu plaza.</p>` : ''}
       <div class="pay-note">${ico('shield')}<p><b>Pago protegido.</b> Lo retenemos hasta el plan; al anfitrión le llega después de celebrarse. Si no se celebra, te devolvemos el 100 %.</p></div>

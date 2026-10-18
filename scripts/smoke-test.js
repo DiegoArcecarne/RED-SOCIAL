@@ -83,7 +83,7 @@ const a = createEnv(store);
 
 // --- Vistas ---
 a.nav('feed'); let h = a.html('feed-list'); rendered += h;
-check('feed: cuadrícula con 12 planes', count(h, /class="cell /g) === 12, count(h, /class="cell /g) + ' celdas');
+check('feed: cuadrícula con 15 planes (12 en persona y 3 por videollamada)', count(h, /class="cell /g) === 15, count(h, /class="cell /g) + ' celdas');
 check('feed: toda imagen tiene fallback onerror', count(h, /class="cover-img"/g) === count(h, /onerror="this\.remove\(\)"/g));
 a.nav('mapa'); h = a.html('map'); rendered += h;
 check('mapa: 8 lugares', count(h, /class="pin /g) === 8);
@@ -475,7 +475,7 @@ check('persistencia: conversaciones, modo de mensajes y bloqueos sobreviven', b.
 check('persistencia: perfiles gestionados e identidad verificada sobreviven', b.run('USERS.some(u => u.handle === "@cafelaesquina" && u.managedBy === "me")') && b.run('ME.verified') === true);
 check('persistencia: los planes base conservan fecha futura', b.run('getPlan("p1").when > new Date()'));
 const c = createEnv({ [a.run('storeKey()')]: '{corrupto' });
-check('persistencia: datos corruptos no rompen la demo', c.run('PLANS.length') === 12);
+check('persistencia: datos corruptos no rompen la demo', c.run('PLANS.length') === 15);
 
 // --- Bucle de planes: fecha, reconfirmar, lista de espera, cancelar, QR de llegada, anfitrión, notificaciones ---
 const pst = {};
@@ -1044,7 +1044,7 @@ check('persisten tu visibilidad por plan y los saludos', pr2.run('myPresence("p2
 const chs = {};
 const ch = createEnv(chs);
 ch.nav('feed'); h = ch.html('feed-list'); rendered += h;
-check('Disponibles: tira de chispas con "¿quién se anima?" y "Lanza una chispa"', h.includes('Chispas · ¿quién se anima?') && h.includes("go('chispa/ch1')") && h.includes('Lanza una chispa') && count(h, /class="cell /g) === 12);
+check('Disponibles: tira de chispas con "¿quién se anima?" y "Lanza una chispa"', h.includes('Chispas · ¿quién se anima?') && h.includes("go('chispa/ch1')") && h.includes('Lanza una chispa') && count(h, /class="cell /g) === 15);
 ch.run('IDEAS.push({ id:"chx", authorId:"nora", title:"Solo amigos", text:"x", category:"social", when:"finde", limit:false, min:2, who:"amigos", approval:false, cost:"gratis", people:[], status:"abierta", at:Date.now() })');
 check('una chispa "solo amigos" no la ve quien no es amigo', !ch.run('visibleIdeas().some(x => x.id === "chx")') && ch.run('areFriends("me", "nora")') === false);
 ch.nav('chispa/ch1'); h = ch.html('view-page'); rendered += h;
@@ -1330,6 +1330,68 @@ check('demo: llega el recordatorio de 2 h antes', rm.run('NOTIFICATIONS[0].planI
 const rm2 = createEnv(rms);
 check('persiste qué recordatorios se han enviado', rm2.run('ME.remindersSent.p1.horas') === true && rm2.run('ME.remindersSent.p10.horas') === true && rm2.run('reminderPrefs().horas') === true);
 
+// --- Planes por videollamada: públicos o privados, con o sin comentarios, unirse libre o con aprobación ---
+const vcs = {};
+const vc = createEnv(vcs);
+vc.nav('feed'); vc.run("setContentTab('disponibles')"); h = vc.html('feed-list');
+check('feed: planes por videollamada, con "En directo" el que está en marcha', h.includes('Videollamada') && h.includes('En directo') && h.includes('Online'));
+check('privada: la ves porque estás apuntada', vc.run('filteredPlans().some(p => p.id === "p15")'));
+vc.run('state.joined.delete("p15")');
+check('privada: si no estás dentro, no sale en Descubrir ni en la búsqueda', !vc.run('filteredPlans().some(p => p.id === "p15")') && !vc.run('JSON.stringify(searchAll("lectura"))').includes('p15'));
+vc.run('state.joined.add("p15")');
+vc.run("state.mode = 'online'");
+check('filtro "Dónde": solo videollamadas', vc.run('filteredPlans().every(p => isOnline(p))') && vc.run('filteredPlans().length') === 3 && vc.run('activeFilters().some(f => f[2] === "Videollamada")'));
+vc.run('clearFilters()');
+check('quitar filtros también quita "Dónde"', vc.run('state.mode') === 'todos');
+vc.nav('plan/p13'); h = vc.html('view-detail'); rendered += h;
+check('ficha: la videollamada (pública, comentarios, quién se une, duración) y en directo', h.includes('<h4>La videollamada</h4>') && h.includes('Con comentarios') && h.includes('Con aprobación del anfitrión, hasta 8 personas') && h.includes('En directo ahora') && h.includes('No se graba') && h.includes('Videollamada · Pública con comentarios'));
+check('ficha: sin lugar, sin QR ni chinchetas; botón "Ver en directo"', !h.includes('<h4>Lugar</h4>') && !h.includes('QR del anfitrión.') && h.includes('Ver en directo'));
+vc.run('enterCall("p13", true)'); vc.nav('sala/p13'); h = vc.html('view-page'); rendered += h;
+check('sala como espectador: escenario, comentarios y "Pedir unirme"', vc.run('state.call.role') === 'espectador' && h.includes('class="room-stage') && h.includes('Estás mirando') && h.includes('Pedir unirme') && h.includes('A mí me funcionó') && h.includes('Comenta'));
+set(vc, 'call-msg', 'Muy buen tema'); vc.run('sendCallComment("p13")');
+check('comentar en directo', vc.run('getPlan("p13").callComments.slice(-1)[0].text') === 'Muy buen tema' && vc.run('getPlan("p13").callComments.slice(-1)[0].userId') === 'me');
+const nCm = vc.run('getPlan("p13").callComments.length'); set(vc, 'call-msg', 'Te voy a matar'); vc.run('sendCallComment("p13")');
+check('los comentarios pasan por los filtros', vc.run('getPlan("p13").callComments.length') === nCm);
+vc.run('askJoinCall("p13")');
+check('con aprobación: espera a que el anfitrión le deje entrar', vc.run('state.call.asked') === true && vc.html('view-page').includes('Esperando al anfitrión'));
+vc.run('admitMe(getPlan("p13"))'); h = vc.html('view-page');
+check('dentro de la llamada: micro, cámara, mano y salir', vc.run('state.call.role') === 'participante' && vc.run('state.joined.has("p13")') && h.includes('<span>Micro</span>') && h.includes('<span>Cámara</span>') && h.includes('<span>Mano</span>') && h.includes('Tú'));
+vc.run("toggleCall('mic'); toggleCall('hand')"); h = vc.html('view-page');
+check('silenciarse y levantar la mano', vc.run('state.call.mic') === false && vc.run('state.call.hand') === true && h.includes('class="tile-hand"'));
+vc.run('demoCallTime("p13"); leaveCall()');
+check('10 minutos en la llamada cuentan como asistencia', vc.run('state.attended.has("p13")') && vc.run('state.call') === null);
+vc.run('getPlan("p14").when = new Date(Date.now() - 60000)'); vc.nav('plan/p14');
+check('pública sin comentarios, libre: "Ver en directo"', vc.html('view-detail').includes('Sin comentarios') && vc.html('view-detail').includes('Cualquiera, hasta 12 personas'));
+vc.run('enterCall("p14", true)'); vc.nav('sala/p14'); h = vc.html('view-page');
+check('sin comentarios: no se puede escribir; unirse sin esperar', h.includes('Comentarios desactivados') && !h.includes('id="call-msg"') && h.includes('Unirme a la llamada'));
+vc.run('askJoinCall("p14")');
+check('libre: entras directamente si hay sitio', vc.run('state.call.role') === 'participante' && vc.run('state.joined.has("p14")'));
+vc.nav('feed');
+check('al salir de la sala se cuelga', vc.run('state.call') === null);
+vc.run('state.joined.delete("p15"); getPlan("p15").when = new Date(Date.now() - 60000); enterCall("p15", true)');
+check('privada: no se puede mirar desde fuera', vc.run('state.call') === null);
+vc.run('state.joined.add("p15")');
+check('recordatorios y agenda de una videollamada', vc.run('reminderText(getPlan("p15"), "horas", 7200000)').includes('por videollamada') && vc.run('agWhere(getPlan("p15"))') === 'Videollamada');
+// Crear una videollamada privada con aprobación
+vc.run("state.draft = Object.assign(state.draft, { mode:'presencial', ovis:'publica', ocom:'si', ojoin:'libre' })"); vc.nav('crear-plan'); h = vc.html('view-page');
+check('crear: "Dónde" (en persona o videollamada) y sus opciones', h.includes('En persona') && h.includes('Videollamada') && h.includes('Quién la ve') && h.includes('Comentarios de quien mira') && h.includes('Quién se une a la llamada') && h.includes('Límite de personas en la llamada'));
+vc.run("setDraft('mode','online'); setDraft('ovis','privada'); setDraft('ojoin','aprobacion')"); set(vc, 'f-olimit', '5'); set(vc, 'f-odur', '45'); set(vc, 'f-title', 'Tertulia de cine'); set(vc, 'f-desc', 'Hablamos de pelis.');
+vc.run('publishPlan()'); const vp = vc.run('PLANS[0]');
+check('publicar: privada, sin comentarios, con aprobación, límite y duración', vp.title === 'Tertulia de cine' && vp.placeId === null && vp.online.visibility === 'privada' && vp.online.comments === false && vp.online.join === 'aprobacion' && vp.groupMax === 5 && vp.approval === 'manual' && vp.durationMin === 45);
+check('privada: no tiene página pública con vista previa', vc.run(`postIsPublic(getPlan("${vp.id}"))`) === false && vc.run('postIsPublic(getPlan("p14"))') === true);
+vc.run(`getPlan("${vp.id}").when = new Date(Date.now() - 60000); enterCall("${vp.id}")`); vc.nav('sala/' + vp.id); h = vc.html('view-page');
+check('anfitrión: entra y puede gestionar', vc.run('state.call.role') === 'participante' && h.includes('Gestionar'));
+vc.run(`state.call.lobby.push("nora"); openCallManage("${vp.id}")`); h = vc.html('overlay');
+check('gestionar: quién quiere unirse, quién está, comentarios y finalizar', h.includes('Quieren unirse') && h.includes('Nora V.') && h.includes('Finalizar para todos'));
+vc.run(`callLobby("${vp.id}", "nora", true)`);
+check('dejar entrar', vc.run('state.call.admitted.includes("nora")') && vc.run(`getPlan("${vp.id}").joined`) === 1);
+vc.run(`callMod("${vp.id}", "nora", "expulsar")`);
+check('sacar de la llamada', vc.run('state.call.kicked.includes("nora")') && vc.run(`getPlan("${vp.id}").joined`) === 0);
+vc.run(`endCall("${vp.id}")`); vc.nav('plan/' + vp.id);
+check('finalizar para todos', vc.run(`getPlan("${vp.id}").callEnded`) === true && vc.html('view-detail').includes('La videollamada ha terminado'));
+const vc2 = createEnv(vcs);
+check('persisten las videollamadas y sus comentarios', vc2.run(`getPlan("${vp.id}").online.visibility`) === 'privada' && vc2.run('getPlan("p13").callComments.some(m => m.text === "Muy buen tema")'));
+
 const pdir0 = path.join(__dirname, '..', 'prototipo');
 // --- Compartir: web pública con vista previa, enlaces que abren la app y menú nativo ---
 const wdir = path.join(__dirname, '..', 'prototipo', 'web');
@@ -1358,9 +1420,10 @@ check('enlace sin web publicada: dominio de la app', sh.run('postUrl(getPlan("p2
 sh.run('Object.assign(location, { protocol:"https:", hostname:"diego.github.io", origin:"https://diego.github.io", pathname:"/RED-SOCIAL/prototipo/standalone.html" })');
 const WB = 'https://diego.github.io/RED-SOCIAL/prototipo/web/';
 check('enlace con la web publicada: lleva a su página', sh.run('postUrl(getPlan("p2"))') === WB + 'plan/p2.html' && sh.run('postUrl(POSTS.find(p => p.id === "po8"))') === WB + 'p/po8.html' && sh.run('postUrl(ME)') === WB + 'u/marina.html');
-const seedUrls = sh.run('[...PLANS, ...POSTS.filter(postIsPublic), ...USERS.filter(u => !u.managedBy)].map(postUrl)');
+const seedUrls = sh.run('[...PLANS.filter(p => !isPrivateCall(p)), ...POSTS.filter(postIsPublic), ...USERS.filter(u => !u.managedBy)].map(postUrl)');
 check('cada enlace de los datos de ejemplo tiene su página generada', seedUrls.every((u) => u.startsWith(WB) && !u.includes('abrir.html') && fs.existsSync(path.join(wdir, u.slice(WB.length)))));
 sh.run('POSTS.unshift({ id:"npo1", authorId:"me", kind:"foto", imgs:[], media:["g-dark"], caption:"Nueva", likes:0, comments:[] })');
+check('videollamada privada: sin página pública, el enlace abre la app', sh.run('postUrl(getPlan("p15"))') === WB + 'abrir.html#/plan/p15' && !fs.existsSync(path.join(wdir, 'plan', 'p15.html')) && fs.existsSync(path.join(wdir, 'plan', 'p14.html')));
 check('lo creado en la demo: enlace a abrir.html con el destino', sh.run('postUrl(POSTS[0])') === WB + 'abrir.html#/p/npo1');
 sh.run('ME.handle = "@marina.nueva"'); check('perfil con otro usuario: enlace a abrir.html', sh.run('postUrl(ME)') === WB + 'abrir.html#/u/me'); sh.run('ME.handle = "@marina"');
 // Compartir perfiles

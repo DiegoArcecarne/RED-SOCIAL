@@ -18,6 +18,7 @@ bucle con un piloto low-code en Madrid antes de construir la app.
 | [`docs/social.md`](docs/social.md) | Especificación del servidor: fotos y vídeos, muro, perfiles privados, búsqueda y menciones |
 | [`docs/pagos.md`](docs/pagos.md) | Especificación: Stripe Connect con dinero retenido hasta el plan, 15 % de comisión, reembolsos, alta de anfitriones y facturas |
 | [`docs/compartir.md`](docs/compartir.md) | Especificación: web pública con vista previa, enlaces que abren la app y menú de compartir nativo |
+| [`docs/videollamadas.md`](docs/videollamadas.md) | Especificación: planes por videollamada (públicos o privados, comentarios, unirse libre o con aprobación), sala y proveedor de vídeo |
 | [`docs/novedades.md`](docs/novedades.md) | Especificación: novedades de cada plan (cambios y avisos) y a quién se notifican |
 | [`docs/agenda.md`](docs/agenda.md) | Especificación: agenda de tus planes (día, semana, mes y año) y suscripción desde el calendario del móvil |
 | [`docs/herramientas-internas.md`](docs/herramientas-internas.md) | Especificación: panel de administración (usuarios, planes, verificación de negocios, categorías y métricas del piloto), roles y registro |

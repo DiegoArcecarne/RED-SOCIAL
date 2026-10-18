@@ -15,7 +15,7 @@ const state = {
   profileTab: 'posts',                 // posts | vividas
   profileFilter: 'todo',               // publicaciones del perfil: todo | plan | vida
   wallFilter: 'todo',                  // publicaciones del muro: todo | plan | vida
-  draft: { cover:'g-grape', size:'mediano', cat:'social', access:'libre', price:'gratis' },
+  draft: { cover:'g-grape', size:'mediano', cat:'social', access:'libre', price:'gratis', mode:'presencial', ovis:'publica', ocom:'si', ojoin:'libre' },
   draftPost: { origin:'plan', kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' },
   storySound: true,                    // las stories suenan con su música (se puede silenciar)
   musicQuery: '', musicMood: 'todas',  // filtros del selector de música
@@ -84,6 +84,10 @@ const SVG = {
   pause:'<svg viewBox="0 0 24 24"><path d="M8.5 5.5v13M15.5 5.5v13"/></svg>',
   search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.4"/><path d="M15.7 15.7 20 20"/></svg>',
   dots:'<svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4" class="fill"/><circle cx="12" cy="12" r="1.4" class="fill"/><circle cx="18.5" cy="12" r="1.4" class="fill"/></svg>',
+  mic:'<svg viewBox="0 0 24 24"><rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5"/></svg>',
+  micOff:'<svg viewBox="0 0 24 24"><path d="M15 9.5V6.5a3 3 0 0 0-5.6-1.5M9 9v2.5a3 3 0 0 0 4.6 2.5"/><path d="M5.5 11.5a6.5 6.5 0 0 0 10.4 5.2M18.5 11.5a6.4 6.4 0 0 1-.6 2.7M12 18v2.5M4 4l16 16"/></svg>',
+  videoOff:'<svg viewBox="0 0 24 24"><path d="M10 6.5h3.5a2.5 2.5 0 0 1 2.5 2.5v3.5M16 15.5A2.5 2.5 0 0 1 13.5 17.5h-7A2.5 2.5 0 0 1 4 15V9a2.5 2.5 0 0 1 1.6-2.3"/><path d="m16 10.5 4-2.5v8l-4-2.5M4 4l16 16"/></svg>',
+  hand:'<svg viewBox="0 0 24 24"><path d="M8 12V6a1.5 1.5 0 0 1 3 0v5M11 11V4.5a1.5 1.5 0 0 1 3 0V11M14 11V6a1.5 1.5 0 0 1 3 0v7.5a6 6 0 0 1-6 6h-.5a6 6 0 0 1-4.6-2.2L3.6 14.5a1.5 1.5 0 0 1 2.3-1.9L8 15"/></svg>',
   calendar:'<svg viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>',
   download:'<svg viewBox="0 0 24 24"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5"/><path d="M5 19.5h14"/></svg>',
   phone:'<svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.4"/><path d="M11 17.5h2"/></svg>',
@@ -248,17 +252,20 @@ function filteredPlans(){
     if (!matchesWhen(p, state.when)) return false;
     if (isCancelled(p)) return false;
     if (p.removed || p.held) return false;   // retirado o en revisión (el anfitrión lo ve en su ficha)
+    if (!canSeeOnline(p)) return false;      // videollamada privada: solo para quien está dentro
+    if (state.mode === 'online' && !isOnline(p)) return false;
+    if (state.mode === 'presencial' && isOnline(p)) return false;
     return true;
   });
 }
 function gridCell(p){
   const place = getPlace(p.placeId);
-  const loc = p.secret ? 'Zona aprox.' : (place ? place.name : 'Madrid');
+  const loc = isOnline(p) ? 'Videollamada' : (p.secret ? 'Zona aprox.' : (place ? place.name : 'Madrid'));
   return `
   <button class="cell ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">
     ${coverImg(p.photo,500)}
     <span class="cell-scrim"></span>
-    <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>${p.featured ? '<span class="cell-feat">Destacado</span>' : ''}
+    <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>${callLive(p) ? `<span class="cell-feat live">${ico('live')} En directo</span>` : (p.featured ? '<span class="cell-feat">Destacado</span>' : (isOnline(p) ? `<span class="cell-feat">${ico('video')} Online</span>` : ''))}
     <span class="cell-info">
       <span class="cell-title">${escapeHtml(p.title)}</span>
       <span class="cell-meta">${escapeHtml(loc)} · ${ico('geo')} ${attendanceView(p).n}</span>
@@ -328,7 +335,7 @@ function postCard(po){
   const u = getUser(po.authorId) || { id:'', name:'Usuario', initials:'?', handle:'' };
   const plan = po.planId ? getPlan(po.planId) : null;
   const place = plan ? getPlace(plan.placeId) : (po.placeId ? getPlace(po.placeId) : null);
-  const placeName = plan && plan.secret ? 'Zona aproximada' : (place ? place.name : '');
+  const placeName = plan && isOnline(plan) ? 'Videollamada' : (plan && plan.secret ? 'Zona aproximada' : (place ? place.name : ''));
   const liked = !!po.likedByMe;
   const comments = visibleComments(po);
   const commentsOff = po.commentsEnabled === false;
@@ -744,7 +751,7 @@ function renderChat(id){
       <span class="cw-t"><b>${escapeHtml(convTitle(c))}</b><span>${plan ? `${c.members.length} personas · Ver plan` : `${escapeHtml(u.handle)} · ${rel}`}</span></span></button>
     ${u ? `<button class="pb-back" onclick="openChatMenu('${c.id}')" aria-label="Opciones">${ico('dots')}</button>` : '<span style="width:34px"></span>'}</div>`;
   const place = plan && getPlace(plan.placeId);
-  const pinned = plan ? `<div class="chat-pin">${ico('pin')}<span><b>Punto de encuentro</b> ${escapeHtml(plan.secret ? 'se desvela el día del plan' : (place ? place.name : 'Madrid'))} · ${fmtWhen(plan.when)}</span>
+  const pinned = plan ? `<div class="chat-pin">${ico(isOnline(plan) ? 'video' : 'pin')}<span><b>${isOnline(plan) ? 'Videollamada' : 'Punto de encuentro'}</b> ${escapeHtml(isOnline(plan) ? 'se entra desde la ficha del plan' : (plan.secret ? 'se desvela el día del plan' : (place ? place.name : 'Madrid')))} · ${fmtWhen(plan.when)}</span>
       <button class="vis-chip ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'solid' : ''}" onclick="confirmDay('${plan.id}','${c.id}')">${ico('check')} ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'Confirmado' : 'Confirmo que voy'}</button>
       ${amHere(plan.id) && !c.messages.some(m => m.from === 'me' && m.ping === plan.id) ? `<button class="vis-chip" onclick="pingPlanChat('${plan.id}','${c.id}')">${ico('pin')} Estoy aquí</button>` : ''}
       <button class="vis-chip sos-chip" onclick="openSos('${plan.id}')" aria-label="SOS: pedir ayuda">SOS</button></div>` : '';
@@ -929,7 +936,7 @@ function shareKey(x){ return isPlan(x) ? 'plan:' + x.id : (isProfile(x) ? 'u:' +
 function appRoute(x){ return isPlan(x) ? `plan/${x.id}` : (isProfile(x) ? `u/${x.id}` : `p/${x.id}`); }
 function webPath(x){ return isPlan(x) ? `plan/${x.id}` : (isProfile(x) ? `u/${String(x.handle).replace(/^@/, '')}` : `p/${x.id}`); }
 // Lo que tiene página en la web pública del prototipo (los datos de ejemplo; ver scripts/build-web.js).
-const SEED_WEB = new Set([...PLANS.map(p => 'plan:' + p.id), ...POSTS.filter(po => postIsPublic(po)).map(po => po.id),
+const SEED_WEB = new Set([...PLANS.filter(p => !isPrivateCall(p)).map(p => 'plan:' + p.id), ...POSTS.filter(po => postIsPublic(po)).map(po => po.id),
   ...USERS.filter(u => !u.managedBy).map(u => 'u:' + u.id + ':' + u.handle)]);
 /* Web pública del prototipo (prototipo/web/): si la app está publicada (GitHub Pages o un
    servidor local), los enlaces llevan a esas páginas, que sí generan la vista previa. Si no
@@ -950,7 +957,7 @@ function postUrl(x){
 }
 function postIsPublic(po){
   if (isProfile(po)) return true;   // la cabecera del perfil es pública aunque la cuenta sea privada
-  if (isPlan(po)) return true;   // los planes son públicos; si la ubicación es secreta, no se desvela
+  if (isPlan(po)) return !isPrivateCall(po);   // los planes son públicos (si la ubicación es secreta, no se desvela), salvo las videollamadas privadas
   const author = getUser(po.authorId) || {};
   return (po.audience || 'publico') === 'publico' && author.profilePublic !== false && !po.removed && !po.held;
 }
@@ -1469,6 +1476,7 @@ function renderDetail(id){
   const pay = p.paid ? myPayment(p.id) : null, toPay = pay && pay.status === 'pendiente';
   let cta;
   if (isCancelled(p)) cta = `<button class="btn-join done" disabled>${ico('close')} Plan cancelado</button>`;
+  else if (callCta(p)) cta = callCta(p);   // videollamada: entrar o ver en directo (videollamadas.js)
   else if (isHost(p)) cta = `<button class="btn-join" onclick="openHostQr('${p.id}')">${ico('grid')} Mostrar QR de llegada</button>`;
   else if (!isVerified() && !attended && !joined) cta = `<button class="btn-join" onclick="requireVerified('Verifica tu identidad para ir a este plan', () => renderDetail('${p.id}'))">${ico('shield')} Verifícate para ir</button>`;
   else if (attended) cta = `<button class="btn-join done" disabled>${ico('check')} Asististe · verificado</button>`;
@@ -1500,8 +1508,9 @@ function renderDetail(id){
   // Organización (anfitrión o admin del grupo): QR, llegadas, solicitudes, editar y cancelar.
   const hostBlock = host && !isCancelled(p) ? `<div class="block"><h4>Organización</h4>
       <div class="pl-host">
-        <button class="sh-row" onclick="openHostQr('${p.id}')">${ico('grid')}<span>QR de llegada</span>${ico('chevR')}</button>
-        <button class="sh-row" onclick="openManualArrivals('${p.id}')">${ico('users')}<span>Marcar llegadas a mano</span>${ico('chevR')}</button>
+        ${isOnline(p) ? `<button class="sh-row" onclick="enterCall('${p.id}')">${ico('video')}<span>Abrir la sala</span>${ico('chevR')}</button>`
+          : `<button class="sh-row" onclick="openHostQr('${p.id}')">${ico('grid')}<span>QR de llegada</span>${ico('chevR')}</button>
+        <button class="sh-row" onclick="openManualArrivals('${p.id}')">${ico('users')}<span>Marcar llegadas a mano</span>${ico('chevR')}</button>`}
         ${isHost(p) && p.paid ? `<button class="sh-row" onclick="go('cobros')">${ico('euro')}<span>Cobros · ${hostSales(p.id).filter(x => x.status !== 'reembolsado').length} reservas</span>${ico('chevR')}</button>` : ''}
         ${isHost(p) ? `<button class="sh-row" onclick="go('editar-plan/${p.id}')">${ico('doc')}<span>Editar fecha, hora o lugar</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openCancelPlan('${p.id}')">${ico('close')}<span>Cancelar el plan</span>${ico('chevR')}</button>` : ''}
@@ -1546,9 +1555,10 @@ function renderDetail(id){
           <span class="tag tag-line">${ico(ICON_FOR_CAT[p.category]||'hash')} ${cat?cat.label:''}</span>
           <span class="tag tag-line">${freeIcon(p)} ${p.paid?'De pago':'Gratis'}</span>
           ${p.secret?`<span class="tag tag-line">${ico('lock')} Secreto</span>`:''}
+          ${isOnline(p)?`<span class="tag tag-line">${ico('video')} Videollamada</span>`:''}
         </div>
         <h2>${escapeHtml(p.title)}</h2>
-        <div class="hero-loc">${ico('pin')} ${p.secret||hideExact?'Zona aprox. · Madrid':(place?place.name+' · '+place.city:escapeHtml(p.meetPoint||'Madrid'))}</div>
+        <div class="hero-loc">${isOnline(p) ? `${ico('video')} Videollamada · ${escapeHtml(onlineSummary(p))}` : `${ico('pin')} ${p.secret||hideExact?'Zona aprox. · Madrid':(place?place.name+' · '+place.city:escapeHtml(p.meetPoint||'Madrid'))}`}</div>
       </div>
     </div>
     <div class="detail-body">
@@ -1560,8 +1570,9 @@ function renderDetail(id){
       ${p.secret?`<div class="secret-note"><span class="sn-ic">${ico('lock')}</span><p>La ubicación exacta se revela 2 horas antes del plan. El secreto es parte de la experiencia.</p></div>`:''}
       <div class="block"><h4>El plan</h4><p>${escapeHtml(p.summary)}</p>
         ${p.meetPoint ? `<p class="hint">${ico('pin')} Punto de encuentro: <b>${escapeHtml(p.meetPoint)}</b></p>` : ''}
-        <p class="hint">${manual?'Plan con aprobación: envía una solicitud; el creador o los admins la aceptan o rechazan.':(libre?'Plan libre: no hace falta apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.':'Plan apuntado: hay que apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.')}</p>
+        <p class="hint">${isOnline(p)?(manual?'Por videollamada, con aprobación: pide tu plaza en la llamada y decide el anfitrión. ':'Por videollamada: apúntate para entrar con cámara y micro. ')+'Cuentas como asistente al pasar 10 minutos en la llamada.':manual?'Plan con aprobación: envía una solicitud; el creador o los admins la aceptan o rechazan.':(libre?'Plan libre: no hace falta apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.':'Plan apuntado: hay que apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.')}</p>
       </div>
+      ${callBlock(p)}
       ${updatesBlock(p)}
       ${p.held ? `<div class="pl-banner">${ico('clock')}<div><b>En revisión</b><p>El filtro automático ha retenido este plan: solo lo ves tú hasta que lo revise una persona del equipo. Puedes apelar en Ajustes ▸ Estado de tu cuenta.</p></div></div>` : ''}
       ${cancelBanner}${reconfirmBanner}${inviteBanner(p)}
@@ -1569,9 +1580,9 @@ function renderDetail(id){
       ${hostBlock}
       ${inviteHostBlock(p)}
       ${manageBlock}
-      ${hereNowBlock(p)}
+      ${isOnline(p) ? '' : hereNowBlock(p)}
       ${whoBlock}
-      ${presence}
+      ${isOnline(p) ? '' : presence}
       <div class="block"><h4>Anfitrión</h4>
         <button class="host-card linkable" onclick="go('u/${p.host.business?'azotea':'me'}')">
           <span class="avatar">${initials(p.host.name)}</span>
@@ -1581,14 +1592,14 @@ function renderDetail(id){
         </button>
         <div class="trust-row"><span class="trust">${ico('shield')} Identidad verificada</span><span class="trust">${ico('check')} Fiabilidad ${p.host.reliability}%</span></div>
       </div>
-      <div class="block"><h4>Lugar</h4>
+      ${isOnline(p) ? '' : `<div class="block"><h4>Lugar</h4>
         <button class="place-link" onclick="go('mapa');selectPlace('${place?place.id:''}')">
           <span class="mini-thumb ${p.gradient}">${coverImg(p.photo,120)}</span>
           <span class="pl-info"><span class="pl-n">${p.secret?'Zona aproximada · centro de Madrid':(hideExact?'Zona aproximada · verifícate para ver el sitio':(place?place.name:'Madrid'))}</span>
             <span class="pl-s">${place?place.city+' · '+(place.kind==='negocio'?'Negocio verificado':'Lugar público')+' · '+place.hashtag:''}</span></span>
           <span class="pl-arrow">${ico('chevR')}</span></button>
-      </div>
-      ${safetyBlock(p)}
+      </div>`}
+      ${isOnline(p) ? '' : safetyBlock(p)}
       <div class="block"><h4>Reseñas de ediciones anteriores</h4>
         ${REVIEWS.map(r=>`<div class="review"><div class="top"><span>${r.author}</span><span class="st">${Array(r.stars).fill(ico('star')).join('')}</span></div><p>${r.text}</p></div>`).join('')}
       </div>
@@ -2162,11 +2173,15 @@ function renderCreatePlan(){
       ${d.fromIdea ? `<div class="pl-banner">${ico('spark')}<div><b>Convirtiendo tu chispa en plan</b><p>Al publicarlo entran los que se animaron y su chat del plan.</p></div></div>` : ''}
       <div class="field"><label for="f-title">Título ${counter('f-title','planTitle',pf.title)}</label><input ${lim('f-title','planTitle')} placeholder="Ej. Atardecer en el mirador" value="${escapeHtml(pf.title || '')}" /></div>
       <div class="field"><label for="f-desc">Descripción ${counter('f-desc','planDesc',pf.desc)}</label><textarea ${lim('f-desc','planDesc')} rows="3" placeholder="¿En qué consiste el plan?">${escapeHtml(pf.desc || '')}</textarea></div>
-      <div class="field"><label>Lugar</label>
+      <div class="field"><label>Dónde</label>
+        <div class="iseg" id="d-mode"><button data-v="presencial" class="${d.mode!=='online'?'active':''}" onclick="setDraft('mode','presencial')">${ico('pin')}<span>En persona</span></button>
+          <button data-v="online" class="${d.mode==='online'?'active':''}" onclick="setDraft('mode','online')">${ico('video')}<span>Videollamada</span></button></div></div>
+      ${onlineFormFields(d)}
+      <div class="field" id="place-field" ${d.mode==='online'?'hidden':''}><label>Lugar</label>
         <div class="mini-map">${ico('map')} Selecciona en el mapa</div>
         <select id="f-place">${PLACES.map(pl=>`<option value="${pl.id}" ${pf.placeId===pl.id?'selected':''}>${pl.name} · ${pl.city}</option>`).join('')}</select></div>
       <div class="field"><label>Fecha y hora</label><input id="f-date" type="datetime-local" value="${escapeHtml(pf.date || '')}" /></div>
-      <div class="field"><label>Tamaño de grupo</label>
+      <div class="field" id="size-field" ${d.mode==='online'?'hidden':''}><label>Tamaño de grupo</label>
         <div class="iseg" id="d-size">${sizes.map(([v,l,n])=>`<button data-v="${v}" class="${d.size===v?'active':''}" onclick="setDraft('size','${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div></div>
       <div class="field"><label>Tema</label>
         <div class="chips" id="d-cat">${activeCategories().map(c=>`<button data-v="${c.id}" class="${d.cat===c.id?'active':''}" onclick="setDraft('cat','${c.id}')">${ico(ICON_FOR_CAT[c.id]||'hash')}<span>${c.label}</span></button>`).join('')}</div></div>
@@ -2182,7 +2197,7 @@ function renderCreatePlan(){
           <p class="hint" id="policy-hint">${escapeHtml(policyHint(d.policy))}</p>
           ${payoutsReady() ? '' : `<button class="vg-inline" onclick="state.draft.priceValue=val('f-price');go('cobros')">${ico('euro')} Para cobrar, configura antes tus cobros (datos fiscales y cuenta bancaria).</button>`}
         </div></div>
-      <div class="field"><label>Tipo de asistencia</label>
+      <div class="field" id="access-field" ${d.mode==='online'?'hidden':''}><label>Tipo de asistencia</label>
         <div class="iseg" id="d-access">
           <button data-v="libre" class="${d.access==='libre'?'active':''}" onclick="setDraft('access','libre')">${ico('globe')}<span>Libre</span></button>
           <button data-v="aprobacion" class="${d.access==='aprobacion'?'active':''}" onclick="setDraft('access','aprobacion')">${ico('check')}<span>Con aprobación</span></button></div>
@@ -2195,10 +2210,12 @@ function renderCreatePlan(){
 }
 function setDraft(key,v){
   state.draft[key]=v;
-  const id={cover:'cover-pick',size:'d-size',cat:'d-cat',price:'d-price',access:'d-access',policy:'d-policy'}[key];
+  const id={cover:'cover-pick',size:'d-size',cat:'d-cat',price:'d-price',access:'d-access',policy:'d-policy',mode:'d-mode',ovis:'d-ovis',ocom:'d-ocom',ojoin:'d-ojoin'}[key];
   const c=id&&document.getElementById(id);
   if(c) c.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.v===v));
   if(key==='price'){ const o=document.getElementById('paid-opts'); if(o) o.hidden = v!=='pago'; }
+  if(key==='mode'){ ['place-field','size-field','access-field'].forEach(f=>{ const e=document.getElementById(f); if(e) e.hidden = v==='online'; }); const o=document.getElementById('online-opts'); if(o) o.hidden = v!=='online'; }
+  if(key==='ovis'){ const e=document.getElementById('ocom-field'); if(e) e.hidden = v==='privada'; const h=document.getElementById('ovis-hint'); if(h) h.textContent = v==='privada' ? 'Solo quien está en la llamada. No sale en Descubrir: invita con el enlace.' : 'Cualquiera puede verla en directo, aunque no participe.'; }
   if(key==='policy'){ const h=document.getElementById('policy-hint'); if(h) h.textContent = policyHint(v); }
   if(key==='access'){ const h=document.getElementById('access-hint'); if(h) h.textContent = v==='aprobacion'
     ? 'Recibirás solicitudes de asistencia y decides a quién aceptas.'
@@ -2243,6 +2260,7 @@ function commitPlan(title, desc, flag){
     approval: access==='aprobacion' ? 'manual' : (access==='libre' && !paid ? 'libre' : 'automatica'),
     groupId, held: !!flag || undefined,
   };
+  if (d.mode === 'online') Object.assign(plan, onlinePlanFields(d));   // videollamada: sin lugar, con sus opciones (videollamadas.js)
   PLANS.unshift(plan);
   if (d.fromIdea) linkIdeaToPlan(plan);   // venía de una chispa: entran los que se animaron (chispas.js)
   if (groupId){ const g=getGroup(groupId); if(g) g.planIds.unshift(plan.id); }
@@ -2384,12 +2402,14 @@ function pageHead(title){ return `<div class="page-bar"><button class="pb-back" 
 // número de filtros puestos; debajo, los puestos como chips que se quitan con un toque.
 const FILTER_SIZES = [['todos','Todos','layers'],['intimo','Íntimo','user'],['mediano','Mediano','users'],['grande','Grande','group']];
 const FILTER_PRICES = [['todos','Todo','layers'],['gratis','Gratis','ticket'],['pago','Pago','euro']];
+const FILTER_MODES = [['todos','Todos','layers'],['presencial','En persona','pin'],['online','Videollamada','video']];
 function activeFilters(){
   const out = [];
   if (state.category !== 'todas'){ const c = getCategory(state.category); out.push(['category', 'todas', c ? c.label : state.category]); }
   if (state.size !== 'todos') out.push(['size', 'todos', (FILTER_SIZES.find(x => x[0] === state.size) || [])[1]]);
   if (state.price !== 'todos') out.push(['price', 'todos', (FILTER_PRICES.find(x => x[0] === state.price) || [])[1]]);
   if (state.when !== 'todo') out.push(['when', 'todo', (WHEN_OPTS.find(x => x[0] === state.when) || [])[1]]);
+  if ((state.mode || 'todos') !== 'todos') out.push(['mode', 'todos', (FILTER_MODES.find(x => x[0] === state.mode) || [])[1]]);
   return out;
 }
 function buildFilters(){
@@ -2407,11 +2427,13 @@ function buildFilters(){
       <div class="seg-row">
         <div class="iseg" id="seg-size">${FILTER_SIZES.map(([v,l,n])=>ichip(v,l,n,state.size===v)).join('')}</div>
         <div class="iseg" id="seg-price">${FILTER_PRICES.map(([v,l,n])=>ichip(v,l,n,state.price===v)).join('')}</div></div>
+      <div class="iseg" id="seg-mode">${FILTER_MODES.map(([v,l,n])=>ichip(v,l,n,(state.mode||'todos')===v)).join('')}</div>
       <div class="iseg when-seg" id="seg-when">${WHEN_OPTS.map(([v,l])=>`<button data-v="${v}" class="${state.when===v?'active':''}">${v==='todo'?ico('clock'):''}<span>${l}</span></button>`).join('')}</div>
       <div class="filter-foot"><button class="link-btn dim" onclick="clearFilters()">Quitar filtros</button><button class="ph-btn primary" onclick="toggleFilters(false)">Ver planes</button></div>
     </div>`;
   cont.querySelector('#seg-when').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.when=b.dataset.v; setActive('#seg-when button',b); renderFeed(); };
   cont.querySelector('#seg-size').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.size=b.dataset.v; setActive('#seg-size button',b); renderFeed(); };
+  cont.querySelector('#seg-mode').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.mode=b.dataset.v; setActive('#seg-mode button',b); renderFeed(); };
   cont.querySelector('#seg-price').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.price=b.dataset.v; setActive('#seg-price button',b); renderFeed(); };
   cont.querySelector('#chips-cat').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.category=b.dataset.v; setActive('#chips-cat button',b); renderFeed(); };
   renderFilterState();
@@ -2432,7 +2454,7 @@ function renderFilterState(){
   if (box) box.innerHTML = state.filtersOpen ? '' : act.map(([k, def, l]) => `<button class="f-chip" onclick="clearFilter('${k}','${def}')" aria-label="Quitar el filtro ${escapeHtml(l)}">${escapeHtml(l)}${ico('close')}</button>`).join('');
 }
 function clearFilter(k, def){ state[k] = def; buildFilters(); renderFeed(); }
-function clearFilters(){ Object.assign(state, { category:'todas', size:'todos', price:'todos', when:'todo' }); buildFilters(); renderFeed(); }
+function clearFilters(){ Object.assign(state, { category:'todas', size:'todos', price:'todos', when:'todo', mode:'todos' }); buildFilters(); renderFeed(); }
 
 /* ---------- la cabecera y la barra de abajo se esconden al bajar y vuelven al subir ----------
    Más pantalla para los planes. Al llegar arriba, al cambiar de pantalla o en el chat,
@@ -2471,7 +2493,8 @@ function router(){
   stopMusic(); checkReminders(); updateDmBadge(); updateNotifBadge(); setChromeHidden(false);
   const hash = location.hash.replace(/^#\//,'') || 'feed';
   const [route,arg] = hash.split('/');
-  if (route !== 'plan'){ state.updVisit = null; state.updAll = null; }   // al volver a la ficha, se recalculan las novedades sin ver
+  if (route !== 'plan'){ state.updVisit = null; state.updAll = null; }
+  if (route !== 'sala' && state.call){ stopMyCamera(); clearInterval(callTimer); state.call = null; }   // al salir de la sala, se cuelga   // al volver a la ficha, se recalculan las novedades sin ver
   switch(route){
     case 'mapa':    state.navTab='mapa'; renderMap(); showView('mapa'); break;
     case 'grupos':  state.navTab='grupos'; renderGroups(); showView('grupos'); break;
@@ -2487,6 +2510,7 @@ function router(){
     case 'tema':    renderTag(arg); showView('page'); scrollTop('page'); break;
     case 'seguidores': case 'seguidos': renderFollowList(route, arg || 'me'); showView('page'); scrollTop('page'); break;
     case 'notificaciones': renderNotifications(); showView('page'); scrollTop('page'); break;
+    case 'sala': renderCall(arg); showView('page'); scrollTop('page'); break;   // videollamada (videollamadas.js)
     case 'agenda': renderAgenda(hash.split('/').slice(1).join('/')); showView('page'); scrollTop('page'); break;
     case 'editar-plan': renderEditPlan(arg); showView('page'); scrollTop('page'); break;
     case 'seguridad': renderSecurity(); showView('page'); scrollTop('page'); break;

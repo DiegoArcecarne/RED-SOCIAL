@@ -42,7 +42,7 @@ function planAgendaKind(p){
   if ((p.waitlist || []).includes('me')) return 'espera';
   return null;
 }
-function agWhere(p){ const pl = getPlace(p.placeId); return p.secret || (pl && pl.secret) ? 'Lugar por desvelar' : (p.meetPoint || (pl ? pl.name : 'Madrid')); }
+function agWhere(p){ if (isOnline(p)) return 'Videollamada'; const pl = getPlace(p.placeId); return p.secret || (pl && pl.secret) ? 'Lugar por desvelar' : (p.meetPoint || (pl ? pl.name : 'Madrid')); }
 function agendaItems(){
   const out = [], end = (s, min) => new Date(s.getTime() + (min || AG_DEFAULT_MIN) * 60000);
   PLANS.forEach(p => {

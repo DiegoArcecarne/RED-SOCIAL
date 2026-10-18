@@ -93,6 +93,10 @@ erDiagram
     PERSONA ||--o{ SOLICITUD_DATOS : "pide (RGPD)"
     USUARIO ||--o| SUSCRIPCION_CALENDARIO : "agenda en el movil"
     PLAN ||--o{ NOVEDAD_PLAN : registra
+    PLAN ||--o| CONFIG_VIDEOLLAMADA : "si es por videollamada"
+    CONFIG_VIDEOLLAMADA ||--o{ PARTICIPACION_LLAMADA : tiene
+    PERSONA ||--o{ PARTICIPACION_LLAMADA : "entra como"
+    CONFIG_VIDEOLLAMADA ||--o{ COMENTARIO_LLAMADA : recibe
     USUARIO ||--o{ NOVEDAD_PLAN : publica
 
     CUENTA_EMPRESA ||--o{ SUSCRIPCION_NEGOCIO : contrata
@@ -197,6 +201,7 @@ erDiagram
         int tamano_min
         int tamano_max
         int duracion_min "para la agenda; 120 si falta"
+        string modalidad "presencial|videollamada"
         decimal precio "nullable"
         decimal desvelo "solo especial/saturado no de pago"
         string politica_cancelacion "flexible|moderada|estricta"
@@ -501,6 +506,33 @@ erDiagram
         string enlace "exportacion, firmado y caducable"
         datetime fecha
         datetime completada
+    }
+    CONFIG_VIDEOLLAMADA {
+        uuid plan_id PK
+        string visibilidad "publica|privada"
+        bool comentarios "solo en publicas"
+        string unirse "libre|aprobacion"
+        int limite "2 a 50, con el anfitrion"
+        string sala_proveedor "id en LiveKit u otro"
+        string estado "programada|abierta|en_directo|terminada"
+    }
+    PARTICIPACION_LLAMADA {
+        uuid id PK
+        uuid plan_id FK
+        uuid persona_id FK
+        string rol "anfitrion|participante|espectador"
+        datetime entrada
+        datetime salida "10 min dentro = asistencia"
+        bool silenciado
+        bool expulsado
+    }
+    COMENTARIO_LLAMADA {
+        uuid id PK
+        uuid plan_id FK
+        uuid persona_id FK
+        string texto "max 200"
+        string estado "publicado|retenido"
+        datetime fecha
     }
     NOVEDAD_PLAN {
         uuid id PK

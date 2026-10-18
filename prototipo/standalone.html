@@ -1230,6 +1230,56 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
 .upd-n{font-size:11px;font-weight:700;color:var(--ink-soft);border:1px solid var(--accent);border-radius:999px;padding:1px 8px;margin-left:6px;text-transform:none;letter-spacing:0;vertical-align:middle}
 #novedades > .btn-ghost{margin-top:6px}
 
+/* ---------- planes por videollamada (videollamadas.js) ---------- */
+.cell-feat .ico{font-size:11px;vertical-align:-1px}
+.cell-feat.live{background:var(--live)}
+.call-live{display:flex;align-items:center;gap:10px;background:var(--surface-2);border:1px solid var(--live);border-radius:12px;padding:9px 11px;margin-bottom:10px;font-size:13px}
+.call-live > .ico{color:var(--live);font-size:17px}
+.call-live > span{flex:1;color:var(--ink-soft)}
+.call-live b{color:var(--ink)}
+.call-facts{display:flex;flex-direction:column;gap:10px}
+.call-facts > div{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink-soft);line-height:1.45}
+.call-facts > div > .ico{font-size:17px;color:var(--ink);flex:none;margin-top:1px}
+.call-facts b{display:block;color:var(--ink);font-size:13.5px}
+/* la sala */
+.room{display:flex;flex-direction:column;gap:10px;min-height:calc(100vh - 140px);padding:10px 12px 14px;background:#000}
+.room-top{display:flex;align-items:center;gap:10px}
+.room-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.room-t b{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.room-t span{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:4px}
+.room-t .ico{font-size:13px;color:var(--live)}
+.room-stage{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.room-stage.n5,.room-stage.n6,.room-stage.n7,.room-stage.n8,.room-stage.n9{grid-template-columns:repeat(3,1fr)}
+.room-stage.n5 .tile,.room-stage.n6 .tile,.room-stage.n7 .tile,.room-stage.n8 .tile,.room-stage.n9 .tile{aspect-ratio:1/1}
+.room-stage.n5 .tile-av,.room-stage.n6 .tile-av,.room-stage.n7 .tile-av,.room-stage.n8 .tile-av,.room-stage.n9 .tile-av{width:40px;height:40px;font-size:14px}
+.room-stage.n1{grid-template-columns:1fr}
+.room-stage.n1 .tile{aspect-ratio:3/4}
+.room-stage.n2 .tile{aspect-ratio:3/4}
+.tile{position:relative;aspect-ratio:4/3;border-radius:12px;overflow:hidden;display:grid;place-items:center;background:linear-gradient(150deg,hsl(var(--h),22%,22%),hsl(calc(var(--h) + 40),18%,12%));border:2px solid transparent;transition:border-color .2s}
+.tile.nocam{background:var(--surface-2)}
+.tile.talk{border-color:var(--accent)}
+.tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.tile-av{width:54px;height:54px;border-radius:50%;background:rgba(0,0,0,.35);display:grid;place-items:center;font-weight:700;font-size:17px;color:#fff}
+.tile.has-video .tile-av{display:none}
+.tile-n{position:absolute;left:6px;bottom:6px;display:flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.55);border-radius:6px;padding:2px 6px;max-width:calc(100% - 12px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile-n .ico{font-size:12px;color:#f0b9bd}
+.tile-hand{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-size:14px}
+.call-role{font-size:12.5px;color:var(--ink-soft);display:flex;gap:6px;align-items:center}
+.call-cm{flex:1;min-height:90px;max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ink-soft);padding:2px 2px}
+.call-cm b{color:var(--ink);font-weight:700;margin-right:3px}
+.call-in{margin:0}
+.call-nocm{font-size:12px;color:var(--ink-dim);text-align:center}
+.room-bar{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
+.room-bar .ph-btn{flex:1}
+.rb{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:58px;background:none;border:none;color:var(--ink);font:inherit;font-size:11px;cursor:pointer}
+.rb .ico{width:46px;height:46px;border-radius:50%;background:var(--surface-3);border:1px solid var(--line);display:grid;place-items:center;font-size:19px}
+.rb.off .ico{background:var(--ink);color:var(--bg)}
+.rb.on .ico{border-color:var(--accent);background:#20385a}
+.rb.end .ico{background:var(--live);border-color:var(--live);color:#fff}
+.req-row{display:flex;align-items:center;gap:10px;padding:6px 0}
+.req-n{flex:1;min-width:0;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rb .ico svg{width:20px;height:20px}
+
   </style>
 </head>
 <body>
@@ -1463,6 +1513,44 @@ const PLANS = [
     summary: 'Proyección bajo las estrellas con manta y palomitas incluidas.',
     secret: false,
   },
+  /* Planes por videollamada (videollamadas.js): sin lugar. online.visibility: publica (cualquiera
+     puede verla en directo) | privada (solo quien está en la llamada); comments: comentarios de
+     quien mira; join: libre (hasta el límite, groupMax) | aprobacion (decide el anfitrión). */
+  {
+    id: 'p13', title: 'Debate: ¿se hacen amigos después de los 30?', placeId: null, category: 'social',
+    level: 2, paid: false, price: 0, recurring: false, hostId: 'lucia',
+    host: { name: 'Lucía R.', business: false, verified: true, rating: 4.8, reliability: 95 },
+    when: hoursFromNow(-0.25), durationMin: 75, groupMin: 2, groupMax: 8, joined: 6,
+    joinType: 'apuntado', approval: 'manual', online: { visibility: 'publica', comments: true, join: 'aprobacion' },
+    gradient: 'g-grape', photo: null,
+    summary: 'Conversación tranquila: cada persona cuenta cómo ha hecho amigos de adulta y qué le ha funcionado. Quien quiera hablar, pide unirse; el resto puede mirar y comentar.',
+    secret: false,
+    callComments: [
+      { userId: 'david', text: 'A mí me funcionó apuntarme a un club de running', min: 9 },
+      { userId: 'irene', text: 'Totalmente de acuerdo con lo de repetir con la misma gente', min: 6 },
+      { userId: 'alexv', text: '¿Alguien más se ha mudado a Madrid hace poco?', min: 3 },
+    ],
+  },
+  {
+    id: 'p14', title: 'Iniciación al ajedrez por videollamada', placeId: null, category: 'cultura',
+    level: 2, paid: false, price: 0, recurring: false, hostId: 'marco',
+    host: { name: 'Marco T.', business: false, verified: true, rating: 4.9, reliability: 99 },
+    when: hoursFromNow(30), durationMin: 60, groupMin: 2, groupMax: 12, joined: 7,
+    joinType: 'apuntado', approval: 'automatica', online: { visibility: 'publica', comments: false, join: 'libre' },
+    gradient: 'g-dark', photo: null,
+    summary: 'Clase para empezar desde cero: movimientos, primeras aperturas y una partida comentada. Con cámara, hasta 12 personas; si solo quieres mirar, entra sin apuntarte.',
+    secret: false,
+  },
+  {
+    id: 'p15', title: 'Club de lectura: Panza de burro', placeId: null, category: 'cultura',
+    level: 2, paid: false, price: 0, recurring: false, hostId: 'sara',
+    host: { name: 'Sara M.', business: false, verified: true, rating: 4.7, reliability: 97 },
+    when: hoursFromNow(50), durationMin: 90, groupMin: 2, groupMax: 6, joined: 4,
+    joinType: 'apuntado', approval: 'manual', online: { visibility: 'privada', comments: false, join: 'aprobacion' },
+    gradient: 'g-sunset', photo: null,
+    summary: 'Comentamos la novela de Andrea Abreu. Grupo pequeño y privado: solo entra quien está apuntado.',
+    secret: false,
+  },
 ];
 
 
@@ -1499,7 +1587,7 @@ const PLAN_ATTENDANCE = {
 };
 PLANS.forEach((p) => {
   const a = PLAN_ATTENDANCE[p.id] || {};
-  p.joinType = a.joinType || (p.paid ? 'apuntado' : 'libre');
+  p.joinType = a.joinType || p.joinType || (p.paid ? 'apuntado' : 'libre');   // las videollamadas traen el suyo
   p.attended = (a.attended != null) ? a.attended : p.joined;
   p.publicAttendees = a.pub || ['SM','DL','NV'];
   p.attendedPrivate = Math.max(0, p.attended - p.publicAttendees.length);
@@ -1519,7 +1607,7 @@ const PLAN_EXTRA = {
 };
 PLANS.forEach((p) => {
   const e = PLAN_EXTRA[p.id] || {};
-  p.approval = (p.joinType === 'libre') ? 'libre' : (e.approval || 'automatica');
+  p.approval = (p.joinType === 'libre') ? 'libre' : (e.approval || p.approval || 'automatica');
   p.groupId = e.groupId || null;
   p.cancelPolicy = e.cancelPolicy || 'flexible';   // flexible | moderada | estricta (solo cuenta en los de pago)
   p.waitlist = e.waitlist ? e.waitlist.slice() : [];
@@ -1549,7 +1637,7 @@ const USERS = [
     bio:'Viajera y runner. Outdoor y gastronomía por Madrid.',
     profilePublic:true, presencePublic:true, followers:184, following:156,
     ratings:{ default:'publica', publica:'todos', privada:'amigos' },
-    joinedPlanIds:['p9'],
+    joinedPlanIds:['p9','p15'],
     seenUpdates:{ p9: Date.now() - 2 * 3600000 },
     remindersSent:{ p9:{ dia:true } },   // recordatorios ya enviados por plan (el del día antes de la cata, en las notificaciones)   // novedades vistas por plan (la más reciente de la cata está sin ver)   // apuntada a la cata de mañana (toca reconfirmar)
     stats:{ noShows:0, lateCancels:0 },
@@ -2629,8 +2717,10 @@ function reminderText(p, slot, msLeft){
   const host = isHost(p), hour = fmtHour(new Date(p.when)), left = inLabel(msLeft || new Date(p.when) - Date.now());
   if (slot === 'dia') return host ? `Tu plan es ${dayWord(p).toLowerCase()} a las ${hour}: ${p.title}. Hay ${p.joined || 0} personas apuntadas.`
     : `${dayWord(p)} a las ${hour}: ${p.title}. ${state.reconfirmed.has(p.id) ? 'Ya has reconfirmado: te esperan.' : 'Reconfirma que vas para no perder tu plaza.'}`;
-  if (slot === 'horas') return host ? `En ${left} empieza ${p.title}. Ten a mano el QR de llegada.`
-    : `En ${left}: ${p.title} · ${p.secret ? 'el lugar ya está desvelado en la ficha' : agWhere(p)}. Al llegar, registra tu llegada con el QR del anfitrión.`;
+  if (slot === 'horas') return host ? `En ${left} empieza ${p.title}. ${isOnline(p) ? 'Abre la sala unos minutos antes.' : 'Ten a mano el QR de llegada.'}`
+    : (isOnline(p) ? `En ${left}: ${p.title}, por videollamada. La sala se abre ${CALL_OPEN_MIN} min antes: entra desde la ficha del plan.`
+    : `En ${left}: ${p.title} · ${p.secret ? 'el lugar ya está desvelado en la ficha' : agWhere(p)}. Al llegar, registra tu llegada con el QR del anfitrión.`);
+  if (isOnline(p)) return `Empieza en ${left}: ${p.title}. ${host ? 'Abre la sala' : 'Ya puedes entrar a la videollamada'} desde la ficha del plan.`;
   return host ? `Empieza en ${left}: ${p.title}. Abre el QR de llegada.` : `Empieza en ${left}: ${p.title}. Si al final no puedes ir, cancela y deja tu plaza a otra persona.`;
 }
 function sendReminder(p, slot, msLeft){
@@ -3506,7 +3596,7 @@ function searchAll(q){
   const n = norm(q).replace(/^[#@]/, '').trim();
   if (!n) return { people: [], plans: [], tags: [] };
   const people = USERS.filter(u => u.id !== 'me' && !(ME.blocked || []).includes(u.id) && userMod(u.id).status !== 'expulsada' && [u.name, u.handle, u.bio, u.business && u.business.category].some(f => norm(f).includes(n)));
-  const plans = PLANS.filter(p => !isCancelled(p) && [p.title, p.summary, (getPlace(p.placeId) || {}).name, (getCategory(p.category) || {}).label, (p.host || {}).name].some(f => norm(f).includes(n)));
+  const plans = PLANS.filter(p => !isCancelled(p) && canSeeOnline(p) && [p.title, p.summary, (getPlace(p.placeId) || {}).name, (getCategory(p.category) || {}).label, (p.host || {}).name].some(f => norm(f).includes(n)));
   const tags = allHashtags().filter(t => norm(t.tag).includes(n));
   return { people, plans, tags };
 }
@@ -3539,7 +3629,7 @@ function renderSearchResults(){
     <span class="conv-main"><b>${escapeHtml(u.name)} ${u.verified ? `<span class="vchk">${ico('check')}</span>` : ''}${typeBadge(u)}</b><span>${escapeHtml(u.handle)}${isPrivate(u) ? ' · Cuenta privada' : ''}${follows('me', u.id) ? ' · Le sigues' : ''}</span></span></button>`;
   const plan = (p) => { const pl = getPlace(p.placeId);
     return `<button class="conv" onclick="saveRecentSearch(state.search.q);go('plan/${p.id}')"><span class="conv-av plan ${p.gradient}">${coverImg(p.photo, 120)}</span>
-      <span class="conv-main"><b>${escapeHtml(p.title)}</b><span>${fmtWhen(new Date(p.when))} · ${escapeHtml(p.secret ? 'Zona aproximada' : (pl ? pl.name : 'Madrid'))}${p.paid ? ' · ' + p.price + ' €' : ' · Gratis'}</span></span></button>`; };
+      <span class="conv-main"><b>${escapeHtml(p.title)}</b><span>${fmtWhen(new Date(p.when))} · ${escapeHtml(isOnline(p) ? 'Videollamada' : (p.secret ? 'Zona aproximada' : (pl ? pl.name : 'Madrid')))}${p.paid ? ' · ' + p.price + ' €' : ' · Gratis'}</span></span></button>`; };
   const tag = (x) => `<button class="conv" onclick="saveRecentSearch(state.search.q);go('tema/${encodeURIComponent(x.tag)}')"><span class="conv-av tag-av">${ico('hash')}</span>
     <span class="conv-main"><b>#${escapeHtml(x.tag)}</b><span>${x.n} ${x.n === 1 ? 'publicación' : 'publicaciones'}</span></span></button>`;
   const sec = (title, list, fn, k) => list.length ? `${t === 'todo' ? `<div class="notif-h"><span>${title}</span>${list.length > 3 ? `<button class="link-btn" onclick="setSearchTab('${k}')">Ver todo</button>` : ''}</div>` : ''}${(t === 'todo' ? list.slice(0, 3) : list).map(fn).join('')}` : '';
@@ -4270,7 +4360,7 @@ function renderCheckout(){
     <div class="sheet-h"><span>Reservar plaza</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list form">
       <div class="ck-plan"><span class="mini-thumb ${p.gradient}">${coverImg(p.photo, 120)}</span><span><b>${escapeHtml(p.title)}</b>
-        <span class="or-s">${fmtWhen(new Date(p.when))} · ${escapeHtml(p.secret ? 'Zona aproximada' : (place ? place.name : 'Madrid'))}</span></span></div>
+        <span class="or-s">${fmtWhen(new Date(p.when))} · ${escapeHtml(isOnline(p) ? 'Videollamada' : (p.secret ? 'Zona aproximada' : (place ? place.name : 'Madrid')))}</span></span></div>
       <div class="ck-row"><span>1 plaza</span><b>${money2(p.price)}</b></div>
       ${pend && pend.status === 'pendiente' ? `<p class="hint">${ico('clock')} Te han aceptado: paga antes de ${fmtWhen(new Date(pend.dueAt))} para confirmar tu plaza.</p>` : ''}
       <div class="pay-note">${ico('shield')}<p><b>Pago protegido.</b> Lo retenemos hasta el plan; al anfitrión le llega después de celebrarse. Si no se celebra, te devolvemos el 100 %.</p></div>
@@ -5337,7 +5427,7 @@ function planAgendaKind(p){
   if ((p.waitlist || []).includes('me')) return 'espera';
   return null;
 }
-function agWhere(p){ const pl = getPlace(p.placeId); return p.secret || (pl && pl.secret) ? 'Lugar por desvelar' : (p.meetPoint || (pl ? pl.name : 'Madrid')); }
+function agWhere(p){ if (isOnline(p)) return 'Videollamada'; const pl = getPlace(p.placeId); return p.secret || (pl && pl.secret) ? 'Lugar por desvelar' : (p.meetPoint || (pl ? pl.name : 'Madrid')); }
 function agendaItems(){
   const out = [], end = (s, min) => new Date(s.getTime() + (min || AG_DEFAULT_MIN) * 60000);
   PLANS.forEach(p => {
@@ -5519,6 +5609,263 @@ function revokeCalFeed(){ ME.calToken = null; calToken(); saveState(); toast('Di
 
 
 /* =========================================================================
+   Planes por videollamada: una actividad, un debate o lo que sea, sin lugar.
+   - Quién la ve: pública (cualquiera puede verla en directo) o privada (solo quien
+     está en la llamada; no sale en Descubrir ni en la búsqueda, se entra con el enlace).
+   - Comentarios de quien mira (solo en públicas): sí o no.
+   - Quién se une a la llamada (cámara y micro): cualquiera hasta el límite, o con la
+     aprobación del anfitrión. Usa la inscripción de siempre: plazas = groupMax.
+   La sala está simulada (sin vídeo real salvo tu cámara, si el navegador lo permite).
+   En la app real: docs/videollamadas.md (proveedor de vídeo, roles, moderación).
+   ========================================================================= */
+const CALL_OPEN_MIN = 10;          // la sala se abre 10 min antes
+const CALL_ATTEND_MIN = 10;        // 10 min en la llamada cuentan como asistencia
+const CALL_DEFAULT_MIN = 60;
+const isOnline = (p) => !!(p && p.online);
+const isPrivateCall = (p) => isOnline(p) && p.online.visibility === 'privada';
+const callStart = (p) => new Date(p.when).getTime();
+const callEnd = (p) => callStart(p) + (p.durationMin || CALL_DEFAULT_MIN) * 60000;
+function callLive(p){ const now = Date.now(); return isOnline(p) && !isCancelled(p) && !p.callEnded && now >= callStart(p) - CALL_OPEN_MIN * 60000 && now <= callEnd(p); }
+const inCall = (p) => state.joined.has(p.id) || isHost(p);   // participa (cámara y micro)
+// ¿Puede verlo alguien que no participa? Las privadas solo existen para quien está dentro (o tiene el enlace).
+function canSeeOnline(p){ return !isPrivateCall(p) || inCall(p) || state.requested.has(p.id) || (p.waitlist || []).includes('me'); }
+function onlineSummary(p){
+  const o = p.online;
+  return o.visibility === 'privada' ? 'Privada' : (o.comments ? 'Pública con comentarios' : 'Pública sin comentarios');
+}
+function onlineJoinLabel(p){ return p.online.join === 'aprobacion' ? `Con aprobación del anfitrión, hasta ${p.groupMax} personas` : `Cualquiera, hasta ${p.groupMax} personas`; }
+// Quién mira (simulado): una cifra estable por plan que se mueve un poco en directo.
+function callViewers(p){ if (isPrivateCall(p)) return 0; const base = 12 + (p.id.charCodeAt(p.id.length - 1) % 9) * 4; return base + ((state.call && state.call.tick) || 0) % 5; }
+
+/* ---------- en la ficha del plan ---------- */
+function callBlock(p){
+  if (!isOnline(p)) return '';
+  const o = p.online, live = callLive(p);
+  return `<div class="block"><h4>La videollamada</h4>
+    ${live ? `<div class="call-live">${ico('live')}<span><b>En directo ahora</b>${o.visibility === 'publica' ? ` · ${callViewers(p)} viendo` : ''}</span>
+      ${inCall(p) ? `<button class="ph-btn primary sm" onclick="enterCall('${p.id}')">Entrar</button>` : (o.visibility === 'publica' ? `<button class="ph-btn sm" onclick="enterCall('${p.id}', true)">Ver</button>` : '')}</div>` : ''}
+    <div class="call-facts">
+      <div>${ico(o.visibility === 'privada' ? 'lock' : 'globe')}<span><b>${o.visibility === 'privada' ? 'Privada' : 'Pública'}</b>${o.visibility === 'privada' ? 'Solo la ve quien está en la llamada. No sale en Descubrir: se entra con el enlace.' : 'Cualquiera puede verla en directo, aunque no participe.'}</span></div>
+      ${o.visibility === 'publica' ? `<div>${ico('chat')}<span><b>${o.comments ? 'Con comentarios' : 'Sin comentarios'}</b>${o.comments ? 'Quien mira puede comentar; los comentarios pasan por los filtros.' : 'Quien mira no puede escribir.'}</span></div>` : ''}
+      <div>${ico('users')}<span><b>Quién se une a la llamada</b>${onlineJoinLabel(p)} con cámara y micro. Ahora: ${p.joined || 0} de ${p.groupMax}.</span></div>
+      <div>${ico('clock')}<span><b>${p.durationMin || CALL_DEFAULT_MIN} minutos</b>La sala se abre ${CALL_OPEN_MIN} min antes. No se graba.</span></div>
+    </div></div>`;
+}
+// Botón principal de la ficha para un plan por videollamada (null: sigue el flujo normal de apuntarse).
+function callCta(p){
+  if (!isOnline(p) || isCancelled(p)) return null;
+  if (p.callEnded || Date.now() > callEnd(p)) return `<button class="btn-join done" disabled>${ico('video')} La videollamada ha terminado</button>`;
+  if (inCall(p)) return `<button class="btn-join" onclick="enterCall('${p.id}')">${ico('video')} ${callLive(p) ? 'Entrar a la videollamada' : 'Entrar (se abre ' + CALL_OPEN_MIN + ' min antes)'}</button>`;
+  if (callLive(p) && p.online.visibility === 'publica') return `<button class="btn-join" onclick="enterCall('${p.id}', true)">${ico('live')} Ver en directo</button>`;
+  return null;
+}
+
+/* ---------- la sala ---------- */
+// Participantes simulados: el anfitrión y los apuntados (hasta el límite), más tú si participas.
+function callPeople(p){
+  const c = state.call || {}, pool = ['lucia','marco','david','irene','alexv','ana','sara','nora'].filter(id => id !== p.hostId);
+  const host = p.hostId && p.hostId !== 'me' ? [p.hostId] : [];
+  const n = Math.max(0, Math.min((p.joined || 0) - (state.joined.has(p.id) ? 1 : 0), p.groupMax - 1, 7)) - (c.kicked || []).length;
+  const others = host.concat(pool.filter(id => !(c.kicked || []).includes(id)).slice(0, Math.max(0, n)));
+  const list = others.map((id, i) => ({ id, u: getUser(id) || { name: id, initials: id.slice(0, 2).toUpperCase() }, mic: !(c.muted || []).includes(id) && i % 3 !== 2, cam: i % 4 !== 3, host: id === p.hostId }));
+  (c.admitted || []).forEach(id => { if (!list.some(x => x.id === id)) list.push({ id, u: getUser(id), mic: true, cam: true }); });
+  if (c.role === 'participante') list.unshift({ id: 'me', u: ME, mic: c.mic, cam: c.cam, host: isHost(p), me: true });
+  return list;
+}
+function enterCall(id, watch){
+  const p = getPlan(id); if (!p) return;
+  if (!callLive(p)){ toast(`La sala se abre ${CALL_OPEN_MIN} min antes de empezar`); return; }
+  const role = !watch && inCall(p) ? 'participante' : 'espectador';
+  if (role === 'participante' && !requireVerified('Verifica tu identidad para entrar con cámara y micro', () => enterCall(id))) return;
+  if (role === 'espectador' && isPrivateCall(p)){ toast('Es una videollamada privada: solo entra quien está apuntado'); return; }
+  state.call = { planId: id, role, mic: true, cam: true, hand: false, asked: false, tick: 0, joinedAt: Date.now(), muted: [], kicked: [], admitted: [], lobby: [] };
+  go('sala/' + id);
+}
+function renderCall(id){
+  const p = getPlan(id), view = document.getElementById('view-page');
+  if (!p || !isOnline(p)){ renderGone('Esta videollamada ya no está disponible'); return; }
+  if (!state.call || state.call.planId !== id){ if (!callLive(p)){ view.innerHTML = pageHead('Videollamada') + `<div class="empty-tab"><p>La sala se abre ${CALL_OPEN_MIN} min antes de empezar.</p></div>`; return; }
+    state.call = { planId: id, role: inCall(p) ? 'participante' : 'espectador', mic: true, cam: true, hand: false, asked: false, tick: 0, joinedAt: Date.now(), muted: [], kicked: [], admitted: [], lobby: [] }; }
+  const c = state.call, o = p.online, part = c.role === 'participante', people = callPeople(p);
+  const showComments = o.visibility === 'publica' && o.comments;
+  const tile = (x, i) => `<div class="tile ${x.me ? 'me' : ''} ${x.cam ? '' : 'nocam'}" data-id="${x.id}" style="--h:${(i * 47) % 360}">
+      ${x.me && x.cam ? '<video id="my-video" autoplay muted playsinline></video>' : ''}
+      <span class="tile-av">${escapeHtml(x.u.initials || initials(x.u.name || '?'))}</span>
+      <span class="tile-n">${x.mic ? '' : ico('micOff')}${escapeHtml(x.me ? 'Tú' : (x.u.name || '').split(' ')[0])}${x.host ? ' · anfitrión' : ''}</span>
+      ${x.me && c.hand ? `<span class="tile-hand">${ico('hand')}</span>` : ''}</div>`;
+  const comments = showComments ? `<div class="call-cm" id="call-cm">${(p.callComments || []).slice(-30).map(m => { const u = getUser(m.userId) || { name: 'Alguien' };
+      return `<p><b>${escapeHtml(m.userId === 'me' ? 'Tú' : u.name.split(' ')[0])}</b> ${escapeHtml(m.text)}</p>`; }).join('')}</div>
+    <div class="chat-in call-in"><input id="call-msg" maxlength="200" placeholder="Comenta…" onkeydown="if(event.key==='Enter')sendCallComment('${id}')"><button class="ph-btn primary sm" onclick="sendCallComment('${id}')">Enviar</button></div>`
+    : (o.visibility === 'publica' ? '<p class="call-nocm">Comentarios desactivados</p>' : '');
+  const full = (p.joined || 0) >= p.groupMax;
+  const viewerAct = c.role === 'espectador' ? (c.asked ? `<button class="ph-btn" disabled>${ico('clock')} Esperando al anfitrión</button>`
+    : (full ? `<button class="ph-btn" disabled>Llamada completa (${p.groupMax})</button>`
+    : `<button class="ph-btn primary" onclick="askJoinCall('${id}')">${ico('video')} ${o.join === 'aprobacion' ? 'Pedir unirme' : 'Unirme a la llamada'}</button>`)) : '';
+  view.innerHTML = `<div class="room">
+    <div class="room-top"><button class="pb-back" onclick="leaveCall()" aria-label="Salir">${ico('chevL')}</button>
+      <div class="room-t"><b>${escapeHtml(p.title)}</b><span>${o.visibility === 'publica' ? `${ico('live')} En directo · ${callViewers(p)} viendo` : `${ico('lock')} Privada`} · ${people.length} en la llamada</span></div>
+      <button class="pb-back" onclick="openCallMenu('${id}')" aria-label="Más opciones">${ico('dots')}</button></div>
+    <div class="room-stage n${Math.min(people.length, 9)}">${people.map(tile).join('')}</div>
+    ${c.role === 'espectador' ? `<p class="call-role">${ico('eye')} Estás mirando. ${o.join === 'aprobacion' ? 'Para hablar, pide unirte: decide el anfitrión.' : `Para hablar, únete (quedan ${Math.max(0, p.groupMax - (p.joined || 0))} plazas).`}</p>` : ''}
+    ${comments}
+    <div class="room-bar">${part ? `
+      <button class="rb ${c.mic ? '' : 'off'}" onclick="toggleCall('mic')" aria-pressed="${!c.mic}" aria-label="${c.mic ? 'Silenciar micro' : 'Activar micro'}">${ico(c.mic ? 'mic' : 'micOff')}<span>Micro</span></button>
+      <button class="rb ${c.cam ? '' : 'off'}" onclick="toggleCall('cam')" aria-pressed="${!c.cam}" aria-label="${c.cam ? 'Apagar cámara' : 'Encender cámara'}">${ico(c.cam ? 'video' : 'videoOff')}<span>Cámara</span></button>
+      <button class="rb ${c.hand ? 'on' : ''}" onclick="toggleCall('hand')" aria-pressed="${c.hand}" aria-label="Levantar la mano">${ico('hand')}<span>Mano</span></button>
+      ${isHost(p) ? `<button class="rb" onclick="openCallManage('${id}')" aria-label="Gestionar">${ico('users')}<span>Gestionar${c.lobby.length ? ` (${c.lobby.length})` : ''}</span></button>` : ''}` : viewerAct}
+      <button class="rb end" onclick="leaveCall()" aria-label="Salir de la llamada">${ico('close')}<span>Salir</span></button></div>
+  </div>`;
+  if (part && c.cam) startMyCamera();
+  const cm = document.getElementById('call-cm'); if (cm) cm.scrollTop = 1e6;
+  startCallTimer(id);
+}
+// Tu cámara, si el navegador da permiso (si no, se ve tu inicial).
+function startMyCamera(){
+  const v = document.getElementById('my-video'), c = state.call; if (!v || !c) return;
+  const show = (s) => { const el = document.getElementById('my-video'); if (!el) return; el.srcObject = s; if (el.parentNode && el.parentNode.classList) el.parentNode.classList.add('has-video'); };   // con imagen, se oculta la inicial
+  if (c.stream){ show(c.stream); return; }
+  try {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || c.camDenied) return;
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false }).then(s => { if (!state.call){ s.getTracks().forEach(t => t.stop()); return; } state.call.stream = s; show(s); },
+      () => { if (state.call) state.call.camDenied = true; });
+  } catch (e) {}
+}
+function stopMyCamera(){ const c = state.call; if (c && c.stream){ c.stream.getTracks().forEach(t => t.stop()); c.stream = null; } }
+let callTimer = null;
+// En directo: quién habla, comentarios de otros y, si organizas, alguien que pide unirse.
+function startCallTimer(id){
+  clearInterval(callTimer);
+  callTimer = setInterval(() => {
+    const c = state.call, p = getPlan(id);
+    if (!c || c.planId !== id || location.hash !== '#/sala/' + id){ clearInterval(callTimer); return; }
+    c.tick++;
+    const tiles = [...document.querySelectorAll('.tile')]; tiles.forEach(t => t.classList.remove('talk'));
+    if (tiles.length) tiles[c.tick % tiles.length].classList.add('talk');
+    if (p.online.visibility === 'publica' && p.online.comments && c.tick % 3 === 0){
+      const lines = ['Qué buen tema', 'Me ha encantado eso último', 'Saludos desde Lavapiés', '¿Repetís la semana que viene?', 'Muy de acuerdo'];
+      (p.callComments = p.callComments || []).push({ userId: ['david','irene','alexv','ana'][c.tick % 4], text: lines[c.tick % lines.length], min: 0 });
+      const cm = document.getElementById('call-cm'); if (cm){ const u = getUser(['david','irene','alexv','ana'][c.tick % 4]); cm.insertAdjacentHTML('beforeend', `<p><b>${escapeHtml(u.name.split(' ')[0])}</b> ${escapeHtml(lines[c.tick % lines.length])}</p>`); cm.scrollTop = 1e6; }
+    }
+    if (isHost(p) && c.tick === 2 && !c.lobby.length){ c.lobby.push('nora'); toast('Nora quiere unirse a la llamada'); renderCall(id); }
+  }, 2500);
+  if (callTimer && callTimer.unref) callTimer.unref();   // fuera del navegador, no retiene el proceso
+}
+function toggleCall(k){
+  const c = state.call; if (!c) return;
+  c[k] = !c[k];
+  if (k === 'cam' && !c.cam) stopMyCamera();
+  renderCall(c.planId);
+}
+// Quien mira pide unirse (o se une, si es libre y hay sitio). En la demo, el anfitrión acepta a los pocos segundos.
+function askJoinCall(id){
+  const p = getPlan(id), c = state.call; if (!p || !c) return;
+  if (!requireVerified('Verifica tu identidad para entrar con cámara y micro', () => askJoinCall(id))) return;
+  if ((p.joined || 0) >= p.groupMax){ toast('La llamada está completa'); return; }
+  if (p.online.join === 'libre'){ admitMe(p); toast('Ya estás en la llamada'); return; }
+  c.asked = true; renderCall(id); toast('Le hemos pedido al anfitrión que te deje entrar');
+  setTimeout(() => { const cc = state.call; if (cc && cc.planId === id && cc.asked){ admitMe(p); toast('El anfitrión te ha dejado entrar'); } }, 3000);
+}
+function admitMe(p){
+  const c = state.call;
+  if (!state.joined.has(p.id)){ state.joined.add(p.id); p.joined = (p.joined || 0) + 1; ensurePlanChat(p.id); }
+  c.role = 'participante'; c.asked = false; c.joinedAt = Date.now(); saveState();
+  if (location.hash === '#/sala/' + p.id) renderCall(p.id);
+}
+function sendCallComment(id){
+  const p = getPlan(id), text = val('call-msg').trim().slice(0, 200); if (!p || !text) return;
+  if (!(p.online.visibility === 'publica' && p.online.comments)){ toast('Los comentarios están desactivados'); return; }
+  guardText(text, { kind: 'comentario' }, (flag) => {
+    if (flag){ toast('No se ha publicado: parece ' + flag.label); return null; }
+    (p.callComments = p.callComments || []).push({ userId: 'me', text, min: 0 }); saveState(); renderCall(id); return null;
+  });
+}
+// 10 minutos dentro cuentan como asistencia verificada (como el QR en los presenciales).
+function markCallAttendance(p){
+  if (!p || state.attended.has(p.id) || !state.joined.has(p.id)) return false;
+  state.attended.add(p.id); p.attended = (p.attended || 0) + 1;
+  ME.attendedPlanIds = [...new Set([...(ME.attendedPlanIds || []), p.id])]; saveState(); return true;
+}
+function leaveCall(){
+  const c = state.call; stopMyCamera(); clearInterval(callTimer);
+  if (c){ const p = getPlan(c.planId);
+    if (c.role === 'participante' && p && Date.now() - c.joinedAt >= CALL_ATTEND_MIN * 60000 && markCallAttendance(p)) toast('Asistencia registrada'); }
+  state.call = null;
+  if (c) go('plan/' + c.planId); else history.back();
+}
+function openCallMenu(id){
+  const p = getPlan(id), c = state.call; if (!p) return;
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Opciones de la llamada">
+    <div class="sheet-h"><span>${escapeHtml(p.title)}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list">
+      <p class="hint">${escapeHtml(onlineSummary(p))} · ${escapeHtml(onlineJoinLabel(p))}. No se graba. No compartas datos personales en directo.</p>
+      <button class="sh-row" onclick="closeOverlay();openShare('plan:${id}')">${ico('send')}<span>Compartir el enlace</span>${ico('chevR')}</button>
+      ${c && c.role === 'participante' && !state.attended.has(id) ? `<button class="sh-row" onclick="demoCallTime('${id}')">${ico('clock')}<span>Demo: pasan ${CALL_ATTEND_MIN} minutos</span>${ico('chevR')}</button>` : ''}
+      ${isHost(p) ? '' : `<button class="sh-row danger" onclick="closeOverlay();reportPlan('${id}')">${ico('alert')}<span>Reportar la videollamada</span>${ico('chevR')}</button>`}
+    </div></div>`);
+}
+function demoCallTime(id){ const c = state.call; if (c) c.joinedAt = Date.now() - CALL_ATTEND_MIN * 60000; closeOverlay(); toast(`Llevas ${CALL_ATTEND_MIN} minutos: al salir cuenta como asistencia`); }
+
+/* ---------- el anfitrión gestiona la sala ---------- */
+function openCallManage(id){
+  const p = getPlan(id), c = state.call; if (!p || !c) return;
+  const people = callPeople(p).filter(x => !x.me);
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Gestionar la llamada">
+    <div class="sheet-h"><span>Gestionar la llamada</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list">
+      ${c.lobby.length ? `<div class="set-title">Quieren unirse</div>${c.lobby.map(uid => { const u = getUser(uid) || { name: uid };
+        return `<div class="req-row"><span class="avatar sm">${escapeHtml(u.initials || '')}</span><span class="req-n">${escapeHtml(u.name)}</span>
+          <button class="ico-btn" onclick="callLobby('${id}','${uid}',false)" aria-label="Rechazar">${ico('close')}</button><button class="ico-btn ok" onclick="callLobby('${id}','${uid}',true)" aria-label="Dejar entrar">${ico('check')}</button></div>`; }).join('')}` : ''}
+      <div class="set-title">En la llamada (${people.length + 1} de ${p.groupMax})</div>
+      ${people.map(x => `<div class="req-row"><span class="avatar sm">${escapeHtml(x.u.initials || '')}</span><span class="req-n">${escapeHtml(x.u.name)}${x.mic ? '' : ' · silenciado'}</span>
+        ${x.mic ? `<button class="link-btn" onclick="callMod('${id}','${x.id}','silenciar')">Silenciar</button>` : ''}<button class="link-btn danger" onclick="callMod('${id}','${x.id}','expulsar')">Sacar</button></div>`).join('')}
+      ${p.online.visibility === 'publica' ? `<div class="opt-row" onclick="toggleCallComments('${id}')"><span class="or-ic">${ico('chat')}</span><span class="or-l">Comentarios de quien mira<span class="or-s">Puedes cerrarlos en cualquier momento</span></span><span class="switch ${p.online.comments ? 'on' : ''}"><span class="knob"></span></span></div>` : ''}
+      <button class="btn-primary danger-btn" onclick="endCall('${id}')">Finalizar para todos</button>
+    </div></div>`);
+}
+function callLobby(id, uid, ok){
+  const c = state.call, p = getPlan(id); if (!c || !p) return;
+  c.lobby = c.lobby.filter(x => x !== uid);
+  if (ok){ if ((p.joined || 0) >= p.groupMax){ toast('La llamada está completa'); } else { c.admitted.push(uid); p.joined = (p.joined || 0) + 1; toast('Ha entrado'); } }
+  saveState(); closeOverlay(); renderCall(id);
+}
+function callMod(id, uid, action){
+  const c = state.call, p = getPlan(id); if (!c || !p) return;
+  if (action === 'silenciar') c.muted.push(uid);
+  if (action === 'expulsar'){ c.kicked.push(uid); c.admitted = c.admitted.filter(x => x !== uid); p.joined = Math.max(0, (p.joined || 0) - 1); }
+  saveState(); closeOverlay(); toast(action === 'silenciar' ? 'Silenciado' : 'Ha salido de la llamada'); renderCall(id);
+}
+function toggleCallComments(id){ const p = getPlan(id); if (!p) return; p.online.comments = !p.online.comments; saveState(); openCallManage(id); renderCall(id); }
+function endCall(id){
+  const p = getPlan(id); if (!p) return;
+  p.callEnded = true; planChatSystem(id, 'La videollamada ha terminado.');
+  stopMyCamera(); clearInterval(callTimer); state.call = null; saveState(); closeOverlay(); toast('Videollamada finalizada'); go('plan/' + id);
+}
+
+/* ---------- al crear el plan ---------- */
+const CALL_DURATIONS = [30, 45, 60, 90, 120];
+function onlineFormFields(d){
+  const seg = (key, opts) => `<div class="iseg" id="d-${key}">${opts.map(([v, l, n]) => `<button data-v="${v}" class="${d[key] === v ? 'active' : ''}" onclick="setDraft('${key}','${v}')">${n ? ico(n) : ''}<span>${l}</span></button>`).join('')}</div>`;
+  return `<div id="online-opts" ${d.mode === 'online' ? '' : 'hidden'}>
+    <div class="field"><label>Quién la ve</label>${seg('ovis', [['publica','Pública','globe'],['privada','Privada','lock']])}
+      <p class="hint" id="ovis-hint">${d.ovis === 'privada' ? 'Solo quien está en la llamada. No sale en Descubrir: invita con el enlace.' : 'Cualquiera puede verla en directo, aunque no participe.'}</p></div>
+    <div class="field" id="ocom-field" ${d.ovis === 'privada' ? 'hidden' : ''}><label>Comentarios de quien mira</label>${seg('ocom', [['si','Con comentarios','chat'],['no','Sin comentarios','close']])}</div>
+    <div class="field"><label>Quién se une a la llamada</label>${seg('ojoin', [['libre','Cualquiera','users'],['aprobacion','Con mi aprobación','check']])}
+      <p class="hint">Unirse es entrar con cámara y micro. ${d.ojoin === 'aprobacion' ? 'Recibirás solicitudes y decides tú.' : 'Entra quien se apunte, hasta el límite.'}</p></div>
+    <div class="field"><label for="f-olimit">Límite de personas en la llamada</label><input id="f-olimit" type="number" min="2" max="50" value="${escapeHtml(String(d.olimit || 10))}" />
+      <p class="hint">Contándote a ti. Quien solo mira no cuenta.</p></div>
+    <div class="field"><label for="f-odur">Duración</label><select id="f-odur">${CALL_DURATIONS.map(m => `<option value="${m}" ${(d.odur || 60) === m ? 'selected' : ''}>${m} minutos</option>`).join('')}</select></div>
+  </div>`;
+}
+// Lo que cambia en el plan al publicarlo por videollamada.
+function onlinePlanFields(d){
+  const limit = Math.max(2, Math.min(50, parseInt(val('f-olimit'), 10) || 10));
+  return { placeId: null, online: { visibility: d.ovis || 'publica', comments: (d.ovis || 'publica') === 'publica' && d.ocom !== 'no', join: d.ojoin || 'libre' },
+    durationMin: parseInt(val('f-odur'), 10) || CALL_DEFAULT_MIN, groupMin: 2, groupMax: limit,
+    joinType: 'apuntado', approval: d.ojoin === 'aprobacion' ? 'manual' : 'automatica' };
+}
+
+
+/* =========================================================================
    Prototipo visual — App de planes. Modo oscuro tipo Instagram, sin emojis.
    Vistas: feed, mapa, grupos, perfil, detalle + creación (plan/post/grupo),
    solicitudes, ajustes. Datos mock en data.js.
@@ -5535,7 +5882,7 @@ const state = {
   profileTab: 'posts',                 // posts | vividas
   profileFilter: 'todo',               // publicaciones del perfil: todo | plan | vida
   wallFilter: 'todo',                  // publicaciones del muro: todo | plan | vida
-  draft: { cover:'g-grape', size:'mediano', cat:'social', access:'libre', price:'gratis' },
+  draft: { cover:'g-grape', size:'mediano', cat:'social', access:'libre', price:'gratis', mode:'presencial', ovis:'publica', ocom:'si', ojoin:'libre' },
   draftPost: { origin:'plan', kind:'foto', caption:'', tags:[], place:'', planId:'', alt:'', audience:'publico', comments:true, hideLikes:false, alsoStory:false, trackId:'' },
   storySound: true,                    // las stories suenan con su música (se puede silenciar)
   musicQuery: '', musicMood: 'todas',  // filtros del selector de música
@@ -5604,6 +5951,10 @@ const SVG = {
   pause:'<svg viewBox="0 0 24 24"><path d="M8.5 5.5v13M15.5 5.5v13"/></svg>',
   search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.4"/><path d="M15.7 15.7 20 20"/></svg>',
   dots:'<svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4" class="fill"/><circle cx="12" cy="12" r="1.4" class="fill"/><circle cx="18.5" cy="12" r="1.4" class="fill"/></svg>',
+  mic:'<svg viewBox="0 0 24 24"><rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5"/></svg>',
+  micOff:'<svg viewBox="0 0 24 24"><path d="M15 9.5V6.5a3 3 0 0 0-5.6-1.5M9 9v2.5a3 3 0 0 0 4.6 2.5"/><path d="M5.5 11.5a6.5 6.5 0 0 0 10.4 5.2M18.5 11.5a6.4 6.4 0 0 1-.6 2.7M12 18v2.5M4 4l16 16"/></svg>',
+  videoOff:'<svg viewBox="0 0 24 24"><path d="M10 6.5h3.5a2.5 2.5 0 0 1 2.5 2.5v3.5M16 15.5A2.5 2.5 0 0 1 13.5 17.5h-7A2.5 2.5 0 0 1 4 15V9a2.5 2.5 0 0 1 1.6-2.3"/><path d="m16 10.5 4-2.5v8l-4-2.5M4 4l16 16"/></svg>',
+  hand:'<svg viewBox="0 0 24 24"><path d="M8 12V6a1.5 1.5 0 0 1 3 0v5M11 11V4.5a1.5 1.5 0 0 1 3 0V11M14 11V6a1.5 1.5 0 0 1 3 0v7.5a6 6 0 0 1-6 6h-.5a6 6 0 0 1-4.6-2.2L3.6 14.5a1.5 1.5 0 0 1 2.3-1.9L8 15"/></svg>',
   calendar:'<svg viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>',
   download:'<svg viewBox="0 0 24 24"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5"/><path d="M5 19.5h14"/></svg>',
   phone:'<svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.4"/><path d="M11 17.5h2"/></svg>',
@@ -5768,17 +6119,20 @@ function filteredPlans(){
     if (!matchesWhen(p, state.when)) return false;
     if (isCancelled(p)) return false;
     if (p.removed || p.held) return false;   // retirado o en revisión (el anfitrión lo ve en su ficha)
+    if (!canSeeOnline(p)) return false;      // videollamada privada: solo para quien está dentro
+    if (state.mode === 'online' && !isOnline(p)) return false;
+    if (state.mode === 'presencial' && isOnline(p)) return false;
     return true;
   });
 }
 function gridCell(p){
   const place = getPlace(p.placeId);
-  const loc = p.secret ? 'Zona aprox.' : (place ? place.name : 'Madrid');
+  const loc = isOnline(p) ? 'Videollamada' : (p.secret ? 'Zona aprox.' : (place ? place.name : 'Madrid'));
   return `
   <button class="cell ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">
     ${coverImg(p.photo,500)}
     <span class="cell-scrim"></span>
-    <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>${p.featured ? '<span class="cell-feat">Destacado</span>' : ''}
+    <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>${callLive(p) ? `<span class="cell-feat live">${ico('live')} En directo</span>` : (p.featured ? '<span class="cell-feat">Destacado</span>' : (isOnline(p) ? `<span class="cell-feat">${ico('video')} Online</span>` : ''))}
     <span class="cell-info">
       <span class="cell-title">${escapeHtml(p.title)}</span>
       <span class="cell-meta">${escapeHtml(loc)} · ${ico('geo')} ${attendanceView(p).n}</span>
@@ -5848,7 +6202,7 @@ function postCard(po){
   const u = getUser(po.authorId) || { id:'', name:'Usuario', initials:'?', handle:'' };
   const plan = po.planId ? getPlan(po.planId) : null;
   const place = plan ? getPlace(plan.placeId) : (po.placeId ? getPlace(po.placeId) : null);
-  const placeName = plan && plan.secret ? 'Zona aproximada' : (place ? place.name : '');
+  const placeName = plan && isOnline(plan) ? 'Videollamada' : (plan && plan.secret ? 'Zona aproximada' : (place ? place.name : ''));
   const liked = !!po.likedByMe;
   const comments = visibleComments(po);
   const commentsOff = po.commentsEnabled === false;
@@ -6264,7 +6618,7 @@ function renderChat(id){
       <span class="cw-t"><b>${escapeHtml(convTitle(c))}</b><span>${plan ? `${c.members.length} personas · Ver plan` : `${escapeHtml(u.handle)} · ${rel}`}</span></span></button>
     ${u ? `<button class="pb-back" onclick="openChatMenu('${c.id}')" aria-label="Opciones">${ico('dots')}</button>` : '<span style="width:34px"></span>'}</div>`;
   const place = plan && getPlace(plan.placeId);
-  const pinned = plan ? `<div class="chat-pin">${ico('pin')}<span><b>Punto de encuentro</b> ${escapeHtml(plan.secret ? 'se desvela el día del plan' : (place ? place.name : 'Madrid'))} · ${fmtWhen(plan.when)}</span>
+  const pinned = plan ? `<div class="chat-pin">${ico(isOnline(plan) ? 'video' : 'pin')}<span><b>${isOnline(plan) ? 'Videollamada' : 'Punto de encuentro'}</b> ${escapeHtml(isOnline(plan) ? 'se entra desde la ficha del plan' : (plan.secret ? 'se desvela el día del plan' : (place ? place.name : 'Madrid')))} · ${fmtWhen(plan.when)}</span>
       <button class="vis-chip ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'solid' : ''}" onclick="confirmDay('${plan.id}','${c.id}')">${ico('check')} ${state.dayConfirmed && state.dayConfirmed[plan.id] ? 'Confirmado' : 'Confirmo que voy'}</button>
       ${amHere(plan.id) && !c.messages.some(m => m.from === 'me' && m.ping === plan.id) ? `<button class="vis-chip" onclick="pingPlanChat('${plan.id}','${c.id}')">${ico('pin')} Estoy aquí</button>` : ''}
       <button class="vis-chip sos-chip" onclick="openSos('${plan.id}')" aria-label="SOS: pedir ayuda">SOS</button></div>` : '';
@@ -6449,7 +6803,7 @@ function shareKey(x){ return isPlan(x) ? 'plan:' + x.id : (isProfile(x) ? 'u:' +
 function appRoute(x){ return isPlan(x) ? `plan/${x.id}` : (isProfile(x) ? `u/${x.id}` : `p/${x.id}`); }
 function webPath(x){ return isPlan(x) ? `plan/${x.id}` : (isProfile(x) ? `u/${String(x.handle).replace(/^@/, '')}` : `p/${x.id}`); }
 // Lo que tiene página en la web pública del prototipo (los datos de ejemplo; ver scripts/build-web.js).
-const SEED_WEB = new Set([...PLANS.map(p => 'plan:' + p.id), ...POSTS.filter(po => postIsPublic(po)).map(po => po.id),
+const SEED_WEB = new Set([...PLANS.filter(p => !isPrivateCall(p)).map(p => 'plan:' + p.id), ...POSTS.filter(po => postIsPublic(po)).map(po => po.id),
   ...USERS.filter(u => !u.managedBy).map(u => 'u:' + u.id + ':' + u.handle)]);
 /* Web pública del prototipo (prototipo/web/): si la app está publicada (GitHub Pages o un
    servidor local), los enlaces llevan a esas páginas, que sí generan la vista previa. Si no
@@ -6470,7 +6824,7 @@ function postUrl(x){
 }
 function postIsPublic(po){
   if (isProfile(po)) return true;   // la cabecera del perfil es pública aunque la cuenta sea privada
-  if (isPlan(po)) return true;   // los planes son públicos; si la ubicación es secreta, no se desvela
+  if (isPlan(po)) return !isPrivateCall(po);   // los planes son públicos (si la ubicación es secreta, no se desvela), salvo las videollamadas privadas
   const author = getUser(po.authorId) || {};
   return (po.audience || 'publico') === 'publico' && author.profilePublic !== false && !po.removed && !po.held;
 }
@@ -6989,6 +7343,7 @@ function renderDetail(id){
   const pay = p.paid ? myPayment(p.id) : null, toPay = pay && pay.status === 'pendiente';
   let cta;
   if (isCancelled(p)) cta = `<button class="btn-join done" disabled>${ico('close')} Plan cancelado</button>`;
+  else if (callCta(p)) cta = callCta(p);   // videollamada: entrar o ver en directo (videollamadas.js)
   else if (isHost(p)) cta = `<button class="btn-join" onclick="openHostQr('${p.id}')">${ico('grid')} Mostrar QR de llegada</button>`;
   else if (!isVerified() && !attended && !joined) cta = `<button class="btn-join" onclick="requireVerified('Verifica tu identidad para ir a este plan', () => renderDetail('${p.id}'))">${ico('shield')} Verifícate para ir</button>`;
   else if (attended) cta = `<button class="btn-join done" disabled>${ico('check')} Asististe · verificado</button>`;
@@ -7020,8 +7375,9 @@ function renderDetail(id){
   // Organización (anfitrión o admin del grupo): QR, llegadas, solicitudes, editar y cancelar.
   const hostBlock = host && !isCancelled(p) ? `<div class="block"><h4>Organización</h4>
       <div class="pl-host">
-        <button class="sh-row" onclick="openHostQr('${p.id}')">${ico('grid')}<span>QR de llegada</span>${ico('chevR')}</button>
-        <button class="sh-row" onclick="openManualArrivals('${p.id}')">${ico('users')}<span>Marcar llegadas a mano</span>${ico('chevR')}</button>
+        ${isOnline(p) ? `<button class="sh-row" onclick="enterCall('${p.id}')">${ico('video')}<span>Abrir la sala</span>${ico('chevR')}</button>`
+          : `<button class="sh-row" onclick="openHostQr('${p.id}')">${ico('grid')}<span>QR de llegada</span>${ico('chevR')}</button>
+        <button class="sh-row" onclick="openManualArrivals('${p.id}')">${ico('users')}<span>Marcar llegadas a mano</span>${ico('chevR')}</button>`}
         ${isHost(p) && p.paid ? `<button class="sh-row" onclick="go('cobros')">${ico('euro')}<span>Cobros · ${hostSales(p.id).filter(x => x.status !== 'reembolsado').length} reservas</span>${ico('chevR')}</button>` : ''}
         ${isHost(p) ? `<button class="sh-row" onclick="go('editar-plan/${p.id}')">${ico('doc')}<span>Editar fecha, hora o lugar</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openCancelPlan('${p.id}')">${ico('close')}<span>Cancelar el plan</span>${ico('chevR')}</button>` : ''}
@@ -7066,9 +7422,10 @@ function renderDetail(id){
           <span class="tag tag-line">${ico(ICON_FOR_CAT[p.category]||'hash')} ${cat?cat.label:''}</span>
           <span class="tag tag-line">${freeIcon(p)} ${p.paid?'De pago':'Gratis'}</span>
           ${p.secret?`<span class="tag tag-line">${ico('lock')} Secreto</span>`:''}
+          ${isOnline(p)?`<span class="tag tag-line">${ico('video')} Videollamada</span>`:''}
         </div>
         <h2>${escapeHtml(p.title)}</h2>
-        <div class="hero-loc">${ico('pin')} ${p.secret||hideExact?'Zona aprox. · Madrid':(place?place.name+' · '+place.city:escapeHtml(p.meetPoint||'Madrid'))}</div>
+        <div class="hero-loc">${isOnline(p) ? `${ico('video')} Videollamada · ${escapeHtml(onlineSummary(p))}` : `${ico('pin')} ${p.secret||hideExact?'Zona aprox. · Madrid':(place?place.name+' · '+place.city:escapeHtml(p.meetPoint||'Madrid'))}`}</div>
       </div>
     </div>
     <div class="detail-body">
@@ -7080,8 +7437,9 @@ function renderDetail(id){
       ${p.secret?`<div class="secret-note"><span class="sn-ic">${ico('lock')}</span><p>La ubicación exacta se revela 2 horas antes del plan. El secreto es parte de la experiencia.</p></div>`:''}
       <div class="block"><h4>El plan</h4><p>${escapeHtml(p.summary)}</p>
         ${p.meetPoint ? `<p class="hint">${ico('pin')} Punto de encuentro: <b>${escapeHtml(p.meetPoint)}</b></p>` : ''}
-        <p class="hint">${manual?'Plan con aprobación: envía una solicitud; el creador o los admins la aceptan o rechazan.':(libre?'Plan libre: no hace falta apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.':'Plan apuntado: hay que apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.')}</p>
+        <p class="hint">${isOnline(p)?(manual?'Por videollamada, con aprobación: pide tu plaza en la llamada y decide el anfitrión. ':'Por videollamada: apúntate para entrar con cámara y micro. ')+'Cuentas como asistente al pasar 10 minutos en la llamada.':manual?'Plan con aprobación: envía una solicitud; el creador o los admins la aceptan o rechazan.':(libre?'Plan libre: no hace falta apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.':'Plan apuntado: hay que apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.')}</p>
       </div>
+      ${callBlock(p)}
       ${updatesBlock(p)}
       ${p.held ? `<div class="pl-banner">${ico('clock')}<div><b>En revisión</b><p>El filtro automático ha retenido este plan: solo lo ves tú hasta que lo revise una persona del equipo. Puedes apelar en Ajustes ▸ Estado de tu cuenta.</p></div></div>` : ''}
       ${cancelBanner}${reconfirmBanner}${inviteBanner(p)}
@@ -7089,9 +7447,9 @@ function renderDetail(id){
       ${hostBlock}
       ${inviteHostBlock(p)}
       ${manageBlock}
-      ${hereNowBlock(p)}
+      ${isOnline(p) ? '' : hereNowBlock(p)}
       ${whoBlock}
-      ${presence}
+      ${isOnline(p) ? '' : presence}
       <div class="block"><h4>Anfitrión</h4>
         <button class="host-card linkable" onclick="go('u/${p.host.business?'azotea':'me'}')">
           <span class="avatar">${initials(p.host.name)}</span>
@@ -7101,14 +7459,14 @@ function renderDetail(id){
         </button>
         <div class="trust-row"><span class="trust">${ico('shield')} Identidad verificada</span><span class="trust">${ico('check')} Fiabilidad ${p.host.reliability}%</span></div>
       </div>
-      <div class="block"><h4>Lugar</h4>
+      ${isOnline(p) ? '' : `<div class="block"><h4>Lugar</h4>
         <button class="place-link" onclick="go('mapa');selectPlace('${place?place.id:''}')">
           <span class="mini-thumb ${p.gradient}">${coverImg(p.photo,120)}</span>
           <span class="pl-info"><span class="pl-n">${p.secret?'Zona aproximada · centro de Madrid':(hideExact?'Zona aproximada · verifícate para ver el sitio':(place?place.name:'Madrid'))}</span>
             <span class="pl-s">${place?place.city+' · '+(place.kind==='negocio'?'Negocio verificado':'Lugar público')+' · '+place.hashtag:''}</span></span>
           <span class="pl-arrow">${ico('chevR')}</span></button>
-      </div>
-      ${safetyBlock(p)}
+      </div>`}
+      ${isOnline(p) ? '' : safetyBlock(p)}
       <div class="block"><h4>Reseñas de ediciones anteriores</h4>
         ${REVIEWS.map(r=>`<div class="review"><div class="top"><span>${r.author}</span><span class="st">${Array(r.stars).fill(ico('star')).join('')}</span></div><p>${r.text}</p></div>`).join('')}
       </div>
@@ -7682,11 +8040,15 @@ function renderCreatePlan(){
       ${d.fromIdea ? `<div class="pl-banner">${ico('spark')}<div><b>Convirtiendo tu chispa en plan</b><p>Al publicarlo entran los que se animaron y su chat del plan.</p></div></div>` : ''}
       <div class="field"><label for="f-title">Título ${counter('f-title','planTitle',pf.title)}</label><input ${lim('f-title','planTitle')} placeholder="Ej. Atardecer en el mirador" value="${escapeHtml(pf.title || '')}" /></div>
       <div class="field"><label for="f-desc">Descripción ${counter('f-desc','planDesc',pf.desc)}</label><textarea ${lim('f-desc','planDesc')} rows="3" placeholder="¿En qué consiste el plan?">${escapeHtml(pf.desc || '')}</textarea></div>
-      <div class="field"><label>Lugar</label>
+      <div class="field"><label>Dónde</label>
+        <div class="iseg" id="d-mode"><button data-v="presencial" class="${d.mode!=='online'?'active':''}" onclick="setDraft('mode','presencial')">${ico('pin')}<span>En persona</span></button>
+          <button data-v="online" class="${d.mode==='online'?'active':''}" onclick="setDraft('mode','online')">${ico('video')}<span>Videollamada</span></button></div></div>
+      ${onlineFormFields(d)}
+      <div class="field" id="place-field" ${d.mode==='online'?'hidden':''}><label>Lugar</label>
         <div class="mini-map">${ico('map')} Selecciona en el mapa</div>
         <select id="f-place">${PLACES.map(pl=>`<option value="${pl.id}" ${pf.placeId===pl.id?'selected':''}>${pl.name} · ${pl.city}</option>`).join('')}</select></div>
       <div class="field"><label>Fecha y hora</label><input id="f-date" type="datetime-local" value="${escapeHtml(pf.date || '')}" /></div>
-      <div class="field"><label>Tamaño de grupo</label>
+      <div class="field" id="size-field" ${d.mode==='online'?'hidden':''}><label>Tamaño de grupo</label>
         <div class="iseg" id="d-size">${sizes.map(([v,l,n])=>`<button data-v="${v}" class="${d.size===v?'active':''}" onclick="setDraft('size','${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div></div>
       <div class="field"><label>Tema</label>
         <div class="chips" id="d-cat">${activeCategories().map(c=>`<button data-v="${c.id}" class="${d.cat===c.id?'active':''}" onclick="setDraft('cat','${c.id}')">${ico(ICON_FOR_CAT[c.id]||'hash')}<span>${c.label}</span></button>`).join('')}</div></div>
@@ -7702,7 +8064,7 @@ function renderCreatePlan(){
           <p class="hint" id="policy-hint">${escapeHtml(policyHint(d.policy))}</p>
           ${payoutsReady() ? '' : `<button class="vg-inline" onclick="state.draft.priceValue=val('f-price');go('cobros')">${ico('euro')} Para cobrar, configura antes tus cobros (datos fiscales y cuenta bancaria).</button>`}
         </div></div>
-      <div class="field"><label>Tipo de asistencia</label>
+      <div class="field" id="access-field" ${d.mode==='online'?'hidden':''}><label>Tipo de asistencia</label>
         <div class="iseg" id="d-access">
           <button data-v="libre" class="${d.access==='libre'?'active':''}" onclick="setDraft('access','libre')">${ico('globe')}<span>Libre</span></button>
           <button data-v="aprobacion" class="${d.access==='aprobacion'?'active':''}" onclick="setDraft('access','aprobacion')">${ico('check')}<span>Con aprobación</span></button></div>
@@ -7715,10 +8077,12 @@ function renderCreatePlan(){
 }
 function setDraft(key,v){
   state.draft[key]=v;
-  const id={cover:'cover-pick',size:'d-size',cat:'d-cat',price:'d-price',access:'d-access',policy:'d-policy'}[key];
+  const id={cover:'cover-pick',size:'d-size',cat:'d-cat',price:'d-price',access:'d-access',policy:'d-policy',mode:'d-mode',ovis:'d-ovis',ocom:'d-ocom',ojoin:'d-ojoin'}[key];
   const c=id&&document.getElementById(id);
   if(c) c.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.v===v));
   if(key==='price'){ const o=document.getElementById('paid-opts'); if(o) o.hidden = v!=='pago'; }
+  if(key==='mode'){ ['place-field','size-field','access-field'].forEach(f=>{ const e=document.getElementById(f); if(e) e.hidden = v==='online'; }); const o=document.getElementById('online-opts'); if(o) o.hidden = v!=='online'; }
+  if(key==='ovis'){ const e=document.getElementById('ocom-field'); if(e) e.hidden = v==='privada'; const h=document.getElementById('ovis-hint'); if(h) h.textContent = v==='privada' ? 'Solo quien está en la llamada. No sale en Descubrir: invita con el enlace.' : 'Cualquiera puede verla en directo, aunque no participe.'; }
   if(key==='policy'){ const h=document.getElementById('policy-hint'); if(h) h.textContent = policyHint(v); }
   if(key==='access'){ const h=document.getElementById('access-hint'); if(h) h.textContent = v==='aprobacion'
     ? 'Recibirás solicitudes de asistencia y decides a quién aceptas.'
@@ -7763,6 +8127,7 @@ function commitPlan(title, desc, flag){
     approval: access==='aprobacion' ? 'manual' : (access==='libre' && !paid ? 'libre' : 'automatica'),
     groupId, held: !!flag || undefined,
   };
+  if (d.mode === 'online') Object.assign(plan, onlinePlanFields(d));   // videollamada: sin lugar, con sus opciones (videollamadas.js)
   PLANS.unshift(plan);
   if (d.fromIdea) linkIdeaToPlan(plan);   // venía de una chispa: entran los que se animaron (chispas.js)
   if (groupId){ const g=getGroup(groupId); if(g) g.planIds.unshift(plan.id); }
@@ -7904,12 +8269,14 @@ function pageHead(title){ return `<div class="page-bar"><button class="pb-back" 
 // número de filtros puestos; debajo, los puestos como chips que se quitan con un toque.
 const FILTER_SIZES = [['todos','Todos','layers'],['intimo','Íntimo','user'],['mediano','Mediano','users'],['grande','Grande','group']];
 const FILTER_PRICES = [['todos','Todo','layers'],['gratis','Gratis','ticket'],['pago','Pago','euro']];
+const FILTER_MODES = [['todos','Todos','layers'],['presencial','En persona','pin'],['online','Videollamada','video']];
 function activeFilters(){
   const out = [];
   if (state.category !== 'todas'){ const c = getCategory(state.category); out.push(['category', 'todas', c ? c.label : state.category]); }
   if (state.size !== 'todos') out.push(['size', 'todos', (FILTER_SIZES.find(x => x[0] === state.size) || [])[1]]);
   if (state.price !== 'todos') out.push(['price', 'todos', (FILTER_PRICES.find(x => x[0] === state.price) || [])[1]]);
   if (state.when !== 'todo') out.push(['when', 'todo', (WHEN_OPTS.find(x => x[0] === state.when) || [])[1]]);
+  if ((state.mode || 'todos') !== 'todos') out.push(['mode', 'todos', (FILTER_MODES.find(x => x[0] === state.mode) || [])[1]]);
   return out;
 }
 function buildFilters(){
@@ -7927,11 +8294,13 @@ function buildFilters(){
       <div class="seg-row">
         <div class="iseg" id="seg-size">${FILTER_SIZES.map(([v,l,n])=>ichip(v,l,n,state.size===v)).join('')}</div>
         <div class="iseg" id="seg-price">${FILTER_PRICES.map(([v,l,n])=>ichip(v,l,n,state.price===v)).join('')}</div></div>
+      <div class="iseg" id="seg-mode">${FILTER_MODES.map(([v,l,n])=>ichip(v,l,n,(state.mode||'todos')===v)).join('')}</div>
       <div class="iseg when-seg" id="seg-when">${WHEN_OPTS.map(([v,l])=>`<button data-v="${v}" class="${state.when===v?'active':''}">${v==='todo'?ico('clock'):''}<span>${l}</span></button>`).join('')}</div>
       <div class="filter-foot"><button class="link-btn dim" onclick="clearFilters()">Quitar filtros</button><button class="ph-btn primary" onclick="toggleFilters(false)">Ver planes</button></div>
     </div>`;
   cont.querySelector('#seg-when').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.when=b.dataset.v; setActive('#seg-when button',b); renderFeed(); };
   cont.querySelector('#seg-size').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.size=b.dataset.v; setActive('#seg-size button',b); renderFeed(); };
+  cont.querySelector('#seg-mode').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.mode=b.dataset.v; setActive('#seg-mode button',b); renderFeed(); };
   cont.querySelector('#seg-price').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.price=b.dataset.v; setActive('#seg-price button',b); renderFeed(); };
   cont.querySelector('#chips-cat').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.category=b.dataset.v; setActive('#chips-cat button',b); renderFeed(); };
   renderFilterState();
@@ -7952,7 +8321,7 @@ function renderFilterState(){
   if (box) box.innerHTML = state.filtersOpen ? '' : act.map(([k, def, l]) => `<button class="f-chip" onclick="clearFilter('${k}','${def}')" aria-label="Quitar el filtro ${escapeHtml(l)}">${escapeHtml(l)}${ico('close')}</button>`).join('');
 }
 function clearFilter(k, def){ state[k] = def; buildFilters(); renderFeed(); }
-function clearFilters(){ Object.assign(state, { category:'todas', size:'todos', price:'todos', when:'todo' }); buildFilters(); renderFeed(); }
+function clearFilters(){ Object.assign(state, { category:'todas', size:'todos', price:'todos', when:'todo', mode:'todos' }); buildFilters(); renderFeed(); }
 
 /* ---------- la cabecera y la barra de abajo se esconden al bajar y vuelven al subir ----------
    Más pantalla para los planes. Al llegar arriba, al cambiar de pantalla o en el chat,
@@ -7991,7 +8360,8 @@ function router(){
   stopMusic(); checkReminders(); updateDmBadge(); updateNotifBadge(); setChromeHidden(false);
   const hash = location.hash.replace(/^#\//,'') || 'feed';
   const [route,arg] = hash.split('/');
-  if (route !== 'plan'){ state.updVisit = null; state.updAll = null; }   // al volver a la ficha, se recalculan las novedades sin ver
+  if (route !== 'plan'){ state.updVisit = null; state.updAll = null; }
+  if (route !== 'sala' && state.call){ stopMyCamera(); clearInterval(callTimer); state.call = null; }   // al salir de la sala, se cuelga   // al volver a la ficha, se recalculan las novedades sin ver
   switch(route){
     case 'mapa':    state.navTab='mapa'; renderMap(); showView('mapa'); break;
     case 'grupos':  state.navTab='grupos'; renderGroups(); showView('grupos'); break;
@@ -8007,6 +8377,7 @@ function router(){
     case 'tema':    renderTag(arg); showView('page'); scrollTop('page'); break;
     case 'seguidores': case 'seguidos': renderFollowList(route, arg || 'me'); showView('page'); scrollTop('page'); break;
     case 'notificaciones': renderNotifications(); showView('page'); scrollTop('page'); break;
+    case 'sala': renderCall(arg); showView('page'); scrollTop('page'); break;   // videollamada (videollamadas.js)
     case 'agenda': renderAgenda(hash.split('/').slice(1).join('/')); showView('page'); scrollTop('page'); break;
     case 'editar-plan': renderEditPlan(arg); showView('page'); scrollTop('page'); break;
     case 'seguridad': renderSecurity(); showView('page'); scrollTop('page'); break;

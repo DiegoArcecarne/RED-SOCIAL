@@ -152,6 +152,44 @@ const PLANS = [
     summary: 'Proyección bajo las estrellas con manta y palomitas incluidas.',
     secret: false,
   },
+  /* Planes por videollamada (videollamadas.js): sin lugar. online.visibility: publica (cualquiera
+     puede verla en directo) | privada (solo quien está en la llamada); comments: comentarios de
+     quien mira; join: libre (hasta el límite, groupMax) | aprobacion (decide el anfitrión). */
+  {
+    id: 'p13', title: 'Debate: ¿se hacen amigos después de los 30?', placeId: null, category: 'social',
+    level: 2, paid: false, price: 0, recurring: false, hostId: 'lucia',
+    host: { name: 'Lucía R.', business: false, verified: true, rating: 4.8, reliability: 95 },
+    when: hoursFromNow(-0.25), durationMin: 75, groupMin: 2, groupMax: 8, joined: 6,
+    joinType: 'apuntado', approval: 'manual', online: { visibility: 'publica', comments: true, join: 'aprobacion' },
+    gradient: 'g-grape', photo: null,
+    summary: 'Conversación tranquila: cada persona cuenta cómo ha hecho amigos de adulta y qué le ha funcionado. Quien quiera hablar, pide unirse; el resto puede mirar y comentar.',
+    secret: false,
+    callComments: [
+      { userId: 'david', text: 'A mí me funcionó apuntarme a un club de running', min: 9 },
+      { userId: 'irene', text: 'Totalmente de acuerdo con lo de repetir con la misma gente', min: 6 },
+      { userId: 'alexv', text: '¿Alguien más se ha mudado a Madrid hace poco?', min: 3 },
+    ],
+  },
+  {
+    id: 'p14', title: 'Iniciación al ajedrez por videollamada', placeId: null, category: 'cultura',
+    level: 2, paid: false, price: 0, recurring: false, hostId: 'marco',
+    host: { name: 'Marco T.', business: false, verified: true, rating: 4.9, reliability: 99 },
+    when: hoursFromNow(30), durationMin: 60, groupMin: 2, groupMax: 12, joined: 7,
+    joinType: 'apuntado', approval: 'automatica', online: { visibility: 'publica', comments: false, join: 'libre' },
+    gradient: 'g-dark', photo: null,
+    summary: 'Clase para empezar desde cero: movimientos, primeras aperturas y una partida comentada. Con cámara, hasta 12 personas; si solo quieres mirar, entra sin apuntarte.',
+    secret: false,
+  },
+  {
+    id: 'p15', title: 'Club de lectura: Panza de burro', placeId: null, category: 'cultura',
+    level: 2, paid: false, price: 0, recurring: false, hostId: 'sara',
+    host: { name: 'Sara M.', business: false, verified: true, rating: 4.7, reliability: 97 },
+    when: hoursFromNow(50), durationMin: 90, groupMin: 2, groupMax: 6, joined: 4,
+    joinType: 'apuntado', approval: 'manual', online: { visibility: 'privada', comments: false, join: 'aprobacion' },
+    gradient: 'g-sunset', photo: null,
+    summary: 'Comentamos la novela de Andrea Abreu. Grupo pequeño y privado: solo entra quien está apuntado.',
+    secret: false,
+  },
 ];
 
 
@@ -188,7 +226,7 @@ const PLAN_ATTENDANCE = {
 };
 PLANS.forEach((p) => {
   const a = PLAN_ATTENDANCE[p.id] || {};
-  p.joinType = a.joinType || (p.paid ? 'apuntado' : 'libre');
+  p.joinType = a.joinType || p.joinType || (p.paid ? 'apuntado' : 'libre');   // las videollamadas traen el suyo
   p.attended = (a.attended != null) ? a.attended : p.joined;
   p.publicAttendees = a.pub || ['SM','DL','NV'];
   p.attendedPrivate = Math.max(0, p.attended - p.publicAttendees.length);
@@ -208,7 +246,7 @@ const PLAN_EXTRA = {
 };
 PLANS.forEach((p) => {
   const e = PLAN_EXTRA[p.id] || {};
-  p.approval = (p.joinType === 'libre') ? 'libre' : (e.approval || 'automatica');
+  p.approval = (p.joinType === 'libre') ? 'libre' : (e.approval || p.approval || 'automatica');
   p.groupId = e.groupId || null;
   p.cancelPolicy = e.cancelPolicy || 'flexible';   // flexible | moderada | estricta (solo cuenta en los de pago)
   p.waitlist = e.waitlist ? e.waitlist.slice() : [];
@@ -238,7 +276,7 @@ const USERS = [
     bio:'Viajera y runner. Outdoor y gastronomía por Madrid.',
     profilePublic:true, presencePublic:true, followers:184, following:156,
     ratings:{ default:'publica', publica:'todos', privada:'amigos' },
-    joinedPlanIds:['p9'],
+    joinedPlanIds:['p9','p15'],
     seenUpdates:{ p9: Date.now() - 2 * 3600000 },
     remindersSent:{ p9:{ dia:true } },   // recordatorios ya enviados por plan (el del día antes de la cata, en las notificaciones)   // novedades vistas por plan (la más reciente de la cata está sin ver)   // apuntada a la cata de mañana (toca reconfirmar)
     stats:{ noShows:0, lateCancels:0 },

@@ -295,7 +295,7 @@ function searchAll(q){
   const n = norm(q).replace(/^[#@]/, '').trim();
   if (!n) return { people: [], plans: [], tags: [] };
   const people = USERS.filter(u => u.id !== 'me' && !(ME.blocked || []).includes(u.id) && userMod(u.id).status !== 'expulsada' && [u.name, u.handle, u.bio, u.business && u.business.category].some(f => norm(f).includes(n)));
-  const plans = PLANS.filter(p => !isCancelled(p) && [p.title, p.summary, (getPlace(p.placeId) || {}).name, (getCategory(p.category) || {}).label, (p.host || {}).name].some(f => norm(f).includes(n)));
+  const plans = PLANS.filter(p => !isCancelled(p) && canSeeOnline(p) && [p.title, p.summary, (getPlace(p.placeId) || {}).name, (getCategory(p.category) || {}).label, (p.host || {}).name].some(f => norm(f).includes(n)));
   const tags = allHashtags().filter(t => norm(t.tag).includes(n));
   return { people, plans, tags };
 }
@@ -328,7 +328,7 @@ function renderSearchResults(){
     <span class="conv-main"><b>${escapeHtml(u.name)} ${u.verified ? `<span class="vchk">${ico('check')}</span>` : ''}${typeBadge(u)}</b><span>${escapeHtml(u.handle)}${isPrivate(u) ? ' · Cuenta privada' : ''}${follows('me', u.id) ? ' · Le sigues' : ''}</span></span></button>`;
   const plan = (p) => { const pl = getPlace(p.placeId);
     return `<button class="conv" onclick="saveRecentSearch(state.search.q);go('plan/${p.id}')"><span class="conv-av plan ${p.gradient}">${coverImg(p.photo, 120)}</span>
-      <span class="conv-main"><b>${escapeHtml(p.title)}</b><span>${fmtWhen(new Date(p.when))} · ${escapeHtml(p.secret ? 'Zona aproximada' : (pl ? pl.name : 'Madrid'))}${p.paid ? ' · ' + p.price + ' €' : ' · Gratis'}</span></span></button>`; };
+      <span class="conv-main"><b>${escapeHtml(p.title)}</b><span>${fmtWhen(new Date(p.when))} · ${escapeHtml(isOnline(p) ? 'Videollamada' : (p.secret ? 'Zona aproximada' : (pl ? pl.name : 'Madrid')))}${p.paid ? ' · ' + p.price + ' €' : ' · Gratis'}</span></span></button>`; };
   const tag = (x) => `<button class="conv" onclick="saveRecentSearch(state.search.q);go('tema/${encodeURIComponent(x.tag)}')"><span class="conv-av tag-av">${ico('hash')}</span>
     <span class="conv-main"><b>#${escapeHtml(x.tag)}</b><span>${x.n} ${x.n === 1 ? 'publicación' : 'publicaciones'}</span></span></button>`;
   const sec = (title, list, fn, k) => list.length ? `${t === 'todo' ? `<div class="notif-h"><span>${title}</span>${list.length > 3 ? `<button class="link-btn" onclick="setSearchTab('${k}')">Ver todo</button>` : ''}</div>` : ''}${(t === 'todo' ? list.slice(0, 3) : list).map(fn).join('')}` : '';

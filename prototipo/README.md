@@ -183,6 +183,13 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    **Recordatorios** de los planes a los que vas y de los tuyos: el día antes (con la
    reconfirmación), 2 h antes (lugar y QR) y 15 min antes; se eligen en *Notificaciones ▸
    preferencias* y se reprograman si cambia la hora (*Demo: recordatorio de 2 h antes*).
+23. **Planes por videollamada** — en *Crear plan ▸ Dónde ▸ Videollamada*: pública o privada,
+   con o sin comentarios, unirse libre hasta un límite o con tu aprobación, y duración. En
+   Descubrir salen con *Online* (o *En directo*) y hay filtro *Dónde*. Prueba *Debate: ¿se
+   hacen amigos después de los 30?* (en directo): *Ver en directo*, comenta, *Pedir unirme* y
+   ya dentro micro, cámara (la tuya, si el navegador lo permite) y mano. Las privadas solo
+   las ve quien está apuntado y no tienen página pública. Ver
+   [`docs/videollamadas.md`](../docs/videollamadas.md).
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.
@@ -192,7 +199,7 @@ condiciones de las cuentas profesionales están pendientes de decidir.
 
 ## Para desarrollar
 
-Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `pagos.js`, `chispas.js`, `admin.js`, `agenda.js`, `app.js`).
+Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `pagos.js`, `chispas.js`, `admin.js`, `agenda.js`, `videollamadas.js`, `app.js`).
 `standalone.html` y `web/` se generan; no los edites a mano. Desde la raíz del repositorio:
 
 ```bash
