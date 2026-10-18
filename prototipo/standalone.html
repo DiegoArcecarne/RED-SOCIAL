@@ -33,6 +33,7 @@
   --radius:14px;
   --maxw:430px;
   --tb:calc(62px + env(safe-area-inset-bottom,0px));   /* alto de la barra inferior (con la zona segura del iPhone) */
+  --tbo:var(--tb);         /* lo que ocupa la barra inferior ahora (0 cuando se esconde al bajar) */
   font-family:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -195,7 +196,7 @@ body{background:#000;color:var(--ink);display:flex;justify-content:center;-webki
 .switch.on{background:var(--accent);border-color:var(--accent)}
 .switch.on .knob{left:19px;background:#fff}
 
-.action-bar{position:sticky;bottom:var(--tb);background:rgba(0,0,0,.9);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:13px 16px;display:flex;align-items:center;gap:14px;margin:14px -16px 0}
+.action-bar{position:sticky;bottom:var(--tbo);transition:bottom .22s ease;background:rgba(0,0,0,.9);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:13px 16px;display:flex;align-items:center;gap:14px;margin:14px -16px 0}
 .action-bar .pr .v{font-size:19px;font-weight:800}
 .action-bar .pr .k{font-size:11px;color:var(--ink-soft);margin-top:1px}
 .btn-join{flex:1;border:none;border-radius:13px;padding:15px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;font-family:inherit;background:var(--accent);display:flex;align-items:center;justify-content:center;gap:7px}
@@ -626,7 +627,7 @@ body{background:#000;color:var(--ink);display:flex;justify-content:center;-webki
 .msg-img{position:relative;display:block;width:200px;aspect-ratio:1;border-radius:14px;overflow:hidden;background:var(--surface-2)}
 .msg-img.blur .cover-img{filter:blur(18px);transform:scale(1.15)}
 .msg-reveal{position:absolute;inset:auto 8px 8px 8px;background:rgba(0,0,0,.6);border:none;color:#fff;border-radius:10px;padding:7px 8px;font:inherit;font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer}
-.chat-foot{position:sticky;bottom:var(--tb);background:rgba(0,0,0,.9);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:8px 12px}
+.chat-foot{position:sticky;bottom:var(--tbo);background:rgba(0,0,0,.9);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:8px 12px}
 .view#view-page:has(.chat-foot){padding-bottom:0;display:flex;flex-direction:column}
 .chat-body{flex:1 0 auto}
 .chat-in{display:flex;align-items:center;gap:8px}
@@ -973,6 +974,36 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
 .rcpt th{font-weight:500;color:var(--ink-dim);width:42%}
 .rcpt td{color:var(--ink)}
 .set-group > .hint{font-size:12.5px;color:var(--ink-soft);line-height:1.45;margin:6px 2px 0}
+
+/* ======================= Interfaz compacta ======================= */
+/* Filtros plegados: buscador + botón "Filtros"; los puestos, como chips debajo. */
+.filters{gap:8px;padding:10px 12px 8px}
+.filter-bar{display:flex;gap:8px;align-items:stretch}
+.filter-bar .search-entry{flex:1;min-width:0}
+.filter-bar .search-entry span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.filter-btn{position:relative;flex:none;display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:0 12px;color:var(--ink);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.filter-btn .ico{font-size:18px}
+.filter-btn.on,.filter-btn.open{border-color:var(--ink)}
+.filter-btn em{font-style:normal;min-width:18px;height:18px;border-radius:9px;background:var(--ink);color:#000;font-size:11px;font-weight:800;display:grid;place-items:center;padding:0 5px}
+.filter-active{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.filter-active:empty{display:none}
+.filter-active::-webkit-scrollbar{display:none}
+.f-chip{flex:none;display:inline-flex;align-items:center;gap:5px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:5px 9px 5px 11px;color:var(--ink);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.f-chip .ico{font-size:12px;color:var(--ink-soft)}
+.filter-panel{display:flex;flex-direction:column;gap:10px;animation:fpanel .18s ease}
+.filter-panel[hidden]{display:none}
+.filter-foot{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.filter-foot .ph-btn{flex:0 0 auto;padding:8px 18px}
+@keyframes fpanel{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+/* Cabecera y barra inferior que se esconden al bajar y vuelven al subir. */
+.appbar{transition:margin-top .22s ease}
+.tabbar{transition:transform .22s ease}
+.phone.chrome-hidden{--tbo:0px}
+.phone.chrome-hidden .appbar{position:relative;margin-top:calc(-1 * var(--ah, 140px))}
+.phone.chrome-hidden .tabbar{transform:translateY(100%)}
+@media (prefers-reduced-motion: reduce){ .appbar,.tabbar,.action-bar{transition:none} .filter-panel{animation:none} }
+.filter-foot .link-btn{font-size:13px}
 
   </style>
 </head>
@@ -4112,6 +4143,7 @@ const SVG = {
   dots:'<svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4" class="fill"/><circle cx="12" cy="12" r="1.4" class="fill"/><circle cx="18.5" cy="12" r="1.4" class="fill"/></svg>',
   download:'<svg viewBox="0 0 24 24"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5"/><path d="M5 19.5h14"/></svg>',
   phone:'<svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.4"/><path d="M11 17.5h2"/></svg>',
+  sliders:'<svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
 };
 function ico(name){ return `<i class="ico">${SVG[name]||''}</i>`; }
 const ICON_FOR_CAT = { outdoor:'mountain', fiesta:'music', gastro:'food', cultura:'landmark', deporte:'flag', bienestar:'leaf', social:'chat', viajeros:'compass' };
@@ -4287,6 +4319,7 @@ function gridCell(p){
   </button>`;
 }
 function renderFeed(){
+  renderFilterState();
   const plans = filteredPlans();
   const cont = document.getElementById('feed-list');
   cont.innerHTML = plans.length ? `<div class="grid">${plans.map(gridCell).join('')}</div>`
@@ -6384,22 +6417,79 @@ function commitPost(caption, flag){
 function pageHead(title){ return `<div class="page-bar"><button class="pb-back" onclick="history.back()" aria-label="Atrás">${ico('chevL')}</button><span class="pb-title">${escapeHtml(title)}</span><span style="width:34px"></span></div>`; }
 
 /* ---------- filtros del feed ---------- */
+// Los filtros van plegados: en la cabecera solo el buscador y el botón "Filtros", con el
+// número de filtros puestos; debajo, los puestos como chips que se quitan con un toque.
+const FILTER_SIZES = [['todos','Todos','layers'],['intimo','Íntimo','user'],['mediano','Mediano','users'],['grande','Grande','group']];
+const FILTER_PRICES = [['todos','Todo','layers'],['gratis','Gratis','ticket'],['pago','Pago','euro']];
+function activeFilters(){
+  const out = [];
+  if (state.category !== 'todas'){ const c = getCategory(state.category); out.push(['category', 'todas', c ? c.label : state.category]); }
+  if (state.size !== 'todos') out.push(['size', 'todos', (FILTER_SIZES.find(x => x[0] === state.size) || [])[1]]);
+  if (state.price !== 'todos') out.push(['price', 'todos', (FILTER_PRICES.find(x => x[0] === state.price) || [])[1]]);
+  if (state.when !== 'todo') out.push(['when', 'todo', (WHEN_OPTS.find(x => x[0] === state.when) || [])[1]]);
+  return out;
+}
 function buildFilters(){
   const cont = document.getElementById('feed-filters');
-  const sizes=[['todos','Todos','layers'],['intimo','Íntimo','user'],['mediano','Mediano','users'],['grande','Grande','group']];
-  const prices=[['todos','Todo','layers'],['gratis','Gratis','ticket'],['pago','Pago','euro']];
   const ichip=(v,l,name,act)=>`<button data-v="${v}" class="${act?'active':''}">${ico(name)}<span>${l}</span></button>`;
+  const open = !!state.filtersOpen;
   cont.innerHTML = `
-    <button class="search-entry" onclick="go('buscar')">${ico('search')}<span>Busca planes, personas o #temas</span></button>
-    <div class="chips" id="chips-cat">${ichip('todas','Todos','hash',true)}${CATEGORIES.map(c=>ichip(c.id,c.label,ICON_FOR_CAT[c.id]||'hash',false)).join('')}</div>
-    <div class="seg-row">
-      <div class="iseg" id="seg-size">${sizes.map(([v,l,n])=>ichip(v,l,n,v==='todos')).join('')}</div>
-      <div class="iseg" id="seg-price">${prices.map(([v,l,n])=>ichip(v,l,n,v==='todos')).join('')}</div></div>
-    <div class="iseg when-seg" id="seg-when">${WHEN_OPTS.map(([v,l])=>`<button data-v="${v}" class="${v==='todo'?'active':''}">${v==='todo'?ico('clock'):''}<span>${l}</span></button>`).join('')}</div>`;
+    <div class="filter-bar">
+      <button class="search-entry" onclick="go('buscar')">${ico('search')}<span>Busca planes, personas o #temas</span></button>
+      <button class="filter-btn" id="filter-btn" aria-expanded="${open}" aria-controls="filter-panel" onclick="toggleFilters()">${ico('sliders')}<span>Filtros</span><em id="filter-count" hidden></em></button>
+    </div>
+    <div class="filter-active" id="filter-active"></div>
+    <div class="filter-panel" id="filter-panel" ${open ? '' : 'hidden'}>
+      <div class="chips" id="chips-cat">${ichip('todas','Todos','hash',state.category==='todas')}${CATEGORIES.map(c=>ichip(c.id,c.label,ICON_FOR_CAT[c.id]||'hash',state.category===c.id)).join('')}</div>
+      <div class="seg-row">
+        <div class="iseg" id="seg-size">${FILTER_SIZES.map(([v,l,n])=>ichip(v,l,n,state.size===v)).join('')}</div>
+        <div class="iseg" id="seg-price">${FILTER_PRICES.map(([v,l,n])=>ichip(v,l,n,state.price===v)).join('')}</div></div>
+      <div class="iseg when-seg" id="seg-when">${WHEN_OPTS.map(([v,l])=>`<button data-v="${v}" class="${state.when===v?'active':''}">${v==='todo'?ico('clock'):''}<span>${l}</span></button>`).join('')}</div>
+      <div class="filter-foot"><button class="link-btn dim" onclick="clearFilters()">Quitar filtros</button><button class="ph-btn primary" onclick="toggleFilters(false)">Ver planes</button></div>
+    </div>`;
   cont.querySelector('#seg-when').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.when=b.dataset.v; setActive('#seg-when button',b); renderFeed(); };
   cont.querySelector('#seg-size').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.size=b.dataset.v; setActive('#seg-size button',b); renderFeed(); };
   cont.querySelector('#seg-price').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.price=b.dataset.v; setActive('#seg-price button',b); renderFeed(); };
   cont.querySelector('#chips-cat').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.category=b.dataset.v; setActive('#chips-cat button',b); renderFeed(); };
+  renderFilterState();
+}
+function toggleFilters(open){
+  state.filtersOpen = open === undefined ? !state.filtersOpen : open;
+  const panel = document.getElementById('filter-panel'), btn = document.getElementById('filter-btn');
+  if (panel) panel.hidden = !state.filtersOpen;
+  if (btn){ btn.setAttribute && btn.setAttribute('aria-expanded', String(state.filtersOpen)); btn.classList.toggle('open', state.filtersOpen); }
+  renderFilterState();
+}
+// Contador del botón y chips de los filtros puestos (solo con el panel cerrado).
+function renderFilterState(){
+  const act = activeFilters();
+  const n = document.getElementById('filter-count'), btn = document.getElementById('filter-btn'), box = document.getElementById('filter-active');
+  if (n){ n.textContent = String(act.length); n.hidden = !act.length; }
+  if (btn) btn.classList.toggle('on', act.length > 0);
+  if (box) box.innerHTML = state.filtersOpen ? '' : act.map(([k, def, l]) => `<button class="f-chip" onclick="clearFilter('${k}','${def}')" aria-label="Quitar el filtro ${escapeHtml(l)}">${escapeHtml(l)}${ico('close')}</button>`).join('');
+}
+function clearFilter(k, def){ state[k] = def; buildFilters(); renderFeed(); }
+function clearFilters(){ Object.assign(state, { category:'todas', size:'todos', price:'todos', when:'todo' }); buildFilters(); renderFeed(); }
+
+/* ---------- la cabecera y la barra de abajo se esconden al bajar y vuelven al subir ----------
+   Más pantalla para los planes. Al llegar arriba, al cambiar de pantalla o en el chat,
+   siempre se ven. */
+const chromeState = { hidden:false, lock:0 };
+function setChromeHidden(h){
+  if (chromeState.hidden === h) return;
+  const ph = document.querySelector && document.querySelector('.phone'); if (!ph) return;
+  const bar = document.querySelector('.appbar');
+  if (h && bar) ph.style.setProperty('--ah', bar.offsetHeight + 'px');
+  chromeState.hidden = h; chromeState.lock = Date.now() + 280;   // sin vaivenes mientras dura la animación
+  ph.classList.toggle('chrome-hidden', h);
+}
+function onViewScroll(e){
+  const v = e.target, y = v.scrollTop, dy = y - (v._lastY || 0);
+  v._lastY = y;
+  if (Date.now() < chromeState.lock) return;
+  if (y < 40 || (v.querySelector && v.querySelector('.chat-foot'))) return setChromeHidden(false);
+  if (v.scrollHeight - v.clientHeight < 240) return;   // poco contenido: no merece la pena
+  if (dy > 6) setChromeHidden(true); else if (dy < -6) setChromeHidden(false);
 }
 function setActive(sel,el){ document.querySelectorAll(sel).forEach(x=>x.classList.remove('active')); el.classList.add('active'); }
 
@@ -6415,7 +6505,7 @@ function showView(name){
 }
 function scrollTop(v){ const el=document.getElementById('view-'+v); if(el) el.scrollTop=0; }
 function router(){
-  stopMusic(); updateDmBadge(); updateNotifBadge();
+  stopMusic(); updateDmBadge(); updateNotifBadge(); setChromeHidden(false);
   const hash = location.hash.replace(/^#\//,'') || 'feed';
   const [route,arg] = hash.split('/');
   switch(route){
@@ -6483,6 +6573,7 @@ function init(){
   document.querySelectorAll('.content-tabs button').forEach(b=>{ b.onclick=()=>setContentTab(b.dataset.tab); });
   document.querySelectorAll('.tabbar button').forEach(b=>{ b.onclick=()=>go(b.dataset.nav==='crear'?'crear':b.dataset.nav); });
   window.addEventListener('hashchange', router);
+  document.querySelectorAll('.view').forEach(v => v.addEventListener('scroll', onViewScroll, { passive:true }));
   updateDmBadge();
   router();
   loadAllMedia().then(n => { if (n) router(); });   // fotos y vídeos subidos (IndexedDB)

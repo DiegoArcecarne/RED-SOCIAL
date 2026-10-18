@@ -976,6 +976,29 @@ check('tus datos (RGPD): incluyen pagos, tarjetas (sin el número) y cobros (IBA
 const py2 = createEnv(pyst);
 check('persisten pagos, tarjetas y cobros', py2.run('PAYMENTS.length') === py.run('PAYMENTS.length') && py2.run('PAYMENT_METHODS.length') === 2 && py2.run('payoutsReady()'));
 
+// --- Interfaz compacta: filtros plegados y barras que se esconden al bajar ---
+const ui = createEnv({});
+ui.nav('feed'); h = ui.html('feed-filters'); rendered += h;
+check('filtros plegados: buscador y botón "Filtros"; el panel, cerrado', h.includes('filter-btn') && h.includes('Busca planes') && /id="filter-panel" hidden/.test(h) && h.includes('aria-expanded="false"'));
+ui.run('toggleFilters()'); check('el botón abre el panel', ui.run('state.filtersOpen') === true && ui.run('document.getElementById("filter-panel").hidden') === false);
+ui.run('state.category = "outdoor"; state.price = "gratis"; toggleFilters(false); renderFeed()');
+check('con el panel cerrado: contador y chips de los filtros puestos', ui.run('document.getElementById("filter-count").textContent') === '2' && ui.html('filter-active').includes('Outdoor') && ui.html('filter-active').includes('Gratis'));
+check('los planes se filtran igual', count(ui.html('feed-list'), /class="cell /g) === ui.run('filteredPlans().length') && ui.run('filteredPlans().every(p => p.category === "outdoor" && !p.paid)'));
+ui.run('clearFilter("price", "todos")'); check('quitar un filtro con su chip', ui.run('state.price') === 'todos' && ui.run('document.getElementById("filter-count").textContent') === '1');
+ui.run('clearFilters()'); check('quitar todos los filtros', ui.run('activeFilters().length') === 0 && ui.run('document.getElementById("filter-count").hidden') === true);
+ui.run(`globalThis.__ph = { cls:{}, classList:{ toggle(c, v){ __ph.cls[c] = v; } }, style:{ setProperty(){} }, offsetHeight:120 }; document.querySelector = () => __ph;
+  globalThis.__v = { scrollTop:0, _lastY:0, scrollHeight:3000, clientHeight:700, querySelector:() => null }`);
+ui.run('__v.scrollTop = 200; onViewScroll({ target: __v }); __v.scrollTop = 300; chromeState.lock = 0; onViewScroll({ target: __v })');
+check('al bajar se esconden la cabecera y la barra de abajo', ui.run('chromeState.hidden') === true && ui.run('__ph.cls["chrome-hidden"]') === true);
+ui.run('chromeState.lock = 0; __v.scrollTop = 250; onViewScroll({ target: __v })');
+check('al subir vuelven', ui.run('chromeState.hidden') === false);
+ui.run('chromeState.lock = 0; __v.scrollTop = 400; onViewScroll({ target: __v }); chromeState.lock = 0; __v.scrollTop = 10; onViewScroll({ target: __v })');
+check('arriba del todo siempre se ven', ui.run('chromeState.hidden') === false);
+ui.run('chromeState.lock = 0; __v.scrollTop = 400; __v.querySelector = (s) => s === ".chat-foot" ? {} : null; onViewScroll({ target: __v })');
+check('en un chat no se esconden', ui.run('chromeState.hidden') === false);
+ui.run('__v.querySelector = () => null; chromeState.lock = 0; __v.scrollTop = 600; onViewScroll({ target: __v })'); ui.nav('mapa');
+check('al cambiar de pantalla vuelven a verse', ui.run('chromeState.hidden') === false);
+
 const pdir0 = path.join(__dirname, '..', 'prototipo');
 // --- Compartir: web pública con vista previa, enlaces que abren la app y menú nativo ---
 const wdir = path.join(__dirname, '..', 'prototipo', 'web');

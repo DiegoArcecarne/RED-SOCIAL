@@ -86,6 +86,7 @@ const SVG = {
   dots:'<svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4" class="fill"/><circle cx="12" cy="12" r="1.4" class="fill"/><circle cx="18.5" cy="12" r="1.4" class="fill"/></svg>',
   download:'<svg viewBox="0 0 24 24"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5"/><path d="M5 19.5h14"/></svg>',
   phone:'<svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.4"/><path d="M11 17.5h2"/></svg>',
+  sliders:'<svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
 };
 function ico(name){ return `<i class="ico">${SVG[name]||''}</i>`; }
 const ICON_FOR_CAT = { outdoor:'mountain', fiesta:'music', gastro:'food', cultura:'landmark', deporte:'flag', bienestar:'leaf', social:'chat', viajeros:'compass' };
@@ -261,6 +262,7 @@ function gridCell(p){
   </button>`;
 }
 function renderFeed(){
+  renderFilterState();
   const plans = filteredPlans();
   const cont = document.getElementById('feed-list');
   cont.innerHTML = plans.length ? `<div class="grid">${plans.map(gridCell).join('')}</div>`
@@ -2358,22 +2360,79 @@ function commitPost(caption, flag){
 function pageHead(title){ return `<div class="page-bar"><button class="pb-back" onclick="history.back()" aria-label="Atrás">${ico('chevL')}</button><span class="pb-title">${escapeHtml(title)}</span><span style="width:34px"></span></div>`; }
 
 /* ---------- filtros del feed ---------- */
+// Los filtros van plegados: en la cabecera solo el buscador y el botón "Filtros", con el
+// número de filtros puestos; debajo, los puestos como chips que se quitan con un toque.
+const FILTER_SIZES = [['todos','Todos','layers'],['intimo','Íntimo','user'],['mediano','Mediano','users'],['grande','Grande','group']];
+const FILTER_PRICES = [['todos','Todo','layers'],['gratis','Gratis','ticket'],['pago','Pago','euro']];
+function activeFilters(){
+  const out = [];
+  if (state.category !== 'todas'){ const c = getCategory(state.category); out.push(['category', 'todas', c ? c.label : state.category]); }
+  if (state.size !== 'todos') out.push(['size', 'todos', (FILTER_SIZES.find(x => x[0] === state.size) || [])[1]]);
+  if (state.price !== 'todos') out.push(['price', 'todos', (FILTER_PRICES.find(x => x[0] === state.price) || [])[1]]);
+  if (state.when !== 'todo') out.push(['when', 'todo', (WHEN_OPTS.find(x => x[0] === state.when) || [])[1]]);
+  return out;
+}
 function buildFilters(){
   const cont = document.getElementById('feed-filters');
-  const sizes=[['todos','Todos','layers'],['intimo','Íntimo','user'],['mediano','Mediano','users'],['grande','Grande','group']];
-  const prices=[['todos','Todo','layers'],['gratis','Gratis','ticket'],['pago','Pago','euro']];
   const ichip=(v,l,name,act)=>`<button data-v="${v}" class="${act?'active':''}">${ico(name)}<span>${l}</span></button>`;
+  const open = !!state.filtersOpen;
   cont.innerHTML = `
-    <button class="search-entry" onclick="go('buscar')">${ico('search')}<span>Busca planes, personas o #temas</span></button>
-    <div class="chips" id="chips-cat">${ichip('todas','Todos','hash',true)}${CATEGORIES.map(c=>ichip(c.id,c.label,ICON_FOR_CAT[c.id]||'hash',false)).join('')}</div>
-    <div class="seg-row">
-      <div class="iseg" id="seg-size">${sizes.map(([v,l,n])=>ichip(v,l,n,v==='todos')).join('')}</div>
-      <div class="iseg" id="seg-price">${prices.map(([v,l,n])=>ichip(v,l,n,v==='todos')).join('')}</div></div>
-    <div class="iseg when-seg" id="seg-when">${WHEN_OPTS.map(([v,l])=>`<button data-v="${v}" class="${v==='todo'?'active':''}">${v==='todo'?ico('clock'):''}<span>${l}</span></button>`).join('')}</div>`;
+    <div class="filter-bar">
+      <button class="search-entry" onclick="go('buscar')">${ico('search')}<span>Busca planes, personas o #temas</span></button>
+      <button class="filter-btn" id="filter-btn" aria-expanded="${open}" aria-controls="filter-panel" onclick="toggleFilters()">${ico('sliders')}<span>Filtros</span><em id="filter-count" hidden></em></button>
+    </div>
+    <div class="filter-active" id="filter-active"></div>
+    <div class="filter-panel" id="filter-panel" ${open ? '' : 'hidden'}>
+      <div class="chips" id="chips-cat">${ichip('todas','Todos','hash',state.category==='todas')}${CATEGORIES.map(c=>ichip(c.id,c.label,ICON_FOR_CAT[c.id]||'hash',state.category===c.id)).join('')}</div>
+      <div class="seg-row">
+        <div class="iseg" id="seg-size">${FILTER_SIZES.map(([v,l,n])=>ichip(v,l,n,state.size===v)).join('')}</div>
+        <div class="iseg" id="seg-price">${FILTER_PRICES.map(([v,l,n])=>ichip(v,l,n,state.price===v)).join('')}</div></div>
+      <div class="iseg when-seg" id="seg-when">${WHEN_OPTS.map(([v,l])=>`<button data-v="${v}" class="${state.when===v?'active':''}">${v==='todo'?ico('clock'):''}<span>${l}</span></button>`).join('')}</div>
+      <div class="filter-foot"><button class="link-btn dim" onclick="clearFilters()">Quitar filtros</button><button class="ph-btn primary" onclick="toggleFilters(false)">Ver planes</button></div>
+    </div>`;
   cont.querySelector('#seg-when').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.when=b.dataset.v; setActive('#seg-when button',b); renderFeed(); };
   cont.querySelector('#seg-size').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.size=b.dataset.v; setActive('#seg-size button',b); renderFeed(); };
   cont.querySelector('#seg-price').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.price=b.dataset.v; setActive('#seg-price button',b); renderFeed(); };
   cont.querySelector('#chips-cat').onclick = e=>{ const b=e.target.closest('button'); if(!b)return; state.category=b.dataset.v; setActive('#chips-cat button',b); renderFeed(); };
+  renderFilterState();
+}
+function toggleFilters(open){
+  state.filtersOpen = open === undefined ? !state.filtersOpen : open;
+  const panel = document.getElementById('filter-panel'), btn = document.getElementById('filter-btn');
+  if (panel) panel.hidden = !state.filtersOpen;
+  if (btn){ btn.setAttribute && btn.setAttribute('aria-expanded', String(state.filtersOpen)); btn.classList.toggle('open', state.filtersOpen); }
+  renderFilterState();
+}
+// Contador del botón y chips de los filtros puestos (solo con el panel cerrado).
+function renderFilterState(){
+  const act = activeFilters();
+  const n = document.getElementById('filter-count'), btn = document.getElementById('filter-btn'), box = document.getElementById('filter-active');
+  if (n){ n.textContent = String(act.length); n.hidden = !act.length; }
+  if (btn) btn.classList.toggle('on', act.length > 0);
+  if (box) box.innerHTML = state.filtersOpen ? '' : act.map(([k, def, l]) => `<button class="f-chip" onclick="clearFilter('${k}','${def}')" aria-label="Quitar el filtro ${escapeHtml(l)}">${escapeHtml(l)}${ico('close')}</button>`).join('');
+}
+function clearFilter(k, def){ state[k] = def; buildFilters(); renderFeed(); }
+function clearFilters(){ Object.assign(state, { category:'todas', size:'todos', price:'todos', when:'todo' }); buildFilters(); renderFeed(); }
+
+/* ---------- la cabecera y la barra de abajo se esconden al bajar y vuelven al subir ----------
+   Más pantalla para los planes. Al llegar arriba, al cambiar de pantalla o en el chat,
+   siempre se ven. */
+const chromeState = { hidden:false, lock:0 };
+function setChromeHidden(h){
+  if (chromeState.hidden === h) return;
+  const ph = document.querySelector && document.querySelector('.phone'); if (!ph) return;
+  const bar = document.querySelector('.appbar');
+  if (h && bar) ph.style.setProperty('--ah', bar.offsetHeight + 'px');
+  chromeState.hidden = h; chromeState.lock = Date.now() + 280;   // sin vaivenes mientras dura la animación
+  ph.classList.toggle('chrome-hidden', h);
+}
+function onViewScroll(e){
+  const v = e.target, y = v.scrollTop, dy = y - (v._lastY || 0);
+  v._lastY = y;
+  if (Date.now() < chromeState.lock) return;
+  if (y < 40 || (v.querySelector && v.querySelector('.chat-foot'))) return setChromeHidden(false);
+  if (v.scrollHeight - v.clientHeight < 240) return;   // poco contenido: no merece la pena
+  if (dy > 6) setChromeHidden(true); else if (dy < -6) setChromeHidden(false);
 }
 function setActive(sel,el){ document.querySelectorAll(sel).forEach(x=>x.classList.remove('active')); el.classList.add('active'); }
 
@@ -2389,7 +2448,7 @@ function showView(name){
 }
 function scrollTop(v){ const el=document.getElementById('view-'+v); if(el) el.scrollTop=0; }
 function router(){
-  stopMusic(); updateDmBadge(); updateNotifBadge();
+  stopMusic(); updateDmBadge(); updateNotifBadge(); setChromeHidden(false);
   const hash = location.hash.replace(/^#\//,'') || 'feed';
   const [route,arg] = hash.split('/');
   switch(route){
@@ -2457,6 +2516,7 @@ function init(){
   document.querySelectorAll('.content-tabs button').forEach(b=>{ b.onclick=()=>setContentTab(b.dataset.tab); });
   document.querySelectorAll('.tabbar button').forEach(b=>{ b.onclick=()=>go(b.dataset.nav==='crear'?'crear':b.dataset.nav); });
   window.addEventListener('hashchange', router);
+  document.querySelectorAll('.view').forEach(v => v.addEventListener('scroll', onViewScroll, { passive:true }));
   updateDmBadge();
   router();
   loadAllMedia().then(n => { if (n) router(); });   // fotos y vídeos subidos (IndexedDB)

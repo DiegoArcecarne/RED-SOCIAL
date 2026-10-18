@@ -45,7 +45,9 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
 
 1. **Descubrir** — cuadrícula de 3 columnas con 12 planes, cada uno con foto
    temática y un icono discreto de gratis o de pago. Filtros por tema, tamaño de
-   grupo y precio.
+   grupo, precio y fecha, **plegados** tras el botón *Filtros* (con el número de filtros
+   puestos, que se quitan con un toque). En todas las pantallas, la cabecera y la barra de
+   abajo **se esconden al bajar** y vuelven al subir, para dejar sitio al contenido.
 2. **Vividas (el muro)** — lo que la gente publica, tanto de los planes como de su
    vida, con un filtro Todo / Planes / Vida: fotos, carruseles
    que se deslizan y vídeos (simulados con la portada en movimiento). Me gusta
