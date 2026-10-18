@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Te han compartido algo en planes · planes</title>
+<meta name="description" content="Planes y gente con quien vivirlos. Ábrelo en la app.">
+<!-- Prototipo con datos de ejemplo: no se indexa. En la app real: noindex (ver docs/compartir.md). -->
+<meta name="robots" content="noindex">
+<meta property="og:site_name" content="planes">
+<meta property="og:locale" content="es_ES">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Te han compartido algo en planes">
+<meta property="og:description" content="Planes y gente con quien vivirlos. Ábrelo en la app.">
+<meta property="og:image" content="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&amp;h=630&amp;fit=crop&amp;q=70">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Te han compartido algo en planes">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Te han compartido algo en planes">
+<meta name="twitter:description" content="Planes y gente con quien vivirlos. Ábrelo en la app.">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&amp;h=630&amp;fit=crop&amp;q=70">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="../icon-192.png">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="web.css">
+</head>
+<body>
+<header class="w-bar"><a class="w-brand" href="index.html">planes</a><a class="w-open" href="../standalone.html#/feed">Abrir en la app</a></header>
+<main class="w-main">
+<article class="w-card"><div class="w-body">
+  <h1>Te han compartido algo en planes</h1>
+  <p>Ábrelo en la app para verlo.</p>
+  <p class="w-dim">En la demo, lo que crea cada persona se guarda en su navegador: si lo abres en otro móvil puede que no aparezca.</p>
+</div></article>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    var r = (location.hash || '').replace(/^#\/?/, '');
+    if (!/^(plan|p|u|tema)\/[\w.%-]+$/.test(r)) return;
+    var to = '../standalone.html#/' + r;
+    try { if (matchMedia('(display-mode: standalone)').matches) return location.replace(to); } catch (e) {}
+    Array.prototype.forEach.call(document.querySelectorAll('a[href$="#/feed"]'), function(a){ a.href = to; });
+  });
+</script>
+<a class="w-cta" href="../standalone.html#/feed">Abrir en la app</a>
+<p class="w-fine">¿Aún no tienes planes? <a href="../standalone.html">Ábrela e instálala</a> en tu móvil: es gratis. Para ir a un plan hay que verificar la identidad.</p>
+</main>
+<footer class="w-foot">planes · prototipo con datos de ejemplo</footer>
+</body>
+</html>
