@@ -189,6 +189,7 @@ function saveState(){
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
       notifications: NOTIFICATIONS,
     }));
+    saveAdmin();
   } catch (e) {   // sin almacenamiento: la demo funciona en memoria
     if (e && /quota/i.test(e.name + e.message)) toast('No queda espacio en este navegador para guardar más fotos');
   }
@@ -256,7 +257,7 @@ function gridCell(p){
   <button class="cell ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">
     ${coverImg(p.photo,500)}
     <span class="cell-scrim"></span>
-    <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>
+    <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>${p.featured ? '<span class="cell-feat">Destacado</span>' : ''}
     <span class="cell-info">
       <span class="cell-title">${escapeHtml(p.title)}</span>
       <span class="cell-meta">${escapeHtml(loc)} · ${ico('geo')} ${attendanceView(p).n}</span>
@@ -265,7 +266,7 @@ function gridCell(p){
 }
 function renderFeed(){
   renderFilterState();
-  const plans = filteredPlans();
+  const plans = filteredPlans().sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));   // destacados por el equipo, primero
   const cont = document.getElementById('feed-list');
   cont.innerHTML = ideasStrip() + (plans.length ? `<div class="grid">${plans.map(gridCell).join('')}</div>`
     : emptyTab('grid','Sin planes con esos filtros','Prueba a ampliar el tamaño de grupo o el tema.'));
@@ -1920,6 +1921,7 @@ function createProfile(){
   USERS.push({ id, name, handle:'@'+user, initials: initials(name), type:'profesional', managedBy:'me', verified:false, followers:0, following:0,
     bio: clip(vals.bio, 'bio'), business:{ category: vals.cat || BIZ_CATEGORIES[0], web:'', address:'' }, attendedPlanIds:[] });
   ME.profiles = myProfiles().map(u => u.id);
+  requestBizVerification(getUser(id));   // entra en la cola de verificación de negocios (admin.js)
   state.draftProfile = null; saveState();
   toast('Perfil creado'); go('u/' + id);
 }
@@ -2036,6 +2038,7 @@ function renderSettings(){
           <span class="tg-ic">${ico('shield')}</span>
           <span class="tg-info"><span class="tg-n">Simular cuenta sin verificar</span><span class="tg-s">Para ver qué cambia antes de verificarse</span></span>
           <span class="switch ${ME.verified?'':'on'}"><span class="knob"></span></span></div>
+        <button class="set-row" onclick="go('admin')"><span class="sr-ic">${ico('layers')}</span><span class="sr-l">Panel de administración<span class="or-s">equipo interno: usuarios, planes, negocios, categorías y métricas</span></span><span class="pl-arrow">${ico('chevR')}</span></button>
         <button class="set-row" onclick="go('moderacion')"><span class="sr-ic">${ico('shield')}</span><span class="sr-l">Panel de moderación<span class="or-s">equipo interno</span></span><span class="soon">${REPORTS.filter(r => r.status === 'en_cola').length} en cola</span><span class="pl-arrow">${ico('chevR')}</span></button>
         <button class="set-row" onclick="openInstallHelp()"><span class="sr-ic">${ico('phone')}</span><span class="sr-l">Instalar en el móvil</span><span class="pl-arrow">${ico('chevR')}</span></button>
         <button class="set-row" onclick="resetDemo()"><span class="sr-ic">${ico('repeat')}</span><span class="sr-l">Restablecer demo</span><span class="soon">borra cuentas y lo creado</span></button>
@@ -2162,7 +2165,7 @@ function renderCreatePlan(){
       <div class="field"><label>Tamaño de grupo</label>
         <div class="iseg" id="d-size">${sizes.map(([v,l,n])=>`<button data-v="${v}" class="${d.size===v?'active':''}" onclick="setDraft('size','${v}')">${ico(n)}<span>${l}</span></button>`).join('')}</div></div>
       <div class="field"><label>Tema</label>
-        <div class="chips" id="d-cat">${CATEGORIES.map(c=>`<button data-v="${c.id}" class="${d.cat===c.id?'active':''}" onclick="setDraft('cat','${c.id}')">${ico(ICON_FOR_CAT[c.id])}<span>${c.label}</span></button>`).join('')}</div></div>
+        <div class="chips" id="d-cat">${activeCategories().map(c=>`<button data-v="${c.id}" class="${d.cat===c.id?'active':''}" onclick="setDraft('cat','${c.id}')">${ico(ICON_FOR_CAT[c.id]||'hash')}<span>${c.label}</span></button>`).join('')}</div></div>
       <div class="field"><label>Precio</label>
         <div class="iseg" id="d-price">
           <button data-v="gratis" class="${d.price==='gratis'?'active':''}" onclick="setDraft('price','gratis')">${ico('ticket')}<span>Gratis</span></button>
@@ -2396,7 +2399,7 @@ function buildFilters(){
     </div>
     <div class="filter-active" id="filter-active"></div>
     <div class="filter-panel" id="filter-panel" ${open ? '' : 'hidden'}>
-      <div class="chips" id="chips-cat">${ichip('todas','Todos','hash',state.category==='todas')}${CATEGORIES.map(c=>ichip(c.id,c.label,ICON_FOR_CAT[c.id]||'hash',state.category===c.id)).join('')}</div>
+      <div class="chips" id="chips-cat">${ichip('todas','Todos','hash',state.category==='todas')}${activeCategories().map(c=>ichip(c.id,c.label,ICON_FOR_CAT[c.id]||'hash',state.category===c.id)).join('')}</div>
       <div class="seg-row">
         <div class="iseg" id="seg-size">${FILTER_SIZES.map(([v,l,n])=>ichip(v,l,n,state.size===v)).join('')}</div>
         <div class="iseg" id="seg-price">${FILTER_PRICES.map(([v,l,n])=>ichip(v,l,n,state.price===v)).join('')}</div></div>
@@ -2489,6 +2492,7 @@ function router(){
     case 'pagos': renderPayments(); showView('page'); scrollTop('page'); break;
     case 'cobros': renderPayouts(); showView('page'); scrollTop('page'); break;
     case 'moderacion': renderModeration(arg); showView('page'); scrollTop('page'); break;
+    case 'admin': renderAdmin(arg); showView('page'); scrollTop('page'); break;
     case 'nuevo-perfil': renderNewProfile(); showView('page'); scrollTop('page'); break;
     case 'editar-perfil': renderEditProfile(); showView('page'); scrollTop('page'); break;
     case 'ajustes': renderSettings(); showView('page'); scrollTop('page'); break;
@@ -2522,7 +2526,7 @@ function init(){
   // Sin sesión: pantalla de bienvenida. Cuenta nueva: empieza sin el contenido de demostración.
   const acc = currentAccount();
   if (acc && acc.id !== 'demo') freshWorld();
-  if (acc) loadState();
+  if (acc){ loadState(); loadAdmin(); }   // loadAdmin: lo que ha cambiado el equipo (admin.js)
   if (!acc || !acc.onboarded) rememberDestino();   // enlace compartido: se abre al entrar
   registerServiceWorker();
   window.addEventListener('pagehide', saveState);

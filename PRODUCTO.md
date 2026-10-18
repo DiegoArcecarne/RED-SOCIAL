@@ -608,6 +608,17 @@ Aparcada para el lanzamiento, apuntada para más adelante. Diseño cuando se act
 
 Condición de activación: solo después de consolidar la reputación de "aquí no se viene a ligar". Si se enseña antes, se pierde el posicionamiento de planes y amigos para siempre. Nota de diseño: el producto ya genera romance de forma orgánica —conoces a alguien haciendo algo real, sin swipe—, así que esta capa es azúcar opcional sobre un mecanismo que ya existe solo, no un pilar.
 
+## Herramientas internas
+
+El equipo opera la app desde un **panel de administración**: una web aparte, con acceso por roles (administración, moderación, soporte y análisis), 2FA obligatoria y un registro inmutable de cada acción. Especificación completa en [`docs/herramientas-internas.md`](docs/herramientas-internas.md).
+
+- **Usuarios**: buscar, ver su estado (verificación, sanciones, reportes, fiabilidad), dar por buena o revocar la verificación con motivo, suspender por motivos de cuenta, enviar el enlace para restablecer la contraseña y dejar notas internas. Nunca se "entra como" un usuario ni se leen sus mensajes privados.
+- **Planes**: filtrar (con reportes, en revisión, de pago, destacados), destacar en Descubrir (curaduría, nunca de pago), aprobar lo que retuvo el filtro, retirar o restaurar, y cancelar con reembolso completo a todos.
+- **Verificación de negocios**: cola con los documentos (CIF, licencia, titularidad del local, seguro) para verificar, pedir lo que falta o rechazar. Al verificar, el negocio lleva la marca y, si reclamaba un lugar del mapa, el lugar pasa a ser suyo. Entra en la cola al crear un perfil profesional o reclamar un lugar.
+- **Categorías**: crear, renombrar, fusionar (mueve sus planes y chispas) y jubilar, sin tocar el código.
+- **Métricas del piloto**: la métrica principal (asistencias verificadas por semana), su evolución y el semáforo de las hipótesis H1-H6 del plan de validación, más la operación del momento (reportes, SOS, negocios por verificar, cobros).
+- **Moderación**: acceso al panel de confianza y seguridad.
+
 ## Roadmap de lanzamiento
 
 Validación low-code primero. Antes de construir la app: landing, grupo por ciudad y pasarela de pago, con planes sembrados a mano. Es como arrancó el ganador de la categoría (Timeleft llegó a 1 M€/mes de ingresos con Typeform, WhatsApp y Stripe antes de tecnología pesada). El objetivo es validar el bucle completo —la gente se apunta, paga, sube el aftermovie, vuelve— a coste casi cero. El plan detallado del piloto (hipótesis, herramientas, calendario de seis semanas, métricas y criterios para continuar o parar) está en [`docs/plan-validacion-madrid.md`](docs/plan-validacion-madrid.md).
@@ -761,7 +772,10 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 
 ### Soporte transversal
 
-- Categoría. id, nombre, estado (activa, fusionada, jubilada). Taxonomía actualizable; no se hard-codea.
+- Categoría. id, nombre, icono, orden, estado (activa, fusionada, jubilada) y en cuál se fusionó. Taxonomía actualizable desde el panel de administración; no se hard-codea.
+- Verificación de negocio. cuenta de empresa, lugar que reclama (opcional), NIF, documentos (CIF, licencia de actividad, titularidad del local, seguro de responsabilidad civil), estado (pendiente, faltan documentos, verificado, rechazado), motivo, quién la decidió y fechas.
+- Equipo y registro. Miembro del equipo (correo de trabajo, roles: administración, moderación, soporte, análisis; 2FA obligatoria), registro de cada acción del equipo (quién, rol, qué, sobre qué, antes y después, motivo, IP, fecha; solo inserción) y notas internas sobre usuarios. Ver [`docs/herramientas-internas.md`](docs/herramientas-internas.md).
+- Métrica semanal. semana, ciudad, registros, activos, planes, apuntados y asistencias verificadas; agregada cada noche a partir de eventos de producto propios.
 - Notificación. usuario_id, tipo (recordatorio y reconfirmación, solicitud, mensaje, cambio en un plan, plaza de la lista de espera, después del plan, seguidor, mención y seguridad —resultado de tus reportes, decisiones de moderación y SOS—; y más adelante planes cerca), referencia (plan, conversación o ruta), texto, leída, fecha. Las preferencias por tipo viven en el Usuario. Los avisos de seguridad no se pueden desactivar.
 
 ### Relaciones clave, de un vistazo

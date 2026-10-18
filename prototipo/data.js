@@ -20,7 +20,7 @@ const PLACES = [
   { id: 'azotea',    name: 'Azotea Círculo',      kind: 'negocio', verified: true,  city: 'Madrid', category: 'fiesta',  hashtag: '#rooftopmadrid',     x: 54, y: 44, rating: 4.6 },
   { id: 'debod',     name: 'Templo de Debod',     kind: 'publico', verified: false, city: 'Madrid', category: 'outdoor', hashtag: '#atardecerdebod',    x: 40, y: 52, rating: 4.9 },
   { id: 'retiro',    name: 'Parque del Retiro',   kind: 'publico', verified: false, city: 'Madrid', category: 'outdoor', hashtag: '#retiromorning',     x: 66, y: 60, rating: 4.7 },
-  { id: 'clamores',  name: 'Sala Clamores',       kind: 'negocio', verified: true,  city: 'Madrid', category: 'cultura', hashtag: '#clamoresjazz',      x: 60, y: 30, rating: 4.5 },
+  { id: 'clamores',  name: 'Sala Clamores',       kind: 'negocio', verified: false, city: 'Madrid', category: 'cultura', hashtag: '#clamoresjazz',      x: 60, y: 30, rating: 4.5 },
   { id: 'sierra',    name: 'Mirador de la Sierra', kind: 'publico', verified: false, city: 'Madrid', category: 'deporte', hashtag: '#trailamanecer',     x: 30, y: 68, rating: 4.8 },
   { id: 'secreto',   name: 'Lugar por desvelar',  kind: 'publico', verified: false, city: 'Madrid', category: 'gastro',  hashtag: '#cenasecretamadrid', x: 48, y: 22, rating: 4.9, secret: true },
   { id: 'lavapies',  name: 'Plaza de Lavapiés',   kind: 'publico', verified: false, city: 'Madrid', category: 'viajeros', hashtag: '#tapasviajeros',    x: 72, y: 46, rating: 4.6 },
@@ -516,6 +516,29 @@ const IDEAS = [
     people:[{ userId:'irene', status:'si' }], status:'abierta', at: minsAgo(400) },
 ];
 
+/* Herramientas internas (admin.js; en la app real, una web aparte con acceso por roles).
+   Verificación de negocios: documentos, estado y, si reclaman un lugar del mapa, cuál.
+   status: pendiente | faltan_documentos | verificado | rechazado. */
+const BIZ_VERIFICATIONS = [
+  { id:'bv1', userId:'azotea', name:'Azotea Círculo', taxId:'B12345674', category:'Ocio nocturno', address:'Centro, Madrid', placeId:'azotea', claim:true,
+    docs:['CIF','Licencia de actividad','Titularidad del local'], status:'verificado', at: minsAgo(40 * 1440), decidedAt: minsAgo(39 * 1440) },
+  { id:'bv2', userId:null, name:'Bar La Parra', taxId:'B87654321', category:'Bar', address:'Lavapiés, Madrid', placeId:'lavapies', claim:false, contact:'Javier R.',
+    docs:['CIF','Licencia de actividad'], missing:['Titularidad del local'], status:'pendiente', at: minsAgo(300) },
+  { id:'bv3', userId:null, name:'Vinos Vivos', taxId:'B11223344', category:'Organizador de eventos', address:'Madrid', contact:'Elena M.',
+    docs:['CIF','Seguro de responsabilidad civil'], status:'pendiente', at: minsAgo(1500) },
+  { id:'bv4', userId:null, name:'Sala Clamores', taxId:'B99887766', category:'Cultura', address:'Chamberí, Madrid', placeId:'clamores', claim:true, contact:'Pablo G.',
+    docs:['CIF','Licencia de actividad','Titularidad del local'], status:'pendiente', at: minsAgo(30) },
+];
+// Métricas del piloto por semana (simuladas: en la app real salen del registro de eventos).
+const PILOT_WEEKS = [
+  { w:'Semana 1', registros:62, activos:41, planes:9,  apuntados:58,  asistencias:37 },
+  { w:'Semana 2', registros:71, activos:66, planes:13, apuntados:84,  asistencias:55 },
+  { w:'Semana 3', registros:48, activos:83, planes:16, apuntados:102, asistencias:71 },
+  { w:'Semana 4', registros:55, activos:97, planes:19, apuntados:121, asistencias:86 },
+];
+// Valores acumulados del piloto para las hipótesis H1-H6 de docs/plan-validacion-madrid.md (simulados).
+const PILOT_STATS = { registros:236, activacion:44, asistenciaGratis:64, asistenciaPago:88, repeticion:27, aforoPago:73, planesConFotos:41, valoracion:4.4, incidentesGraves:0, semana:4, semanas:6 };
+
 /* Pagos (pagos.js; en la app real, Stripe Connect). Cada pago es una reserva de un plan de
    pago: el dinero queda retenido hasta que el plan se celebra y después se paga al
    anfitrión, menos la comisión del 15 %. status: pendiente (aceptado, falta pagar) |
@@ -554,7 +577,7 @@ if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
     STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, FOLLOW_REQUESTS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
-    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS, PLAN_PRESENCE, IDEAS,
+    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS, PLAN_PRESENCE, IDEAS, BIZ_VERIFICATIONS, PILOT_WEEKS, PILOT_STATS,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }

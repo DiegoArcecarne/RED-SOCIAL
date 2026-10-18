@@ -1129,6 +1129,86 @@ check('el filtro automático también vale para las chispas', ch.run('IDEAS[0].h
 const ch2 = createEnv(chs);
 check('persisten las chispas y las respuestas', ch2.run(`getIdea("${myIdea.id}").status`) === 'convertida' && ch2.run('myIdeaStatus(getIdea("ch3"))') === 'si');
 
+// --- Herramientas internas: panel de administración ---
+const ads = {};
+const ad = createEnv(ads);
+ad.nav('ajustes'); h = ad.html('view-page');
+check('ajustes ▸ Prototipo: entrada al panel de administración', h.includes("go('admin')") && h.includes('Panel de administración'));
+ad.nav('admin'); h = ad.html('view-page'); rendered += h;
+check('admin: pestañas usuarios, planes, negocios, categorías, moderación y registro', ['Resumen','Usuarios','Planes','Negocios','Categorías','Moderación','Registro'].every(t => h.includes(`<span>${t}</span>`)) && h.includes('Herramienta interna del equipo'));
+check('admin: cifra principal (asistencias de la semana) con su variación', h.includes('Asistencias verificadas esta semana') && h.includes('<b>86</b>') && h.includes('+21 % frente a la semana anterior'));
+check('admin: gráfico de columnas de una serie, con tabla y descripción accesible', h.includes('class="wk-chart"') && count(h, /class="wk-col"/g) === 4 && h.includes('aria-label="Asistencias verificadas por semana: 37, 55, 71, 86"') && h.includes('Ver como tabla') && count(h, /class="wk-val"/g) === 1);
+const hyps = ad.run('pilotHypotheses()').map(x => x.status).join(',');
+check('admin: hipótesis H1-H6 con el semáforo de plan-validacion-madrid', hyps === 'ambar,verde,ambar,verde,ambar,verde' && h.includes('st-warn') && h.includes('st-good') && h.includes('<span>Ajustar</span>') && h.includes('<span>Seguir</span>'));
+ad.run('PILOT_STATS.registros = 120');
+check('admin: H1 en rojo si no llega a 150 registros', ad.run('pilotHypotheses()[0].status') === 'rojo');
+ad.run('PILOT_STATS.registros = 236; PILOT_STATS.incidentesGraves = 1');
+check('admin: H6 en rojo con cualquier incidente grave', ad.run('pilotHypotheses()[5].status') === 'rojo');
+ad.run('PILOT_STATS.incidentesGraves = 0');
+check('admin: datos vivos de la demo', h.includes('Esta demo, ahora') && h.includes('Planes activos') && h.includes('Negocios por verificar'));
+// Usuarios
+ad.run("renderAdmin('usuarios')"); h = ad.html('view-page'); rendered += h;
+check('admin ▸ usuarios: lista con verificación y estado', h.includes('Marco') && h.includes('Verificada') && h.includes('Activa'));
+ad.run("state.adminQ = 'luc'; renderAdminList()");
+check('admin ▸ usuarios: buscar', ad.html('adm-list').includes('Lucía') && !ad.html('adm-list').includes('Marco'));
+ad.run("openAdminUser('marco')"); h = ad.html('overlay');
+check('admin ▸ ficha: datos, nota interna y acciones', h.includes('Nota interna') && h.includes('Revocar la verificación') && h.includes('Suspender 7 días'));
+set(ad, 'f-anote', 'Habla con soporte el lunes'); ad.run("saveAdminNote('marco')");
+ad.run("adminSetVerified('marco', false)");
+check('admin: revocar la verificación', ad.run('getUser("marco").verified') === false && ad.html('overlay').includes('Dar por verificada'));
+ad.run("adminSuspend('marco', true)");
+check('admin: suspender 7 días (usa el estado de moderación)', ad.run('isSanctioned("marco")') === true && ad.html('overlay').includes('Reactivar la cuenta'));
+ad.run("adminSuspend('marco', false)");
+check('admin: reactivar', ad.run('isSanctioned("marco")') === false);
+// Planes
+ad.run("closeOverlay(); state.adminPlanFilter = 'pago'; renderAdmin('planes')"); h = ad.html('view-page');
+const nPaid = ad.run('PLANS.filter(p => p.paid).length');
+check('admin ▸ planes: filtro de pago', count(h, /class="adm-row"/g) === nPaid);
+const featId = ad.run('PLANS.filter(p => !p.paid && !isCancelled(p) && p.when > Date.now()).slice(-1)[0].id');
+ad.run(`adminPlan("${featId}", "destacar")`); ad.run('state.filtersOpen = false'); ad.nav('feed'); ad.run("setContentTab('disponibles')");
+check('admin: destacar un plan lo pone el primero en Descubrir', ad.run('filteredPlans().sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))[0].id') === featId && ad.html('feed-list').includes('Destacado'));
+ad.run(`adminPlan("${featId}", "retirar")`);
+check('admin: retirar un plan lo quita de Descubrir', !ad.run('filteredPlans()').some(p => p.id === featId) && ad.run(`planAdminState(getPlan("${featId}"))`) === 'Retirado');
+ad.run(`adminPlan("${featId}", "restaurar")`);
+const payPlan = ad.run("PAYMENTS.find(x => !x.past && x.status === 'retenido').planId");
+ad.run(`adminPlan("${payPlan}", "cancelar")`);
+check('admin: cancelar un plan de pago reembolsa a todos', ad.run(`isCancelled(getPlan("${payPlan}"))`) && ad.run(`PAYMENTS.filter(x => x.planId === "${payPlan}" && !x.past).every(x => x.status === 'reembolsado')`));
+// Negocios
+ad.run("renderAdmin('negocios')"); h = ad.html('view-page'); rendered += h;
+check('admin ▸ negocios: cola con documentos y lugar reclamado', h.includes('Bar La Parra') && h.includes('Reclama el lugar') && h.includes('Titularidad del local') && h.includes('Pedir documentos') && h.includes('<em>3</em>'));
+check('el lugar aún no está verificado', ad.run('getPlace("clamores").verified') === false);
+ad.run("decideBiz('bv4', 'aprobar')");
+check('admin: verificar un negocio que reclama un lugar lo marca como suyo', ad.run('BIZ_VERIFICATIONS.find(b => b.id === "bv4").status') === 'verificado' && ad.run('getPlace("clamores").verified') === true);
+ad.run("decideBiz('bv3', 'documentos')");
+check('admin: pedir los documentos que faltan', ad.run('BIZ_VERIFICATIONS.find(b => b.id === "bv3").status') === 'faltan_documentos' && ad.run('BIZ_VERIFICATIONS.find(b => b.id === "bv3").note').includes('Licencia de actividad'));
+ad.run("decideBiz('bv2', 'rechazar')");
+check('admin: rechazar', ad.run('BIZ_VERIFICATIONS.find(b => b.id === "bv2").status') === 'rechazado');
+const nBiz = ad.run('BIZ_VERIFICATIONS.length');
+ad.run("state.draftProfile = null"); ad.nav('nuevo-perfil'); set(ad, 'f-npname', 'Taller Barro'); set(ad, 'f-npuser', 'tallerbarro'); set(ad, 'f-npcat', 'Cultura'); ad.run('createProfile()');
+check('crear un perfil profesional lo pone en la cola de verificación', ad.run('BIZ_VERIFICATIONS.length') === nBiz + 1 && ad.run('BIZ_VERIFICATIONS.slice(-1)[0].name') === 'Taller Barro' && ad.run('BIZ_VERIFICATIONS.slice(-1)[0].status') === 'pendiente');
+// Categorías
+ad.run("renderAdmin('categorias')"); h = ad.html('view-page'); rendered += h;
+check('admin ▸ categorías: lista con recuento de planes', h.includes('Outdoor') || h.includes('planes · Activa'));
+set(ad, 'f-newcat', 'Juegos de mesa'); ad.run('addCategory()');
+check('admin: crear una categoría (sale al crear un plan y en los filtros)', ad.run('activeCategories().some(c => c.id === "juegos-de-mesa")') && ad.html('feed-filters').includes('Juegos de mesa'));
+ad.run("openCatEdit('juegos-de-mesa')"); set(ad, 'f-catname', 'Juegos'); ad.run("catAction('juegos-de-mesa', 'renombrar')");
+check('admin: renombrar', ad.run('getCategory("juegos-de-mesa").label') === 'Juegos');
+const nViaj = ad.run('PLANS.filter(p => p.category === "viajeros").length'), nSoc = ad.run('PLANS.filter(p => p.category === "social").length');
+ad.run("openCatEdit('viajeros')"); set(ad, 'f-catinto', 'social'); ad.run("catAction('viajeros', 'fusionar')");
+check('admin: fusionar mueve los planes y la quita de los filtros', ad.run('PLANS.filter(p => p.category === "social").length') === nViaj + nSoc && !ad.run('activeCategories().some(c => c.id === "viajeros")') && !ad.html('feed-filters').includes('data-v="viajeros"'));
+ad.run("catAction('juegos-de-mesa', 'jubilar')");
+check('admin: jubilar (deja de salir al crear)', !ad.run('activeCategories().some(c => c.id === "juegos-de-mesa")'));
+ad.run("state.ideaDraft = null"); ad.nav('crear-chispa');
+check('las chispas usan las categorías activas', !ad.html('view-page').includes("setIdeaCategory('viajeros')") && ad.html('view-page').includes("setIdeaCategory('social')"));
+// Moderación y registro
+ad.run("renderAdmin('moderacion')"); h = ad.html('view-page');
+check('admin ▸ moderación: resumen y acceso al panel', h.includes('En cola') && h.includes('Abrir el panel de moderación'));
+ad.run("renderAdmin('registro')"); h = ad.html('view-page'); rendered += h;
+check('admin ▸ registro: cada acción con quién y qué', ['Nota interna','Verificación revocada','Suspende la cuenta 7 días','Destaca el plan','Cancela el plan','Verifica el negocio','Fusiona la categoría','Jubila la categoría'].every(t => h.includes(t)) && h.includes('Tú (admin)'));
+const ad2 = createEnv(ads);
+check('persiste lo del equipo (categorías, negocios, verificación, registro)', ad2.run('getCategory("juegos-de-mesa").label') === 'Juegos' && !ad2.run('activeCategories().some(c => c.id === "viajeros")') && ad2.run('getPlace("clamores").verified') === true
+  && ad2.run('getUser("marco").verified') === false && ad2.run('ADMIN_LOG.length') >= 10 && ad2.run('BIZ_VERIFICATIONS.find(b => b.id === "bv3").status') === 'faltan_documentos');
+
 const pdir0 = path.join(__dirname, '..', 'prototipo');
 // --- Compartir: web pública con vista previa, enlaces que abren la app y menú nativo ---
 const wdir = path.join(__dirname, '..', 'prototipo', 'web');

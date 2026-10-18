@@ -97,6 +97,14 @@ erDiagram
     PLAN ||--o| CAMPANA_BOOST : promociona
     USUARIO ||--o{ NOTIFICACION : recibe
 
+    MIEMBRO_EQUIPO ||--o{ REGISTRO_ADMIN : "hace (solo insercion)"
+    MIEMBRO_EQUIPO ||--o{ NOTA_INTERNA : escribe
+    USUARIO ||--o{ NOTA_INTERNA : "tiene (solo la ve el equipo)"
+    CUENTA_EMPRESA ||--o{ VERIFICACION_NEGOCIO : solicita
+    VERIFICACION_NEGOCIO }o--o| LUGAR : "reclama"
+    MIEMBRO_EQUIPO ||--o{ VERIFICACION_NEGOCIO : decide
+    CATEGORIA |o--o{ CATEGORIA : "fusionada en"
+
     PERSONA {
         uuid id PK
         string email "unico, verificado por codigo"
@@ -190,6 +198,8 @@ erDiagram
         string politica_cancelacion "flexible|moderada|estricta"
         string estado "proximo|en_curso|pasado|cancelado"
         string foto "url en almacenamiento"
+        bool destacado "curaduria del equipo, nunca de pago"
+        bool retirado "fuera de Descubrir"
     }
     CHISPA {
         uuid id PK
@@ -504,7 +514,56 @@ erDiagram
     CATEGORIA {
         uuid id PK
         string nombre
+        string icono
+        int orden
         string estado "activa|fusionada|jubilada"
+        uuid fusionada_en_id FK "nullable"
+    }
+    MIEMBRO_EQUIPO {
+        uuid id PK
+        string correo "SSO de trabajo"
+        string roles "administracion|moderacion|soporte|analisis"
+        bool dos_fa "obligatoria"
+    }
+    REGISTRO_ADMIN {
+        uuid id PK
+        uuid miembro_id FK
+        string rol "en ese momento"
+        string accion
+        string objeto_tipo
+        uuid objeto_id
+        json antes_despues
+        string motivo
+        string ip
+        datetime fecha
+    }
+    NOTA_INTERNA {
+        uuid id PK
+        uuid usuario_id FK
+        uuid autor_id FK "miembro del equipo"
+        string texto "max 500"
+        datetime fecha
+    }
+    VERIFICACION_NEGOCIO {
+        uuid id PK
+        uuid cuenta_empresa_id FK
+        uuid lugar_id FK "si reclama un lugar"
+        string nif
+        string documentos "cif|licencia|titularidad|seguro_rc (cifrados, 90 dias)"
+        string estado "pendiente|faltan_documentos|verificado|rechazado"
+        string motivo
+        uuid revisor_id FK
+        datetime fecha_solicitud
+        datetime fecha_decision
+    }
+    METRICA_SEMANAL {
+        date semana PK
+        string ciudad PK
+        int registros
+        int activos
+        int planes
+        int apuntados
+        int asistencias "verificadas: la metrica principal"
     }
     CONSENTIMIENTO {
         uuid id PK

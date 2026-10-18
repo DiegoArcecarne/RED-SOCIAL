@@ -178,7 +178,7 @@ function linkIdeaToPlan(plan){
 }
 
 /* ---------- lanzar una chispa ---------- */
-function freshIdeaDraft(cat){ const pr = IDEA_PRESETS[cat || 'outdoor']; return { category: cat || 'outdoor', when:'finde', date:'', zone:'', placeId:'', limit: pr.limit, max: pr.max || 8, min: pr.min, who:'todos', approval:true, auto:false, cost: pr.cost, costNote:'', title:'', text:'' }; }
+function freshIdeaDraft(cat){ const pr = ideaPreset(cat || 'outdoor'); return { category: cat || 'outdoor', when:'finde', date:'', zone:'', placeId:'', limit: pr.limit, max: pr.max || 8, min: pr.min, who:'todos', approval:true, auto:false, cost: pr.cost, costNote:'', title:'', text:'' }; }
 function renderCreateIdea(){
   const view = document.getElementById('view-page'), d = state.ideaDraft || (state.ideaDraft = freshIdeaDraft());
   const seg = (k, opts, icons) => `<div class="iseg">${opts.map(([v, l, n]) => `<button class="${String(d[k]) === v ? 'active' : ''}" onclick="setIdeaField('${k}','${v}')">${icons && n ? ico(n) : ''}<span>${l}</span></button>`).join('')}</div>`;
@@ -186,8 +186,8 @@ function renderCreateIdea(){
     <p class="hint">${ico('spark')} Cuenta qué estás pensando hacer y mira quién se anima. Si llegáis al mínimo, lo conviertes en plan con un toque.</p>
     <div class="field"><label for="f-ititle">¿Qué te apetece? ${counter('f-ititle','planTitle',d.title)}</label><input ${lim('f-ititle','planTitle')} placeholder="Ir a pescar al pantano" value="${escapeHtml(d.title)}"></div>
     <div class="field"><label for="f-itext">Cuéntalo ${counter('f-itext','groupAbout',d.text)}</label><textarea ${lim('f-itext','groupAbout')} rows="3" placeholder="Estoy pensando ir a pescar el sábado temprano. Llevo cañas de sobra. ¿Alguien se anima?">${escapeHtml(d.text)}</textarea></div>
-    <div class="field"><label>Tema</label><div class="chips">${CATEGORIES.map(c => `<button class="${d.category === c.id ? 'active' : ''}" onclick="setIdeaCategory('${c.id}')">${ico(ICON_FOR_CAT[c.id] || 'hash')}<span>${c.label}</span></button>`).join('')}</div>
-      <p class="hint">${escapeHtml(IDEA_PRESETS[d.category].why)} Te proponemos esta configuración; cámbiala si quieres.</p></div>
+    <div class="field"><label>Tema</label><div class="chips">${activeCategories().map(c => `<button class="${d.category === c.id ? 'active' : ''}" onclick="setIdeaCategory('${c.id}')">${ico(ICON_FOR_CAT[c.id] || 'hash')}<span>${c.label}</span></button>`).join('')}</div>
+      <p class="hint">${escapeHtml(ideaPreset(d.category).why)} Te proponemos esta configuración; cámbiala si quieres.</p></div>
     <div class="field"><label>Cuándo</label><div class="chips">${IDEA_WHEN.map(([v, l]) => `<button class="${d.when === v ? 'active' : ''}" onclick="setIdeaField('when','${v}')"><span>${l}</span></button>`).join('')}</div>
       ${d.when === 'fecha' ? `<input id="f-idate" type="datetime-local" style="margin-top:8px" value="${escapeHtml(d.date)}">` : ''}</div>
     <div class="field"><label for="f-izone">Dónde (aproximado)</label><input id="f-izone" maxlength="${LIMITS.address}" placeholder="Pantano de San Juan" value="${escapeHtml(d.zone)}">
@@ -223,7 +223,7 @@ function setIdeaField(k, v){
   renderCreateIdea();
 }
 function setIdeaCategory(cat){
-  captureIdea(); const pr = IDEA_PRESETS[cat], d = state.ideaDraft;
+  captureIdea(); const pr = ideaPreset(cat), d = state.ideaDraft;
   Object.assign(d, { category: cat, limit: pr.limit, max: pr.max || d.max, min: pr.min, cost: pr.cost });
   renderCreateIdea();
 }

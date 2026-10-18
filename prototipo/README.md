@@ -159,6 +159,15 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    defecto si está abierta a cualquiera) o "Quizás". Al llegar al mínimo, *Confirmar el
    plan* pide solo día, hora y punto de encuentro, y eliges quién pasa; o se hace solo, si
    lo activas. Los apuntados confirman en 24 h ("Sí, voy"); si no, su plaza queda libre.
+20. **Panel de administración** (equipo interno) — en *Ajustes ▸ Prototipo*. *Resumen*:
+   asistencias verificadas de la semana, su evolución en columnas (y como tabla) y el
+   semáforo de las hipótesis H1-H6 del piloto (datos simulados), más la demo en vivo.
+   *Usuarios* (buscar, nota interna, revocar o dar por buena la verificación, suspender),
+   *Planes* (destacar en Descubrir, retirar, cancelar con reembolso), *Negocios* (verificar,
+   pedir documentos o rechazar; verificar a Sala Clamores le da su lugar del mapa),
+   *Categorías* (crear, renombrar, fusionar y jubilar: cambia lo que sale al crear y al
+   filtrar), *Moderación* y *Registro* de cada acción. Ver
+   [`docs/herramientas-internas.md`](../docs/herramientas-internas.md).
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.
@@ -168,7 +177,7 @@ condiciones de las cuentas profesionales están pendientes de decidir.
 
 ## Para desarrollar
 
-Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `pagos.js`, `chispas.js`, `app.js`).
+Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `pagos.js`, `chispas.js`, `admin.js`, `app.js`).
 `standalone.html` y `web/` se generan; no los edites a mano. Desde la raíz del repositorio:
 
 ```bash
