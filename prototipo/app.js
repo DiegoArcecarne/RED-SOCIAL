@@ -641,6 +641,8 @@ function carouselDots(track, id){
   if (dots) Array.from(dots.children).forEach((d,k)=>d.classList.toggle('on', k===i));
   const c = document.getElementById('cc-'+id);
   if (c && dots) c.textContent = (i+1) + '/' + dots.children.length;
+  const th = document.getElementById('ct-'+id);   // miniaturas del borrador
+  if (th) Array.from(th.children).forEach((d,k)=>d.classList.toggle('on', k===i));
 }
 
 /* ======================= MENSAJES ======================= */
@@ -2303,10 +2305,7 @@ function renderCreatePost(){
   const d = state.draftPost, k = d.kind;
   const tr = d.trackId && getTrack(d.trackId);
   const musicSticker = tr ? `<span class="pp-music">${ico('music')} ${escapeHtml(trackLabel(tr))}</span>` : '';
-  const sample = [['g-grape','1566737236500-c8ac43014a67'],['g-sunset','1495567720989-cebdbdd97913'],['g-forest','1551632811-561732d1e306']];
-  const preview = k==='carrusel'
-    ? `<div class="post-prev carrusel">${sample.map(([c,ph])=>`<span class="pp ${c}">${coverImg(ph,500)}</span>`).join('')}<span class="pp-dots">1 / ${sample.length}</span>${musicSticker}</div>`
-    : `<div class="post-prev"><span class="pp ${sample[0][0]}">${coverImg(sample[0][1],700)}${k==='video'?`<span class="play-ov">${ico('play')}</span>`:''}${musicSticker}</span></div>`;
+  const preview = samplePreviewHtml(k, musicSticker);   // sin nada subido: fotos de muestra (social.js)
   // planes vinculables: a los que asististe o que creaste
   const linkable = linkablePlans();
   const fromPlan = d.origin === 'plan' && linkable.length > 0;
@@ -2329,7 +2328,7 @@ function renderCreatePost(){
           <button class="${k==='foto'?'active':''}" onclick="setPostField('kind','foto')">${ico('image')}<span>Foto</span></button>
           <button class="${k==='video'?'active':''}" onclick="setPostField('kind','video')">${ico('video')}<span>Vídeo</span></button>
           <button class="${k==='carrusel'?'active':''}" onclick="setPostField('kind','carrusel')">${ico('stack')}<span>Carrusel</span></button></div></div>`}
-      <div class="field"><label>Vista previa</label>${draftItems().length ? draftPreviewHtml(musicSticker) : preview + '<p class="hint">Sube tus fotos o un vídeo. Si no eliges nada, la demo usa fotos de muestra.</p>'}
+      <div class="field"><label>Vista previa</label>${draftItems().length ? draftPreviewHtml(musicSticker) : preview + '<p class="hint">Sube tus fotos o un vídeo. Si no eliges nada, la demo usa fotos de muestra.</p>' + previewPostBtn()}
         <label class="add-media center">${ico('image')} ${draftItems().length ? 'Añadir más' : 'Hacer foto o elegir de la galería'}<input type="file" accept="image/*,video/*" multiple hidden onchange="pickPostMedia(this)"></label></div>
 
       <div class="field"><label for="f-caption">Pie de texto ${counter('f-caption','caption',d.caption)}</label>

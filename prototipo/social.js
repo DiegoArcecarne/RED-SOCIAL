@@ -106,16 +106,63 @@ function pickPostMedia(input){
     renderCreatePost();
   }, () => toast('No se ha podido leer alguna foto'));
 }
-// Vista previa de lo subido, con botón para quitar cada elemento.
+// Vista previa de lo subido, como se verá en el muro: el carrusel se desliza (con contador y puntos),
+// y debajo las miniaturas para saltar a una foto, cambiarla de orden o quitarla.
 function draftPreviewHtml(sticker){
   const items = draftItems();
   if (!items.length) return '';
-  if (items[0].type === 'video') return `<div class="post-prev"><span class="pp g-dark"><video class="pp-video" src="${items[0].url || ''}" poster="${items[0].posterUrl || ''}" playsinline muted loop controls></video>
-    <button class="sv-x pv-x" onclick="removeDraftItem('${items[0].id}')" aria-label="Quitar el vídeo">${ico('close')}</button>${sticker}</span></div>
-    <p class="hint">${items[0].duration || 0} s · máximo ${MAX_VIDEO_S} s.</p>`;
-  return `<div class="post-prev ${items.length > 1 ? 'carrusel' : ''}">${items.map((it, i) => `<span class="pp g-dark"><img class="cover-img" src="${it.url}" alt="">
-      ${items.length > 1 ? `<span class="pp-n">${i + 1}</span>` : ''}<button class="sv-x pv-x" onclick="removeDraftItem('${it.id}')" aria-label="Quitar la foto ${i + 1}">${ico('close')}</button></span>`).join('')}${sticker}</div>
-    <p class="hint">${items.length} de ${MAX_ITEMS} fotos. Quitamos la ubicación GPS que guardan las fotos.</p>`;
+  if (items[0].type === 'video') return `<div class="pm draft-pm g-dark"><video class="pp-video" src="${items[0].url || ''}" poster="${items[0].posterUrl || ''}" playsinline muted loop controls></video>
+    <button class="sv-x pv-x" onclick="removeDraftItem('${items[0].id}')" aria-label="Quitar el vídeo">${ico('close')}</button>${sticker}</div>
+    <p class="hint">${items[0].duration || 0} s · máximo ${MAX_VIDEO_S} s.</p>${previewPostBtn()}`;
+  if (items.length === 1) return `<div class="pm draft-pm g-dark"><img class="cover-img" src="${items[0].url}" alt="">
+    <button class="sv-x pv-x" onclick="removeDraftItem('${items[0].id}')" aria-label="Quitar la foto">${ico('close')}</button>${sticker}</div>
+    <p class="hint">1 de ${MAX_ITEMS} fotos: añade más para hacer un carrusel. Quitamos la ubicación GPS que guardan las fotos.</p>${previewPostBtn()}`;
+  return `${draftCarousel(items.map(it => it.url), sticker)}
+    <div class="draft-thumbs" id="ct-draft">${items.map((it, i) => `<div class="dt ${i === 0 ? 'on' : ''}">
+      <button class="dt-img" onclick="draftGo(${i})" aria-label="Ver la foto ${i + 1}"><img src="${it.url}" alt=""><span class="pp-n">${i + 1}</span></button>
+      <span class="dt-acts"><button onclick="moveDraftItem('${it.id}',-1)" ${i === 0 ? 'disabled' : ''} aria-label="Mover la foto ${i + 1} antes">${ico('chevL')}</button><button onclick="removeDraftItem('${it.id}')" aria-label="Quitar la foto ${i + 1}">${ico('close')}</button><button onclick="moveDraftItem('${it.id}',1)" ${i === items.length - 1 ? 'disabled' : ''} aria-label="Mover la foto ${i + 1} después">${ico('chevR')}</button></span></div>`).join('')}</div>
+    <p class="hint">${items.length} de ${MAX_ITEMS} fotos. Desliza para verlas; con las flechas cambias el orden. Quitamos la ubicación GPS que guardan las fotos.</p>${previewPostBtn()}`;
+}
+// Carrusel deslizable (el mismo que en el muro) para la vista previa del borrador.
+function draftCarousel(srcs, sticker){
+  return `<div class="pm pm-car draft-pm"><div class="car-track" id="draft-track" onscroll="carouselDots(this,'draft')">${srcs.map(src => `<div class="car-slide g-dark">${coverImg(src, 700)}</div>`).join('')}</div>
+    <span class="pm-count" id="cc-draft">1/${srcs.length}</span><div class="car-dots" id="cd-draft">${srcs.map((_, i) => `<i class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div>${sticker || ''}</div>`;
+}
+// Sin nada subido: las fotos de muestra de la demo, también deslizables si es un carrusel.
+const SAMPLE_POST = ['1566737236500-c8ac43014a67','1495567720989-cebdbdd97913','1551632811-561732d1e306'];
+function samplePreviewHtml(kind, sticker){
+  if (kind === 'carrusel') return draftCarousel(SAMPLE_POST, sticker);
+  return `<div class="pm draft-pm g-grape">${coverImg(SAMPLE_POST[0], 700)}${kind === 'video' ? `<span class="pm-play">${ico('play')}</span>` : ''}${sticker || ''}</div>`;
+}
+const previewPostBtn = () => `<button class="btn-ghost pv-post" onclick="openPostPreview()">${ico('eye')} Ver cómo quedará</button>`;
+function draftGo(i){
+  const t = document.getElementById('draft-track'); if (!t) return;
+  if (typeof t.scrollTo === 'function') t.scrollTo({ left: i * t.clientWidth, behavior: 'smooth' }); else t.scrollLeft = i * (t.clientWidth || 0);
+}
+function moveDraftItem(id, dir){
+  capturePostInputs();
+  const items = draftItems(), i = items.findIndex(x => x.id === id), j = i + dir;
+  if (i < 0 || j < 0 || j >= items.length) return;
+  [items[i], items[j]] = [items[j], items[i]];
+  renderCreatePost(); draftGo(j);
+}
+// La publicación tal y como saldrá en el muro (con el pie, la música, el plan y el lugar), antes de publicar.
+function openPostPreview(){
+  capturePostInputs();
+  const d = state.draftPost, items = draftItems(), linkable = linkablePlans();
+  const video = items[0] && items[0].type === 'video';
+  if (video){ MEDIA.pv_video = items[0].url; }
+  const imgs = items.length ? (video ? [items[0].posterUrl || ''] : items.map(it => it.url)) : (d.kind === 'carrusel' ? SAMPLE_POST : [SAMPLE_POST[0]]);
+  const po = { id:'preview', authorId:'me', kind: items.length ? (video ? 'video' : (items.length > 1 ? 'carrusel' : 'foto')) : d.kind, imgs, media: imgs.map(() => 'g-dark'),
+    video: video ? 'm:pv_video' : undefined, duration: video ? items[0].duration : 15, caption: d.caption || '', likes:0, ago:0, comments:[],
+    placeId: d.place || null, planId: d.origin === 'plan' && linkable.length ? (linkable.some(p => p.id === d.planId) ? d.planId : linkable[0].id) : null,
+    trackId: d.trackId || null, hideLikes: d.hideLikes, commentsEnabled: d.comments, taggedUserIds: [...(d.tags || [])] };
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet pv-sheet" role="dialog" aria-label="Vista previa de la publicación">
+    <div class="sheet-h"><span>Así se verá</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list"><div class="pv-card">${postCard(po).replace(/id="(cc|cd)-preview"/g, 'id="$1-pv"').replace(/carouselDots\(this,'preview'\)/g, "carouselDots(this,'pv')")}</div>
+      <p class="hint">${{ publico:'La verá cualquiera', seguidores:'La verán tus seguidores', amigos:'La verán tus amigos' }[d.audience] || ''}${d.alsoStory ? ' · también en tus Stories 24 h' : ''}.</p>
+      <div class="pv-acts"><button class="btn-ghost" onclick="closeOverlay()">Seguir editando</button><button class="btn-primary" onclick="closeOverlay();publishPost()">${ico('check')} Publicar</button></div>
+    </div></div>`);
 }
 // Al publicar: guarda los archivos y devuelve las referencias para la publicación.
 function commitDraftMedia(){

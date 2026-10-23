@@ -1263,3 +1263,26 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
 .req-row{display:flex;align-items:center;gap:10px;padding:6px 0}
 .req-n{flex:1;min-width:0;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rb .ico svg{width:20px;height:20px}
+
+/* ---------- vista previa al crear una publicación (social.js) ---------- */
+.draft-pm{border-radius:14px;width:100%}
+.draft-pm > .cover-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.draft-pm .pv-x{position:absolute;top:8px;right:8px;z-index:3}
+.draft-pm .pp-music{z-index:3}
+.draft-thumbs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-top:10px;padding-bottom:2px}
+.draft-thumbs::-webkit-scrollbar{display:none}
+.dt{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px}
+.dt-img{position:relative;width:64px;height:64px;border-radius:10px;overflow:hidden;border:2px solid transparent;padding:0;background:var(--surface-2);cursor:pointer}
+.dt.on .dt-img{border-color:var(--ink)}
+.dt-img img{width:100%;height:100%;object-fit:cover;display:block}
+.dt-img .pp-n{left:4px;top:4px;font-size:10px;padding:1px 6px}
+.dt-acts{display:flex;gap:2px}
+.dt-acts button{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);display:grid;place-items:center;font-size:11px;cursor:pointer;padding:0}
+.dt-acts button:disabled{opacity:.3;cursor:default}
+.pv-post{margin-top:10px;width:100%}
+.pv-sheet{max-height:92%}
+.pv-card{flex:none;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--bg)}
+.pv-card *{pointer-events:none}
+.pv-card .car-track,.pv-card .car-track *,.pv-card .pm-video,.pv-card .pm-video *{pointer-events:auto}
+.pv-acts{display:flex;gap:8px}
+.pv-acts > *{flex:1}
