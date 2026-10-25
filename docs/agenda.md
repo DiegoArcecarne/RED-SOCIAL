@@ -67,7 +67,11 @@ planes que solo has visto o guardado no entran.
     Se limita a 60 peticiones por hora por token.
   - Al cerrar la cuenta o al suspenderla, el token se revoca.
 
-## 5. API
+## 5. Publicidad en la agenda
+
+Como mucho un anuncio por vista (día, semana o día elegido del mes), con "Patrocinado", quién paga y "Por qué lo ves": un plan promocionado en su día o un anuncio de marca en tu primer día libre. Nunca en la vista de año, en notificaciones ni en recordatorios. Se elige solo con tus temas, tus días libres y tu ciudad: ver [`publicidad.md`](publicidad.md).
+
+## 6. API
 
 | Método | Ruta | Para qué |
 |---|---|---|
@@ -81,7 +85,7 @@ La agenda no tiene tabla propia: se calcula a partir de las inscripciones, solic
 pagos, listas de espera, invitaciones de chispas y asistencias. Solo se guarda el token
 (`SUSCRIPCION_CALENDARIO`).
 
-## 6. Qué simula el prototipo
+## 7. Qué simula el prototipo
 
 | En el prototipo | En la app real |
 |---|---|

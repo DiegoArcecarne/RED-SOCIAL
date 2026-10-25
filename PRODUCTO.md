@@ -160,6 +160,8 @@ Dos niveles de anunciante. Marcas, locales y organizadores con campañas, y el "
 
 Coexiste con la comisión. Un local puede listar un plan de pago (comisión sobre la venta) y además pagar por destacarlo (publicidad). Son ingresos distintos sobre la misma oferta.
 
+En la agenda. Además del muro, un plan promocionado o un anuncio de marca puede salir en la agenda de quien tiene libre ese día y le interesa el tema: como mucho uno por vista, siempre con "Patrocinado" y "Por qué lo ves", y sin píxeles ni rastreo fuera de la app (solo tus temas, tus días libres y tu ciudad). Cualquier anfitrión puede promocionar su plan desde su ficha (presupuesto y días, revisión del equipo antes de salir). Especificación en [`docs/publicidad.md`](docs/publicidad.md).
+
 Guardarraíl de confianza. La densidad de publicidad se limita y los anuncios son siempre nativos y etiquetados. Saturar de publicidad mata la confianza social, que es el activo central del producto; la regla es la misma que rige la inyección orgánica.
 
 ## Cuentas de negocio: particulares y empresas

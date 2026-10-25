@@ -598,6 +598,14 @@ const AGENDA_HISTORY = [
   { id:'h8', planId:'p2', title:'Atardecer en el Templo de Debod', placeId:'debod', when: daysAgoAt(95, 20, 15), status:'asistio' },
   { id:'h9', planId:'p8', title:'Yoga al sol en el Retiro', placeId:'retiro', when: daysAgoAt(124, 10), status:'asistio' },
 ];
+/* Publicidad (publicidad.js): planes promocionados por su anfitrión y campañas de marca.
+   surfaces: dónde sale (de momento, la agenda). budget y spent en €; bid: prioridad. */
+const AD_CAMPAIGNS = [
+  { id:'ad1', planId:'p12', advertiserId:'azotea', advertiser:'Azotea Círculo', surfaces:['agenda'], budget:60, spent:21.4, bid:2, status:'activa', impressions:3560, clicks:98 },
+  { id:'ad2', planId:'p7', advertiserId:'clamores', advertiser:'Sala Clamores', surfaces:['agenda'], budget:40, spent:12.1, bid:1, status:'activa', impressions:2010, clicks:51 },
+  { id:'ad3', planId:null, advertiserId:'rutaverde', advertiser:'Ruta Verde', surfaces:['agenda'], categories:['deporte','outdoor'], budget:120, spent:44, bid:1, status:'activa', impressions:7300, clicks:160,
+    title:'Bicis de alquiler para tus planes del finde', text:'Recógela el sábado y devuélvela el domingo. Un 15 % menos si vas a un plan de la app.', cta:'Ver la oferta', photo:'1532298229144-0ec0c57515c7' },
+];
 // Métricas del piloto por semana (simuladas: en la app real salen del registro de eventos).
 const PILOT_WEEKS = [
   { w:'Semana 1', registros:62, activos:41, planes:9,  apuntados:58,  asistencias:37 },
@@ -646,7 +654,7 @@ if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
     STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, FOLLOW_REQUESTS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
-    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS, PLAN_PRESENCE, IDEAS, BIZ_VERIFICATIONS, PILOT_WEEKS, PILOT_STATS, AGENDA_HISTORY,
+    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS, PLAN_PRESENCE, IDEAS, BIZ_VERIFICATIONS, PILOT_WEEKS, PILOT_STATS, AGENDA_HISTORY, AD_CAMPAIGNS,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }

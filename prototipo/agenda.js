@@ -131,15 +131,16 @@ function agDayView(items){
     return `<button class="ag-ev k-${style}" style="top:${top(i.start)}px;height:${h}px;left:calc(48px + (100% - 48px) * ${i.col} / ${n});width:calc((100% - 48px) / ${n} - 4px)" onclick="go('${i.route}')">
       <b>${escapeHtml(i.title)}</b><span>${hhmm(i.start)}–${hhmm(i.end)} · ${escapeHtml(i.where)}</span><em>${label}</em></button>`; }).join('');
   const now = new Date(), nowLine = isToday(d) && now.getHours() >= from && now.getHours() < to ? `<div class="ag-now" style="top:${top(now)}px" aria-hidden="true"></div>` : '';
-  return `${list.length ? '' : agEmpty('Nada en tu agenda este día.')}
+  return `${list.length ? '' : agEmpty('Nada en tu agenda este día.')}${adCard(pickAgendaAd([startOfDay(d)], items))}
     <div class="ag-day" style="height:${(to - from) * HOUR + 12}px">${hours}${nowLine}${evs}</div>`;
 }
 /* Semana: los siete días, cada uno con sus planes. */
 function agWeekView(items){
   const a = startOfWeek(state.agDate), days = Array.from({ length: 7 }, (_, k) => addDays(a, k));
-  return `<div class="ag-week">${days.map(d => { const list = itemsOn(items, d);
+  const ad = pickAgendaAd(days, items);   // como mucho un anuncio por semana (publicidad.js)
+  return `<div class="ag-week">${days.map(d => { const list = itemsOn(items, d), adHere = ad && dayKey(ad.day) === dayKey(d) ? adCard(ad) : '';
     return `<div class="ag-wd ${isToday(d) ? 'today' : ''}"><button class="ag-wd-h" onclick="agSet('dia','${dayKey(d)}')" aria-label="Ver el ${escapeHtml(dayTitle(d))}"><b>${d.getDate()}</b><span>${DIAS_LARGOS[d.getDay()].slice(0, 3)}</span></button>
-      <div class="ag-wd-items">${list.map(agRow).join('') || '<span class="ag-free">Libre</span>'}</div></div>`; }).join('')}</div>`;
+      <div class="ag-wd-items">${list.map(agRow).join('') || (adHere ? '' : '<span class="ag-free">Libre</span>')}${adHere}</div></div>`; }).join('')}</div>`;
 }
 /* Mes: cuadrícula con un punto por plan; al tocar un día, sus planes debajo. */
 function agMonthView(items){
@@ -152,7 +153,7 @@ function agMonthView(items){
   const list = itemsOn(items, d);
   return `<div class="ag-month"><div class="ag-mh">${DIAS_INI.map(x => `<span>${x}</span>`).join('')}</div><div class="ag-grid">${cells}</div></div>
     <div class="ag-sel"><div class="notif-h"><span>${escapeHtml(dayTitle(d))}</span><button class="link-btn" onclick="agSet('dia')">Ver el día</button></div>
-      ${list.map(agRow).join('') || '<p class="ag-free">Nada este día.</p>'}</div>`;
+      ${list.map(agRow).join('') || '<p class="ag-free">Nada este día.</p>'}${adCard(pickAgendaAd([startOfDay(d)], items))}</div>`;
 }
 /* Año: los doce meses en pequeño; los días con plan, marcados. */
 function agYearView(items){

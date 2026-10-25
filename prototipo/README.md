@@ -190,6 +190,12 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    ya dentro micro, cámara (la tuya, si el navegador lo permite) y mano. Las privadas solo
    las ve quien está apuntado y no tienen página pública. Ver
    [`docs/videollamadas.md`](../docs/videollamadas.md).
+24. **Publicidad en la agenda** — como mucho un anuncio por vista, con *Patrocinado*, quién
+   paga y *Por qué lo ves* (tus temas, tu día libre y tu ciudad; sin rastreo). Desde ahí,
+   *No me interesa*, *No ver anuncios de…* o dejar de usar tus temas. Si organizas un plan:
+   *Promocionar este plan* (presupuesto, días, estimación, pago y resultados). Y la **lupa**
+   de arriba abre el buscador de planes, personas y #temas desde cualquier pestaña. Ver
+   [`docs/publicidad.md`](../docs/publicidad.md).
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.
@@ -199,7 +205,7 @@ condiciones de las cuentas profesionales están pendientes de decidir.
 
 ## Para desarrollar
 
-Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `pagos.js`, `chispas.js`, `admin.js`, `agenda.js`, `videollamadas.js`, `app.js`).
+Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `pagos.js`, `chispas.js`, `admin.js`, `agenda.js`, `videollamadas.js`, `publicidad.js`, `app.js`).
 `standalone.html` y `web/` se generan; no los edites a mano. Desde la raíz del repositorio:
 
 ```bash

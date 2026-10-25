@@ -1304,6 +1304,32 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
 .pv-acts{display:flex;gap:8px}
 .pv-acts > *{flex:1}
 
+/* ---------- publicidad en la agenda (publicidad.js) ---------- */
+.ag-ad{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:8px 10px 10px;display:flex;flex-direction:column;gap:7px}
+.ag-ad-h{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-soft)}
+.ag-ad-h em{font-style:normal;font-weight:800;color:var(--ink);font-size:10.5px;letter-spacing:.3px;text-transform:uppercase;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.ag-ad-h span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-ad-h .link-btn{font-size:11.5px}
+.ag-ad-b{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:var(--ink);font:inherit;text-align:left;padding:0;cursor:pointer}
+.ag-ad-b .mini-thumb{width:44px;height:44px}
+.ag-ad-cta{flex:none;font-size:12px;font-weight:700;border:1px solid var(--line);border-radius:999px;padding:5px 10px;background:var(--surface-2)}
+.ad-why{list-style:none;display:flex;flex-direction:column;gap:8px}
+.ad-why li{display:flex;gap:8px;align-items:center;font-size:13.5px}
+.ad-why .ico{color:var(--ink-soft);flex:none}
+.ad-hero{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden}
+.ad-hero .cover-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.promo-box{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:var(--surface-2)}
+.promo-h{display:flex;align-items:center;gap:8px;font-size:13.5px}
+.promo-k{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.promo-k span{display:flex;flex-direction:column;font-size:11.5px;color:var(--ink-soft)}
+.promo-k b{font-size:16px;color:var(--ink);font-variant-numeric:tabular-nums}
+.promo-est{display:flex;flex-direction:column;gap:2px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:12.5px;color:var(--ink-soft)}
+.promo-est b{font-size:15px;color:var(--ink)}
+.ag-ad .ag-main b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3}
+.ag-ad .ag-main span{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35}
+.ag-wd .ag-ad-cta{display:none}
+.sh-row .or-s{display:block;font-weight:500;font-size:12px;color:var(--ink-soft);margin-top:2px}
+
   </style>
 </head>
 <body>
@@ -1313,6 +1339,9 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
         <h1>planes</h1>
         <span class="spacer"></span>
         <span class="tag">prototipo</span>
+        <button class="dm-btn" id="search-btn" aria-label="Buscar planes, personas o temas" onclick="go('buscar')">
+          <i class="ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.4"/><path d="M15.7 15.7 20 20"/></svg></i>
+        </button>
         <button class="dm-btn" id="notif-btn" aria-label="Notificaciones" onclick="go('notificaciones')">
           <i class="ico"><svg viewBox="0 0 24 24"><path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 1.5 5.5H5s1.5-1.5 1.5-5.5z"/><path d="M10 18.5a2 2 0 0 0 4 0"/></svg></i><span class="dm-badge" id="notif-badge" hidden></span>
         </button>
@@ -1983,6 +2012,14 @@ const AGENDA_HISTORY = [
   { id:'h8', planId:'p2', title:'Atardecer en el Templo de Debod', placeId:'debod', when: daysAgoAt(95, 20, 15), status:'asistio' },
   { id:'h9', planId:'p8', title:'Yoga al sol en el Retiro', placeId:'retiro', when: daysAgoAt(124, 10), status:'asistio' },
 ];
+/* Publicidad (publicidad.js): planes promocionados por su anfitrión y campañas de marca.
+   surfaces: dónde sale (de momento, la agenda). budget y spent en €; bid: prioridad. */
+const AD_CAMPAIGNS = [
+  { id:'ad1', planId:'p12', advertiserId:'azotea', advertiser:'Azotea Círculo', surfaces:['agenda'], budget:60, spent:21.4, bid:2, status:'activa', impressions:3560, clicks:98 },
+  { id:'ad2', planId:'p7', advertiserId:'clamores', advertiser:'Sala Clamores', surfaces:['agenda'], budget:40, spent:12.1, bid:1, status:'activa', impressions:2010, clicks:51 },
+  { id:'ad3', planId:null, advertiserId:'rutaverde', advertiser:'Ruta Verde', surfaces:['agenda'], categories:['deporte','outdoor'], budget:120, spent:44, bid:1, status:'activa', impressions:7300, clicks:160,
+    title:'Bicis de alquiler para tus planes del finde', text:'Recógela el sábado y devuélvela el domingo. Un 15 % menos si vas a un plan de la app.', cta:'Ver la oferta', photo:'1532298229144-0ec0c57515c7' },
+];
 // Métricas del piloto por semana (simuladas: en la app real salen del registro de eventos).
 const PILOT_WEEKS = [
   { w:'Semana 1', registros:62, activos:41, planes:9,  apuntados:58,  asistencias:37 },
@@ -2031,7 +2068,7 @@ if (typeof window !== 'undefined') {
   Object.assign(window, {
     CATEGORIES, PLACES, PLANS, REVIEWS, ME, USERS, POSTS, GROUPS, REQUESTS,
     STORIES, LIVES, LIVE_CHAT, TRACKS, FOLLOWS, FOLLOW_REQUESTS, RATINGS, follows, areFriends, CONVERSATIONS, getConversation, REPORTS, NOTIFICATIONS,
-    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS, PLAN_PRESENCE, IDEAS, BIZ_VERIFICATIONS, PILOT_WEEKS, PILOT_STATS, AGENDA_HISTORY,
+    MOD_ACTIONS, USER_MOD, SAFETY_EVENTS, PAYMENT_METHODS, PAYMENTS, PLAN_PRESENCE, IDEAS, BIZ_VERIFICATIONS, PILOT_WEEKS, PILOT_STATS, AGENDA_HISTORY, AD_CAMPAIGNS,
     getPlace, getPlan, getCategory, getUser, getGroup, getTrack, postsByUser, postOrigin, requestsForPlan,
   });
 }
@@ -2325,7 +2362,8 @@ function freshWorld(){
   ME.trustedContacts = []; ME.shareTrips = false; ME.safeCheck = false; ME.consents = undefined; ME.consentLog = [];
   drop(MOD_ACTIONS, a => a.targetUserId === 'me'); drop(SAFETY_EVENTS, () => true); delete USER_MOD.me;
   drop(PAYMENTS, x => x.userId === 'me'); drop(PAYMENT_METHODS, () => true); ME.payouts = undefined;
-  ME.planPresence = {}; ME.pinged = {}; ME.calToken = null; AGENDA_HISTORY.length = 0; ME.seenUpdates = {}; ME.remindersSent = {}; ME.reminderPrefs = undefined;
+  ME.planPresence = {}; ME.pinged = {}; ME.calToken = null; AGENDA_HISTORY.length = 0; ME.seenUpdates = {}; ME.remindersSent = {}; ME.reminderPrefs = undefined; ME.adPrefs = undefined;
+  drop(AD_CAMPAIGNS, c => c.advertiserId === 'me');
   drop(IDEAS, x => x.authorId === 'me'); IDEAS.forEach(x => { x.people = x.people.filter(p => p.userId !== 'me'); });
   PLANS.forEach(p => { p.waitlist = (p.waitlist || []).filter(x => x !== 'me'); });
 }
@@ -5590,15 +5628,16 @@ function agDayView(items){
     return `<button class="ag-ev k-${style}" style="top:${top(i.start)}px;height:${h}px;left:calc(48px + (100% - 48px) * ${i.col} / ${n});width:calc((100% - 48px) / ${n} - 4px)" onclick="go('${i.route}')">
       <b>${escapeHtml(i.title)}</b><span>${hhmm(i.start)}–${hhmm(i.end)} · ${escapeHtml(i.where)}</span><em>${label}</em></button>`; }).join('');
   const now = new Date(), nowLine = isToday(d) && now.getHours() >= from && now.getHours() < to ? `<div class="ag-now" style="top:${top(now)}px" aria-hidden="true"></div>` : '';
-  return `${list.length ? '' : agEmpty('Nada en tu agenda este día.')}
+  return `${list.length ? '' : agEmpty('Nada en tu agenda este día.')}${adCard(pickAgendaAd([startOfDay(d)], items))}
     <div class="ag-day" style="height:${(to - from) * HOUR + 12}px">${hours}${nowLine}${evs}</div>`;
 }
 /* Semana: los siete días, cada uno con sus planes. */
 function agWeekView(items){
   const a = startOfWeek(state.agDate), days = Array.from({ length: 7 }, (_, k) => addDays(a, k));
-  return `<div class="ag-week">${days.map(d => { const list = itemsOn(items, d);
+  const ad = pickAgendaAd(days, items);   // como mucho un anuncio por semana (publicidad.js)
+  return `<div class="ag-week">${days.map(d => { const list = itemsOn(items, d), adHere = ad && dayKey(ad.day) === dayKey(d) ? adCard(ad) : '';
     return `<div class="ag-wd ${isToday(d) ? 'today' : ''}"><button class="ag-wd-h" onclick="agSet('dia','${dayKey(d)}')" aria-label="Ver el ${escapeHtml(dayTitle(d))}"><b>${d.getDate()}</b><span>${DIAS_LARGOS[d.getDay()].slice(0, 3)}</span></button>
-      <div class="ag-wd-items">${list.map(agRow).join('') || '<span class="ag-free">Libre</span>'}</div></div>`; }).join('')}</div>`;
+      <div class="ag-wd-items">${list.map(agRow).join('') || (adHere ? '' : '<span class="ag-free">Libre</span>')}${adHere}</div></div>`; }).join('')}</div>`;
 }
 /* Mes: cuadrícula con un punto por plan; al tocar un día, sus planes debajo. */
 function agMonthView(items){
@@ -5611,7 +5650,7 @@ function agMonthView(items){
   const list = itemsOn(items, d);
   return `<div class="ag-month"><div class="ag-mh">${DIAS_INI.map(x => `<span>${x}</span>`).join('')}</div><div class="ag-grid">${cells}</div></div>
     <div class="ag-sel"><div class="notif-h"><span>${escapeHtml(dayTitle(d))}</span><button class="link-btn" onclick="agSet('dia')">Ver el día</button></div>
-      ${list.map(agRow).join('') || '<p class="ag-free">Nada este día.</p>'}</div>`;
+      ${list.map(agRow).join('') || '<p class="ag-free">Nada este día.</p>'}${adCard(pickAgendaAd([startOfDay(d)], items))}</div>`;
 }
 /* Año: los doce meses en pequeño; los días con plan, marcados. */
 function agYearView(items){
@@ -5940,6 +5979,155 @@ function onlinePlanFields(d){
 
 
 /* =========================================================================
+   Publicidad en la agenda: planes promocionados (el anfitrión paga por darlo a conocer)
+   y campañas de marca. Sin píxeles ni rastreo fuera de la app (issue #28): se elige
+   por contexto, con lo que ya sabe la app.
+   - Qué cuenta: tus temas (los que elegiste y los de los planes a los que fuiste), que
+     ese día lo tienes libre y tu ciudad. Nunca lo que hablas en los chats.
+   - Cuánto: como mucho un anuncio por vista de la agenda (día, semana o el día elegido
+     del mes) y cada anuncio, 3 veces al día. Nunca en el año, ni en notificaciones ni
+     recordatorios, ni planes que ya están en tu agenda.
+   - Siempre con la etiqueta "Patrocinado", quién paga y "Por qué lo ves".
+   - Cualquier anfitrión puede promocionar su plan (presupuesto y días); el equipo lo
+     revisa antes de que salga. En la app real: docs/publicidad.md.
+   ========================================================================= */
+const AD_CPM = 6;              // € por cada 1.000 veces que se ve (orientativo)
+const AD_MAX_DAY = 3;          // veces al día que se repite un mismo anuncio
+const AD_BUDGETS = [10, 25, 50];
+const AD_DAYS = [3, 7, 14];
+const adPrefs = () => Object.assign({ interests: true, hidden: [], hiddenAdvertisers: [], seen: {} }, ME.adPrefs || {});
+function setAdPrefs(patch){ ME.adPrefs = Object.assign(adPrefs(), patch); saveState(); }
+// Tus temas: los que elegiste y los de los planes a los que fuiste (datos de la propia app).
+function myTopics(){
+  const t = new Set(ME.interests || []);
+  (ME.attendedPlanIds || []).forEach(id => { const p = getPlan(id); if (p) t.add(p.category); });
+  return t;
+}
+const adPlan = (c) => c.planId ? getPlan(c.planId) : null;
+function adLive(c){
+  if (c.status !== 'activa' || (c.spent || 0) >= c.budget || (c.endsAt && Date.now() > c.endsAt)) return false;
+  const pr = adPrefs(); if (pr.hidden.includes(c.id) || pr.hiddenAdvertisers.includes(c.advertiserId)) return false;
+  if (c.advertiserId === 'me' || (c.planId && isHost(adPlan(c) || {}))) return false;   // tus propios anuncios no te salen
+  const p = adPlan(c);
+  if (c.planId && (!p || isCancelled(p) || p.removed || p.held || isPrivateCall(p) || new Date(p.when) < Date.now() || planAgendaKind(p))) return false;
+  return true;
+}
+// Elige como mucho un anuncio para los días que se ven. Devuelve { ad, day } o null.
+function pickAgendaAd(days, items){
+  const today = startOfDay(Date.now()), topics = myTopics(), pr = adPrefs();
+  const free = (d) => !itemsOn(items, d).some(i => i.kind !== 'cancelado');
+  const seenToday = (c) => (pr.seen[c.id + ':' + dayKey(Date.now())] || 0) >= AD_MAX_DAY && !Object.keys(state.adCounted || {}).some(k => k.startsWith(c.id + ':' + (state.agView || '') + ':'));
+  let best = null;
+  AD_CAMPAIGNS.filter(c => (c.surfaces || []).includes('agenda') && adLive(c) && !seenToday(c)).forEach(c => {
+    const p = adPlan(c);
+    const day = p ? days.find(d => dayKey(d) === dayKey(p.when)) : days.find(d => d >= today && free(d));
+    if (!day || day < today) return;
+    const cats = p ? [p.category] : (c.categories || []);
+    const why = [];
+    if (pr.interests && cats.some(x => topics.has(x))) why.push(`Te interesan los planes de ${(getCategory(cats.find(x => topics.has(x))) || {}).label || 'este tema'}`);
+    if (free(day)) why.push(`Tienes libre el ${DIAS_LARGOS[day.getDay()]}`);
+    why.push('Es en Madrid, tu ciudad');
+    const score = (why.length - 1) * 2 + (c.bid || 1);
+    if (!best || score > best.score) best = { ad: c, day, why, score };
+  });
+  return best;
+}
+// La tarjeta: clara como anuncio, distinta de tus planes.
+function adCard(pick){
+  if (!pick) return '';
+  const c = pick.ad, p = adPlan(c), pr = adPrefs(), k = c.id + ':' + dayKey(Date.now()), view = c.id + ':' + (state.agView || '') + ':' + dayKey(pick.day);
+  // Una vista cuenta una vez (volver a pintar la misma pantalla no suma).
+  state.adCounted = state.adCounted || {};
+  if (!state.adCounted[view]){ state.adCounted[view] = true; pr.seen[k] = (pr.seen[k] || 0) + 1; c.impressions = (c.impressions || 0) + 1; c.spent = Math.min(c.budget, (c.spent || 0) + AD_CPM / 1000); ME.adPrefs = pr; }
+  state.adWhy = Object.assign({}, state.adWhy, { [c.id]: pick.why });
+  const title = p ? p.title : c.title, sub = p ? `${whenShort(new Date(p.when))} · ${agWhere(p)}${p.paid ? ' · ' + money(p.price) : ' · Gratis'}` : c.text;
+  return `<div class="ag-ad" role="group" aria-label="Anuncio de ${escapeHtml(c.advertiser)}">
+    <div class="ag-ad-h"><em>Patrocinado</em><span>${escapeHtml(c.advertiser)}</span><button class="link-btn" onclick="openAdWhy('${c.id}')">Por qué lo ves</button></div>
+    <button class="ag-ad-b" onclick="clickAd('${c.id}')"><span class="mini-thumb g-dark">${coverImg(p ? planCover(p) : c.photo, 120)}</span>
+      <span class="ag-main"><b>${escapeHtml(title)}</b><span>${escapeHtml(sub)}</span></span><span class="ag-ad-cta">${escapeHtml(p ? 'Ver plan' : (c.cta || 'Ver'))}</span></button></div>`;
+}
+function clickAd(id){
+  const c = AD_CAMPAIGNS.find(x => x.id === id); if (!c) return;
+  c.clicks = (c.clicks || 0) + 1; saveState();
+  if (c.planId) return go('plan/' + c.planId);
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Anuncio">
+    <div class="sheet-h"><span>${escapeHtml(c.advertiser)} · Patrocinado</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list"><div class="ad-hero g-dark">${coverImg(c.photo, 700)}</div><b>${escapeHtml(c.title)}</b><p class="hint">${escapeHtml(c.text)}</p>
+      <button class="btn-primary" onclick="closeOverlay();toast('En la app real abre la web del anunciante')">${escapeHtml(c.cta || 'Ver')}</button></div></div>`);
+}
+function openAdWhy(id){
+  const c = AD_CAMPAIGNS.find(x => x.id === id); if (!c) return;
+  const why = (state.adWhy || {})[id] || ['Es en Madrid, tu ciudad'], pr = adPrefs();
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Por qué ves este anuncio">
+    <div class="sheet-h"><span>Por qué lo ves</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list">
+      <p class="hint">${escapeHtml(c.advertiser)} paga para que su ${c.planId ? 'plan' : 'anuncio'} salga en la agenda de gente como tú:</p>
+      <ul class="ad-why">${why.map(w => `<li>${ico('check')}<span>${escapeHtml(w)}</span></li>`).join('')}</ul>
+      <p class="hint">No usamos lo que haces fuera de la app, ni píxeles de seguimiento, ni lo que hablas en los chats. Como mucho, un anuncio en cada vista de tu agenda.</p>
+      <button class="sh-row" onclick="hideAd('${id}')">${ico('eye')}<span>No me interesa este anuncio</span>${ico('chevR')}</button>
+      <button class="sh-row" onclick="hideAdvertiser('${c.advertiserId}')">${ico('close')}<span>No ver anuncios de ${escapeHtml(c.advertiser)}</span>${ico('chevR')}</button>
+      <div class="opt-row" onclick="setAdPrefs({ interests: !adPrefs().interests });openAdWhy('${id}')"><span class="or-ic">${ico('heartO')}</span><span class="or-l">Usar mis temas para elegir anuncios<span class="or-s">Si lo quitas, solo cuentan tu ciudad y tus días libres</span></span><span class="switch ${pr.interests ? 'on' : ''}"><span class="knob"></span></span></div>
+      <button class="sh-row danger" onclick="closeOverlay();openReport('${c.advertiserId}', null, ${c.planId ? `{ objectType:'plan', planId:'${c.planId}' }` : 'null'})">${ico('alert')}<span>Reportar el anuncio</span>${ico('chevR')}</button>
+    </div></div>`);
+}
+function hideAd(id){ setAdPrefs({ hidden: adPrefs().hidden.concat(id) }); closeOverlay(); toast('No volverás a ver este anuncio'); if (/^#\/agenda/.test(location.hash)) drawAgenda(); }
+function hideAdvertiser(uid){ setAdPrefs({ hiddenAdvertisers: adPrefs().hiddenAdvertisers.concat(uid) }); closeOverlay(); toast('No verás más anuncios de esta cuenta'); if (/^#\/agenda/.test(location.hash)) drawAgenda(); }
+
+/* ---------- el anfitrión promociona su plan ---------- */
+const myCampaign = (planId) => AD_CAMPAIGNS.find(c => c.planId === planId && c.advertiserId === 'me' && c.status !== 'terminada');
+// Estimación: veces que se verá con ese presupuesto y personas distintas (cada una lo ve unas 2,5 veces).
+const adReach = (budget) => { const imp = Math.round(budget / AD_CPM * 1000); return { imp, people: Math.round(imp / 2.5) }; };
+function promoBlock(p){
+  if (!isHost(p) || isCancelled(p) || isPrivateCall(p)) return '';
+  const c = myCampaign(p.id);
+  if (!c) return `<button class="sh-row" onclick="openPromote('${p.id}')">${ico('spark')}<span>Promocionar este plan<span class="or-s">Que salga en la agenda de quien tiene libre y le gusta el tema</span></span>${ico('chevR')}</button>`;
+  const st = { en_revision: 'En revisión por el equipo', activa: 'Activa', pausada: 'Pausada' }[c.status] || c.status;
+  return `<div class="promo-box"><div class="promo-h">${ico('spark')}<b>Promoción · ${st}</b></div>
+    <div class="promo-k"><span><b>${(c.impressions || 0).toLocaleString('es-ES')}</b>veces vista</span><span><b>${c.clicks || 0}</b>toques</span><span><b>${money2(c.spent || 0)}</b>de ${money(c.budget)}</span></div>
+    <div class="pl-actions">${c.status === 'activa' ? `<button class="link-btn" onclick="setCampaign('${c.id}','pausada')">Pausar</button>` : (c.status === 'pausada' ? `<button class="link-btn" onclick="setCampaign('${c.id}','activa')">Reanudar</button>` : '')}
+      <button class="link-btn" onclick="setCampaign('${c.id}','terminada')">Terminar (se devuelve lo no gastado)</button>${c.status === 'activa' ? `<button class="link-btn dim" onclick="demoAdTraffic('${c.id}')">Demo: pasa un día</button>` : ''}</div></div>`;
+}
+function openPromote(id){
+  const p = getPlan(id); if (!p) return;
+  const d = state.promo = state.promo && state.promo.planId === id ? state.promo : { planId: id, budget: 25, days: 7 };
+  const r = adReach(d.budget), cat = getCategory(p.category), pm = PAYMENT_METHODS.find(m => m.isDefault) || PAYMENT_METHODS[0];
+  showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Promocionar el plan">
+    <div class="sheet-h"><span>Promocionar el plan</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-list form">
+      <p class="hint">Sale en la agenda, con la etiqueta "Patrocinado", de quien tiene libre el día del plan y le interesa ${escapeHtml(cat ? cat.label : 'el tema')}, en Madrid. Nunca en notificaciones.</p>
+      <div class="field"><label>Presupuesto</label><div class="iseg">${AD_BUDGETS.map(b => `<button class="${d.budget === b ? 'active' : ''}" onclick="state.promo.budget=${b};openPromote('${id}')"><span>${b} €</span></button>`).join('')}</div></div>
+      <div class="field"><label>Durante</label><div class="iseg">${AD_DAYS.map(n => `<button class="${d.days === n ? 'active' : ''}" onclick="state.promo.days=${n};openPromote('${id}')"><span>${n} días</span></button>`).join('')}</div>
+        <p class="hint">Termina antes si llega el día del plan o se acaba el presupuesto.</p></div>
+      <div class="promo-est"><b>Unas ${r.people.toLocaleString('es-ES')} personas</b><span>la verán ${r.imp.toLocaleString('es-ES')} veces en total (estimación)</span></div>
+      <p class="hint">Pagas solo lo que se gaste; lo que sobre se devuelve. Antes de salir, el equipo lo revisa. Factura con IVA en Cobros.</p>
+      <button class="btn-primary" onclick="confirmPromote('${id}')">${ico('card')} Pagar ${money(d.budget)}${pm ? ` con ${escapeHtml(pm.brand)} ···· ${escapeHtml(pm.last4)}` : ''}</button>
+    </div></div>`);
+}
+function confirmPromote(id){
+  const p = getPlan(id), d = state.promo; if (!p || !d) return;
+  if (!PAYMENT_METHODS.length){ toast('Añade una tarjeta en Pagos para promocionar'); return; }
+  const c = { id: newId('ad'), planId: id, advertiserId: 'me', advertiser: ME.name, surfaces: ['agenda'], budget: d.budget, days: d.days, bid: 1,
+    status: 'en_revision', createdAt: Date.now(), endsAt: Math.min(new Date(p.when).getTime(), Date.now() + d.days * 86400000), impressions: 0, clicks: 0, spent: 0 };
+  AD_CAMPAIGNS.push(c); state.promo = null; saveState(); closeOverlay(); toast('Pagado · el equipo lo revisa antes de que salga'); renderDetail(id);
+  setTimeout(() => { if (c.status === 'en_revision'){ c.status = 'activa'; notify('pago', `Tu promoción de ${p.title} ya está activa.`, { planId: id }); saveState(); if (location.hash === '#/plan/' + id) renderDetail(id); } }, 3000);
+}
+function setCampaign(cid, status){
+  const c = AD_CAMPAIGNS.find(x => x.id === cid); if (!c) return;
+  c.status = status;
+  if (status === 'terminada'){ const back = Math.max(0, c.budget - (c.spent || 0)); toast(`Promoción terminada · te devolvemos ${money2(back)}`); }
+  else toast(status === 'pausada' ? 'Promoción pausada' : 'Promoción reanudada');
+  saveState(); if (c.planId) renderDetail(c.planId);
+}
+// Demo: un día de promoción (en la app real, lo cuenta el servidor cada vez que se ve).
+function demoAdTraffic(cid){
+  const c = AD_CAMPAIGNS.find(x => x.id === cid); if (!c) return;
+  const day = Math.round(adReach(c.budget).imp / c.days);
+  c.impressions = (c.impressions || 0) + day; c.clicks = (c.clicks || 0) + Math.round(day * 0.03); c.spent = Math.min(c.budget, (c.spent || 0) + day * AD_CPM / 1000);
+  saveState(); renderDetail(c.planId);
+}
+
+
+/* =========================================================================
    Prototipo visual — App de planes. Modo oscuro tipo Instagram, sin emojis.
    Vistas: feed, mapa, grupos, perfil, detalle + creación (plan/post/grupo),
    solicitudes, ajustes. Datos mock en data.js.
@@ -6138,8 +6326,8 @@ function saveState(){
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
             city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom,
-            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged, calToken: ME.calToken, seenUpdates: ME.seenUpdates, remindersSent: ME.remindersSent, reminderPrefs: ME.reminderPrefs },
-      modActions: MOD_ACTIONS, userMod: USER_MOD, safety: SAFETY_EVENTS, payments: PAYMENTS, paymentMethods: PAYMENT_METHODS, ideas: IDEAS,
+            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged, calToken: ME.calToken, seenUpdates: ME.seenUpdates, remindersSent: ME.remindersSent, reminderPrefs: ME.reminderPrefs, adPrefs: ME.adPrefs },
+      modActions: MOD_ACTIONS, adCampaigns: AD_CAMPAIGNS, userMod: USER_MOD, safety: SAFETY_EVENTS, payments: PAYMENTS, paymentMethods: PAYMENT_METHODS, ideas: IDEAS,
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
       notifications: NOTIFICATIONS,
@@ -6174,6 +6362,7 @@ function loadState(){
   if (Array.isArray(snap.payments)) PAYMENTS.splice(0, PAYMENTS.length, ...snap.payments);
   if (Array.isArray(snap.paymentMethods)) PAYMENT_METHODS.splice(0, PAYMENT_METHODS.length, ...snap.paymentMethods);
   if (Array.isArray(snap.ideas)) IDEAS.splice(0, IDEAS.length, ...snap.ideas);
+  if (Array.isArray(snap.adCampaigns)) AD_CAMPAIGNS.splice(0, AD_CAMPAIGNS.length, ...snap.adCampaigns);
   if (snap.userMod){ Object.keys(USER_MOD).forEach(k => delete USER_MOD[k]); Object.assign(USER_MOD, snap.userMod); }
   if (snap.me) Object.assign(ME, snap.me);
   (snap.extraProfiles || []).forEach(x => { if (!USERS.some(u => u.id === x.id)) USERS.push(x); });
@@ -7466,7 +7655,7 @@ function renderDetail(id){
         ${isHost(p) && p.paid ? `<button class="sh-row" onclick="go('cobros')">${ico('euro')}<span>Cobros · ${hostSales(p.id).filter(x => x.status !== 'reembolsado').length} reservas</span>${ico('chevR')}</button>` : ''}
         ${isHost(p) ? `<button class="sh-row" onclick="go('editar-plan/${p.id}')">${ico('doc')}<span>Editar fecha, hora o lugar</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openCancelPlan('${p.id}')">${ico('close')}<span>Cancelar el plan</span>${ico('chevR')}</button>` : ''}
-      </div>${agendaActions(p)}</div>` : '';
+      ${promoBlock(p)}</div>${agendaActions(p)}</div>` : '';
 
   const presence = isCancelled(p) ? '' : presenceBlock(p);   // quién te ve y si vas solo o en grupo (planes.js)
 

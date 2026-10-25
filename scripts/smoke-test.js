@@ -1404,6 +1404,45 @@ check('finalizar para todos', vc.run(`getPlan("${vp.id}").callEnded`) === true &
 const vc2 = createEnv(vcs);
 check('persisten las videollamadas y sus comentarios', vc2.run(`getPlan("${vp.id}").online.visibility`) === 'privada' && vc2.run('getPlan("p13").callComments.some(m => m.text === "Muy buen tema")'));
 
+// --- Publicidad en la agenda y buscador siempre a mano ---
+const pubs = {};
+const av = createEnv(pubs);
+check('buscador: la lupa de arriba lleva a buscar planes, personas y temas', html.includes('id="search-btn"') && html.includes(`onclick="go('buscar')"`));
+av.run('getPlan("p12").when = new Date(Date.now() + 2 * 3600000); getPlan("p7").when = new Date(Date.now() + 3 * 3600000)');
+const wkDays = av.run('Array.from({ length: 7 }, (_, k) => dayKey(addDays(startOfWeek(Date.now()), k)))');
+const pick = av.run('(() => { const p = pickAgendaAd(Array.from({ length: 7 }, (_, k) => addDays(startOfWeek(Date.now()), k)), agendaItems()); return p && { id: p.ad.id, day: dayKey(p.day), why: p.why }; })()');
+check('agenda: elige un anuncio por contexto (temas, día libre, ciudad)', !!pick && wkDays.includes(pick.day) && pick.why.includes('Es en Madrid, tu ciudad') && pick.why.some(w => w.startsWith('Tienes libre')));
+av.nav('agenda/semana/' + av.run('dayKey(Date.now())')); h = av.html('view-page'); rendered += h;
+check('agenda ▸ semana: como mucho un anuncio, con "Patrocinado", quién paga y "Por qué lo ves"', count(h, /class="ag-ad"/g) === 1 && h.includes('<em>Patrocinado</em>') && h.includes('Por qué lo ves'));
+const shownId = av.run('Object.keys(state.adWhy)[0]');
+check('el anuncio cuenta como visto (impresión) una vez por vista', (() => { const i0 = av.run(`AD_CAMPAIGNS.find(c => c.id === "${shownId}").impressions`); av.run('drawAgenda()'); return av.run(`AD_CAMPAIGNS.find(c => c.id === "${shownId}").impressions`) === i0; })());
+av.run(`openAdWhy("${shownId}")`); h = av.html('overlay');
+check('por qué lo ves: los motivos, sin rastreo, y opciones', h.includes('No usamos lo que haces fuera de la app') && h.includes('No me interesa este anuncio') && h.includes('No ver anuncios de') && h.includes('Usar mis temas') && h.includes('Reportar el anuncio'));
+av.run(`hideAd("${shownId}")`);
+check('no me interesa: deja de salir ese anuncio', av.run('adPrefs().hidden').includes(shownId) && !av.run(`(pickAgendaAd(Array.from({ length: 7 }, (_, k) => addDays(startOfWeek(Date.now()), k)), agendaItems()) || { ad:{} }).ad.id === "${shownId}"`));
+av.run('state.joined.add("p12")');
+check('un plan que ya está en tu agenda no se anuncia', !av.run('adLive(AD_CAMPAIGNS.find(c => c.id === "ad1"))'));
+av.run('state.joined.delete("p12")');
+check('el año, las notificaciones y los recordatorios no llevan anuncios', (av.nav('agenda/ano'), !av.html('view-page').includes('class="ag-ad"')) && (av.nav('notificaciones'), !av.html('view-page').includes('Patrocinado')));
+av.run('setAdPrefs({ interests:false })');
+const pick2 = av.run('(() => { const p = pickAgendaAd(Array.from({ length: 7 }, (_, k) => addDays(startOfWeek(Date.now()), k)), agendaItems()); return p ? p.why : []; })()');
+check('sin usar tus temas: solo cuentan el día libre y la ciudad', !pick2.some(w => w.startsWith('Te interesan')));
+// El anfitrión promociona su plan
+av.run('getPlan("p10").hostId = "me"'); av.nav('plan/p10'); h = av.html('view-detail');
+check('anfitrión: "Promocionar este plan"', h.includes("openPromote('p10')"));
+av.run('openPromote("p10")'); h = av.html('overlay');
+check('promocionar: presupuesto, días, estimación y pago', h.includes('10 €') && h.includes('50 €') && h.includes('7 días') && h.includes('personas') && h.includes('Pagar 25 €'));
+av.run('state.promo.budget = 10; confirmPromote("p10")');
+const myAd = av.run('AD_CAMPAIGNS.find(c => c.planId === "p10" && c.advertiserId === "me")');
+check('pagar: la promoción queda en revisión del equipo', !!myAd && myAd.status === 'en_revision' && myAd.budget === 10 && av.html('view-detail').includes('En revisión por el equipo'));
+av.run('myCampaign("p10").status = "activa"; renderDetail("p10"); demoAdTraffic(myCampaign("p10").id)');
+check('estadísticas: veces vista, toques y gasto', av.run('myCampaign("p10").impressions') > 0 && av.html('view-detail').includes('veces vista') && av.html('view-detail').includes('toques'));
+check('tus propios anuncios no te salen', !av.run('adLive(myCampaign("p10"))'));
+av.run('setCampaign(myCampaign("p10").id, "terminada")');
+check('terminar la promoción', !av.run('myCampaign("p10")'));
+const av2 = createEnv(pubs);
+check('persisten las campañas y tus preferencias de anuncios', av2.run('AD_CAMPAIGNS.some(c => c.planId === "p10" && c.status === "terminada")') && av2.run('adPrefs().hidden').includes(shownId) && av2.run('adPrefs().interests') === false);
+
 const pdir0 = path.join(__dirname, '..', 'prototipo');
 // --- Compartir: web pública con vista previa, enlaces que abren la app y menú nativo ---
 const wdir = path.join(__dirname, '..', 'prototipo', 'web');

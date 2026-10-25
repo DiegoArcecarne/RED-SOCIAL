@@ -563,7 +563,14 @@ erDiagram
         uuid anunciante_id FK
         string tipo "campana_marca|boost"
         uuid plan_promocionado_id FK "en boost"
+        string superficies "agenda|descubrir"
+        string temas "en campañas de marca"
         decimal presupuesto
+        decimal gastado
+        int puja
+        string estado "en_revision|activa|pausada|terminada|rechazada"
+        int impresiones "agregadas, sin quién"
+        int toques
     }
     CATEGORIA {
         uuid id PK
