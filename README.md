@@ -12,6 +12,7 @@ bucle con un piloto low-code en Madrid antes de construir la app.
 | Ruta | Qué es |
 |---|---|
 | [`PRODUCTO.md`](PRODUCTO.md) | Definición de producto completa: posicionamiento, flujos, modelo económico, confianza y seguridad, alcance del MVP, métricas, competencia y decisiones abiertas |
+| [`docs/estado.md`](docs/estado.md) | Estado del proyecto: qué está hecho (PR por bloque), qué falta y cómo retomarlo. Las normas de trabajo, en [`CLAUDE.md`](CLAUDE.md) |
 | [`docs/modelo-datos.md`](docs/modelo-datos.md) | Diagrama de entidades y relaciones (Mermaid) |
 | [`docs/cuentas-y-acceso.md`](docs/cuentas-y-acceso.md) | Especificación del servidor: registro, acceso, 2FA, 18+, onboarding y verificación |
 | [`docs/bucle-de-planes.md`](docs/bucle-de-planes.md) | Especificación del servidor: apuntarse, lista de espera, reconfirmación, QR de llegada, chat y notificaciones |
