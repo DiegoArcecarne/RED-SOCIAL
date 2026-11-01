@@ -125,10 +125,11 @@ PLANS.filter(planIsPublic).forEach((p) => {
   const host = p.host || {};
   const where = planWhere(p);
   const facts = [p.paid ? `${p.price} €` : 'Gratis', ...(p.tickets || []).map((t) => `${t.name} ${t.price} €`), SIZE_LABEL[sizeBucket(p)], cat ? cat.label : ''].filter(Boolean);
-  const description = isCancelled(p) ? 'Este plan se ha cancelado.' : `${facts.join(' · ')} · ${where}`;
+  // Exclusivos de la app (lanzamientos): la web anuncia el plan pero las entradas solo se venden en la app.
+  const description = isCancelled(p) ? 'Este plan se ha cancelado.' : `${p.exclusive ? 'Entradas solo en la app · ' : ''}${facts.join(' · ')} · ${where}`;
   planPages.add(p.id);
   files[`plan/${p.id}.html`] = page({
-    depth: 1, type: 'website', appRoute: `plan/${p.id}`, indexable: !isCancelled(p), label: 'Ver el plan en la app',
+    depth: 1, type: 'website', appRoute: `plan/${p.id}`, indexable: !isCancelled(p), label: p.exclusive ? 'Consigue tu entrada en la app' : 'Ver el plan en la app',
     title: p.title, description, image: photo(p.photo, 1200, 630), imageAlt: `Foto del plan ${p.title}`,
     body: `<article class="w-card">
   ${p.photo ? `<div class="w-cover"><img onerror="this.remove()" src="${esc(photo(p.photo, 900, 600))}" alt="${esc('Foto del plan ' + p.title)}"></div>` : ''}

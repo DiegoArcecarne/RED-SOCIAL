@@ -32,6 +32,8 @@ erDiagram
     USUARIO ||--o{ INSCRIPCION : realiza
     INSCRIPCION ||--o| PAGO : genera
     PLAN ||--o{ TIPO_ENTRADA : ofrece
+    PLAN ||--o{ AVISO_VENTA : "lista de aviso"
+    USUARIO ||--o{ AVISO_VENTA : pide
     TIPO_ENTRADA ||--o{ PAGO : "se vende en"
     USUARIO ||--o{ METODO_PAGO : guarda
     USUARIO ||--o| CUENTA_COBRO : "cobra con"
@@ -204,6 +206,9 @@ erDiagram
         int tamano_max
         int duracion_min "para la agenda; 120 si falta"
         string modalidad "presencial|videollamada"
+        bool exclusivo_app "entradas solo en la app"
+        datetime apertura_venta
+        int horas_anticipado
         decimal precio "nullable"
         decimal desvelo "solo especial/saturado no de pago"
         string politica_cancelacion "flexible|moderada|estricta"
@@ -294,6 +299,14 @@ erDiagram
         uuid pista_id FK "musica, nullable"
         int likes
         string visibilidad
+    }
+    AVISO_VENTA {
+        uuid id PK
+        uuid plan_id FK
+        uuid usuario_id FK
+        datetime fecha
+        bool aviso_anticipado_enviado
+        bool aviso_apertura_enviado
     }
     TIPO_ENTRADA {
         uuid id PK

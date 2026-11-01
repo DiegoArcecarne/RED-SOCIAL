@@ -197,7 +197,7 @@ function saveState(){
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
             city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom,
-            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged, calToken: ME.calToken, seenUpdates: ME.seenUpdates, remindersSent: ME.remindersSent, reminderPrefs: ME.reminderPrefs, adPrefs: ME.adPrefs },
+            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged, calToken: ME.calToken, seenUpdates: ME.seenUpdates, remindersSent: ME.remindersSent, reminderPrefs: ME.reminderPrefs, adPrefs: ME.adPrefs, salesAlerts: ME.salesAlerts, salesSent: ME.salesSent },
       modActions: MOD_ACTIONS, adCampaigns: AD_CAMPAIGNS, userMod: USER_MOD, safety: SAFETY_EVENTS, payments: PAYMENTS, paymentMethods: PAYMENT_METHODS, ideas: IDEAS,
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
@@ -275,7 +275,7 @@ function gridCell(p){
   <button class="cell ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">
     ${coverImg(planCover(p),500)}
     <span class="cell-scrim"></span>
-    <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>${callLive(p) ? `<span class="cell-feat live">${ico('live')} En directo</span>` : (p.featured ? '<span class="cell-feat">Destacado</span>' : (isOnline(p) ? `<span class="cell-feat">${ico('video')} Online</span>` : ''))}
+    <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>${callLive(p) ? `<span class="cell-feat live">${ico('live')} En directo</span>` : (p.featured ? '<span class="cell-feat">Destacado</span>' : (isExclusive(p) ? `<span class="cell-feat">${ico('lock')} Solo en la app</span>` : (isOnline(p) ? `<span class="cell-feat">${ico('video')} Online</span>` : '')))}
     <span class="cell-info">
       <span class="cell-title">${escapeHtml(p.title)}</span>
       <span class="cell-meta">${escapeHtml(loc)} · ${ico('geo')} ${attendanceView(p).n}</span>
@@ -1489,6 +1489,7 @@ function renderDetail(id){
   let cta;
   if (isCancelled(p)) cta = `<button class="btn-join done" disabled>${ico('close')} Plan cancelado</button>`;
   else if (callCta(p)) cta = callCta(p);   // videollamada: entrar o ver en directo (videollamadas.js)
+  else if (exclusiveCta(p)) cta = exclusiveCta(p);   // exclusivo de la app: aún no se puede comprar (lanzamiento.js)
   else if (isHost(p)) cta = `<button class="btn-join" onclick="openHostQr('${p.id}')">${ico('grid')} Mostrar QR de llegada</button>`;
   else if (!isVerified() && !attended && !joined) cta = `<button class="btn-join" onclick="requireVerified('Verifica tu identidad para ir a este plan', () => renderDetail('${p.id}'))">${ico('shield')} Verifícate para ir</button>`;
   else if (attended) cta = `<button class="btn-join done" disabled>${ico('check')} Asististe · verificado</button>`;
@@ -1527,7 +1528,7 @@ function renderDetail(id){
         ${isHost(p) && p.paid ? `<button class="sh-row" onclick="go('cobros')">${ico('euro')}<span>Cobros · ${hostSales(p.id).filter(x => x.status !== 'reembolsado').length} reservas</span>${ico('chevR')}</button>` : ''}
         ${isHost(p) ? `<button class="sh-row" onclick="go('editar-plan/${p.id}')">${ico('doc')}<span>Editar fecha, hora o lugar</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openCancelPlan('${p.id}')">${ico('close')}<span>Cancelar el plan</span>${ico('chevR')}</button>` : ''}
-      ${promoBlock(p)}</div>${ticketsHostLine(p)}${agendaActions(p)}</div>` : '';
+      ${promoBlock(p)}</div>${ticketsHostLine(p)}${exclusiveHostLine(p)}${agendaActions(p)}</div>` : '';
 
   const presence = isCancelled(p) ? '' : presenceBlock(p);   // quién te ve y si vas solo o en grupo (planes.js)
 
@@ -1569,6 +1570,7 @@ function renderDetail(id){
           <span class="tag tag-line">${freeIcon(p)} ${p.paid?'De pago':'Gratis'}</span>
           ${p.secret?`<span class="tag tag-line">${ico('lock')} Secreto</span>`:''}
           ${isOnline(p)?`<span class="tag tag-line">${ico('video')} Videollamada</span>`:''}
+          ${isExclusive(p)?`<span class="tag tag-line">${ico('lock')} Solo en la app</span>`:''}
         </div>
         <h2>${escapeHtml(p.title)}</h2>
         <div class="hero-loc">${isOnline(p) ? `${ico('video')} Videollamada · ${escapeHtml(onlineSummary(p))}` : `${ico('pin')} ${p.secret||hideExact?'Zona aprox. · Madrid':(place?place.name+' · '+place.city:escapeHtml(p.meetPoint||'Madrid'))}`}</div>
@@ -1585,6 +1587,7 @@ function renderDetail(id){
         ${p.meetPoint ? `<p class="hint">${ico('pin')} Punto de encuentro: <b>${escapeHtml(p.meetPoint)}</b></p>` : ''}
         <p class="hint">${isOnline(p)?(manual?'Por videollamada, con aprobación: pide tu plaza en la llamada y decide el anfitrión. ':'Por videollamada: apúntate para entrar con cámara y micro. ')+'Cuentas como asistente al pasar 10 minutos en la llamada.':manual?'Plan con aprobación: envía una solicitud; el creador o los admins la aceptan o rechazan.':(libre?'Plan libre: no hace falta apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.':'Plan apuntado: hay que apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.')}</p>
       </div>
+      ${exclusiveBlock(p)}
       ${ticketsBlock(p)}
       ${callBlock(p)}
       ${updatesBlock(p)}
@@ -2505,7 +2508,7 @@ function showView(name){
 }
 function scrollTop(v){ const el=document.getElementById('view-'+v); if(el) el.scrollTop=0; }
 function router(){
-  stopMusic(); checkReminders(); updateDmBadge(); updateNotifBadge(); setChromeHidden(false);
+  stopMusic(); checkReminders(); checkSalesAlerts(); updateDmBadge(); updateNotifBadge(); setChromeHidden(false);
   const hash = location.hash.replace(/^#\//,'') || 'feed';
   const [route,arg] = hash.split('/');
   if (route !== 'plan'){ state.updVisit = null; state.updAll = null; }

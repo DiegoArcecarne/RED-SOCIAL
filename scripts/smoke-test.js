@@ -83,7 +83,7 @@ const a = createEnv(store);
 
 // --- Vistas ---
 a.nav('feed'); let h = a.html('feed-list'); rendered += h;
-check('feed: cuadrícula con 15 planes (12 en persona y 3 por videollamada)', count(h, /class="cell /g) === 15, count(h, /class="cell /g) + ' celdas');
+check('feed: cuadrícula con 16 planes (13 en persona y 3 por videollamada)', count(h, /class="cell /g) === 16, count(h, /class="cell /g) + ' celdas');
 check('feed: toda imagen tiene fallback onerror', count(h, /class="cover-img"/g) === count(h, /onerror="this\.remove\(\)"/g));
 a.nav('mapa'); h = a.html('map'); rendered += h;
 check('mapa: 8 lugares', count(h, /class="pin /g) === 8);
@@ -475,7 +475,7 @@ check('persistencia: conversaciones, modo de mensajes y bloqueos sobreviven', b.
 check('persistencia: perfiles gestionados e identidad verificada sobreviven', b.run('USERS.some(u => u.handle === "@cafelaesquina" && u.managedBy === "me")') && b.run('ME.verified') === true);
 check('persistencia: los planes base conservan fecha futura', b.run('getPlan("p1").when > new Date()'));
 const c = createEnv({ [a.run('storeKey()')]: '{corrupto' });
-check('persistencia: datos corruptos no rompen la demo', c.run('PLANS.length') === 15);
+check('persistencia: datos corruptos no rompen la demo', c.run('PLANS.length') === 16);
 
 // --- Bucle de planes: fecha, reconfirmar, lista de espera, cancelar, QR de llegada, anfitrión, notificaciones ---
 const pst = {};
@@ -1054,7 +1054,7 @@ check('persisten tu visibilidad por plan y los saludos', pr2.run('myPresence("p2
 const chs = {};
 const ch = createEnv(chs);
 ch.nav('feed'); h = ch.html('feed-list'); rendered += h;
-check('Disponibles: tira de chispas con "¿quién se anima?" y "Lanza una chispa"', h.includes('Chispas · ¿quién se anima?') && h.includes("go('chispa/ch1')") && h.includes('Lanza una chispa') && count(h, /class="cell /g) === 15);
+check('Disponibles: tira de chispas con "¿quién se anima?" y "Lanza una chispa"', h.includes('Chispas · ¿quién se anima?') && h.includes("go('chispa/ch1')") && h.includes('Lanza una chispa') && count(h, /class="cell /g) === 16);
 ch.run('IDEAS.push({ id:"chx", authorId:"nora", title:"Solo amigos", text:"x", category:"social", when:"finde", limit:false, min:2, who:"amigos", approval:false, cost:"gratis", people:[], status:"abierta", at:Date.now() })');
 check('una chispa "solo amigos" no la ve quien no es amigo', !ch.run('visibleIdeas().some(x => x.id === "chx")') && ch.run('areFriends("me", "nora")') === false);
 ch.nav('chispa/ch1'); h = ch.html('view-page'); rendered += h;
@@ -1487,10 +1487,41 @@ check('anfitrión: ventas de la entrada especial', tk.html('view-detail').includ
 const tk2 = createEnv(tks);
 check('persisten las entradas vendidas y tu VIP', tk2.run('myPayment("p3").ticketId') === 'vip' && tk2.run(`getPlan("${tkp.id}").tickets[0].sold`) === 3);
 
+// --- Plan exclusivo de la app (lanzamiento): venta solo aquí, con cuenta verificada ---
+const lzs = {};
+const lz = createEnv(lzs);
+lz.nav('feed'); lz.run("setContentTab('disponibles')");
+check('Descubrir: el plan de lanzamiento lleva "Solo en la app"', lz.html('feed-list').includes('Solo en la app'));
+lz.nav('plan/p16'); h = lz.html('view-detail'); rendered += h;
+check('ficha: exclusivo de la app, cuándo abre la venta y cuántos esperan', h.includes('Exclusivo de la app') && h.includes('La venta abre el') && h.includes('personas esperando') && h.includes('ni taquilla ni otras webs') && h.includes('tu QR y tu DNI') && h.includes('Una por persona'));
+check('antes de abrir: "Avísame cuando abra la venta" en lugar de reservar', h.includes('Avísame cuando abra') && !h.includes('Reservar ·'));
+lz.run('joinPlan("p16")');
+check('no se puede comprar antes de que abra', !lz.run('state.joined.has("p16")') && !lz.html('overlay').includes('Pagar'));
+lz.run('joinSalesAlert("p16")'); h = lz.html('view-detail');
+check('en la lista de aviso: acceso anticipado si estás verificada', h.includes('Te avisaremos · acceso anticipado') && /1\.?241 personas esperando/.test(h));
+lz.run('getPlan("p16").exclusive.salesAt = Date.now() + 3 * 3600000; checkSalesAlerts(); renderDetail("p16")'); h = lz.html('view-detail');
+check('acceso anticipado: puedes comprar antes que el resto, con aviso', lz.run('canBuyNow(getPlan("p16"))') && h.includes('Tienes acceso anticipado') && lz.run('NOTIFICATIONS[0].text').includes('acceso anticipado'));
+lz.run('ME.verified = false');
+check('sin verificar no hay acceso anticipado', !lz.run('canBuyNow(getPlan("p16"))'));
+lz.run('ME.verified = true; delete ME.salesAlerts.p16');
+check('sin apuntarte al aviso tampoco', !lz.run('canBuyNow(getPlan("p16"))'));
+lz.run('demoOpenSales("p16")'); h = lz.html('view-detail');
+check('venta abierta para todos', lz.run('canBuyNow(getPlan("p16"))') && h.includes('Venta abierta') && h.includes('Reservar'));
+lz.run('joinPlan("p16")');
+check('se compra en la app (pago protegido)', lz.html('overlay').includes('Pagar 12,00 €'));
+lz.run('payWithWallet()');
+check('comprada: a tu nombre y cuenta en las vendidas del lanzamiento', lz.run('state.joined.has("p16")') && lz.run('getPlan("p16").exclusive.sold') === 1 && lz.run('myPayment("p16").amount') === 12);
+// Registro que llega por el enlace del plan: cuenta como registro del lanzamiento
+const lzr = { 'planes-destino': '#/plan/p16' };
+const lzn = createEnv(lzr, { sinSesion: true, hash: '#/plan/p16' });
+lzn.run('createAccount({ pending:{ method:"email", email:"nueva@example.com", salt:"s", hash:"h" }, birth:"1995-05-05", marketing:false })');
+check('el registro guarda de qué enlace viene', lzn.run('currentAccount().origin') === 'plan/p16');
+
 const pdir0 = path.join(__dirname, '..', 'prototipo');
 // --- Compartir: web pública con vista previa, enlaces que abren la app y menú nativo ---
 const wdir = path.join(__dirname, '..', 'prototipo', 'web');
 const wread = (f) => { try { return fs.readFileSync(path.join(wdir, f), 'utf8'); } catch (err) { return ''; } };
+check('web pública: anuncia el plan pero la entrada, solo en la app', wread('plan/p16.html').includes('Entradas solo en la app') && wread('plan/p16.html').includes('Consigue tu entrada en la app'));
 check('web pública: el plan dice que tiene entrada especial', wread('plan/p1.html').includes('Barra VIP 12 €'));
 const sh = createEnv({});
 let wp = wread('plan/p2.html');

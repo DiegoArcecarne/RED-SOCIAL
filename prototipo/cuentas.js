@@ -261,7 +261,8 @@ function createAccount(d){
   const p = d.pending, id = 'acc' + Date.now();
   const acc = { id, method:p.method, email:p.email, phone:p.phone, salt:p.salt, hash:p.hash, twoFA: p.twoFA ? { method:p.twoFA } : null,
     birthdate:d.birth, consents:{ legal:true, marketing:!!d.marketing, version:LEGAL_VERSION, at:new Date().toISOString() },
-    onboarded:false, step:'perfil', failed:0, createdAt:new Date().toISOString() };
+    onboarded:false, step:'perfil', failed:0, createdAt:new Date().toISOString(),
+    origin: (lsGet(DESTINO_KEY) || '').replace(/^#\//, '') || null };   // de qué enlace viene (lanzamientos: registros por plan)
   const list = accounts(); list.push(acc); saveAccounts(list);
   lsSet(SESSION_KEY, id);
   freshWorld(); saveState();
@@ -286,7 +287,7 @@ function freshWorld(){
   ME.trustedContacts = []; ME.shareTrips = false; ME.safeCheck = false; ME.consents = undefined; ME.consentLog = [];
   drop(MOD_ACTIONS, a => a.targetUserId === 'me'); drop(SAFETY_EVENTS, () => true); delete USER_MOD.me;
   drop(PAYMENTS, x => x.userId === 'me'); drop(PAYMENT_METHODS, () => true); ME.payouts = undefined;
-  ME.planPresence = {}; ME.pinged = {}; ME.calToken = null; AGENDA_HISTORY.length = 0; ME.seenUpdates = {}; ME.remindersSent = {}; ME.reminderPrefs = undefined; ME.adPrefs = undefined;
+  ME.planPresence = {}; ME.pinged = {}; ME.calToken = null; AGENDA_HISTORY.length = 0; ME.seenUpdates = {}; ME.remindersSent = {}; ME.reminderPrefs = undefined; ME.adPrefs = undefined; ME.salesAlerts = {}; ME.salesSent = {};
   drop(AD_CAMPAIGNS, c => c.advertiserId === 'me');
   drop(IDEAS, x => x.authorId === 'me'); IDEAS.forEach(x => { x.people = x.people.filter(p => p.userId !== 'me'); });
   PLANS.forEach(p => { p.waitlist = (p.waitlist || []).filter(x => x !== 'me'); });

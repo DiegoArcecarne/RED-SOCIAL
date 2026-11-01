@@ -82,6 +82,7 @@ function clearPlanPhoto(){ state.draft.photo = null; const pv = document.getElem
 function joinPlan(id){
   const p = getPlan(id); if (!p || isCancelled(p)) return;
   if (!requireVerified('Verifica tu identidad para apuntarte', () => joinPlan(id))) return;
+  if (!canBuyNow(p)){ toast('La venta aún no está abierta: pulsa "Avísame"'); return; }   // plan exclusivo de la app (lanzamiento.js)
   const pay = p.paid && myPayment(id);
   if (isFull(p) && !(pay && pay.status === 'pendiente')) return joinWaitlist(id);
   if (p.paid && !(pay && pay.status === 'retenido')) return openCheckout(id);   // de pago: primero se paga (pagos.js)
@@ -89,7 +90,7 @@ function joinPlan(id){
 }
 function completeJoin(id, msg){
   const p = getPlan(id); if (!p) return;
-  if (!state.joined.has(id)){ state.joined.add(id); p.joined = (p.joined || 0) + 1; }
+  if (!state.joined.has(id)){ state.joined.add(id); p.joined = (p.joined || 0) + 1; exclusiveSold(p); }
   ensurePlanChat(id);
   checkReminders();   // si es en las próximas 24 h, el recordatorio llega ya
   saveState();

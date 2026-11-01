@@ -1347,6 +1347,15 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
 #vip-opts{display:flex;flex-direction:column;gap:12px;margin-top:12px}
 #vip-opts[hidden]{display:none}
 
+/* ---------- planes exclusivos de la app (lanzamiento.js) ---------- */
+.block.excl{border-color:var(--accent)}
+.block.excl h4{display:flex;align-items:center;gap:6px}
+.excl-st{font-size:13.5px;color:var(--ink-soft);margin-bottom:4px}
+.excl-st b{color:var(--ink)}
+.excl-list{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.excl-list li{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--ink-soft)}
+.excl-list .ico{flex:none;margin-top:2px;color:var(--ink);font-size:15px}
+
   </style>
 </head>
 <body>
@@ -1621,6 +1630,19 @@ const PLANS = [
     summary: 'Comentamos la novela de Andrea Abreu. Grupo pequeño y privado: solo entra quien está apuntado.',
     secret: false,
   },
+  /* Exclusivo de la app (lanzamiento.js): la venta abre a una hora anunciada y solo aquí, con
+     cuenta verificada. waiting: lista de aviso; signups: registros llegados por su enlace. */
+  {
+    id: 'p16', title: 'Fiesta de lanzamiento de planes', placeId: 'azotea', category: 'fiesta',
+    level: 3, paid: true, price: 12, recurring: false, hostId: 'azotea',
+    host: { name: 'Azotea Círculo', business: true, verified: true, rating: 4.6, reliability: 98 },
+    when: hoursFromNow(24 * 9), durationMin: 300, groupMin: 40, groupMax: 150, joined: 0,
+    joinType: 'apuntado', approval: 'automatica',
+    exclusive: { salesAt: hoursFromNow(50).getTime(), earlyHours: 24, waiting: 1240, signups: 312, sold: 0 },
+    gradient: 'g-grape',
+    summary: 'La primera fiesta de la app: DJ al atardecer, la gente de los primeros planes y una sorpresa. Entradas solo en la app, a tu nombre.',
+    secret: false,
+  },
 ];
 
 
@@ -1654,6 +1676,7 @@ const PLAN_ATTENDANCE = {
   p10: { joinType: 'libre',    attended: 18, pub: ['MN','RU','SO','PB','LC'] },
   p11: { joinType: 'libre',    attended: 11, pub: ['CD','HV','OK'] },
   p12: { joinType: 'apuntado', attended: 27, pub: ['AZ','CI','NE','RO'] },
+  p16: { joinType: 'apuntado', attended: 0,  pub: [] },   // aún no se ha celebrado
 };
 PLANS.forEach((p) => {
   const a = PLAN_ATTENDANCE[p.id] || {};
@@ -1701,6 +1724,7 @@ const PLAN_PHOTO = {
   p13:'1588196749597-9ff075ee6b5b', // videollamada en un portátil
   p14:'1586165368502-1bad197a6461', // ajedrez
   p15:'1543002588-bfa74002ed7e',    // libro abierto
+  p16:'1514525253161-7a46d19cd819', // fiesta de lanzamiento
 };
 PLANS.forEach((p) => { p.photo = PLAN_PHOTO[p.id] || ''; });
 
@@ -2361,7 +2385,8 @@ function createAccount(d){
   const p = d.pending, id = 'acc' + Date.now();
   const acc = { id, method:p.method, email:p.email, phone:p.phone, salt:p.salt, hash:p.hash, twoFA: p.twoFA ? { method:p.twoFA } : null,
     birthdate:d.birth, consents:{ legal:true, marketing:!!d.marketing, version:LEGAL_VERSION, at:new Date().toISOString() },
-    onboarded:false, step:'perfil', failed:0, createdAt:new Date().toISOString() };
+    onboarded:false, step:'perfil', failed:0, createdAt:new Date().toISOString(),
+    origin: (lsGet(DESTINO_KEY) || '').replace(/^#\//, '') || null };   // de qué enlace viene (lanzamientos: registros por plan)
   const list = accounts(); list.push(acc); saveAccounts(list);
   lsSet(SESSION_KEY, id);
   freshWorld(); saveState();
@@ -2386,7 +2411,7 @@ function freshWorld(){
   ME.trustedContacts = []; ME.shareTrips = false; ME.safeCheck = false; ME.consents = undefined; ME.consentLog = [];
   drop(MOD_ACTIONS, a => a.targetUserId === 'me'); drop(SAFETY_EVENTS, () => true); delete USER_MOD.me;
   drop(PAYMENTS, x => x.userId === 'me'); drop(PAYMENT_METHODS, () => true); ME.payouts = undefined;
-  ME.planPresence = {}; ME.pinged = {}; ME.calToken = null; AGENDA_HISTORY.length = 0; ME.seenUpdates = {}; ME.remindersSent = {}; ME.reminderPrefs = undefined; ME.adPrefs = undefined;
+  ME.planPresence = {}; ME.pinged = {}; ME.calToken = null; AGENDA_HISTORY.length = 0; ME.seenUpdates = {}; ME.remindersSent = {}; ME.reminderPrefs = undefined; ME.adPrefs = undefined; ME.salesAlerts = {}; ME.salesSent = {};
   drop(AD_CAMPAIGNS, c => c.advertiserId === 'me');
   drop(IDEAS, x => x.authorId === 'me'); IDEAS.forEach(x => { x.people = x.people.filter(p => p.userId !== 'me'); });
   PLANS.forEach(p => { p.waitlist = (p.waitlist || []).filter(x => x !== 'me'); });
@@ -2778,6 +2803,7 @@ function clearPlanPhoto(){ state.draft.photo = null; const pv = document.getElem
 function joinPlan(id){
   const p = getPlan(id); if (!p || isCancelled(p)) return;
   if (!requireVerified('Verifica tu identidad para apuntarte', () => joinPlan(id))) return;
+  if (!canBuyNow(p)){ toast('La venta aún no está abierta: pulsa "Avísame"'); return; }   // plan exclusivo de la app (lanzamiento.js)
   const pay = p.paid && myPayment(id);
   if (isFull(p) && !(pay && pay.status === 'pendiente')) return joinWaitlist(id);
   if (p.paid && !(pay && pay.status === 'retenido')) return openCheckout(id);   // de pago: primero se paga (pagos.js)
@@ -2785,7 +2811,7 @@ function joinPlan(id){
 }
 function completeJoin(id, msg){
   const p = getPlan(id); if (!p) return;
-  if (!state.joined.has(id)){ state.joined.add(id); p.joined = (p.joined || 0) + 1; }
+  if (!state.joined.has(id)){ state.joined.add(id); p.joined = (p.joined || 0) + 1; exclusiveSold(p); }
   ensurePlanChat(id);
   checkReminders();   // si es en las próximas 24 h, el recordatorio llega ya
   saveState();
@@ -6230,6 +6256,7 @@ function buyTicket(planId, ticketId){
   const p = getPlan(planId), t = getTicket(p, ticketId); if (!p || !t) return;
   if (!requireVerified('Verifica tu identidad para comprar entradas', () => buyTicket(planId, ticketId))) return;
   if (isCancelled(p)){ toast('El plan está cancelado'); return; }
+  if (!canBuyNow(p)){ toast('La venta aún no está abierta'); return; }
   if (ticketLeft(t) <= 0){ toast(`${t.name}: agotada`); return; }
   if (myTicket(p)){ toast('Ya tienes una entrada especial para este plan'); return; }
   if (!state.joined.has(planId) && p.paid && isFull(p)){ toast('El plan está completo'); return; }
@@ -6273,6 +6300,86 @@ function vipFromDraft(){
   const perks = String(d.vipPerks || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, TICKET_MAX_PERKS).map(s => s.slice(0, 60));
   return [{ id: 'vip', name: (String(d.vipName || '').trim() || 'Zona VIP').slice(0, 30), price: round2(parseFloat(String(d.vipPrice).replace(',', '.'))), cap: parseInt(d.vipCap, 10), sold: 0, perks }];
 }
+
+
+/* =========================================================================
+   Planes exclusivos de la app (lanzamiento y promoción): las entradas solo se venden
+   aquí, con cuenta verificada. El plan sirve de anuncio y cada entrada trae un registro.
+   - La venta abre a una hora anunciada; antes, "Avísame" apunta a la lista de aviso.
+   - Quien está en la lista y verificado tiene acceso anticipado (horas antes que el resto).
+   - Entradas a tu nombre e intransferibles (una por persona): en la puerta, QR y DNI.
+     Si no puedes ir, se devuelve y pasa a la lista de espera (sin reventa).
+   - Se mide: personas avisadas, registros que llegan por el enlace del plan y vendidas.
+   En la app real: docs/lanzamiento.md.
+   ========================================================================= */
+const isExclusive = (p) => !!(p && p.exclusive);
+const salesAt = (p) => new Date(p.exclusive.salesAt).getTime();
+const earlyAt = (p) => salesAt(p) - (p.exclusive.earlyHours || 0) * 3600000;
+const onNotifyList = (p) => !!(ME.salesAlerts || {})[p.id];
+// ¿Puedo comprar ya? Abierta para todos, o acceso anticipado si estoy en la lista y verificado.
+function canBuyNow(p){
+  if (!isExclusive(p)) return true;
+  const now = Date.now();
+  return now >= salesAt(p) || (now >= earlyAt(p) && onNotifyList(p) && isVerified());
+}
+function untilLabel(ms){ const m = Math.max(1, Math.round(ms / 60000)), d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60);
+  return d ? `${d} d ${h} h` : (h ? `${h} h ${m % 60} min` : `${m} min`); }
+const whenOpen = (t) => { const d = new Date(t); return `${DIAS_LARGOS[d.getDay()]} ${d.getDate()} a las ${hhmm(d)}`; };
+
+/* ---------- en la ficha ---------- */
+function exclusiveBlock(p){
+  if (!isExclusive(p) || isCancelled(p)) return '';
+  const x = p.exclusive, now = Date.now(), open = now >= salesAt(p), early = !open && canBuyNow(p);
+  const waiting = (x.waiting || 0) + (onNotifyList(p) ? 1 : 0);
+  return `<div class="block excl" id="exclusivo"><h4>${ico('lock')} Exclusivo de la app</h4>
+    ${open ? `<p class="excl-st"><b>Venta abierta</b> · ${x.sold || 0} vendidas${p.groupMax ? ` de ${p.groupMax}` : ''}</p>`
+      : (early ? `<p class="excl-st"><b>Tienes acceso anticipado</b> · para el resto abre el ${whenOpen(salesAt(p))}</p>`
+      : `<p class="excl-st"><b>La venta abre el ${whenOpen(salesAt(p))}</b> · quedan ${untilLabel(salesAt(p) - now)}</p>
+         <p class="hint">${waiting.toLocaleString('es-ES')} personas esperando.${x.earlyHours ? ` Quien se apunte al aviso y esté verificado compra ${x.earlyHours} h antes.` : ''}</p>`)}
+    <ul class="excl-list">
+      <li>${ico('phone')}<span>Las entradas solo se venden aquí: ni taquilla ni otras webs.</span></li>
+      <li>${ico('shield')}<span>Hace falta una cuenta verificada. La entrada va a tu nombre: en la puerta, tu QR y tu DNI.</span></li>
+      <li>${ico('user')}<span>Una por persona e intransferible. Si no puedes ir, devuélvela y pasa a la lista de espera.</span></li>
+    </ul>
+    ${!open && !early ? `<div class="pl-actions"><button class="link-btn dim" onclick="demoOpenSales('${p.id}')">Demo: abre la venta</button></div>` : ''}
+  </div>`;
+}
+// Botón principal mientras la venta no está abierta para ti (null: el flujo normal de apuntarse).
+function exclusiveCta(p){
+  if (!isExclusive(p) || isCancelled(p) || state.joined.has(p.id) || canBuyNow(p)) return null;
+  if (onNotifyList(p)) return `<button class="btn-join done" disabled>${ico('check')} Te avisaremos${isVerified() ? ' · acceso anticipado' : ''}</button>`;
+  return `<button class="btn-join" onclick="joinSalesAlert('${p.id}')">${ico('bell')} Avísame cuando abra</button>`;
+}
+function joinSalesAlert(id){
+  const p = getPlan(id); if (!p) return;
+  ME.salesAlerts = Object.assign({}, ME.salesAlerts, { [id]: Date.now() }); saveState();
+  toast(isVerified() ? `Te avisamos: podrás comprar ${p.exclusive.earlyHours || 0} h antes que el resto` : 'Te avisamos. Verifícate para tener acceso anticipado');
+  renderDetail(id);
+}
+// Avisos: acceso anticipado y apertura de la venta (una vez cada uno). Se comprueba al navegar.
+function checkSalesAlerts(){
+  if (typeof ME === 'undefined' || !ME.name) return;
+  const now = Date.now(), sent = ME.salesSent || (ME.salesSent = {});
+  PLANS.filter(p => isExclusive(p) && onNotifyList(p) && !isCancelled(p) && !state.joined.has(p.id)).forEach(p => {
+    const k = sent[p.id] || {};
+    if (now >= salesAt(p) && !k.open){ k.open = true; notify('recordatorio', `Ya está abierta la venta de ${p.title}. Solo en la app.`, { planId: p.id }); }
+    else if (now >= earlyAt(p) && now < salesAt(p) && isVerified() && !k.early){ k.early = true; notify('recordatorio', `Tu acceso anticipado a ${p.title} ya está abierto: compra antes que nadie.`, { planId: p.id }); }
+    sent[p.id] = k;
+  });
+}
+function demoOpenSales(id){
+  const p = getPlan(id); if (!p) return;
+  p.exclusive.salesAt = Date.now() - 60000; checkSalesAlerts(); saveState();
+  toast('Venta abierta'); renderDetail(id);
+}
+// Lo que ve el anfitrión: lista de aviso, registros que trajo el enlace y vendidas.
+function exclusiveHostLine(p){
+  if (!isExclusive(p)) return '';
+  const x = p.exclusive, mine = accounts().filter(a => a.origin === 'plan/' + p.id).length;
+  return `<div class="pay-line">${ico('users')}<span>${(x.waiting || 0).toLocaleString('es-ES')} esperando · ${((x.signups || 0) + mine).toLocaleString('es-ES')} registros desde el enlace · ${x.sold || 0} vendidas</span></div>`;
+}
+// Al comprar: una por persona, y se cuenta en las vendidas del lanzamiento.
+function exclusiveSold(p){ if (isExclusive(p)) p.exclusive.sold = (p.exclusive.sold || 0) + 1; }
 
 
 /* =========================================================================
@@ -6474,7 +6581,7 @@ function saveState(){
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
             city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom,
-            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged, calToken: ME.calToken, seenUpdates: ME.seenUpdates, remindersSent: ME.remindersSent, reminderPrefs: ME.reminderPrefs, adPrefs: ME.adPrefs },
+            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged, calToken: ME.calToken, seenUpdates: ME.seenUpdates, remindersSent: ME.remindersSent, reminderPrefs: ME.reminderPrefs, adPrefs: ME.adPrefs, salesAlerts: ME.salesAlerts, salesSent: ME.salesSent },
       modActions: MOD_ACTIONS, adCampaigns: AD_CAMPAIGNS, userMod: USER_MOD, safety: SAFETY_EVENTS, payments: PAYMENTS, paymentMethods: PAYMENT_METHODS, ideas: IDEAS,
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
@@ -6552,7 +6659,7 @@ function gridCell(p){
   <button class="cell ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">
     ${coverImg(planCover(p),500)}
     <span class="cell-scrim"></span>
-    <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>${callLive(p) ? `<span class="cell-feat live">${ico('live')} En directo</span>` : (p.featured ? '<span class="cell-feat">Destacado</span>' : (isOnline(p) ? `<span class="cell-feat">${ico('video')} Online</span>` : ''))}
+    <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>${callLive(p) ? `<span class="cell-feat live">${ico('live')} En directo</span>` : (p.featured ? '<span class="cell-feat">Destacado</span>' : (isExclusive(p) ? `<span class="cell-feat">${ico('lock')} Solo en la app</span>` : (isOnline(p) ? `<span class="cell-feat">${ico('video')} Online</span>` : '')))}
     <span class="cell-info">
       <span class="cell-title">${escapeHtml(p.title)}</span>
       <span class="cell-meta">${escapeHtml(loc)} · ${ico('geo')} ${attendanceView(p).n}</span>
@@ -7766,6 +7873,7 @@ function renderDetail(id){
   let cta;
   if (isCancelled(p)) cta = `<button class="btn-join done" disabled>${ico('close')} Plan cancelado</button>`;
   else if (callCta(p)) cta = callCta(p);   // videollamada: entrar o ver en directo (videollamadas.js)
+  else if (exclusiveCta(p)) cta = exclusiveCta(p);   // exclusivo de la app: aún no se puede comprar (lanzamiento.js)
   else if (isHost(p)) cta = `<button class="btn-join" onclick="openHostQr('${p.id}')">${ico('grid')} Mostrar QR de llegada</button>`;
   else if (!isVerified() && !attended && !joined) cta = `<button class="btn-join" onclick="requireVerified('Verifica tu identidad para ir a este plan', () => renderDetail('${p.id}'))">${ico('shield')} Verifícate para ir</button>`;
   else if (attended) cta = `<button class="btn-join done" disabled>${ico('check')} Asististe · verificado</button>`;
@@ -7804,7 +7912,7 @@ function renderDetail(id){
         ${isHost(p) && p.paid ? `<button class="sh-row" onclick="go('cobros')">${ico('euro')}<span>Cobros · ${hostSales(p.id).filter(x => x.status !== 'reembolsado').length} reservas</span>${ico('chevR')}</button>` : ''}
         ${isHost(p) ? `<button class="sh-row" onclick="go('editar-plan/${p.id}')">${ico('doc')}<span>Editar fecha, hora o lugar</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openCancelPlan('${p.id}')">${ico('close')}<span>Cancelar el plan</span>${ico('chevR')}</button>` : ''}
-      ${promoBlock(p)}</div>${ticketsHostLine(p)}${agendaActions(p)}</div>` : '';
+      ${promoBlock(p)}</div>${ticketsHostLine(p)}${exclusiveHostLine(p)}${agendaActions(p)}</div>` : '';
 
   const presence = isCancelled(p) ? '' : presenceBlock(p);   // quién te ve y si vas solo o en grupo (planes.js)
 
@@ -7846,6 +7954,7 @@ function renderDetail(id){
           <span class="tag tag-line">${freeIcon(p)} ${p.paid?'De pago':'Gratis'}</span>
           ${p.secret?`<span class="tag tag-line">${ico('lock')} Secreto</span>`:''}
           ${isOnline(p)?`<span class="tag tag-line">${ico('video')} Videollamada</span>`:''}
+          ${isExclusive(p)?`<span class="tag tag-line">${ico('lock')} Solo en la app</span>`:''}
         </div>
         <h2>${escapeHtml(p.title)}</h2>
         <div class="hero-loc">${isOnline(p) ? `${ico('video')} Videollamada · ${escapeHtml(onlineSummary(p))}` : `${ico('pin')} ${p.secret||hideExact?'Zona aprox. · Madrid':(place?place.name+' · '+place.city:escapeHtml(p.meetPoint||'Madrid'))}`}</div>
@@ -7862,6 +7971,7 @@ function renderDetail(id){
         ${p.meetPoint ? `<p class="hint">${ico('pin')} Punto de encuentro: <b>${escapeHtml(p.meetPoint)}</b></p>` : ''}
         <p class="hint">${isOnline(p)?(manual?'Por videollamada, con aprobación: pide tu plaza en la llamada y decide el anfitrión. ':'Por videollamada: apúntate para entrar con cámara y micro. ')+'Cuentas como asistente al pasar 10 minutos en la llamada.':manual?'Plan con aprobación: envía una solicitud; el creador o los admins la aceptan o rechazan.':(libre?'Plan libre: no hace falta apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.':'Plan apuntado: hay que apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.')}</p>
       </div>
+      ${exclusiveBlock(p)}
       ${ticketsBlock(p)}
       ${callBlock(p)}
       ${updatesBlock(p)}
@@ -8782,7 +8892,7 @@ function showView(name){
 }
 function scrollTop(v){ const el=document.getElementById('view-'+v); if(el) el.scrollTop=0; }
 function router(){
-  stopMusic(); checkReminders(); updateDmBadge(); updateNotifBadge(); setChromeHidden(false);
+  stopMusic(); checkReminders(); checkSalesAlerts(); updateDmBadge(); updateNotifBadge(); setChromeHidden(false);
   const hash = location.hash.replace(/^#\//,'') || 'feed';
   const [route,arg] = hash.split('/');
   if (route !== 'plan'){ state.updVisit = null; state.updAll = null; }

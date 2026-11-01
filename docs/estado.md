@@ -35,6 +35,7 @@ bloque.
 | Publicidad en la agenda sin rastreo; lupa de búsqueda | #37 | `docs/publicidad.md` |
 | Traspaso: `CLAUDE.md`, este documento y la vista previa | #38 | `CLAUDE.md` |
 | Entradas especiales (zona VIP) y planes freemium | #39 | `docs/pagos.md` |
+| Planes exclusivos de la app (lanzamiento y promoción) | #40 | `docs/lanzamiento.md` |
 
 ## Pendiente
 

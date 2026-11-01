@@ -1329,3 +1329,12 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
 .sheet .tk-perks{margin:-4px 0 4px}
 #vip-opts{display:flex;flex-direction:column;gap:12px;margin-top:12px}
 #vip-opts[hidden]{display:none}
+
+/* ---------- planes exclusivos de la app (lanzamiento.js) ---------- */
+.block.excl{border-color:var(--accent)}
+.block.excl h4{display:flex;align-items:center;gap:6px}
+.excl-st{font-size:13.5px;color:var(--ink-soft);margin-bottom:4px}
+.excl-st b{color:var(--ink)}
+.excl-list{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.excl-list li{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--ink-soft)}
+.excl-list .ico{flex:none;margin-top:2px;color:var(--ink);font-size:15px}

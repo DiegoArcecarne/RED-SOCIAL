@@ -52,6 +52,7 @@ function buyTicket(planId, ticketId){
   const p = getPlan(planId), t = getTicket(p, ticketId); if (!p || !t) return;
   if (!requireVerified('Verifica tu identidad para comprar entradas', () => buyTicket(planId, ticketId))) return;
   if (isCancelled(p)){ toast('El plan está cancelado'); return; }
+  if (!canBuyNow(p)){ toast('La venta aún no está abierta'); return; }
   if (ticketLeft(t) <= 0){ toast(`${t.name}: agotada`); return; }
   if (myTicket(p)){ toast('Ya tienes una entrada especial para este plan'); return; }
   if (!state.joined.has(planId) && p.paid && isFull(p)){ toast('El plan está completo'); return; }
