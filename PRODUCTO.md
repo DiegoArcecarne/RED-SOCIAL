@@ -122,6 +122,8 @@ No hay emparejamiento persona-persona. Nada de swipe ni de parejas. La compatibi
 
 Sí hay ranking de planes por afinidad. El feed ordena planes según intereses declarados en el onboarding y comportamiento (qué planes ves, a cuáles te apuntas). Esto es relevancia de contenido, no matching de citas.
 
+Sin píxeles ni datos de fuera. El orden sale solo de lo que pasa dentro de la app: los temas que eliges, los planes a los que vas (llegada con QR), lo que guardas, buscas y miras, a quién sigues y quién de ellos va, la fecha y la fiabilidad del anfitrión. Lo que pides no ver resta. En el piloto son reglas con puntos fijos; más adelante, un modelo aprendido. Cada plan explica "Por qué ves este plan" y se puede descartar ("No me interesa", "Ver menos planes de X"). En Ajustes ▸ Tus intereses se ven los parámetros, se editan los temas y se puede desactivar la personalización: entonces el orden es por fecha. Para que el feed no se llene de un solo tema, no salen más de dos planes seguidos del mismo. Los anuncios llevan siempre "Patrocinado": en Vividas, como mucho uno cada 10 publicaciones (ocupan uno de cada dos huecos de plan inyectado), y en la búsqueda, uno, solo si tiene que ver con lo buscado. Detalle en [docs/recomendacion-y-anuncios.md](docs/recomendacion-y-anuncios.md).
+
 Taxonomía actualizable. Las categorías no se hard-codean. Estructura propuesta de arranque, revisable: outdoor y aventura, fiesta y vida nocturna, gastronomía, cultura, deporte, bienestar, social y networking, planes para viajeros. Las categorías se añaden, fusionan o jubilan según los datos de uso real.
 
 ## Modelo económico

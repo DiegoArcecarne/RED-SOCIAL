@@ -189,7 +189,9 @@ function openPostMenu(id){
     <div class="sheet-list">
       ${mine ? `<button class="sh-row" onclick="openEditCaption('${id}')">${ico('doc')}<span>Editar el pie</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openDeletePost('${id}')">${ico('close')}<span>Eliminar publicación</span>${ico('chevR')}</button>`
-      : `<button class="sh-row" onclick="closeOverlay();toggleFollowQuiet('${u.id}')">${ico('user')}<span>${follows('me', u.id) ? 'Dejar de seguir' : 'Seguir'} a ${escapeHtml(u.name)}</span>${ico('chevR')}</button>
+      : `<button class="sh-row" onclick="openPostWhy('${id}')">${ico('spark')}<span>Por qué veo esto</span>${ico('chevR')}</button>
+        <button class="sh-row" onclick="hidePost('${id}')">${ico('eye')}<span>No me interesa</span>${ico('chevR')}</button>
+        <button class="sh-row" onclick="closeOverlay();toggleFollowQuiet('${u.id}')">${ico('user')}<span>${follows('me', u.id) ? 'Dejar de seguir' : 'Seguir'} a ${escapeHtml(u.name)}</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openReport('${u.id}', null, { objectType:'publicacion', postId:'${id}' })">${ico('alert')}<span>Reportar</span>${ico('chevR')}</button>`}
       <button class="sh-row" onclick="closeOverlay();copyShareLink('${id}')">${ico('link')}<span>Copiar enlace</span>${ico('chevR')}</button>
     </div></div>`);
@@ -379,8 +381,12 @@ function renderSearchResults(){
   const tag = (x) => `<button class="conv" onclick="saveRecentSearch(state.search.q);go('tema/${encodeURIComponent(x.tag)}')"><span class="conv-av tag-av">${ico('hash')}</span>
     <span class="conv-main"><b>#${escapeHtml(x.tag)}</b><span>${x.n} ${x.n === 1 ? 'publicación' : 'publicaciones'}</span></span></button>`;
   const sec = (title, list, fn, k) => list.length ? `${t === 'todo' ? `<div class="notif-h"><span>${title}</span>${list.length > 3 ? `<button class="link-btn" onclick="setSearchTab('${k}')">Ver todo</button>` : ''}</div>` : ''}${(t === 'todo' ? list.slice(0, 3) : list).map(fn).join('')}` : '';
+  // Como mucho un resultado patrocinado, encima de los planes y solo si tiene que ver con lo buscado (recomendacion.js).
+  const ad = t === 'todo' || t === 'planes' ? searchAdRow(q, r.plans) : null;
+  const plans = ad && ad.planId ? r.plans.filter(p => p.id !== ad.planId) : r.plans;
   const html = (t === 'todo' || t === 'personas' ? sec('Personas', r.people, person, 'personas') : '')
-    + (t === 'todo' || t === 'planes' ? sec('Planes', r.plans, plan, 'planes') : '')
+    + (ad ? `${t === 'todo' && !plans.length ? '<div class="notif-h"><span>Planes</span></div>' : ''}${ad.html}` : '')
+    + (t === 'todo' || t === 'planes' ? sec('Planes', plans, plan, 'planes') : '')
     + (t === 'todo' || t === 'temas' ? sec('Temas', r.tags, tag, 'temas') : '');
   box.innerHTML = html || `<div class="empty-tab"><span class="empty-ic">${ico('search')}</span><p>Sin resultados para «${escapeHtml(q)}».</p></div>`;
 }

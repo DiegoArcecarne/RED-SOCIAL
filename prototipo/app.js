@@ -197,7 +197,7 @@ function saveState(){
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
             city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom,
-            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged, calToken: ME.calToken, seenUpdates: ME.seenUpdates, remindersSent: ME.remindersSent, reminderPrefs: ME.reminderPrefs, adPrefs: ME.adPrefs, salesAlerts: ME.salesAlerts, salesSent: ME.salesSent },
+            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged, calToken: ME.calToken, seenUpdates: ME.seenUpdates, remindersSent: ME.remindersSent, reminderPrefs: ME.reminderPrefs, adPrefs: ME.adPrefs, reco: ME.reco, recoLog: ME.recoLog, salesAlerts: ME.salesAlerts, salesSent: ME.salesSent },
       modActions: MOD_ACTIONS, adCampaigns: AD_CAMPAIGNS, userMod: USER_MOD, safety: SAFETY_EVENTS, payments: PAYMENTS, paymentMethods: PAYMENT_METHODS, ideas: IDEAS,
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
@@ -263,6 +263,7 @@ function filteredPlans(){
     if (isCancelled(p)) return false;
     if (p.removed || p.held) return false;   // retirado o en revisión (el anfitrión lo ve en su ficha)
     if (!canSeeOnline(p)) return false;      // videollamada privada: solo para quien está dentro
+    if (recoPrefs().hiddenPlans.includes(p.id)) return false;   // "No me interesa" (recomendacion.js)
     if (state.mode === 'online' && !isOnline(p)) return false;
     if (state.mode === 'presencial' && isOnline(p)) return false;
     return true;
@@ -284,7 +285,7 @@ function gridCell(p){
 }
 function renderFeed(){
   renderFilterState();
-  const plans = filteredPlans().sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));   // destacados por el equipo, primero
+  const plans = rankPlans(filteredPlans());   // destacados por el equipo primero y luego por intereses (recomendacion.js)
   const cont = document.getElementById('feed-list');
   cont.innerHTML = ideasStrip() + (plans.length ? `<div class="grid">${plans.map(gridCell).join('')}</div>`
     : emptyTab('grid','Sin planes con esos filtros','Prueba a ampliar el tamaño de grupo o el tema.'));
@@ -294,8 +295,8 @@ function agoLabel(h){ if (h < 1) return 'ahora'; if (h < 24) return `hace ${Math
 function minLabel(m){ return m < 1 ? 'ahora' : (m < 60 ? `hace ${m} min` : `hace ${Math.round(m/60)} h`); }
 function setContentTab(t){ stopMusic(); state.contentTab = t; renderContent(); scrollTop('feed'); }
 
-// Publicaciones del muro, de la más reciente a la más antigua.
-function wallPosts(){ return POSTS.filter(canSeePost).sort((a,b)=>(a.ago||0)-(b.ago||0)); }
+// Publicaciones del muro, de la más reciente a la más antigua (el orden final lo pone rankPosts).
+function wallPosts(){ const hid = recoPrefs().hiddenPosts; return POSTS.filter(po => canSeePost(po) && !hid.includes(po.id)).sort((a,b)=>(a.ago||0)-(b.ago||0)); }
 
 // Filtro por origen: experiencias de planes o momentos de la vida de cada uno.
 function byOrigin(posts, f){ return f === 'todo' ? posts : posts.filter(po => postOrigin(po) === f); }
@@ -380,11 +381,16 @@ function postCard(po){
 }
 
 // Plan inyectado en el muro (regla de producto: 1 cada 5 publicaciones), de la
-// misma categoría que las publicaciones que se acaban de ver.
-function injectedPlan(seen, used){
+// misma categoría que las publicaciones que se acaban de ver. Uno de cada dos huecos
+// puede ser un plan patrocinado (recomendacion.js), nunca más densidad.
+function injectedPlan(seen, used, slot){
   let cat = null;
   for (let i = seen.length - 1; i >= 0; i--){ const p = seen[i].planId && getPlan(seen[i].planId); if (p){ cat = p.category; break; } }
-  const upcoming = PLANS.filter(p => p.when > new Date() && !used.has(p.id));
+  if (slot % 2 === 0){
+    const ad = pickFeedAd('muro', cat ? [cat] : [], { used, viewKey: (c) => c.id + ':muro:' + slot });
+    if (ad){ used.add(ad.ad.planId || ad.ad.id); return sponsoredInject(ad, slot); }
+  }
+  const upcoming = rankPlans(PLANS.filter(p => discoverable(p) && !used.has(p.id)));
   const pick = upcoming.find(p => p.category === cat) || upcoming[0];
   if (!pick) return '';
   used.add(pick.id);
@@ -422,14 +428,14 @@ function storiesStrip(){
 
 function renderWall(){
   const all = wallPosts();
-  const posts = byOrigin(all, state.wallFilter);
+  const posts = rankPosts(byOrigin(all, state.wallFilter));   // por intereses (recomendacion.js)
   const used = new Set();
   let out = `<div class="wall-filter">${originFilter(all, state.wallFilter, v => `setWallFilter('${v}')`, 'Vida')}</div>`;
   if (!posts.length) out += emptyTab('image', 'Nada por aquí todavía', 'Cuando la gente a la que sigues publique, lo verás aquí.');
   posts.forEach((po,i) => {
     out += postCard(po);
     if (i === 1) out += storiesStrip();
-    if ((i + 1) % 5 === 0) out += injectedPlan(posts.slice(0, i + 1), used);
+    if ((i + 1) % 5 === 0) out += injectedPlan(posts.slice(0, i + 1), used, (i + 1) / 5);
   });
   return `<div class="wall">${out}</div>`;
 }
@@ -1617,6 +1623,7 @@ function renderDetail(id){
           <span class="pl-arrow">${ico('chevR')}</span></button>
       </div>`}
       ${isOnline(p) ? '' : safetyBlock(p)}
+      ${recoBlock(p)}
       <div class="block"><h4>Reseñas de ediciones anteriores</h4>
         ${REVIEWS.map(r=>`<div class="review"><div class="top"><span>${r.author}</span><span class="st">${Array(r.stars).fill(ico('star')).join('')}</span></div><p>${r.text}</p></div>`).join('')}
       </div>
@@ -2030,6 +2037,7 @@ function renderSettings(){
           <span class="tg-ic">${ico(ME.presencePublic?'globe':'lock')}</span>
           <span class="tg-info"><span class="tg-n">Presencia por defecto: ${ME.presencePublic?'pública':'privada'}</span><span class="tg-s">Cómo apareces al registrar tu llegada</span></span>
           <span class="switch ${ME.presencePublic?'on':''}"><span class="knob"></span></span></div>
+        <button class="set-row" onclick="go('intereses')"><span class="sr-ic">${ico('spark')}</span><span class="sr-l">Tus intereses y recomendaciones<span class="or-s">qué ves en Descubrir y por qué</span></span><span class="soon">${recoOn() ? 'Activadas' : 'Por fecha'}</span><span class="pl-arrow">${ico('chevR')}</span></button>
       </div>
       <div class="set-group"><div class="set-title">Menciones y etiquetas</div>
         <div class="set-box"><span class="sb-l">Quién puede mencionarte o etiquetarte</span>
@@ -2517,7 +2525,7 @@ function router(){
     case 'mapa':    state.navTab='mapa'; renderMap(); showView('mapa'); break;
     case 'grupos':  state.navTab='grupos'; renderGroups(); showView('grupos'); break;
     case 'perfil':  state.navTab='perfil'; renderProfile('me'); showView('perfil'); break;
-    case 'plan':    if (!getPlan(arg)){ renderGone('Este plan ya no está disponible'); break; } renderDetail(arg); showView('detail'); scrollTop('detail'); break;
+    case 'plan':    if (!getPlan(arg)){ renderGone('Este plan ya no está disponible'); break; } recoView(arg); renderDetail(arg); showView('detail'); scrollTop('detail'); break;
     case 'p':       state.navTab='feed'; renderContent(); showView('feed'); openLinkedPost(arg); break;   // enlace a una publicación
     case 'recibido': receiveShared(); break;   // lo que llega desde el menú de compartir del móvil
     case 'u':       renderProfile(arg); showView('page'); scrollTop('page'); break;
@@ -2544,6 +2552,7 @@ function router(){
     case 'nuevo-perfil': renderNewProfile(); showView('page'); scrollTop('page'); break;
     case 'editar-perfil': renderEditProfile(); showView('page'); scrollTop('page'); break;
     case 'ajustes': renderSettings(); showView('page'); scrollTop('page'); break;
+    case 'intereses': renderInterests(); showView('page'); scrollTop('page'); break;
     case 'solicitudes': renderRequests(arg); showView('page'); scrollTop('page'); break;
     case 'crear':   renderCreateChooser(); showView('page'); scrollTop('page'); break;
     case 'crear-plan':  renderCreatePlan(); showView('page'); scrollTop('page'); break;

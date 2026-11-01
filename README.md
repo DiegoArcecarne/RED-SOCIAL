@@ -21,6 +21,7 @@ bucle con un piloto low-code en Madrid antes de construir la app.
 | [`docs/compartir.md`](docs/compartir.md) | Especificación: web pública con vista previa, enlaces que abren la app y menú de compartir nativo |
 | [`docs/lanzamiento.md`](docs/lanzamiento.md) | Planes exclusivos de la app como medio de lanzamiento y promoción: venta solo en la app, con cuenta verificada |
 | [`docs/publicidad.md`](docs/publicidad.md) | Especificación: publicidad sin rastreo (anuncios en la agenda y planes promocionados) |
+| [`docs/recomendacion-y-anuncios.md`](docs/recomendacion-y-anuncios.md) | Especificación: orden de Descubrir por intereses con señales propias, "Por qué ves esto", Tus intereses y anuncios en Vividas y en la búsqueda |
 | [`docs/videollamadas.md`](docs/videollamadas.md) | Especificación: planes por videollamada (públicos o privados, comentarios, unirse libre o con aprobación), sala y proveedor de vídeo |
 | [`docs/novedades.md`](docs/novedades.md) | Especificación: novedades de cada plan (cambios y avisos) y a quién se notifican |
 | [`docs/agenda.md`](docs/agenda.md) | Especificación: agenda de tus planes (día, semana, mes y año) y suscripción desde el calendario del móvil |

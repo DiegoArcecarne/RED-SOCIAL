@@ -6,7 +6,8 @@ bloque.
 ## Dónde está todo
 
 - **Código y documentos**: este repositorio. Nada importante vive fuera.
-- **`main` tiene todo lo hecho hasta el PR #38** (se fusionó con todos los anteriores).
+- **`main` tiene todo lo hecho hasta el PR #41** (el #41 se fusionó con el #39 y el #40
+  debajo; antes, el #38 con todos los anteriores).
   Las ramas nuevas salen de `main`; si hay PR abiertos sin fusionar, de la última rama.
 
 ## Qué está hecho (prototipo y especificación)
@@ -37,12 +38,14 @@ bloque.
 | Entradas especiales (zona VIP) y planes freemium | #39 | `docs/pagos.md` |
 | Planes exclusivos de la app (lanzamiento y promoción) | #40 | `docs/lanzamiento.md` |
 | Nombre: Plannet (plan + net) en la app, la web y los documentos | #41 | `PRODUCTO.md` |
+| Recomendación por intereses y anuncios en Vividas y en la búsqueda (issue #28) | #42 | `docs/recomendacion-y-anuncios.md` |
 
 ## Pendiente
 
-- **Issue #28**: algoritmo de recomendación por intereses y anuncios por búsquedas sin
-  píxeles. La parte de anuncios en la agenda ya está (`docs/publicidad.md`); falta el
-  algoritmo del feed y la publicidad en Descubrir.
+- **Issue #28**: hecha la fase 1 (reglas a mano) y los anuncios en la agenda, Vividas y la
+  búsqueda (`docs/recomendacion-y-anuncios.md`). Falta: revisión legal de la base para
+  anuncios con temas propios, panel del anunciante para cuentas de negocio, atribución de
+  reservas y llegadas en el servidor, y la fase 2 (modelo aprendido) cuando haya datos.
 - **Bonos de descuento de marcas** como estrategia de captación: solo apuntado en
   `docs/lanzamiento.md` (§6).
 - **Marca Plannet**: comprobar dominio (`plannet.app` es provisional) y registro de la marca.

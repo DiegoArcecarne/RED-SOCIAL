@@ -1586,6 +1586,62 @@ let mf = null; try { mf = JSON.parse(fs.readFileSync(path.join(pdir0, 'manifest.
 check('PWA: sale en el menú de compartir (share_target con fotos y vídeos) y captura los enlaces', !!mf && mf.share_target.method === 'POST' && mf.share_target.params.files[0].accept.includes('image/*') && mf.handle_links === 'preferred'
   && fs.readFileSync(path.join(pdir0, 'sw.js'), 'utf8').includes('recibir-compartido'));
 
+// --- Recomendación por intereses y anuncios en Descubrir (issue #28) ---
+const rcs = {};
+const rc = createEnv(rcs);
+check('recomendación: cada plan dice por qué sale, con señales de la app', rc.run('planScore(getPlan("p4")).why').includes('Has ido a planes de Gastronomía'));
+check('recomendación: los destacados por el equipo siguen primero', (() => { rc.run('getPlan("p7").featured = true'); const first = rc.run('rankPlans(filteredPlans())[0].id'); rc.run('getPlan("p7").featured = false'); return first === 'p7'; })());
+const rcCats = rc.run('rankPlans(filteredPlans()).map(p => p.category)');
+check('recomendación: no más de 2 planes seguidos del mismo tema (salvo que no quede otro)', !rcCats.some((c, i) => i >= 2 && c === rcCats[i - 1] && c === rcCats[i - 2] && rcCats.slice(i).some(x => x !== c)), rcCats.join(' '));
+const rcBefore = rc.run('planScore(getPlan("p4")).score');
+rc.run('toggleLessCat("gastro")');
+check('ver menos de un tema: resta y lo explica', rc.run('planScore(getPlan("p4")).score') < rcBefore && rc.run('planScore(getPlan("p4")).why[0]').startsWith('Pediste ver menos planes de Gastronomía'));
+rc.run('toggleLessCat("gastro")');
+rc.nav('plan/p10'); h = rc.html('view-detail'); rendered += h;
+check('ficha: "Por qué ves este plan", "No me interesa" y "Ver menos"', h.includes('Por qué ves este plan') && h.includes('No me interesa este plan') && h.includes('Ver menos planes de Deporte'));
+check('abrir un plan queda en el registro propio (tipo, plan, tema y hora)', rc.run('ME.recoLog.slice(-1)[0].type') === 'vista' && rc.run('ME.recoLog.slice(-1)[0].planId') === 'p10' && rc.run('Object.keys(ME.recoLog.slice(-1)[0]).sort().join()') === 'at,cat,planId,type');
+rc.run('notInterestedPlan("p10")');
+check('no me interesa: el plan sale de Disponibles', !rc.run('filteredPlans().some(p => p.id === "p10")') && (rc.nav('feed'), rc.run('state.contentTab = "disponibles"; renderContent()'), !rc.html('feed-list').includes("plan/p10'")));
+rc.nav('intereses'); h = rc.html('view-page'); rendered += h;
+check('Tus intereses: temas, lo descartado, los parámetros y lo que nunca se usa', h.includes('Tus temas') && h.includes('Running club al anochecer') && h.includes('Qué tenemos en cuenta') && h.includes('píxeles de seguimiento') && h.includes('Borrar mi historial'));
+rc.run('notInterestedPlan("p10")');
+check('se puede deshacer desde Tus intereses', rc.run('filteredPlans().some(p => p.id === "p10")'));
+rc.run('toggleMyInterest("cultura")');
+check('editar tus temas cuenta para recomendar', rc.run('ME.interests').includes('cultura') && rc.run('planScore(getPlan("p11")).why').includes('Elegiste Cultura entre tus temas'));
+rc.nav('ajustes'); check('Ajustes: "Tus intereses y recomendaciones"', rc.html('view-page').includes("go('intereses')"));
+// Vividas
+rc.nav('feed'); rc.run('state.contentTab = "vividas"; renderContent()'); h = rc.html('feed-list'); rendered += h;
+const rcInj = count(h, /class="inject /g), rcAds = count(h, /class="inject sp /g);
+check('Vividas: anuncios en uno de cada dos huecos, nunca más densidad, con "Patrocinado"', rcAds >= 1 && rcAds <= Math.ceil(rcInj / 2) && rcInj === Math.floor(rc.run('wallPosts().length') / 5) && h.includes('<em>Patrocinado</em>') && h.includes('Por qué lo ves'));
+const rcAd = rc.run('Object.keys(state.adSurface).find(k => state.adSurface[k] === "muro")');
+rc.run(`openAdWhy("${rcAd}")`); check('por qué lo ves en Vividas: dice dónde y la densidad', rc.html('overlay').includes('salga en Vividas') && rc.html('overlay').includes('uno cada 10 publicaciones'));
+check('Vividas: lo que sigues y te interesa sube; el orden no es solo por fecha', rc.run('postScore(wallPosts().find(p => follows("me", p.authorId))).why').some(w => w.startsWith('Sigues a')));
+const rcPost = rc.run('wallPosts().find(p => p.authorId !== "me").id');
+rc.run(`openPostMenu("${rcPost}")`); h = rc.html('overlay');
+check('publicación ajena (⋯): "Por qué veo esto" y "No me interesa"', h.includes(`openPostWhy('${rcPost}')`) && h.includes(`hidePost('${rcPost}')`));
+rc.run(`openPostWhy("${rcPost}")`); check('por qué veo esta publicación: motivos y opciones', rc.html('overlay').includes('Solo usamos lo que haces dentro de Plannet') && rc.html('overlay').includes('Tus intereses'));
+rc.run(`hidePost("${rcPost}")`); check('no me interesa una publicación: sale del muro', !rc.run(`wallPosts().some(p => p.id === "${rcPost}")`));
+// Búsqueda
+rc.run('getPlan("p12").when = new Date(Date.now() + 26 * 3600000)');
+rc.nav('buscar'); rc.run('state.search.q = "cine"; state.search.tab = "todo"; renderSearchResults()'); h = rc.html('sr-res'); rendered += h;
+check('búsqueda: un resultado patrocinado relacionado, sin repetirlo abajo', count(h, /class="sr-ad"/g) === 1 && h.includes('<em>Patrocinado</em>') && count(h, /Cine de verano en azotea/g) === 1);
+rc.run('openAdWhy("ad1")'); check('por qué lo ves en la búsqueda: lo que buscaste', rc.html('overlay').includes('Buscaste «cine»') && rc.html('overlay').includes('salga en la búsqueda'));
+rc.run('state.search.q = "vermut"; renderSearchResults()'); check('búsqueda sin relación: sin anuncio', !rc.html('sr-res').includes('Patrocinado'));
+rc.run('state.search.q = "bici"; renderSearchResults()'); check('anuncio solo donde se ha pedido salir (marca sin búsqueda: no)', !rc.html('sr-res').includes('Ruta Verde'));
+check('el anunciante ve dónde se vio, en totales', rc.run('AD_CAMPAIGNS.find(c => c.id === "ad1").bySurface.busqueda') >= 1);
+// Oponerse
+rc.run('toggleRecoConsent()');
+check('oponerse: orden por fecha y se borra lo guardado', !rc.run('recoOn()') && rc.run('(ME.recoLog || []).length') === 0 && (() => { const l = rc.run('rankPlans(filteredPlans()).filter(p => !p.featured).map(p => new Date(p.when).getTime())'); return l.every((t, i) => !i || t >= l[i - 1]); })());
+rc.run('recoView("p2")'); check('sin recomendaciones no se registra nada', rc.run('(ME.recoLog || []).length') === 0 && rc.html('view-page').includes('se ordenan por fecha'));
+rc.run('toggleRecoConsent()');
+check('los cambios quedan en el registro de consentimientos', rc.run('ME.consentLog.filter(e => e.key === "personalizacion").length') === 2);
+rc.run('toggleLessCat("fiesta")');
+const rc2 = createEnv(rcs);
+check('persisten tus intereses, lo descartado y el registro', rc2.run('recoPrefs().lessCats').includes('fiesta') && rc2.run('recoPrefs().hiddenPosts').includes(rcPost) && rc2.run('ME.interests').includes('cultura'));
+// Promoción: sale en las tres superficies
+rc.run('getPlan("p10").hostId = "me"; state.promo = { planId:"p10", budget:10, days:3 }; confirmPromote("p10"); myCampaign("p10").status = "activa"; demoAdTraffic(myCampaign("p10").id)');
+check('promocionar: agenda, Vividas y búsqueda, con lo visto en cada sitio', rc.run('myCampaign("p10").surfaces.join()') === 'agenda,muro,busqueda' && rc.html('view-detail').includes('Dónde la han visto'));
+
 // --- Web instalable (PWA) ---
 const pdir = path.join(__dirname, '..', 'prototipo');
 let man = null; try { man = JSON.parse(fs.readFileSync(path.join(pdir, 'manifest.webmanifest'), 'utf8')); } catch (err) {}

@@ -1,8 +1,10 @@
 # Publicidad sin rastreo: planes promocionados y anuncios en la agenda
 
 Especificación de cómo salen anuncios en la app sin píxeles de seguimiento (ver issue #28).
-El prototipo lo simula en la agenda (`prototipo/publicidad.js`); aquí se describe lo que
-tiene que hacer el servidor.
+El prototipo lo simula en la agenda (`prototipo/publicidad.js`) y en Descubrir
+(`prototipo/recomendacion.js`); aquí se describe lo que tiene que hacer el servidor. La
+recomendación y los anuncios de Vividas y de la búsqueda, en
+[`recomendacion-y-anuncios.md`](recomendacion-y-anuncios.md).
 
 ## 1. Qué se anuncia
 
@@ -16,7 +18,9 @@ tiene que hacer el servidor.
 | Superficie | Cuánto | Estado |
 |---|---|---|
 | **Agenda** | Como mucho **un anuncio por vista** (el día, la semana o el día elegido en el mes). El de un plan sale en el día del plan; el de marca, en tu primer día libre | En el prototipo |
-| Descubrir | El hueco de inyección del muro (1 de cada 5-6), ya previsto en PRODUCTO.md | Fase 2 |
+| Vividas | Como mucho uno de cada dos huecos de plan inyectado: un anuncio cada 10 publicaciones | En el prototipo |
+| Búsqueda | Como mucho uno, encima de los planes, y solo si tiene que ver con lo buscado | En el prototipo |
+| Disponibles | Sin anuncios por ahora | Por decidir |
 | Nunca | La vista de año, las notificaciones, los recordatorios, los chats, las novedades de un plan, las videollamadas | — |
 
 Cada anuncio lleva siempre **"Patrocinado"**, quién paga y **"Por qué lo ves"**. Un mismo
@@ -61,14 +65,16 @@ En la ficha de tu plan ▸ *Organización ▸ Promocionar este plan*:
 4. **Revisión**: el equipo lo revisa antes de que salga (mismas normas que el contenido:
    nada de planes engañosos, apuestas ni productos prohibidos). Si lo rechaza,
    devuelve el 100 %.
-5. **Resultados** en la ficha: veces vista, toques y gasto; pausar, reanudar o terminar.
+5. **Resultados** en la ficha: veces vista (en total y en cada sitio: agenda, Vividas y
+   búsqueda), toques y gasto; pausar, reanudar o terminar.
 
 No se puede promocionar un plan cancelado, retirado, en revisión ni una videollamada privada.
 
 ## 6. Datos y API
 
-`CAMPANA_BOOST`: anunciante, tipo (boost o marca), plan promocionado, superficies,
-temas (en marca), presupuesto, gastado, puja, estado (`en_revision | activa | pausada |
+`CAMPANA_BOOST`: anunciante, tipo (boost o marca), plan promocionado, superficies
+(`agenda | muro | busqueda`; un plan promocionado sale en las tres), palabras clave de
+búsqueda, temas (en marca), presupuesto, gastado, puja, estado (`en_revision | activa | pausada |
 terminada | rechazada`), fechas, impresiones y toques. Por persona: anuncios y
 anunciantes ocultos, si se usan sus temas, y el contador diario de impresiones por anuncio.
 

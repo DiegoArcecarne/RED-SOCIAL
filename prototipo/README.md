@@ -208,6 +208,15 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    *Demo: abre la venta* para comprar. La web pública del plan dice "Entradas solo en la app"
    y el registro que llega por su enlace queda contado. Ver
    [`docs/lanzamiento.md`](../docs/lanzamiento.md).
+27. **Recomendación por intereses y anuncios en Descubrir** — Disponibles y Vividas se
+   ordenan por lo que haces en la app (temas elegidos, planes a los que fuiste, lo que
+   guardas, buscas y miras, a quién sigues y quién va), sin más de 2 planes seguidos del
+   mismo tema. En la ficha, *Por qué ves este plan*, *No me interesa* y *Ver menos planes
+   de X*; en el menú de cada publicación, *Por qué veo esto*. *Ajustes ▸ Tus intereses*:
+   activar o no las recomendaciones (sin ellas, orden por fecha), tus temas, lo descartado,
+   qué se tiene en cuenta y borrar el historial. Anuncios con "Patrocinado" en Vividas (uno
+   cada 10 publicaciones) y en la búsqueda (busca *cine*). Ver
+   [`docs/recomendacion-y-anuncios.md`](../docs/recomendacion-y-anuncios.md).
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.
@@ -217,7 +226,7 @@ condiciones de las cuentas profesionales están pendientes de decidir.
 
 ## Para desarrollar
 
-Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `pagos.js`, `chispas.js`, `admin.js`, `agenda.js`, `videollamadas.js`, `publicidad.js`, `entradas.js`, `lanzamiento.js`, `app.js`).
+Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `pagos.js`, `chispas.js`, `admin.js`, `agenda.js`, `videollamadas.js`, `publicidad.js`, `entradas.js`, `lanzamiento.js`, `recomendacion.js`, `app.js`).
 `standalone.html` y `web/` se generan; no los edites a mano. Desde la raíz del repositorio:
 
 ```bash
