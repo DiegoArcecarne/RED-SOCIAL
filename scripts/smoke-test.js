@@ -1443,10 +1443,55 @@ check('terminar la promoción', !av.run('myCampaign("p10")'));
 const av2 = createEnv(pubs);
 check('persisten las campañas y tus preferencias de anuncios', av2.run('AD_CAMPAIGNS.some(c => c.planId === "p10" && c.status === "terminada")') && av2.run('adPrefs().hidden').includes(shownId) && av2.run('adPrefs().interests') === false);
 
+// --- Entradas: plan gratis con zona VIP de pago, y de pago con general y VIP ---
+const tks = {};
+const tk = createEnv(tks);
+tk.nav('plan/p1'); h = tk.html('view-detail'); rendered += h;
+check('ficha: entradas (acceso libre y Barra VIP con lo que incluye y plazas)', h.includes('<h4>Entradas</h4>') && h.includes('Acceso libre') && h.includes('Barra VIP') && h.includes('Vermut de la casa') && h.includes('Quedan 5 de 12') && h.includes('Comprar · 12 €'));
+check('barra de abajo: gratis con la entrada especial al lado', h.includes('Barra VIP 12 €'));
+tk.run('buyTicket("p1", "vip")'); h = tk.html('overlay');
+check('comprar la entrada VIP: pago con lo que incluye', h.includes('Entrada Barra VIP') && h.includes('Pagar 12,00 €') && h.includes('Sitio en la barra'));
+tk.run('payWithWallet()');
+const tp1 = tk.run('myPayment("p1")');
+check('pagada: retenida hasta el plan, apuntado y una plaza VIP menos', tp1.amount === 12 && tp1.ticketId === 'vip' && tp1.status === 'retenido' && tk.run('state.joined.has("p1")') && tk.run('getTicket(getPlan("p1"), "vip").sold') === 8);
+h = tk.html('view-detail');
+check('tu entrada VIP con su código para entrar a la zona', h.includes('Entrada Barra VIP · código') && h.includes(tk.run('ticketCode(getPlan("p1"), getTicket(getPlan("p1"), "vip"))')) && h.includes('Tu entrada · VIP-'));
+tk.run(`openReceipt("${tp1.id}")`);
+check('el recibo dice qué entrada es', tk.html('overlay').includes('<th>Entrada</th><td>Barra VIP</td>'));
+tk.run('closeOverlay(); refundMyPayment(getPlan("p1"), { amount:12, pct:100, policy: CANCEL_POLICIES.flexible })');
+check('si cancelas con reembolso, la plaza VIP vuelve a la venta', tk.run('getTicket(getPlan("p1"), "vip").sold') === 7 && tk.run('myTicket(getPlan("p1"))') === null);
+// Plan de pago: general y luego pasar a VIP pagando la diferencia
+tk.run('state.checkout = null; openCheckout("p3"); payWithWallet()');
+check('general de pago', tk.run('myPayment("p3").amount') === 18 && !tk.run('myPayment("p3").ticketId'));
+tk.nav('plan/p3'); h = tk.html('view-detail');
+check('con la general: "Pasar a Zona VIP" por la diferencia', h.includes('Pasar a Zona VIP · 27 €'));
+tk.run('buyTicket("p3", "vip")'); h = tk.html('overlay');
+check('pagar la diferencia (ya pagaste la general)', h.includes('ya pagaste 18,00 €') && h.includes('Pagar 27,00 €'));
+tk.run('payWithWallet()');
+check('pasas a VIP: un solo pago de 45 € con la entrada especial', tk.run('myPayment("p3").amount') === 45 && tk.run('myPayment("p3").ticketId') === 'vip' && tk.run('PAYMENTS.filter(x => x.planId === "p3" && x.userId === "me" && !x.past).length') === 1);
+tk.run('getTicket(getPlan("p1"), "vip").sold = 12'); tk.nav('plan/p1');
+check('agotada', tk.html('view-detail').includes('Agotada') && (tk.run('closeOverlay(); buyTicket("p1", "vip")'), !tk.html('overlay').includes('Pagar')));
+// Crear un plan gratis con zona VIP
+tk.run('ME.payouts = { status:"activa", iban:"ES9121000418450200051332" }; state.draft.price = "gratis"; state.draft.vip = false'); tk.nav('crear-plan'); h = tk.html('view-page');
+check('crear plan: "Entrada especial (zona VIP)" opcional', h.includes('Entrada especial (zona VIP)') && h.includes('El plan sigue gratis'));
+tk.run('toggleVipDraft()'); set(tk, 'f-title', 'Concierto en el parque'); set(tk, 'f-desc', 'Música en directo.');
+const nTk = tk.run('PLANS.length'); tk.run('publishPlan()');
+check('sin precio para la VIP no se publica', tk.run('PLANS.length') === nTk);
+set(tk, 'f-vipname', 'Primera fila'); set(tk, 'f-vipprice', '20'); set(tk, 'f-vipcap', '10'); set(tk, 'f-vipperks', 'Primera fila\nUna consumición'); tk.run('publishPlan()');
+const tkp = tk.run('PLANS[0]');
+check('publicado: gratis con su entrada especial', tkp.title === 'Concierto en el parque' && !tkp.paid && tkp.tickets.length === 1 && tkp.tickets[0].name === 'Primera fila' && tkp.tickets[0].price === 20 && tkp.tickets[0].cap === 10 && tkp.tickets[0].perks.length === 2);
+tk.run(`demoSales("${tkp.id}", 3)`);
+check('en un plan gratis, se venden las entradas especiales', tk.run(`getPlan("${tkp.id}").tickets[0].sold`) === 3 && tk.run(`hostSales("${tkp.id}").every(x => x.ticketId === "vip" && x.amount === 20)`));
+tk.nav('plan/' + tkp.id);
+check('anfitrión: ventas de la entrada especial', tk.html('view-detail').includes('Primera fila: 3 de 10 vendidas · 60 €'));
+const tk2 = createEnv(tks);
+check('persisten las entradas vendidas y tu VIP', tk2.run('myPayment("p3").ticketId') === 'vip' && tk2.run(`getPlan("${tkp.id}").tickets[0].sold`) === 3);
+
 const pdir0 = path.join(__dirname, '..', 'prototipo');
 // --- Compartir: web pública con vista previa, enlaces que abren la app y menú nativo ---
 const wdir = path.join(__dirname, '..', 'prototipo', 'web');
 const wread = (f) => { try { return fs.readFileSync(path.join(wdir, f), 'utf8'); } catch (err) { return ''; } };
+check('web pública: el plan dice que tiene entrada especial', wread('plan/p1.html').includes('Barra VIP 12 €'));
 const sh = createEnv({});
 let wp = wread('plan/p2.html');
 check('web: página del plan con etiquetas Open Graph y Twitter (imagen 1200×630)', ['og:title', 'og:description', 'og:image" content="https://images.unsplash.com/', 'og:image:width" content="1200"', 'twitter:card" content="summary_large_image"', 'og:locale" content="es_ES"'].every((x) => wp.includes(x)));

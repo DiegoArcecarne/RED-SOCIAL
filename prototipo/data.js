@@ -273,6 +273,13 @@ const PLAN_PHOTO = {
 };
 PLANS.forEach((p) => { p.photo = PLAN_PHOTO[p.id] || ''; });
 
+// Entradas especiales (entradas.js): un plan gratis con zona VIP de pago, y uno de pago con general y VIP.
+const PLAN_TICKETS = {
+  p1: [{ id:'vip', name:'Barra VIP', price:12, cap:12, sold:7, perks:['Sitio en la barra junto al coro','Vermut de la casa y una tapa','Sin esperar para pedir'] }],
+  p3: [{ id:'vip', name:'Zona VIP', price:45, cap:20, sold:14, perks:['Mesa reservada junto a la cabina','Dos consumiciones','Entrada sin cola'] }],
+};
+PLANS.forEach((p) => { if (PLAN_TICKETS[p.id]) p.tickets = PLAN_TICKETS[p.id].map((t) => ({ ...t, perks: t.perks.slice() })); });
+
 // Usuarios (perfiles). type: 'usuario' normal o 'profesional' (cuenta de negocio).
 const USERS = [
   { id:'me', name:'Marina', handle:'@marina', initials:'MA', type:'usuario', verified:true,

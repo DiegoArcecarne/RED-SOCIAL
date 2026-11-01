@@ -6,11 +6,8 @@ bloque.
 ## Dónde está todo
 
 - **Código y documentos**: este repositorio. Nada importante vive fuera.
-- **PR abiertos sin fusionar, encadenados**: del #8 al #37. Cada uno va encima del anterior,
-  así que **fusionar el último (o la rama más reciente) en `main` incluye todos**; después se
-  pueden cerrar los demás. A partir de ahí, las ramas nuevas salen de `main`.
-- **Rama más reciente**: la del último PR abierto (ahora, `claude/traspaso-8jk291`, que va
-  encima de `claude/publicidad-agenda-8jk291`, PR #37).
+- **`main` tiene todo lo hecho hasta el PR #38** (se fusionó con todos los anteriores).
+  Las ramas nuevas salen de `main`; si hay PR abiertos sin fusionar, de la última rama.
 
 ## Qué está hecho (prototipo y especificación)
 
@@ -36,6 +33,8 @@ bloque.
 | Novedades del plan y recordatorios | #35 | `docs/novedades.md` |
 | Planes por videollamada; portadas; arreglos del móvil y del carrusel | #36 | `docs/videollamadas.md` |
 | Publicidad en la agenda sin rastreo; lupa de búsqueda | #37 | `docs/publicidad.md` |
+| Traspaso: `CLAUDE.md`, este documento y la vista previa | #38 | `CLAUDE.md` |
+| Entradas especiales (zona VIP) y planes freemium | #39 | `docs/pagos.md` |
 
 ## Pendiente
 

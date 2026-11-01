@@ -31,32 +31,37 @@ function nextReceiptNo(){
   const n = PAYMENTS.reduce((m, x) => Math.max(m, parseInt(String(x.receiptNo || '').split('-').pop(), 10) || 0), 117) + 1;
   return 'PL-' + new Date().getFullYear() + '-' + String(n).padStart(6, '0');
 }
-function newPayment(p, userId, status){
-  const x = { id: newId('pay'), planId: p.id, planTitle: p.title, hostName: (p.host || {}).name || '', userId, amount: p.price, refunded: 0,
+function newPayment(p, userId, status, ticket){
+  const x = { id: newId('pay'), planId: p.id, planTitle: p.title, hostName: (p.host || {}).name || '', userId, amount: ticket ? ticket.price : p.price, refunded: 0,
     status, at: Date.now(), receiptNo: nextReceiptNo(), intent: 'pi_' + Math.random().toString(36).slice(2, 12) };
+  if (ticket){ x.ticketId = ticket.id; x.ticketName = ticket.name; }   // entrada especial (entradas.js)
   PAYMENTS.push(x); return x;
 }
 
 /* ---------- reservar y pagar ---------- */
 // Política de cancelación de un plan, con números (la misma que se enseña antes de pagar).
 function policyLine(p){ const pol = CANCEL_POLICIES[p.cancelPolicy || 'flexible']; return `Cancelación ${pol.label.toLowerCase()}: ${pol.text}`; }
-function openCheckout(planId){
+function openCheckout(planId, ticketId){
   const p = getPlan(planId); if (!p) return;
-  state.checkout = state.checkout && state.checkout.planId === planId ? state.checkout
-    : { planId, method: (PAYMENT_METHODS.find(m => m.isDefault) || PAYMENT_METHODS[0] || { id:'nueva' }).id, save: true, err: '' };
+  state.checkout = state.checkout && state.checkout.planId === planId && state.checkout.ticketId === (ticketId || null) ? state.checkout
+    : { planId, ticketId: ticketId || null, method: (PAYMENT_METHODS.find(m => m.isDefault) || PAYMENT_METHODS[0] || { id:'nueva' }).id, save: true, err: '' };
   renderCheckout();
 }
+// Lo que se paga ahora: la plaza o la entrada especial (si ya tienes la general, la diferencia).
+function checkoutAmount(ck, p){ const t = ck.ticketId && getTicket(p, ck.ticketId); return t ? ticketCost(p, t) : p.price; }
 function renderCheckout(){
   const ck = state.checkout, p = getPlan(ck.planId); if (!p) return;
-  const place = getPlace(p.placeId), pend = myPayment(p.id);
+  const place = getPlace(p.placeId), pend = myPayment(p.id), t = ck.ticketId && getTicket(p, ck.ticketId), amount = checkoutAmount(ck, p);
+  const upgrade = t && pend && pend.status === 'retenido' && !pend.ticketId;
   const methods = PAYMENT_METHODS.map(m => `<button class="pay-opt ${ck.method === m.id ? 'on' : ''}" role="radio" aria-checked="${ck.method === m.id}" onclick="setCheckout('method','${m.id}')">
       <span class="rep-dot"></span>${ico('card')}<span>${escapeHtml(m.brand)} ···· ${escapeHtml(m.last4)}<span class="or-s">Caduca ${escapeHtml(m.exp)}</span></span></button>`).join('');
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Pagar la reserva">
-    <div class="sheet-h"><span>Reservar plaza</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-h"><span>${t ? 'Comprar entrada' : 'Reservar plaza'}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list form">
       <div class="ck-plan"><span class="mini-thumb ${p.gradient}">${coverImg(planCover(p), 120)}</span><span><b>${escapeHtml(p.title)}</b>
         <span class="or-s">${fmtWhen(new Date(p.when))} · ${escapeHtml(isOnline(p) ? 'Videollamada' : (p.secret ? 'Zona aproximada' : (place ? place.name : 'Madrid')))}</span></span></div>
-      <div class="ck-row"><span>1 plaza</span><b>${money2(p.price)}</b></div>
+      <div class="ck-row"><span>${t ? `Entrada ${escapeHtml(t.name)}${upgrade ? ` (ya pagaste ${money2(pend.amount)} de la general)` : ''}` : '1 plaza'}</span><b>${money2(amount)}</b></div>
+      ${t && (t.perks || []).length ? `<ul class="tk-perks">${t.perks.map(x => `<li>${ico('check')}<span>${escapeHtml(x)}</span></li>`).join('')}</ul>` : ''}
       ${pend && pend.status === 'pendiente' ? `<p class="hint">${ico('clock')} Te han aceptado: paga antes de ${fmtWhen(new Date(pend.dueAt))} para confirmar tu plaza.</p>` : ''}
       <div class="pay-note">${ico('shield')}<p><b>Pago protegido.</b> Lo retenemos hasta el plan; al anfitrión le llega después de celebrarse. Si no se celebra, te devolvemos el 100 %.</p></div>
       <p class="hint">${escapeHtml(policyLine(p))}</p>
@@ -70,7 +75,7 @@ function renderCheckout(){
         <div class="opt-row" onclick="setCheckout('save', ${!ck.save})"><span class="or-ic">${ico('lock')}</span><span class="or-l">Guardar para la próxima vez</span><span class="switch ${ck.save ? 'on' : ''}"><span class="knob"></span></span></div>
         <p class="hint">Demo: 4242 4242 4242 4242 paga; 4000 0027 6000 3184 pide confirmar en tu banco; 4000 0000 0000 0002 es rechazada.</p>` : ''}
       ${ck.err ? `<p class="pay-err" role="alert">${ico('alert')} ${escapeHtml(ck.err)}</p>` : ''}
-      <button class="btn-primary" onclick="payNow()">Pagar ${money2(p.price)}</button>
+      <button class="btn-primary" onclick="payNow()">Pagar ${money2(amount)}</button>
       <p class="hint">Los datos de la tarjeta van directamente al procesador de pagos (Stripe); planes no los guarda.</p>
     </div></div>`);
 }
@@ -120,6 +125,7 @@ function completePayment(method){
     PAYMENT_METHODS.push(method);
   }
   const label = method.last4 ? `${method.brand} ···· ${method.last4}` : method.brand;
+  if (ck.ticketId) return completeTicketPayment(p, getTicket(p, ck.ticketId), label);
   let x = myPayment(p.id);
   if (x && x.status === 'pendiente'){ x.status = 'retenido'; x.at = Date.now(); delete x.dueAt; }
   else x = newPayment(p, 'me', 'retenido');
@@ -127,6 +133,22 @@ function completePayment(method){
   state.checkout = null; closeOverlay();
   notify('pago', `Pago de ${money2(x.amount)} para ${p.title}. Lo retenemos hasta el plan. Recibo ${x.receiptNo}.`, { route:'pagos' });
   completeJoin(p.id, `Plaza reservada · ${money(x.amount)} retenidos hasta el plan`);
+}
+
+// Entrada especial: nueva, o pasar de la general pagando la diferencia.
+function completeTicketPayment(p, t, label){
+  if (!t) return;
+  const cost = ticketCost(p, t), wasJoined = state.joined.has(p.id);
+  let x = myPayment(p.id);
+  if (x && x.status === 'retenido' && !x.ticketId){ x.amount = round2(x.amount + cost); x.upgradedAt = Date.now(); }   // la general pasa a especial
+  else if (x && x.status === 'pendiente'){ x.status = 'retenido'; x.amount = t.price; x.at = Date.now(); delete x.dueAt; }
+  else x = newPayment(p, 'me', 'retenido', t);
+  x.ticketId = t.id; x.ticketName = t.name; x.method = label;
+  t.sold = (t.sold || 0) + 1;
+  state.checkout = null; closeOverlay();
+  notify('pago', `Pago de ${money2(cost)} por la entrada ${t.name} de ${p.title}. Lo retenemos hasta el plan. Recibo ${x.receiptNo}.`, { route:'pagos' });
+  if (wasJoined){ saveState(); toast(`Ya tienes la entrada ${t.name}`); renderDetail(p.id); }
+  else completeJoin(p.id, `Entrada ${t.name} · ${money(cost)} retenidos hasta el plan`);
 }
 
 /* ---------- cancelaciones y reembolsos ---------- */
@@ -139,6 +161,7 @@ function refundMyPayment(p, rf){
   x.refundReason = rf.pct >= 100 ? 'Cancelaste a tiempo: reembolso completo' : (rf.pct > 0 ? `Política ${rf.policy.label.toLowerCase()}: reembolso del ${rf.pct} %` : `Política ${rf.policy.label.toLowerCase()}: sin reembolso`);
   if (rf.pct > 0){ x.refundedAt = Date.now(); notify('pago', `Te devolvemos ${money2(x.refunded)} de ${p.title}. Llega a tu tarjeta en 5-10 días hábiles.`, { route:'pagos' }); }
   if (rf.pct === 0) x.cancelled = true;   // la plaza se pierde y el importe va al anfitrión tras el plan
+  const t = x.ticketId && getTicket(p, x.ticketId); if (t && t.sold) t.sold--;   // la entrada especial vuelve a la venta
   return x;
 }
 // El anfitrión cancela (o el plan no llega al mínimo): reembolso completo a todos.
@@ -173,10 +196,12 @@ function demoPayout(planId){
 }
 // Demo: llegan reservas a un plan de pago tuyo.
 function demoSales(planId, n){
-  const p = getPlan(planId); if (!p || !p.paid) return;
+  const p = getPlan(planId), t = ticketsOf(p)[0]; if (!p || !(p.paid || t)) return;
   const buyers = USERS.filter(u => u.id !== 'me' && !u.managedBy && u.type !== 'profesional').slice(0, n || 3);
-  buyers.forEach(u => { const x = newPayment(p, u.id, 'retenido'); x.method = 'Tarjeta'; p.joined = (p.joined || 0) + 1; });
-  saveState(); notify('pago', `${buyers.length} reservas nuevas en ${p.title}: ${money2(buyers.length * p.price)} retenidos hasta el plan.`, { route:'cobros' });
+  // En un plan gratis con entrada especial, lo que se vende es la especial; en uno de pago, la general.
+  buyers.forEach(u => { const x = newPayment(p, u.id, 'retenido', p.paid ? null : t); x.method = 'Tarjeta'; p.joined = (p.joined || 0) + 1; if (!p.paid) t.sold = (t.sold || 0) + 1; });
+  const total = buyers.length * (p.paid ? p.price : t.price);
+  saveState(); notify('pago', `${buyers.length} ${p.paid ? 'reservas' : 'entradas ' + t.name} nuevas en ${p.title}: ${money2(total)} retenidos hasta el plan.`, { route:'cobros' });
   if (location.hash.startsWith('#/cobros')) renderPayouts(); else renderDetail(planId);
 }
 
@@ -251,8 +276,8 @@ const PLATFORM = { name:'planes (razón social pendiente)', nif:'B00000000', add
 function receiptHtml(x){
   const host = USERS.find(u => u.name === x.hostName) || {};
   const biz = host.type === 'profesional';
-  const rows = [['Plan', x.planTitle], ['Organiza', x.hostName + (biz ? ' (empresa)' : '')], ['Fecha del pago', new Date(x.at).toLocaleDateString('es-ES')],
-    ['Forma de pago', x.method || ''], ['Importe', money2(x.amount)]].concat(x.refunded ? [['Reembolsado', '− ' + money2(x.refunded)], ['Total', money2(x.amount - x.refunded)]] : []);
+  const rows = [['Plan', x.planTitle]].concat(x.ticketName ? [['Entrada', x.ticketName]] : []).concat([['Organiza', x.hostName + (biz ? ' (empresa)' : '')], ['Fecha del pago', new Date(x.at).toLocaleDateString('es-ES')],
+    ['Forma de pago', x.method || ''], ['Importe', money2(x.amount)]]).concat(x.refunded ? [['Reembolsado', '− ' + money2(x.refunded)], ['Total', money2(x.amount - x.refunded)]] : []);
   return `<div class="rcpt"><div class="rcpt-h"><b>planes</b><span>Recibo ${escapeHtml(x.receiptNo)}</span></div>
     <table>${rows.map(([k, v]) => `<tr><th>${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`).join('')}</table>
     <p>Cobrado por ${escapeHtml(PLATFORM.name)} (NIF ${PLATFORM.nif}) en nombre de ${escapeHtml(x.hostName)}, a través de Stripe. ${biz ? 'La factura de la entrada la emite el organizador; pídesela desde aquí.' : 'IVA incluido si corresponde.'}</p></div>`;

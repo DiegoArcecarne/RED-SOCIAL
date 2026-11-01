@@ -124,7 +124,7 @@ PLANS.filter(planIsPublic).forEach((p) => {
   const cat = getCategory(p.category);
   const host = p.host || {};
   const where = planWhere(p);
-  const facts = [p.paid ? `${p.price} €` : 'Gratis', SIZE_LABEL[sizeBucket(p)], cat ? cat.label : ''].filter(Boolean);
+  const facts = [p.paid ? `${p.price} €` : 'Gratis', ...(p.tickets || []).map((t) => `${t.name} ${t.price} €`), SIZE_LABEL[sizeBucket(p)], cat ? cat.label : ''].filter(Boolean);
   const description = isCancelled(p) ? 'Este plan se ha cancelado.' : `${facts.join(' · ')} · ${where}`;
   planPages.add(p.id);
   files[`plan/${p.id}.html`] = page({

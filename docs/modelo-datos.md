@@ -31,6 +31,8 @@ erDiagram
     PLAN ||--o{ INSCRIPCION : recibe
     USUARIO ||--o{ INSCRIPCION : realiza
     INSCRIPCION ||--o| PAGO : genera
+    PLAN ||--o{ TIPO_ENTRADA : ofrece
+    TIPO_ENTRADA ||--o{ PAGO : "se vende en"
     USUARIO ||--o{ METODO_PAGO : guarda
     USUARIO ||--o| CUENTA_COBRO : "cobra con"
     CUENTA_COBRO ||--o{ TRANSFERENCIA : recibe
@@ -293,9 +295,19 @@ erDiagram
         int likes
         string visibilidad
     }
+    TIPO_ENTRADA {
+        uuid id PK
+        uuid plan_id FK
+        string nombre "max 30, p. ej. Zona VIP"
+        decimal precio "mayor que la general"
+        int plazas
+        int vendidas
+        string incluye "hasta 4 lineas"
+    }
     PAGO {
         uuid id PK
         uuid inscripcion_id FK
+        uuid tipo_entrada_id FK "nulo si es la general"
         decimal importe
         decimal comision "15% IVA incluido"
         decimal reembolsado

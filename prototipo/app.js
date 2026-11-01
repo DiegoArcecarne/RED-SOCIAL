@@ -1512,6 +1512,7 @@ function renderDetail(id){
   const myBlock = (joined && !attended && !isCancelled(p)) ? `<div class="block"><h4>Tu asistencia</h4>
       <p class="hint">${state.reconfirmed.has(p.id) ? `${ico('check')} Apuntado y reconfirmado.` : 'Apuntado.'} ${p.paid ? escapeHtml(policyLine(p)) : 'Si no puedes ir, cancela con tiempo: deja la plaza a otra persona.'}</p>
       ${pay && pay.status !== 'pendiente' ? `<div class="pay-line">${ico('card')}<span>Pagado ${money2(pay.amount)} · ${PAY_STATUS[pay.status].toLowerCase()}</span><button class="link-btn" onclick="openReceipt('${pay.id}')">Recibo</button></div>` : ''}
+      ${myTicket(p) ? `<div class="pay-line">${ico('star')}<span>Entrada ${escapeHtml(myTicket(p).name)} · código <b>${escapeHtml(ticketCode(p, myTicket(p)))}</b> · enséñalo al entrar a la zona</span></div>` : ''}
       ${agendaActions(p)}
       <div class="pl-actions"><button class="link-btn" onclick="openCancel('${p.id}')">Cancelar asistencia</button><button class="link-btn dim" onclick="demoReminder('${p.id}')">Demo: recordatorio de 2 h antes</button><button class="link-btn dim" onclick="demoPlanEnded('${p.id}')">Demo: simular que el plan ha terminado</button></div></div>`
     : (toPay ? `<div class="block"><h4>Tu plaza</h4><p class="hint">${ico('clock')} Te guardamos la plaza hasta ${fmtWhen(new Date(pay.dueAt))}. Paga para confirmarla; si no, pasa a la siguiente persona.</p></div>`
@@ -1526,7 +1527,7 @@ function renderDetail(id){
         ${isHost(p) && p.paid ? `<button class="sh-row" onclick="go('cobros')">${ico('euro')}<span>Cobros · ${hostSales(p.id).filter(x => x.status !== 'reembolsado').length} reservas</span>${ico('chevR')}</button>` : ''}
         ${isHost(p) ? `<button class="sh-row" onclick="go('editar-plan/${p.id}')">${ico('doc')}<span>Editar fecha, hora o lugar</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openCancelPlan('${p.id}')">${ico('close')}<span>Cancelar el plan</span>${ico('chevR')}</button>` : ''}
-      ${promoBlock(p)}</div>${agendaActions(p)}</div>` : '';
+      ${promoBlock(p)}</div>${ticketsHostLine(p)}${agendaActions(p)}</div>` : '';
 
   const presence = isCancelled(p) ? '' : presenceBlock(p);   // quién te ve y si vas solo o en grupo (planes.js)
 
@@ -1584,6 +1585,7 @@ function renderDetail(id){
         ${p.meetPoint ? `<p class="hint">${ico('pin')} Punto de encuentro: <b>${escapeHtml(p.meetPoint)}</b></p>` : ''}
         <p class="hint">${isOnline(p)?(manual?'Por videollamada, con aprobación: pide tu plaza en la llamada y decide el anfitrión. ':'Por videollamada: apúntate para entrar con cámara y micro. ')+'Cuentas como asistente al pasar 10 minutos en la llamada.':manual?'Plan con aprobación: envía una solicitud; el creador o los admins la aceptan o rechazan.':(libre?'Plan libre: no hace falta apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.':'Plan apuntado: hay que apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.')}</p>
       </div>
+      ${ticketsBlock(p)}
       ${callBlock(p)}
       ${updatesBlock(p)}
       ${p.held ? `<div class="pl-banner">${ico('clock')}<div><b>En revisión</b><p>El filtro automático ha retenido este plan: solo lo ves tú hasta que lo revise una persona del equipo. Puedes apelar en Ajustes ▸ Estado de tu cuenta.</p></div></div>` : ''}
@@ -1616,7 +1618,7 @@ function renderDetail(id){
         ${REVIEWS.map(r=>`<div class="review"><div class="top"><span>${r.author}</span><span class="st">${Array(r.stars).fill(ico('star')).join('')}</span></div><p>${r.text}</p></div>`).join('')}
       </div>
       <div class="action-bar">
-        <div class="pr"><div class="v">${p.paid?money(p.price):'Gratis'}</div><div class="k">${p.paid?'pago protegido hasta el plan':(libre?'plan libre':'sin coste')}</div></div>
+        <div class="pr"><div class="v">${p.paid?money(p.price):'Gratis'}</div><div class="k">${ticketsOf(p).length ? escapeHtml(ticketsLine(p)) : (p.paid?'pago protegido hasta el plan':(libre?'plan libre':'sin coste'))}</div></div>
         ${cta}
       </div>
     </div>`;
@@ -2208,7 +2210,8 @@ function renderCreatePlan(){
           <div class="iseg" id="d-policy">${Object.entries(CANCEL_POLICIES).map(([k, v]) => `<button data-v="${k}" class="${(d.policy || 'flexible') === k ? 'active' : ''}" onclick="setDraft('policy','${k}')"><span>${v.label}</span></button>`).join('')}</div>
           <p class="hint" id="policy-hint">${escapeHtml(policyHint(d.policy))}</p>
           ${payoutsReady() ? '' : `<button class="vg-inline" onclick="state.draft.priceValue=val('f-price');go('cobros')">${ico('euro')} Para cobrar, configura antes tus cobros (datos fiscales y cuenta bancaria).</button>`}
-        </div></div>
+        </div>
+        ${ticketFormFields(d)}</div>
       <div class="field" id="access-field" ${d.mode==='online'?'hidden':''}><label>Tipo de asistencia</label>
         <div class="iseg" id="d-access">
           <button data-v="libre" class="${d.access==='libre'?'active':''}" onclick="setDraft('access','libre')">${ico('globe')}<span>Libre</span></button>
@@ -2245,6 +2248,8 @@ function publishPlan(){
     if (!(n >= 1 && n <= 500)){ toast('Pon un precio por plaza entre 1 y 500 €'); return; }
     if (!payoutsReady()){ state.draft.priceValue = val('f-price'); toast('Para publicar un plan de pago, configura antes tus cobros'); go('cobros'); return; }
   }
+  const vipErr = vipDraftError(); if (vipErr){ toast(vipErr); return; }   // entrada especial (entradas.js)
+  if (state.draft.vip && !payoutsReady()){ state.draft.priceValue = val('f-price'); toast('Para vender entradas, configura antes tus cobros'); go('cobros'); return; }
   if (!userMod('me').canHost){ toast('Moderación te ha retirado la opción de organizar planes. Mira Ajustes ▸ Estado de tu cuenta'); return; }
   const pf = state.draft.prefill || {};   // si viene de una chispa y el campo llega vacío
   const title = clip(val('f-title') || pf.title, 'planTitle') || 'Plan sin título';
@@ -2273,10 +2278,11 @@ function commitPlan(title, desc, flag){
     groupId, held: !!flag || undefined,
   };
   if (d.mode === 'online') Object.assign(plan, onlinePlanFields(d));   // videollamada: sin lugar, con sus opciones (videollamadas.js)
+  const tickets = vipFromDraft(); if (tickets) plan.tickets = tickets;   // entrada especial opcional (entradas.js)
   PLANS.unshift(plan);
   if (d.fromIdea) linkIdeaToPlan(plan);   // venía de una chispa: entran los que se animaron (chispas.js)
   if (groupId){ const g=getGroup(groupId); if(g) g.planIds.unshift(plan.id); }
-  state.pendingGroup = null; d.photo = null; d.priceValue = "";
+  state.pendingGroup = null; d.photo = null; d.priceValue = ""; d.vip = false; d.vipPrice = ''; d.vipCap = ''; d.vipPerks = '';
   ensurePlanChat(plan.id);
   saveState();
   if (plan.approval === 'manual' && !flag) setTimeout(() => simulateIncomingRequest(plan.id), 5000);   // demo: llega una solicitud

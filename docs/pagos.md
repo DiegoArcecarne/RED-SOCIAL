@@ -87,6 +87,35 @@ Modelo: **cargos y transferencias separados** (*separate charges and transfers*)
   - cuando queda una plaza, se te guarda 24 h para pagar.
 - **Comprobaciones en el servidor**: la reserva y el cobro van en la misma operación. Si el plan se llena entre medias, el pago se cancela y no se cobra. Cada cobro lleva una clave de idempotencia por inscripción, para no cobrar dos veces.
 
+## Tipos de entrada: general y especiales (zona VIP)
+
+Además de su acceso (gratis o de pago), un plan puede tener **entradas especiales**: una zona
+VIP, primera fila, mesa reservada… Con eso caben tres modelos:
+
+| Modelo | Acceso al plan | Entrada especial |
+|---|---|---|
+| Gratis | Gratis | — |
+| De pago | Precio de la general | Opcional (más cara que la general) |
+| **Freemium** | Gratis | De pago (por ejemplo, zona VIP) |
+
+- **Cada entrada especial** tiene nombre (máx. 30), precio (1 a 500 €, por encima de la
+  general), plazas propias y qué incluye (hasta 4 líneas). En el MVP, una por plan; el modelo
+  admite varias.
+- **Comprar** desde la ficha (*Entradas ▸ Comprar*), con el pago protegido de siempre: retenido
+  hasta el plan, 15 % de comisión, la política de cancelación del plan y su recibo, que dice qué
+  entrada es. Hay que estar verificado.
+- **Pasar a VIP**: quien ya tiene la general paga solo la diferencia; el servidor actualiza el
+  mismo pago (un `PaymentIntent` nuevo por la diferencia, vinculado al primero) y el recibo.
+- **Plazas**: se descuentan al pagar y vuelven a la venta si alguien cancela con reembolso.
+  Agotada, se ve "Agotada"; no hay lista de espera de especiales en el MVP.
+- **Acceso a la zona**: cada entrada especial lleva un código personal (en la app real, un QR
+  firmado por el servidor, de un solo uso por plan) que el personal comprueba en la puerta de
+  la zona con la app del anfitrión.
+- **Anfitrión**: ve las ventas de cada entrada (vendidas, plazas y total) en la ficha y en
+  *Cobros*. Para vender entradas especiales en un plan gratis también hace falta tener los
+  cobros configurados.
+- **Cancelación del plan**: se devuelve el 100 % de todas las entradas, como siempre.
+
 ## Cancelaciones y reembolsos
 
 Políticas (las de PRODUCTO.md; el anfitrión elige una al publicar):

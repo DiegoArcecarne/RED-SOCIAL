@@ -1312,3 +1312,20 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
 .ag-ad .ag-main span{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35}
 .ag-wd .ag-ad-cta{display:none}
 .sh-row .or-s{display:block;font-weight:500;font-size:12px;color:var(--ink-soft);margin-top:2px}
+
+/* ---------- entradas: general y especiales (entradas.js) ---------- */
+.tk{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;margin-bottom:8px;background:var(--surface-2)}
+.tk.vip{border-color:var(--accent)}
+.tk-h{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
+.tk-h b{display:flex;align-items:center;gap:6px}
+.tk-h > span{font-weight:800;font-variant-numeric:tabular-nums}
+.tk-s{font-size:12.5px;color:var(--ink-soft)}
+.tk-f{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tk-mine{font-style:normal;font-size:11.5px;font-weight:700;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:2px 8px;background:var(--surface)}
+.tk-out{font-size:12px;font-weight:700;color:var(--ink-dim)}
+.tk-perks{list-style:none;display:flex;flex-direction:column;gap:4px}
+.tk-perks li{display:flex;gap:6px;align-items:flex-start;font-size:12.5px;color:var(--ink-soft)}
+.tk-perks .ico{flex:none;margin-top:2px;color:var(--ink)}
+.sheet .tk-perks{margin:-4px 0 4px}
+#vip-opts{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+#vip-opts[hidden]{display:none}

@@ -26,7 +26,7 @@ antes de empezar.
 SPA estática en JavaScript sin dependencias. Se edita **solo en las fuentes**: `index.html`,
 `styles.css` y los `.js` (`data.js` datos de ejemplo, `cuentas.js`, `planes.js`, `social.js`,
 `confianza.js`, `pagos.js`, `chispas.js`, `admin.js`, `agenda.js`, `videollamadas.js`,
-`publicidad.js` y `app.js`, que va el último). Funciones globales (los `onclick` en línea las
+`publicidad.js`, `entradas.js` y `app.js`, que va el último). Funciones globales (los `onclick` en línea las
 llaman), router por `#/ruta` en `router()` de `app.js`, estado en `state` y persistencia en
 `localStorage` con `saveState()` / `loadState()`.
 

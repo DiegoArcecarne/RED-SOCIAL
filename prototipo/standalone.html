@@ -1330,6 +1330,23 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
 .ag-wd .ag-ad-cta{display:none}
 .sh-row .or-s{display:block;font-weight:500;font-size:12px;color:var(--ink-soft);margin-top:2px}
 
+/* ---------- entradas: general y especiales (entradas.js) ---------- */
+.tk{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;margin-bottom:8px;background:var(--surface-2)}
+.tk.vip{border-color:var(--accent)}
+.tk-h{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
+.tk-h b{display:flex;align-items:center;gap:6px}
+.tk-h > span{font-weight:800;font-variant-numeric:tabular-nums}
+.tk-s{font-size:12.5px;color:var(--ink-soft)}
+.tk-f{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tk-mine{font-style:normal;font-size:11.5px;font-weight:700;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:2px 8px;background:var(--surface)}
+.tk-out{font-size:12px;font-weight:700;color:var(--ink-dim)}
+.tk-perks{list-style:none;display:flex;flex-direction:column;gap:4px}
+.tk-perks li{display:flex;gap:6px;align-items:flex-start;font-size:12.5px;color:var(--ink-soft)}
+.tk-perks .ico{flex:none;margin-top:2px;color:var(--ink)}
+.sheet .tk-perks{margin:-4px 0 4px}
+#vip-opts{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+#vip-opts[hidden]{display:none}
+
   </style>
 </head>
 <body>
@@ -1686,6 +1703,13 @@ const PLAN_PHOTO = {
   p15:'1543002588-bfa74002ed7e',    // libro abierto
 };
 PLANS.forEach((p) => { p.photo = PLAN_PHOTO[p.id] || ''; });
+
+// Entradas especiales (entradas.js): un plan gratis con zona VIP de pago, y uno de pago con general y VIP.
+const PLAN_TICKETS = {
+  p1: [{ id:'vip', name:'Barra VIP', price:12, cap:12, sold:7, perks:['Sitio en la barra junto al coro','Vermut de la casa y una tapa','Sin esperar para pedir'] }],
+  p3: [{ id:'vip', name:'Zona VIP', price:45, cap:20, sold:14, perks:['Mesa reservada junto a la cabina','Dos consumiciones','Entrada sin cola'] }],
+};
+PLANS.forEach((p) => { if (PLAN_TICKETS[p.id]) p.tickets = PLAN_TICKETS[p.id].map((t) => ({ ...t, perks: t.perks.slice() })); });
 
 // Usuarios (perfiles). type: 'usuario' normal o 'profesional' (cuenta de negocio).
 const USERS = [
@@ -4448,32 +4472,37 @@ function nextReceiptNo(){
   const n = PAYMENTS.reduce((m, x) => Math.max(m, parseInt(String(x.receiptNo || '').split('-').pop(), 10) || 0), 117) + 1;
   return 'PL-' + new Date().getFullYear() + '-' + String(n).padStart(6, '0');
 }
-function newPayment(p, userId, status){
-  const x = { id: newId('pay'), planId: p.id, planTitle: p.title, hostName: (p.host || {}).name || '', userId, amount: p.price, refunded: 0,
+function newPayment(p, userId, status, ticket){
+  const x = { id: newId('pay'), planId: p.id, planTitle: p.title, hostName: (p.host || {}).name || '', userId, amount: ticket ? ticket.price : p.price, refunded: 0,
     status, at: Date.now(), receiptNo: nextReceiptNo(), intent: 'pi_' + Math.random().toString(36).slice(2, 12) };
+  if (ticket){ x.ticketId = ticket.id; x.ticketName = ticket.name; }   // entrada especial (entradas.js)
   PAYMENTS.push(x); return x;
 }
 
 /* ---------- reservar y pagar ---------- */
 // Política de cancelación de un plan, con números (la misma que se enseña antes de pagar).
 function policyLine(p){ const pol = CANCEL_POLICIES[p.cancelPolicy || 'flexible']; return `Cancelación ${pol.label.toLowerCase()}: ${pol.text}`; }
-function openCheckout(planId){
+function openCheckout(planId, ticketId){
   const p = getPlan(planId); if (!p) return;
-  state.checkout = state.checkout && state.checkout.planId === planId ? state.checkout
-    : { planId, method: (PAYMENT_METHODS.find(m => m.isDefault) || PAYMENT_METHODS[0] || { id:'nueva' }).id, save: true, err: '' };
+  state.checkout = state.checkout && state.checkout.planId === planId && state.checkout.ticketId === (ticketId || null) ? state.checkout
+    : { planId, ticketId: ticketId || null, method: (PAYMENT_METHODS.find(m => m.isDefault) || PAYMENT_METHODS[0] || { id:'nueva' }).id, save: true, err: '' };
   renderCheckout();
 }
+// Lo que se paga ahora: la plaza o la entrada especial (si ya tienes la general, la diferencia).
+function checkoutAmount(ck, p){ const t = ck.ticketId && getTicket(p, ck.ticketId); return t ? ticketCost(p, t) : p.price; }
 function renderCheckout(){
   const ck = state.checkout, p = getPlan(ck.planId); if (!p) return;
-  const place = getPlace(p.placeId), pend = myPayment(p.id);
+  const place = getPlace(p.placeId), pend = myPayment(p.id), t = ck.ticketId && getTicket(p, ck.ticketId), amount = checkoutAmount(ck, p);
+  const upgrade = t && pend && pend.status === 'retenido' && !pend.ticketId;
   const methods = PAYMENT_METHODS.map(m => `<button class="pay-opt ${ck.method === m.id ? 'on' : ''}" role="radio" aria-checked="${ck.method === m.id}" onclick="setCheckout('method','${m.id}')">
       <span class="rep-dot"></span>${ico('card')}<span>${escapeHtml(m.brand)} ···· ${escapeHtml(m.last4)}<span class="or-s">Caduca ${escapeHtml(m.exp)}</span></span></button>`).join('');
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Pagar la reserva">
-    <div class="sheet-h"><span>Reservar plaza</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-h"><span>${t ? 'Comprar entrada' : 'Reservar plaza'}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list form">
       <div class="ck-plan"><span class="mini-thumb ${p.gradient}">${coverImg(planCover(p), 120)}</span><span><b>${escapeHtml(p.title)}</b>
         <span class="or-s">${fmtWhen(new Date(p.when))} · ${escapeHtml(isOnline(p) ? 'Videollamada' : (p.secret ? 'Zona aproximada' : (place ? place.name : 'Madrid')))}</span></span></div>
-      <div class="ck-row"><span>1 plaza</span><b>${money2(p.price)}</b></div>
+      <div class="ck-row"><span>${t ? `Entrada ${escapeHtml(t.name)}${upgrade ? ` (ya pagaste ${money2(pend.amount)} de la general)` : ''}` : '1 plaza'}</span><b>${money2(amount)}</b></div>
+      ${t && (t.perks || []).length ? `<ul class="tk-perks">${t.perks.map(x => `<li>${ico('check')}<span>${escapeHtml(x)}</span></li>`).join('')}</ul>` : ''}
       ${pend && pend.status === 'pendiente' ? `<p class="hint">${ico('clock')} Te han aceptado: paga antes de ${fmtWhen(new Date(pend.dueAt))} para confirmar tu plaza.</p>` : ''}
       <div class="pay-note">${ico('shield')}<p><b>Pago protegido.</b> Lo retenemos hasta el plan; al anfitrión le llega después de celebrarse. Si no se celebra, te devolvemos el 100 %.</p></div>
       <p class="hint">${escapeHtml(policyLine(p))}</p>
@@ -4487,7 +4516,7 @@ function renderCheckout(){
         <div class="opt-row" onclick="setCheckout('save', ${!ck.save})"><span class="or-ic">${ico('lock')}</span><span class="or-l">Guardar para la próxima vez</span><span class="switch ${ck.save ? 'on' : ''}"><span class="knob"></span></span></div>
         <p class="hint">Demo: 4242 4242 4242 4242 paga; 4000 0027 6000 3184 pide confirmar en tu banco; 4000 0000 0000 0002 es rechazada.</p>` : ''}
       ${ck.err ? `<p class="pay-err" role="alert">${ico('alert')} ${escapeHtml(ck.err)}</p>` : ''}
-      <button class="btn-primary" onclick="payNow()">Pagar ${money2(p.price)}</button>
+      <button class="btn-primary" onclick="payNow()">Pagar ${money2(amount)}</button>
       <p class="hint">Los datos de la tarjeta van directamente al procesador de pagos (Stripe); planes no los guarda.</p>
     </div></div>`);
 }
@@ -4537,6 +4566,7 @@ function completePayment(method){
     PAYMENT_METHODS.push(method);
   }
   const label = method.last4 ? `${method.brand} ···· ${method.last4}` : method.brand;
+  if (ck.ticketId) return completeTicketPayment(p, getTicket(p, ck.ticketId), label);
   let x = myPayment(p.id);
   if (x && x.status === 'pendiente'){ x.status = 'retenido'; x.at = Date.now(); delete x.dueAt; }
   else x = newPayment(p, 'me', 'retenido');
@@ -4544,6 +4574,22 @@ function completePayment(method){
   state.checkout = null; closeOverlay();
   notify('pago', `Pago de ${money2(x.amount)} para ${p.title}. Lo retenemos hasta el plan. Recibo ${x.receiptNo}.`, { route:'pagos' });
   completeJoin(p.id, `Plaza reservada · ${money(x.amount)} retenidos hasta el plan`);
+}
+
+// Entrada especial: nueva, o pasar de la general pagando la diferencia.
+function completeTicketPayment(p, t, label){
+  if (!t) return;
+  const cost = ticketCost(p, t), wasJoined = state.joined.has(p.id);
+  let x = myPayment(p.id);
+  if (x && x.status === 'retenido' && !x.ticketId){ x.amount = round2(x.amount + cost); x.upgradedAt = Date.now(); }   // la general pasa a especial
+  else if (x && x.status === 'pendiente'){ x.status = 'retenido'; x.amount = t.price; x.at = Date.now(); delete x.dueAt; }
+  else x = newPayment(p, 'me', 'retenido', t);
+  x.ticketId = t.id; x.ticketName = t.name; x.method = label;
+  t.sold = (t.sold || 0) + 1;
+  state.checkout = null; closeOverlay();
+  notify('pago', `Pago de ${money2(cost)} por la entrada ${t.name} de ${p.title}. Lo retenemos hasta el plan. Recibo ${x.receiptNo}.`, { route:'pagos' });
+  if (wasJoined){ saveState(); toast(`Ya tienes la entrada ${t.name}`); renderDetail(p.id); }
+  else completeJoin(p.id, `Entrada ${t.name} · ${money(cost)} retenidos hasta el plan`);
 }
 
 /* ---------- cancelaciones y reembolsos ---------- */
@@ -4556,6 +4602,7 @@ function refundMyPayment(p, rf){
   x.refundReason = rf.pct >= 100 ? 'Cancelaste a tiempo: reembolso completo' : (rf.pct > 0 ? `Política ${rf.policy.label.toLowerCase()}: reembolso del ${rf.pct} %` : `Política ${rf.policy.label.toLowerCase()}: sin reembolso`);
   if (rf.pct > 0){ x.refundedAt = Date.now(); notify('pago', `Te devolvemos ${money2(x.refunded)} de ${p.title}. Llega a tu tarjeta en 5-10 días hábiles.`, { route:'pagos' }); }
   if (rf.pct === 0) x.cancelled = true;   // la plaza se pierde y el importe va al anfitrión tras el plan
+  const t = x.ticketId && getTicket(p, x.ticketId); if (t && t.sold) t.sold--;   // la entrada especial vuelve a la venta
   return x;
 }
 // El anfitrión cancela (o el plan no llega al mínimo): reembolso completo a todos.
@@ -4590,10 +4637,12 @@ function demoPayout(planId){
 }
 // Demo: llegan reservas a un plan de pago tuyo.
 function demoSales(planId, n){
-  const p = getPlan(planId); if (!p || !p.paid) return;
+  const p = getPlan(planId), t = ticketsOf(p)[0]; if (!p || !(p.paid || t)) return;
   const buyers = USERS.filter(u => u.id !== 'me' && !u.managedBy && u.type !== 'profesional').slice(0, n || 3);
-  buyers.forEach(u => { const x = newPayment(p, u.id, 'retenido'); x.method = 'Tarjeta'; p.joined = (p.joined || 0) + 1; });
-  saveState(); notify('pago', `${buyers.length} reservas nuevas en ${p.title}: ${money2(buyers.length * p.price)} retenidos hasta el plan.`, { route:'cobros' });
+  // En un plan gratis con entrada especial, lo que se vende es la especial; en uno de pago, la general.
+  buyers.forEach(u => { const x = newPayment(p, u.id, 'retenido', p.paid ? null : t); x.method = 'Tarjeta'; p.joined = (p.joined || 0) + 1; if (!p.paid) t.sold = (t.sold || 0) + 1; });
+  const total = buyers.length * (p.paid ? p.price : t.price);
+  saveState(); notify('pago', `${buyers.length} ${p.paid ? 'reservas' : 'entradas ' + t.name} nuevas en ${p.title}: ${money2(total)} retenidos hasta el plan.`, { route:'cobros' });
   if (location.hash.startsWith('#/cobros')) renderPayouts(); else renderDetail(planId);
 }
 
@@ -4668,8 +4717,8 @@ const PLATFORM = { name:'planes (razón social pendiente)', nif:'B00000000', add
 function receiptHtml(x){
   const host = USERS.find(u => u.name === x.hostName) || {};
   const biz = host.type === 'profesional';
-  const rows = [['Plan', x.planTitle], ['Organiza', x.hostName + (biz ? ' (empresa)' : '')], ['Fecha del pago', new Date(x.at).toLocaleDateString('es-ES')],
-    ['Forma de pago', x.method || ''], ['Importe', money2(x.amount)]].concat(x.refunded ? [['Reembolsado', '− ' + money2(x.refunded)], ['Total', money2(x.amount - x.refunded)]] : []);
+  const rows = [['Plan', x.planTitle]].concat(x.ticketName ? [['Entrada', x.ticketName]] : []).concat([['Organiza', x.hostName + (biz ? ' (empresa)' : '')], ['Fecha del pago', new Date(x.at).toLocaleDateString('es-ES')],
+    ['Forma de pago', x.method || ''], ['Importe', money2(x.amount)]]).concat(x.refunded ? [['Reembolsado', '− ' + money2(x.refunded)], ['Total', money2(x.amount - x.refunded)]] : []);
   return `<div class="rcpt"><div class="rcpt-h"><b>planes</b><span>Recibo ${escapeHtml(x.receiptNo)}</span></div>
     <table>${rows.map(([k, v]) => `<tr><th>${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`).join('')}</table>
     <p>Cobrado por ${escapeHtml(PLATFORM.name)} (NIF ${PLATFORM.nif}) en nombre de ${escapeHtml(x.hostName)}, a través de Stripe. ${biz ? 'La factura de la entrada la emite el organizador; pídesela desde aquí.' : 'IVA incluido si corresponde.'}</p></div>`;
@@ -6124,6 +6173,105 @@ function demoAdTraffic(cid){
   const day = Math.round(adReach(c.budget).imp / c.days);
   c.impressions = (c.impressions || 0) + day; c.clicks = (c.clicks || 0) + Math.round(day * 0.03); c.spent = Math.min(c.budget, (c.spent || 0) + day * AD_CPM / 1000);
   saveState(); renderDetail(c.planId);
+}
+
+
+/* =========================================================================
+   Entradas: además de su acceso (gratis o de pago), un plan puede tener entradas
+   especiales con su precio, sus plazas y lo que incluyen. Por ejemplo, un plan gratis
+   con una zona VIP de pago (freemium) o un plan de pago con general y VIP.
+   - Se compran desde la app con el pago protegido de siempre (pagos.js): el dinero
+     queda retenido hasta el plan, con la misma comisión y la misma política de cancelación.
+   - Quien ya va con la entrada general puede pasar a VIP pagando solo la diferencia.
+   - Cada entrada especial lleva un código personal para el acceso a su zona.
+   En la app real: docs/pagos.md (Tipos de entrada).
+   ========================================================================= */
+const TICKET_MAX_PERKS = 4;
+const ticketsOf = (p) => (p && p.tickets) || [];
+const getTicket = (p, id) => ticketsOf(p).find(t => t.id === id) || null;
+const ticketLeft = (t) => t.cap ? Math.max(0, t.cap - (t.sold || 0)) : Infinity;
+// Tu entrada especial en este plan (si la tienes y no la has cancelado).
+function myTicket(p){
+  const x = myPayment(p.id);
+  return x && x.ticketId && !x.cancelled && !['reembolsado'].includes(x.status) ? getTicket(p, x.ticketId) : null;
+}
+// Lo que pagas por una entrada: si ya pagaste la general, solo la diferencia.
+function ticketCost(p, t){
+  const x = myPayment(p.id), paid = x && x.status === 'retenido' && !x.ticketId ? x.amount : 0;
+  return round2(Math.max(0, t.price - paid));
+}
+// Código personal para entrar a la zona (en la app real, un QR firmado por el servidor).
+function ticketCode(p, t){
+  let h = 7; String(p.id + ':' + t.id + ':' + (ME.handle || 'me')).split('').forEach(c => { h = (h * 31 + c.charCodeAt(0)) % 9000; });
+  return `${t.id.toUpperCase()}-${1000 + h}`;
+}
+// "Gratis · Zona VIP 12 €" para la barra de abajo y las listas.
+function ticketsLine(p){ return ticketsOf(p).map(t => `${t.name} ${money(t.price)}`).join(' · '); }
+
+/* ---------- en la ficha del plan ---------- */
+function ticketsBlock(p){
+  const list = ticketsOf(p); if (!list.length) return '';
+  const joined = state.joined.has(p.id), mine = myTicket(p), off = isCancelled(p) || new Date(p.when) < Date.now();
+  const base = `<div class="tk"><div class="tk-h"><b>${p.paid ? 'Entrada general' : 'Acceso libre'}</b><span>${p.paid ? money(p.price) : 'Gratis'}</span></div>
+    <p class="tk-s">${p.paid ? 'El plan, sin extras.' : (p.joinType === 'libre' ? 'El plan, sin apuntarte ni pagar.' : 'El plan, sin pagar nada.')}${joined && !mine ? ' <em class="tk-mine">Tu entrada</em>' : ''}</p></div>`;
+  const rows = list.map(t => {
+    const left = ticketLeft(t), have = mine && mine.id === t.id, cost = ticketCost(p, t);
+    const act = have ? `<em class="tk-mine">Tu entrada · ${escapeHtml(ticketCode(p, t))}</em>`
+      : (off ? '' : (left <= 0 ? '<span class="tk-out">Agotada</span>'
+      : `<button class="ph-btn sm primary" onclick="buyTicket('${p.id}','${t.id}')">${joined ? `Pasar a ${escapeHtml(t.name)} · ${money(cost)}` : `Comprar · ${money(t.price)}`}</button>`));
+    return `<div class="tk vip"><div class="tk-h"><b>${ico('star')} ${escapeHtml(t.name)}</b><span>${money(t.price)}</span></div>
+      ${(t.perks || []).length ? `<ul class="tk-perks">${t.perks.map(x => `<li>${ico('check')}<span>${escapeHtml(x)}</span></li>`).join('')}</ul>` : ''}
+      <div class="tk-f"><span class="tk-s">${t.cap ? (left > 0 ? `Quedan ${left} de ${t.cap}` : `${t.cap} vendidas`) : 'Sin límite'}</span>${act}</div></div>`;
+  }).join('');
+  return `<div class="block" id="entradas"><h4>Entradas</h4>${base}${rows}
+    <p class="hint">Pago protegido: lo retenemos hasta el plan. ${p.paid ? 'Si ya tienes la general, pagas solo la diferencia.' : 'El plan sigue siendo gratis; la entrada especial es opcional.'}</p></div>`;
+}
+function buyTicket(planId, ticketId){
+  const p = getPlan(planId), t = getTicket(p, ticketId); if (!p || !t) return;
+  if (!requireVerified('Verifica tu identidad para comprar entradas', () => buyTicket(planId, ticketId))) return;
+  if (isCancelled(p)){ toast('El plan está cancelado'); return; }
+  if (ticketLeft(t) <= 0){ toast(`${t.name}: agotada`); return; }
+  if (myTicket(p)){ toast('Ya tienes una entrada especial para este plan'); return; }
+  if (!state.joined.has(planId) && p.paid && isFull(p)){ toast('El plan está completo'); return; }
+  openCheckout(planId, ticketId);
+}
+// El anfitrión: ventas de cada entrada especial.
+function ticketsHostLine(p){
+  const list = ticketsOf(p); if (!list.length) return '';
+  return `<div class="pay-line">${ico('star')}<span>${list.map(t => `${escapeHtml(t.name)}: ${t.sold || 0}${t.cap ? ' de ' + t.cap : ''} vendidas · ${money((t.sold || 0) * t.price)}`).join(' · ')}</span></div>`;
+}
+
+/* ---------- al crear el plan ---------- */
+function ticketFormFields(d){
+  const on = !!d.vip;
+  return `<div id="d-tickets"><div class="opt-row" onclick="toggleVipDraft()"><span class="or-ic">${ico('star')}</span><span class="or-l">Entrada especial (zona VIP)<span class="or-s">${d.price === 'pago' ? 'Además de la general' : 'El plan sigue gratis; quien quiera, paga la zona VIP'}</span></span><span class="switch ${on ? 'on' : ''}"><span class="knob"></span></span></div></div>
+    <div id="vip-opts" ${on ? '' : 'hidden'}>
+      <div class="field"><label for="f-vipname">Nombre</label><input id="f-vipname" maxlength="30" value="${escapeHtml(d.vipName || 'Zona VIP')}"></div>
+      <div class="ck-two"><div class="field"><label for="f-vipprice">Precio (€)</label><input id="f-vipprice" type="number" min="1" max="500" step="0.5" value="${escapeHtml(String(d.vipPrice || ''))}" placeholder="25"></div>
+        <div class="field"><label for="f-vipcap">Plazas</label><input id="f-vipcap" type="number" min="1" max="500" value="${escapeHtml(String(d.vipCap || ''))}" placeholder="20"></div></div>
+      <div class="field"><label for="f-vipperks">Qué incluye (una cosa por línea, hasta ${TICKET_MAX_PERKS})</label><textarea id="f-vipperks" rows="3" maxlength="240" placeholder="Zona reservada junto al escenario&#10;Una consumición&#10;Entrada sin cola">${escapeHtml(d.vipPerks || '')}</textarea></div>
+    </div>`;
+}
+function captureVipDraft(){ const d = state.draft; if (!document.getElementById('f-vipname')) return; d.vipName = val('f-vipname'); d.vipPrice = val('f-vipprice'); d.vipCap = val('f-vipcap'); d.vipPerks = val('f-vipperks'); }
+function toggleVipDraft(){
+  captureVipDraft(); state.draft.vip = !state.draft.vip;
+  const o = document.getElementById('vip-opts'); if (o) o.hidden = !state.draft.vip;
+  const sw = document.querySelector && document.querySelector('#d-tickets .switch'); if (sw) sw.classList.toggle('on', !!state.draft.vip);
+}
+// Valida la entrada especial del borrador: devuelve el error o null.
+function vipDraftError(){
+  const d = state.draft; if (!d.vip) return null;
+  captureVipDraft();
+  const price = parseFloat(String(d.vipPrice).replace(',', '.')), cap = parseInt(d.vipCap, 10);
+  if (!(price >= 1 && price <= 500)) return 'Pon un precio para la entrada especial entre 1 y 500 €';
+  if (d.price === 'pago'){ const base = parseFloat(String(val('f-price') || d.priceValue).replace(',', '.')); if (base && price <= base) return 'La entrada especial tiene que costar más que la general'; }
+  if (!(cap >= 1 && cap <= 500)) return 'Indica cuántas plazas tiene la entrada especial';
+  return null;
+}
+function vipFromDraft(){
+  const d = state.draft; if (!d.vip) return null;
+  const perks = String(d.vipPerks || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, TICKET_MAX_PERKS).map(s => s.slice(0, 60));
+  return [{ id: 'vip', name: (String(d.vipName || '').trim() || 'Zona VIP').slice(0, 30), price: round2(parseFloat(String(d.vipPrice).replace(',', '.'))), cap: parseInt(d.vipCap, 10), sold: 0, perks }];
 }
 
 
@@ -7641,6 +7789,7 @@ function renderDetail(id){
   const myBlock = (joined && !attended && !isCancelled(p)) ? `<div class="block"><h4>Tu asistencia</h4>
       <p class="hint">${state.reconfirmed.has(p.id) ? `${ico('check')} Apuntado y reconfirmado.` : 'Apuntado.'} ${p.paid ? escapeHtml(policyLine(p)) : 'Si no puedes ir, cancela con tiempo: deja la plaza a otra persona.'}</p>
       ${pay && pay.status !== 'pendiente' ? `<div class="pay-line">${ico('card')}<span>Pagado ${money2(pay.amount)} · ${PAY_STATUS[pay.status].toLowerCase()}</span><button class="link-btn" onclick="openReceipt('${pay.id}')">Recibo</button></div>` : ''}
+      ${myTicket(p) ? `<div class="pay-line">${ico('star')}<span>Entrada ${escapeHtml(myTicket(p).name)} · código <b>${escapeHtml(ticketCode(p, myTicket(p)))}</b> · enséñalo al entrar a la zona</span></div>` : ''}
       ${agendaActions(p)}
       <div class="pl-actions"><button class="link-btn" onclick="openCancel('${p.id}')">Cancelar asistencia</button><button class="link-btn dim" onclick="demoReminder('${p.id}')">Demo: recordatorio de 2 h antes</button><button class="link-btn dim" onclick="demoPlanEnded('${p.id}')">Demo: simular que el plan ha terminado</button></div></div>`
     : (toPay ? `<div class="block"><h4>Tu plaza</h4><p class="hint">${ico('clock')} Te guardamos la plaza hasta ${fmtWhen(new Date(pay.dueAt))}. Paga para confirmarla; si no, pasa a la siguiente persona.</p></div>`
@@ -7655,7 +7804,7 @@ function renderDetail(id){
         ${isHost(p) && p.paid ? `<button class="sh-row" onclick="go('cobros')">${ico('euro')}<span>Cobros · ${hostSales(p.id).filter(x => x.status !== 'reembolsado').length} reservas</span>${ico('chevR')}</button>` : ''}
         ${isHost(p) ? `<button class="sh-row" onclick="go('editar-plan/${p.id}')">${ico('doc')}<span>Editar fecha, hora o lugar</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openCancelPlan('${p.id}')">${ico('close')}<span>Cancelar el plan</span>${ico('chevR')}</button>` : ''}
-      ${promoBlock(p)}</div>${agendaActions(p)}</div>` : '';
+      ${promoBlock(p)}</div>${ticketsHostLine(p)}${agendaActions(p)}</div>` : '';
 
   const presence = isCancelled(p) ? '' : presenceBlock(p);   // quién te ve y si vas solo o en grupo (planes.js)
 
@@ -7713,6 +7862,7 @@ function renderDetail(id){
         ${p.meetPoint ? `<p class="hint">${ico('pin')} Punto de encuentro: <b>${escapeHtml(p.meetPoint)}</b></p>` : ''}
         <p class="hint">${isOnline(p)?(manual?'Por videollamada, con aprobación: pide tu plaza en la llamada y decide el anfitrión. ':'Por videollamada: apúntate para entrar con cámara y micro. ')+'Cuentas como asistente al pasar 10 minutos en la llamada.':manual?'Plan con aprobación: envía una solicitud; el creador o los admins la aceptan o rechazan.':(libre?'Plan libre: no hace falta apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.':'Plan apuntado: hay que apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.')}</p>
       </div>
+      ${ticketsBlock(p)}
       ${callBlock(p)}
       ${updatesBlock(p)}
       ${p.held ? `<div class="pl-banner">${ico('clock')}<div><b>En revisión</b><p>El filtro automático ha retenido este plan: solo lo ves tú hasta que lo revise una persona del equipo. Puedes apelar en Ajustes ▸ Estado de tu cuenta.</p></div></div>` : ''}
@@ -7745,7 +7895,7 @@ function renderDetail(id){
         ${REVIEWS.map(r=>`<div class="review"><div class="top"><span>${r.author}</span><span class="st">${Array(r.stars).fill(ico('star')).join('')}</span></div><p>${r.text}</p></div>`).join('')}
       </div>
       <div class="action-bar">
-        <div class="pr"><div class="v">${p.paid?money(p.price):'Gratis'}</div><div class="k">${p.paid?'pago protegido hasta el plan':(libre?'plan libre':'sin coste')}</div></div>
+        <div class="pr"><div class="v">${p.paid?money(p.price):'Gratis'}</div><div class="k">${ticketsOf(p).length ? escapeHtml(ticketsLine(p)) : (p.paid?'pago protegido hasta el plan':(libre?'plan libre':'sin coste'))}</div></div>
         ${cta}
       </div>
     </div>`;
@@ -8337,7 +8487,8 @@ function renderCreatePlan(){
           <div class="iseg" id="d-policy">${Object.entries(CANCEL_POLICIES).map(([k, v]) => `<button data-v="${k}" class="${(d.policy || 'flexible') === k ? 'active' : ''}" onclick="setDraft('policy','${k}')"><span>${v.label}</span></button>`).join('')}</div>
           <p class="hint" id="policy-hint">${escapeHtml(policyHint(d.policy))}</p>
           ${payoutsReady() ? '' : `<button class="vg-inline" onclick="state.draft.priceValue=val('f-price');go('cobros')">${ico('euro')} Para cobrar, configura antes tus cobros (datos fiscales y cuenta bancaria).</button>`}
-        </div></div>
+        </div>
+        ${ticketFormFields(d)}</div>
       <div class="field" id="access-field" ${d.mode==='online'?'hidden':''}><label>Tipo de asistencia</label>
         <div class="iseg" id="d-access">
           <button data-v="libre" class="${d.access==='libre'?'active':''}" onclick="setDraft('access','libre')">${ico('globe')}<span>Libre</span></button>
@@ -8374,6 +8525,8 @@ function publishPlan(){
     if (!(n >= 1 && n <= 500)){ toast('Pon un precio por plaza entre 1 y 500 €'); return; }
     if (!payoutsReady()){ state.draft.priceValue = val('f-price'); toast('Para publicar un plan de pago, configura antes tus cobros'); go('cobros'); return; }
   }
+  const vipErr = vipDraftError(); if (vipErr){ toast(vipErr); return; }   // entrada especial (entradas.js)
+  if (state.draft.vip && !payoutsReady()){ state.draft.priceValue = val('f-price'); toast('Para vender entradas, configura antes tus cobros'); go('cobros'); return; }
   if (!userMod('me').canHost){ toast('Moderación te ha retirado la opción de organizar planes. Mira Ajustes ▸ Estado de tu cuenta'); return; }
   const pf = state.draft.prefill || {};   // si viene de una chispa y el campo llega vacío
   const title = clip(val('f-title') || pf.title, 'planTitle') || 'Plan sin título';
@@ -8402,10 +8555,11 @@ function commitPlan(title, desc, flag){
     groupId, held: !!flag || undefined,
   };
   if (d.mode === 'online') Object.assign(plan, onlinePlanFields(d));   // videollamada: sin lugar, con sus opciones (videollamadas.js)
+  const tickets = vipFromDraft(); if (tickets) plan.tickets = tickets;   // entrada especial opcional (entradas.js)
   PLANS.unshift(plan);
   if (d.fromIdea) linkIdeaToPlan(plan);   // venía de una chispa: entran los que se animaron (chispas.js)
   if (groupId){ const g=getGroup(groupId); if(g) g.planIds.unshift(plan.id); }
-  state.pendingGroup = null; d.photo = null; d.priceValue = "";
+  state.pendingGroup = null; d.photo = null; d.priceValue = ""; d.vip = false; d.vipPrice = ''; d.vipCap = ''; d.vipPerks = '';
   ensurePlanChat(plan.id);
   saveState();
   if (plan.approval === 'manual' && !flag) setTimeout(() => simulateIncomingRequest(plan.id), 5000);   // demo: llega una solicitud
