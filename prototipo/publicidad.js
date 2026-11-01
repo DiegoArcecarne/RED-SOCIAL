@@ -77,21 +77,22 @@ function clickAd(id){
 }
 function openAdWhy(id){
   const c = AD_CAMPAIGNS.find(x => x.id === id); if (!c) return;
-  const why = (state.adWhy || {})[id] || ['Es en Madrid, tu ciudad'], pr = adPrefs();
+  const why = (state.adWhy || {})[id] || ['Es en Madrid, tu ciudad'], pr = adPrefs(), surf = (state.adSurface || {})[id] || 'agenda';
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Por qué ves este anuncio">
     <div class="sheet-h"><span>Por qué lo ves</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list">
-      <p class="hint">${escapeHtml(c.advertiser)} paga para que su ${c.planId ? 'plan' : 'anuncio'} salga en la agenda de gente como tú:</p>
+      <p class="hint">${escapeHtml(c.advertiser)} paga para que su ${c.planId ? 'plan' : 'anuncio'} salga en ${AD_SURFACE_LABEL[surf] || 'tu agenda'}. Te sale por esto:</p>
       <ul class="ad-why">${why.map(w => `<li>${ico('check')}<span>${escapeHtml(w)}</span></li>`).join('')}</ul>
-      <p class="hint">No usamos lo que haces fuera de la app, ni píxeles de seguimiento, ni lo que hablas en los chats. Como mucho, un anuncio en cada vista de tu agenda.</p>
+      <p class="hint">No usamos lo que haces fuera de la app, ni píxeles de seguimiento, ni lo que hablas en los chats. ${{ agenda: 'Como mucho, un anuncio en cada vista de tu agenda.', muro: 'En Vividas, como mucho uno cada 10 publicaciones.', busqueda: 'En la búsqueda, como mucho uno, y solo si tiene que ver con lo que buscas.' }[surf]}</p>
       <button class="sh-row" onclick="hideAd('${id}')">${ico('eye')}<span>No me interesa este anuncio</span>${ico('chevR')}</button>
       <button class="sh-row" onclick="hideAdvertiser('${c.advertiserId}')">${ico('close')}<span>No ver anuncios de ${escapeHtml(c.advertiser)}</span>${ico('chevR')}</button>
       <div class="opt-row" onclick="setAdPrefs({ interests: !adPrefs().interests });openAdWhy('${id}')"><span class="or-ic">${ico('heartO')}</span><span class="or-l">Usar mis temas para elegir anuncios<span class="or-s">Si lo quitas, solo cuentan tu ciudad y tus días libres</span></span><span class="switch ${pr.interests ? 'on' : ''}"><span class="knob"></span></span></div>
       <button class="sh-row danger" onclick="closeOverlay();openReport('${c.advertiserId}', null, ${c.planId ? `{ objectType:'plan', planId:'${c.planId}' }` : 'null'})">${ico('alert')}<span>Reportar el anuncio</span>${ico('chevR')}</button>
     </div></div>`);
 }
-function hideAd(id){ setAdPrefs({ hidden: adPrefs().hidden.concat(id) }); closeOverlay(); toast('No volverás a ver este anuncio'); if (/^#\/agenda/.test(location.hash)) drawAgenda(); }
-function hideAdvertiser(uid){ setAdPrefs({ hiddenAdvertisers: adPrefs().hiddenAdvertisers.concat(uid) }); closeOverlay(); toast('No verás más anuncios de esta cuenta'); if (/^#\/agenda/.test(location.hash)) drawAgenda(); }
+function adRefresh(){ if (/^#\/agenda/.test(location.hash)) drawAgenda(); else if (typeof recoRefresh === 'function') recoRefresh(); }
+function hideAd(id){ setAdPrefs({ hidden: adPrefs().hidden.concat(id) }); closeOverlay(); toast('No volverás a ver este anuncio'); adRefresh(); }
+function hideAdvertiser(uid){ setAdPrefs({ hiddenAdvertisers: adPrefs().hiddenAdvertisers.concat(uid) }); closeOverlay(); toast('No verás más anuncios de esta cuenta'); adRefresh(); }
 
 /* ---------- el anfitrión promociona su plan ---------- */
 const myCampaign = (planId) => AD_CAMPAIGNS.find(c => c.planId === planId && c.advertiserId === 'me' && c.status !== 'terminada');
@@ -100,10 +101,11 @@ const adReach = (budget) => { const imp = Math.round(budget / AD_CPM * 1000); re
 function promoBlock(p){
   if (!isHost(p) || isCancelled(p) || isPrivateCall(p)) return '';
   const c = myCampaign(p.id);
-  if (!c) return `<button class="sh-row" onclick="openPromote('${p.id}')">${ico('spark')}<span>Promocionar este plan<span class="or-s">Que salga en la agenda de quien tiene libre y le gusta el tema</span></span>${ico('chevR')}</button>`;
+  if (!c) return `<button class="sh-row" onclick="openPromote('${p.id}')">${ico('spark')}<span>Promocionar este plan<span class="or-s">Que salga en la agenda, en Vividas y en la búsqueda de quien le gusta el tema</span></span>${ico('chevR')}</button>`;
   const st = { en_revision: 'En revisión por el equipo', activa: 'Activa', pausada: 'Pausada' }[c.status] || c.status;
   return `<div class="promo-box"><div class="promo-h">${ico('spark')}<b>Promoción · ${st}</b></div>
     <div class="promo-k"><span><b>${(c.impressions || 0).toLocaleString('es-ES')}</b>veces vista</span><span><b>${c.clicks || 0}</b>toques</span><span><b>${money2(c.spent || 0)}</b>de ${money(c.budget)}</span></div>
+    ${c.impressions ? `<p class="hint">Dónde la han visto: ${(c.surfaces || ['agenda']).map(sf => `${{ agenda: 'Agenda', muro: 'Vividas', busqueda: 'Búsqueda' }[sf]} ${((c.bySurface || {})[sf] || 0).toLocaleString('es-ES')}`).join(' · ')}. Sin saber quién: solo los totales.</p>` : ''}
     <div class="pl-actions">${c.status === 'activa' ? `<button class="link-btn" onclick="setCampaign('${c.id}','pausada')">Pausar</button>` : (c.status === 'pausada' ? `<button class="link-btn" onclick="setCampaign('${c.id}','activa')">Reanudar</button>` : '')}
       <button class="link-btn" onclick="setCampaign('${c.id}','terminada')">Terminar (se devuelve lo no gastado)</button>${c.status === 'activa' ? `<button class="link-btn dim" onclick="demoAdTraffic('${c.id}')">Demo: pasa un día</button>` : ''}</div></div>`;
 }
@@ -114,7 +116,7 @@ function openPromote(id){
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Promocionar el plan">
     <div class="sheet-h"><span>Promocionar el plan</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list form">
-      <p class="hint">Sale en la agenda, con la etiqueta "Patrocinado", de quien tiene libre el día del plan y le interesa ${escapeHtml(cat ? cat.label : 'el tema')}, en Madrid. Nunca en notificaciones.</p>
+      <p class="hint">Sale con la etiqueta "Patrocinado" a quien le interesa ${escapeHtml(cat ? cat.label : 'el tema')} en Madrid: en su agenda si tiene libre el día del plan, en Vividas y en la búsqueda cuando busca algo relacionado. Nunca en notificaciones.</p>
       <div class="field"><label>Presupuesto</label><div class="iseg">${AD_BUDGETS.map(b => `<button class="${d.budget === b ? 'active' : ''}" onclick="state.promo.budget=${b};openPromote('${id}')"><span>${b} €</span></button>`).join('')}</div></div>
       <div class="field"><label>Durante</label><div class="iseg">${AD_DAYS.map(n => `<button class="${d.days === n ? 'active' : ''}" onclick="state.promo.days=${n};openPromote('${id}')"><span>${n} días</span></button>`).join('')}</div>
         <p class="hint">Termina antes si llega el día del plan o se acaba el presupuesto.</p></div>
@@ -126,7 +128,7 @@ function openPromote(id){
 function confirmPromote(id){
   const p = getPlan(id), d = state.promo; if (!p || !d) return;
   if (!PAYMENT_METHODS.length){ toast('Añade una tarjeta en Pagos para promocionar'); return; }
-  const c = { id: newId('ad'), planId: id, advertiserId: 'me', advertiser: ME.name, surfaces: ['agenda'], budget: d.budget, days: d.days, bid: 1,
+  const c = { id: newId('ad'), planId: id, advertiserId: 'me', advertiser: ME.name, surfaces: ['agenda', 'muro', 'busqueda'], budget: d.budget, days: d.days, bid: 1,
     status: 'en_revision', createdAt: Date.now(), endsAt: Math.min(new Date(p.when).getTime(), Date.now() + d.days * 86400000), impressions: 0, clicks: 0, spent: 0 };
   AD_CAMPAIGNS.push(c); state.promo = null; saveState(); closeOverlay(); toast('Pagado · el equipo lo revisa antes de que salga'); renderDetail(id);
   setTimeout(() => { if (c.status === 'en_revision'){ c.status = 'activa'; notify('pago', `Tu promoción de ${p.title} ya está activa.`, { planId: id }); saveState(); if (location.hash === '#/plan/' + id) renderDetail(id); } }, 3000);
@@ -142,6 +144,8 @@ function setCampaign(cid, status){
 function demoAdTraffic(cid){
   const c = AD_CAMPAIGNS.find(x => x.id === cid); if (!c) return;
   const day = Math.round(adReach(c.budget).imp / c.days);
+  const sf = c.surfaces || ['agenda'], share = { agenda: 0.4, muro: 0.45, busqueda: 0.15 }, tot = sf.reduce((t, x) => t + (share[x] || 0), 0) || 1;
+  c.bySurface = Object.assign({}, c.bySurface); sf.forEach(x => { c.bySurface[x] = (c.bySurface[x] || 0) + Math.round(day * (share[x] || 0) / tot); });
   c.impressions = (c.impressions || 0) + day; c.clicks = (c.clicks || 0) + Math.round(day * 0.03); c.spent = Math.min(c.budget, (c.spent || 0) + day * AD_CPM / 1000);
   saveState(); renderDetail(c.planId);
 }

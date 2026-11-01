@@ -106,6 +106,9 @@ erDiagram
     CUENTA_EMPRESA ||--o{ SUSCRIPCION_NEGOCIO : contrata
     USUARIO ||--o{ CAMPANA_BOOST : anuncia
     PLAN ||--o| CAMPANA_BOOST : promociona
+    USUARIO ||--o{ EVENTO_ACTIVIDAD : "genera (registro propio, sin pixeles)"
+    USUARIO ||--o| PREFERENCIA_RECOMENDACION : tiene
+    CAMPANA_BOOST ||--o{ ATRIBUCION_ANUNCIO : "reservas y llegadas"
     USUARIO ||--o{ NOTIFICACION : recibe
 
     MIEMBRO_EQUIPO ||--o{ REGISTRO_ADMIN : "hace (solo insercion)"
@@ -588,7 +591,9 @@ erDiagram
         uuid anunciante_id FK
         string tipo "campana_marca|boost"
         uuid plan_promocionado_id FK "en boost"
-        string superficies "agenda|descubrir"
+        string superficies "agenda|muro|busqueda"
+        string palabras_clave "busqueda"
+        json impresiones_por_superficie "agregadas"
         string temas "en campañas de marca"
         decimal presupuesto
         decimal gastado
@@ -596,6 +601,34 @@ erDiagram
         string estado "en_revision|activa|pausada|terminada|rechazada"
         int impresiones "agregadas, sin quién"
         int toques
+    }
+    EVENTO_ACTIVIDAD {
+        uuid id PK
+        uuid usuario_id FK
+        string tipo "vista|busqueda|guardar|no_interesa|menos_tema|apuntarse|llegada"
+        uuid plan_id FK "nullable"
+        uuid publicacion_id FK "nullable"
+        uuid categoria_id FK "nullable"
+        string texto "solo en busqueda"
+        string base_legal "servicio|interes_legitimo|consentimiento"
+        datetime fecha "90 dias los de interes legitimo"
+    }
+    PREFERENCIA_RECOMENDACION {
+        uuid usuario_id PK
+        bool personalizacion "oposicion = orden por fecha"
+        string temas_elegidos
+        string temas_menos
+        string planes_descartados
+        string publicaciones_descartadas
+    }
+    ATRIBUCION_ANUNCIO {
+        uuid id PK
+        uuid campana_id FK
+        date dia
+        string superficie
+        int toques
+        int reservas "7 dias tras el toque"
+        int llegadas "QR"
     }
     CATEGORIA {
         uuid id PK
