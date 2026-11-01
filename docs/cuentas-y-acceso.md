@@ -22,7 +22,7 @@ identidad, Varios perfiles por persona) y [`modelo-datos.md`](modelo-datos.md)
 | El bloqueo por falta de verificación lo hace la pantalla | Lo aplica el servidor en cada petición (ver más abajo) |
 | La sesión es una clave en el navegador | Token de sesión de corta duración y token de refresco rotatorio |
 
-Cuenta de demostración: `marina@planes.app` · `planes123` (o el botón "Entrar con la
+Cuenta de demostración: `marina@plannet.app` · `planes123` (o el botón "Entrar con la
 cuenta de demostración"). Las cuentas nuevas empiezan vacías, sin el contenido de Marina.
 
 ## Registro

@@ -11,9 +11,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-  <meta name="apple-mobile-web-app-title" content="planes" />
-  <title>Prototipo (standalone) · App de planes</title>
-  <meta name="description" content="Prototipo visual navegable de la app de planes (basado en PRODUCTO.md)." />
+  <meta name="apple-mobile-web-app-title" content="Plannet" />
+  <title>Prototipo (standalone) · Plannet</title>
+  <meta name="description" content="Prototipo visual navegable de Plannet, la app de planes (basado en PRODUCTO.md)." />
   <style>
 /* =========================================================================
    Prototipo — App de planes. Modo oscuro tipo Instagram, minimalista.
@@ -1330,13 +1330,39 @@ a.ph-btn{text-decoration:none;display:flex;align-items:center;justify-content:ce
 .ag-wd .ag-ad-cta{display:none}
 .sh-row .or-s{display:block;font-weight:500;font-size:12px;color:var(--ink-soft);margin-top:2px}
 
+/* ---------- entradas: general y especiales (entradas.js) ---------- */
+.tk{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;margin-bottom:8px;background:var(--surface-2)}
+.tk.vip{border-color:var(--accent)}
+.tk-h{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
+.tk-h b{display:flex;align-items:center;gap:6px}
+.tk-h > span{font-weight:800;font-variant-numeric:tabular-nums}
+.tk-s{font-size:12.5px;color:var(--ink-soft)}
+.tk-f{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tk-mine{font-style:normal;font-size:11.5px;font-weight:700;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:2px 8px;background:var(--surface)}
+.tk-out{font-size:12px;font-weight:700;color:var(--ink-dim)}
+.tk-perks{list-style:none;display:flex;flex-direction:column;gap:4px}
+.tk-perks li{display:flex;gap:6px;align-items:flex-start;font-size:12.5px;color:var(--ink-soft)}
+.tk-perks .ico{flex:none;margin-top:2px;color:var(--ink)}
+.sheet .tk-perks{margin:-4px 0 4px}
+#vip-opts{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+#vip-opts[hidden]{display:none}
+
+/* ---------- planes exclusivos de la app (lanzamiento.js) ---------- */
+.block.excl{border-color:var(--accent)}
+.block.excl h4{display:flex;align-items:center;gap:6px}
+.excl-st{font-size:13.5px;color:var(--ink-soft);margin-bottom:4px}
+.excl-st b{color:var(--ink)}
+.excl-list{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.excl-list li{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--ink-soft)}
+.excl-list .ico{flex:none;margin-top:2px;color:var(--ink);font-size:15px}
+
   </style>
 </head>
 <body>
   <div class="phone">
     <header class="appbar">
       <div class="brand">
-        <h1>planes</h1>
+        <h1>Plannet</h1>
         <span class="spacer"></span>
         <span class="tag">prototipo</span>
         <button class="dm-btn" id="search-btn" aria-label="Buscar planes, personas o temas" onclick="go('buscar')">
@@ -1604,6 +1630,19 @@ const PLANS = [
     summary: 'Comentamos la novela de Andrea Abreu. Grupo pequeño y privado: solo entra quien está apuntado.',
     secret: false,
   },
+  /* Exclusivo de la app (lanzamiento.js): la venta abre a una hora anunciada y solo aquí, con
+     cuenta verificada. waiting: lista de aviso; signups: registros llegados por su enlace. */
+  {
+    id: 'p16', title: 'Fiesta de lanzamiento de planes', placeId: 'azotea', category: 'fiesta',
+    level: 3, paid: true, price: 12, recurring: false, hostId: 'azotea',
+    host: { name: 'Azotea Círculo', business: true, verified: true, rating: 4.6, reliability: 98 },
+    when: hoursFromNow(24 * 9), durationMin: 300, groupMin: 40, groupMax: 150, joined: 0,
+    joinType: 'apuntado', approval: 'automatica',
+    exclusive: { salesAt: hoursFromNow(50).getTime(), earlyHours: 24, waiting: 1240, signups: 312, sold: 0 },
+    gradient: 'g-grape',
+    summary: 'La primera fiesta de la app: DJ al atardecer, la gente de los primeros planes y una sorpresa. Entradas solo en la app, a tu nombre.',
+    secret: false,
+  },
 ];
 
 
@@ -1637,6 +1676,7 @@ const PLAN_ATTENDANCE = {
   p10: { joinType: 'libre',    attended: 18, pub: ['MN','RU','SO','PB','LC'] },
   p11: { joinType: 'libre',    attended: 11, pub: ['CD','HV','OK'] },
   p12: { joinType: 'apuntado', attended: 27, pub: ['AZ','CI','NE','RO'] },
+  p16: { joinType: 'apuntado', attended: 0,  pub: [] },   // aún no se ha celebrado
 };
 PLANS.forEach((p) => {
   const a = PLAN_ATTENDANCE[p.id] || {};
@@ -1684,8 +1724,16 @@ const PLAN_PHOTO = {
   p13:'1588196749597-9ff075ee6b5b', // videollamada en un portátil
   p14:'1586165368502-1bad197a6461', // ajedrez
   p15:'1543002588-bfa74002ed7e',    // libro abierto
+  p16:'1514525253161-7a46d19cd819', // fiesta de lanzamiento
 };
 PLANS.forEach((p) => { p.photo = PLAN_PHOTO[p.id] || ''; });
+
+// Entradas especiales (entradas.js): un plan gratis con zona VIP de pago, y uno de pago con general y VIP.
+const PLAN_TICKETS = {
+  p1: [{ id:'vip', name:'Barra VIP', price:12, cap:12, sold:7, perks:['Sitio en la barra junto al coro','Vermut de la casa y una tapa','Sin esperar para pedir'] }],
+  p3: [{ id:'vip', name:'Zona VIP', price:45, cap:20, sold:14, perks:['Mesa reservada junto a la cabina','Dos consumiciones','Entrada sin cola'] }],
+};
+PLANS.forEach((p) => { if (PLAN_TICKETS[p.id]) p.tickets = PLAN_TICKETS[p.id].map((t) => ({ ...t, perks: t.perks.slice() })); });
 
 // Usuarios (perfiles). type: 'usuario' normal o 'profesional' (cuenta de negocio).
 const USERS = [
@@ -2086,7 +2134,7 @@ if (typeof window !== 'undefined') {
    ========================================================================= */
 const ACCOUNTS_KEY = 'planes-cuentas-v1';
 const SESSION_KEY  = 'planes-sesion';
-const DEMO_LOGIN = { email:'marina@planes.app', pass:'planes123' };
+const DEMO_LOGIN = { email:'marina@plannet.app', pass:'planes123' };
 const OTP_TTL_MS = 10 * 60 * 1000, OTP_RESEND_MS = 30 * 1000, OTP_MAX_TRIES = 5;
 const LOGIN_MAX_FAILS = 5, LOCK_MS = 15 * 60 * 1000;
 const LEGAL_VERSION = '2026-10';
@@ -2156,8 +2204,8 @@ function maskTo(to){ return to.includes('@') ? to.replace(/^(.).*(@.*)$/, '$1•
 function deliverCode(to, purpose, via){
   const code = String(Math.floor(100000 + Math.random() * 900000));
   state.otp = { code, purpose, to, via: via || (to.includes('@') ? 'email' : 'sms'), exp: Date.now() + OTP_TTL_MS, tries: 0, resendAt: Date.now() + OTP_RESEND_MS };
-  const from = state.otp.via === 'app' ? 'Autenticador' : (state.otp.via === 'email' ? 'Correo · planes' : 'SMS · planes');
-  showSimNotice(from, state.otp.via === 'app' ? `Código actual: ${code}` : `Tu código de planes es ${code}. Caduca en 10 minutos. No lo compartas con nadie.`, code);
+  const from = state.otp.via === 'app' ? 'Autenticador' : (state.otp.via === 'email' ? 'Correo · Plannet' : 'SMS · planes');
+  showSimNotice(from, state.otp.via === 'app' ? `Código actual: ${code}` : `Tu código de Plannet es ${code}. Caduca en 10 minutos. No lo compartas con nadie.`, code);
   return code;
 }
 function showSimNotice(from, text, code){
@@ -2215,7 +2263,7 @@ function auWelcome(){
   const pics = PLANS.slice(0, 6).map(p => `<span class="au-pic ${p.gradient}">${coverImg(planCover(p), 300)}</span>`).join('');
   return `<div class="au-hero">${pics}<span class="au-shade"></span></div>
     <div class="au-body">
-      <span class="au-logo">planes</span>
+      <span class="au-logo">Plannet</span>
       <h2 class="au-h big">Planes y gente con quien vivirlos</h2>
       ${destinoLabel() ? `<p class="au-shared">${ico('send')}<span>Te han compartido ${escapeHtml(destinoLabel())}. Entra o crea tu cuenta y te llevamos ahí.</span></p>` : ''}
       <ul class="au-vals">
@@ -2292,12 +2340,12 @@ function startTwoFA(){
   const to = m === 'sms' ? (p.phone || '') : (m === 'email' ? (p.email || '') : 'app');
   if (m === 'sms' && !to) return authErr('Tu cuenta es con email: para recibir SMS añade un teléfono en Ajustes ▸ Seguridad.');
   if (m === 'email' && !to) return authErr('Tu cuenta es con teléfono: elige SMS o app autenticadora.');
-  if (m === 'app') showSimNotice('planes', 'Clave para tu app autenticadora: JBSW Y3DP EHPK 3PXP (simulada).');
+  if (m === 'app') showSimNotice('Plannet', 'Clave para tu app autenticadora: JBSW Y3DP EHPK 3PXP (simulada).');
   deliverCode(to, '2fa-alta', m === 'app' ? 'app' : m);
   showAuth('codigo');
 }
 function auAge(d){
-  return `${authHead('Antes de empezar', '', 'planes es solo para mayores de 18 años.')}
+  return `${authHead('Antes de empezar', '', 'Plannet es solo para mayores de 18 años.')}
     <div class="au-form">
       <div class="field"><label for="f-birth">Fecha de nacimiento</label><input id="f-birth" type="date" value="${escapeHtml(d.birth||'')}" max="${new Date().toISOString().slice(0,10)}" /></div>
       <label class="au-check"><input id="f-legal" type="checkbox" ${d.legal?'checked':''} />
@@ -2318,7 +2366,7 @@ function submitAge(){
 }
 function auMinor(){
   return `${authHead('Todavía no puedes usar planes', "showAuth('bienvenida', {})")}
-    <div class="au-form"><p class="au-sub">planes es solo para mayores de 18 años, porque se queda en persona con gente que no conoces. No hemos guardado tus datos.</p>
+    <div class="au-form"><p class="au-sub">Plannet es solo para mayores de 18 años, porque se queda en persona con gente que no conoces. No hemos guardado tus datos.</p>
     <button class="btn-ghost" onclick="showAuth('bienvenida', {})">Volver al inicio</button></div>`;
 }
 function openLegal(kind){
@@ -2337,7 +2385,8 @@ function createAccount(d){
   const p = d.pending, id = 'acc' + Date.now();
   const acc = { id, method:p.method, email:p.email, phone:p.phone, salt:p.salt, hash:p.hash, twoFA: p.twoFA ? { method:p.twoFA } : null,
     birthdate:d.birth, consents:{ legal:true, marketing:!!d.marketing, version:LEGAL_VERSION, at:new Date().toISOString() },
-    onboarded:false, step:'perfil', failed:0, createdAt:new Date().toISOString() };
+    onboarded:false, step:'perfil', failed:0, createdAt:new Date().toISOString(),
+    origin: (lsGet(DESTINO_KEY) || '').replace(/^#\//, '') || null };   // de qué enlace viene (lanzamientos: registros por plan)
   const list = accounts(); list.push(acc); saveAccounts(list);
   lsSet(SESSION_KEY, id);
   freshWorld(); saveState();
@@ -2362,7 +2411,7 @@ function freshWorld(){
   ME.trustedContacts = []; ME.shareTrips = false; ME.safeCheck = false; ME.consents = undefined; ME.consentLog = [];
   drop(MOD_ACTIONS, a => a.targetUserId === 'me'); drop(SAFETY_EVENTS, () => true); delete USER_MOD.me;
   drop(PAYMENTS, x => x.userId === 'me'); drop(PAYMENT_METHODS, () => true); ME.payouts = undefined;
-  ME.planPresence = {}; ME.pinged = {}; ME.calToken = null; AGENDA_HISTORY.length = 0; ME.seenUpdates = {}; ME.remindersSent = {}; ME.reminderPrefs = undefined; ME.adPrefs = undefined;
+  ME.planPresence = {}; ME.pinged = {}; ME.calToken = null; AGENDA_HISTORY.length = 0; ME.seenUpdates = {}; ME.remindersSent = {}; ME.reminderPrefs = undefined; ME.adPrefs = undefined; ME.salesAlerts = {}; ME.salesSent = {};
   drop(AD_CAMPAIGNS, c => c.advertiserId === 'me');
   drop(IDEAS, x => x.authorId === 'me'); IDEAS.forEach(x => { x.people = x.people.filter(p => p.userId !== 'me'); });
   PLANS.forEach(p => { p.waitlist = (p.waitlist || []).filter(x => x !== 'me'); });
@@ -2370,7 +2419,7 @@ function freshWorld(){
 
 /* ---------- entrar, recuperar y salir ---------- */
 function auLogin(d){
-  return `${authHead('Entra en planes', "showAuth('bienvenida', {})")}
+  return `${authHead('Entra en Plannet', "showAuth('bienvenida', {})")}
     <div class="au-form">
       <div class="field"><label for="f-id">Email o teléfono</label><input id="f-id" autocomplete="username" value="${escapeHtml(d.identifier||'')}" /></div>
       <div class="field"><label for="f-pass">Contraseña</label><input id="f-pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitLogin()" /></div>
@@ -2754,6 +2803,7 @@ function clearPlanPhoto(){ state.draft.photo = null; const pv = document.getElem
 function joinPlan(id){
   const p = getPlan(id); if (!p || isCancelled(p)) return;
   if (!requireVerified('Verifica tu identidad para apuntarte', () => joinPlan(id))) return;
+  if (!canBuyNow(p)){ toast('La venta aún no está abierta: pulsa "Avísame"'); return; }   // plan exclusivo de la app (lanzamiento.js)
   const pay = p.paid && myPayment(id);
   if (isFull(p) && !(pay && pay.status === 'pendiente')) return joinWaitlist(id);
   if (p.paid && !(pay && pay.status === 'retenido')) return openCheckout(id);   // de pago: primero se paga (pagos.js)
@@ -2761,7 +2811,7 @@ function joinPlan(id){
 }
 function completeJoin(id, msg){
   const p = getPlan(id); if (!p) return;
-  if (!state.joined.has(id)){ state.joined.add(id); p.joined = (p.joined || 0) + 1; }
+  if (!state.joined.has(id)){ state.joined.add(id); p.joined = (p.joined || 0) + 1; exclusiveSold(p); }
   ensurePlanChat(id);
   checkReminders();   // si es en las próximas 24 h, el recordatorio llega ya
   saveState();
@@ -3086,7 +3136,7 @@ function addPlanUpdate(p, type, text, opts){
   if (u.by !== 'me' && updateReachesMe(p, important)) notify('cambio', `${p.title} · ${label.toLowerCase()}: ${text}`, { planId: p.id, force: important });
   return u;
 }
-const updateBy = (p, u) => u.by === 'me' ? 'Tú' : (u.by === 'equipo' ? 'Equipo de planes' : ((p.host || {}).name || 'El anfitrión'));
+const updateBy = (p, u) => u.by === 'me' ? 'Tú' : (u.by === 'equipo' ? 'Equipo de Plannet' : ((p.host || {}).name || 'El anfitrión'));
 // Lo que no habías visto: se calcula al entrar en la ficha y se marca como visto.
 function visitUpdates(p){
   if (state.updVisit === p.id) return;
@@ -3186,8 +3236,8 @@ function systemNotify(body){
   try {
     if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
     const opts = { body, icon:'icon-192.png', badge:'icon-192.png' };
-    if (navigator.serviceWorker && navigator.serviceWorker.ready) navigator.serviceWorker.ready.then(r => r.showNotification('planes', opts), () => new Notification('planes', opts));
-    else new Notification('planes', opts);
+    if (navigator.serviceWorker && navigator.serviceWorker.ready) navigator.serviceWorker.ready.then(r => r.showNotification('Plannet', opts), () => new Notification('Plannet', opts));
+    else new Notification('Plannet', opts);
   } catch (e) {}
 }
 function askNotifPermission(){
@@ -3822,7 +3872,7 @@ function renderMentionsTab(){
 function setMentionPolicy(v){ ME.mentionPolicy = v; saveState(); renderSettings(); }
 
 /* ---------- recibir desde el menú de compartir del móvil ----------
-   Con la app instalada (Android), "planes" sale en el menú de compartir de la galería o
+   Con la app instalada (Android), "Plannet" sale en el menú de compartir de la galería o
    del navegador (share_target del manifest). El service worker (sw.js) guarda lo recibido
    y abre #/recibido: fotos o vídeo → nueva publicación; un enlace de planes → se abre. */
 const SHARE_INBOX = 'planes-compartido';
@@ -3835,10 +3885,10 @@ function receiveShared(){
       .then(blobs => c.keys().then(ks => Promise.all(ks.map(k => c.delete(k)))).then(() => applyShared(meta, blobs.filter(Boolean))));
   })).catch(fallback);
 }
-// Ruta de la app si lo recibido es un enlace de planes (dominio real o web del prototipo).
+// Ruta de la app si lo recibido es un enlace de Plannet (dominio real o web del prototipo).
 function sharedLink(text){
   const s = String(text || '');
-  const m = s.match(/abrir\.html#\/(plan|p|u|tema)\/([\w.%-]+)/) || s.match(/(?:planes\.app|\/web)\/(plan|p|u|tema)\/([\w.%-]+?)(?:\.html)?(?=$|[\s?#"'<>])/);
+  const m = s.match(/abrir\.html#\/(plan|p|u|tema)\/([\w.%-]+)/) || s.match(/(?:plannet\.app|\/web)\/(plan|p|u|tema)\/([\w.%-]+?)(?:\.html)?(?=$|[\s?#"'<>])/);
   if (!m) return null;
   if (m[1] === 'u' && !getUser(m[2])){ const u = USERS.find(x => String(x.handle).replace(/^@/, '') === m[2]); return u ? 'u/' + u.id : null; }
   return m[1] + '/' + m[2];
@@ -4174,7 +4224,7 @@ function renderAccountStatus(){
   </div>`;
 }
 
-/* ---------- panel interno de moderación (equipo de planes) ----------
+/* ---------- panel interno de moderación (equipo de Plannet) ----------
    En la app real es una web aparte, con acceso por roles y registro de quién hace qué. */
 function renderModeration(tab){
   state.modTab = tab || state.modTab || 'cola';
@@ -4194,7 +4244,7 @@ function renderModeration(tab){
         <div class="mod-meta">${escapeHtml(MOD_ACTION_TYPES[a.action][1])} · ${dayLabel(a.decidedAt || a.at)}</div><p class="hint">${escapeHtml(statementFor(a))}</p></div>`; }).join(''),
   }[t];
   view.innerHTML = pageHead('Moderación') + `<div class="page-body inbox">
-    <p class="hint mod-note">${ico('lock')} Herramienta interna del equipo de planes. En la app real es una web aparte con acceso por roles; aquí se simula para probar el circuito completo.</p>
+    <p class="hint mod-note">${ico('lock')} Herramienta interna del equipo de Plannet. En la app real es una web aparte con acceso por roles; aquí se simula para probar el circuito completo.</p>
     <div class="iseg origin-seg mod-tabs">${tabs.map(([v, l, n, c]) => `<button class="${t === v ? 'active' : ''}" onclick="renderModeration('${v}')">${ico(n)}<span>${l}</span>${c ? `<em>${c}</em>` : ''}</button>`).join('')}</div>
     ${body()}</div>`;
 }
@@ -4253,7 +4303,7 @@ function trustedContacts(){ return ME.trustedContacts || []; }
 function renderTrusted(){
   const view = document.getElementById('view-page'), list = trustedContacts();
   view.innerHTML = pageHead('Contactos de confianza') + `<div class="page-body form">
-    <p class="hint">Hasta ${MAX_TRUSTED} personas, aunque no usen planes. Les llega un SMS con el plan, el sitio y la hora cuando lo compartes, y tu ubicación si pulsas SOS.</p>
+    <p class="hint">Hasta ${MAX_TRUSTED} personas, aunque no usen Plannet. Les llega un SMS con el plan, el sitio y la hora cuando lo compartes, y tu ubicación si pulsas SOS.</p>
     ${list.map(c => `<div class="conv"><span class="avatar conv-av">${escapeHtml(initials(c.name))}</span>
       <span class="conv-main"><b>${escapeHtml(c.name)}</b><span>${escapeHtml(c.phone)} · ${c.status === 'aceptado' ? 'Ha aceptado' : 'Invitación enviada'}</span></span>
       <button class="ph-btn sm" onclick="removeTrusted('${c.id}')">Quitar</button></div>`).join('')}
@@ -4314,7 +4364,7 @@ function openSos(planId){
     <div class="sheet-list form">
       <a class="btn-primary danger-btn sos-call" href="tel:112">Llamar al 112</a>
       <button class="btn-ghost" onclick="sendSos('${planId}')">${ico('alert')} Enviar alerta con mi ubicación</button>
-      <p class="hint">Avisamos al equipo de seguridad de planes (atiende las 24 horas y puede llamarte)${list.length ? ' y a ' + escapeHtml(contactNames().join(' y ')) + ' por SMS' : ''}, con el plan y tu ubicación.${list.length ? '' : ' Añade contactos de confianza para avisarles también.'}</p>
+      <p class="hint">Avisamos al equipo de seguridad de Plannet (atiende las 24 horas y puede llamarte)${list.length ? ' y a ' + escapeHtml(contactNames().join(' y ')) + ' por SMS' : ''}, con el plan y tu ubicación.${list.length ? '' : ' Añade contactos de confianza para avisarles también.'}</p>
     </div></div>`);
 }
 function sendSos(planId){
@@ -4370,7 +4420,7 @@ function renderMyData(){
       <div class="set-row static"><span class="sr-ic">${ico('check')}</span><span class="sr-l">Mayor de 18 años<span class="or-s">Confirmado al registrarte</span></span></div></div>
     <div class="set-group"><div class="set-title">Tus derechos</div>
       <button class="set-row" onclick="go('editar-perfil')"><span class="sr-ic">${ico('user')}</span><span class="sr-l">Corregir tus datos</span><span class="pl-arrow">${ico('chevR')}</span></button>
-      <div class="set-row static"><span class="sr-ic">${ico('doc')}</span><span class="sr-l">Oposición, limitación y otras peticiones<span class="or-s">privacidad@planes.app · te respondemos en menos de un mes</span></span></div>
+      <div class="set-row static"><span class="sr-ic">${ico('doc')}</span><span class="sr-l">Oposición, limitación y otras peticiones<span class="or-s">privacidad@plannet.app · te respondemos en menos de un mes</span></span></div>
       <button class="set-row danger" onclick="openDeleteAccount()"><span class="sr-ic">${ico('alert')}</span><span class="sr-l">Eliminar cuenta</span></button></div>
   </div>`;
 }
@@ -4425,7 +4475,7 @@ function exportMyData(){
    - Cobros del anfitrión: alta (datos fiscales, IBAN, verificación), saldo y facturas.
    - Recibos de cada pago y factura mensual de la comisión.
    ========================================================================= */
-const COMMISSION = 0.15;            // comisión de planes (IVA incluido)
+const COMMISSION = 0.15;            // comisión de Plannet (IVA incluido)
 const VAT = 0.21;                   // IVA de la comisión
 const RELEASE_HOURS = 48;           // se paga al anfitrión 48 h después del plan, si nadie reclama
 const PAY_WINDOW_HOURS = 24;        // aceptado en un plan de pago: 24 h para pagar
@@ -4448,32 +4498,37 @@ function nextReceiptNo(){
   const n = PAYMENTS.reduce((m, x) => Math.max(m, parseInt(String(x.receiptNo || '').split('-').pop(), 10) || 0), 117) + 1;
   return 'PL-' + new Date().getFullYear() + '-' + String(n).padStart(6, '0');
 }
-function newPayment(p, userId, status){
-  const x = { id: newId('pay'), planId: p.id, planTitle: p.title, hostName: (p.host || {}).name || '', userId, amount: p.price, refunded: 0,
+function newPayment(p, userId, status, ticket){
+  const x = { id: newId('pay'), planId: p.id, planTitle: p.title, hostName: (p.host || {}).name || '', userId, amount: ticket ? ticket.price : p.price, refunded: 0,
     status, at: Date.now(), receiptNo: nextReceiptNo(), intent: 'pi_' + Math.random().toString(36).slice(2, 12) };
+  if (ticket){ x.ticketId = ticket.id; x.ticketName = ticket.name; }   // entrada especial (entradas.js)
   PAYMENTS.push(x); return x;
 }
 
 /* ---------- reservar y pagar ---------- */
 // Política de cancelación de un plan, con números (la misma que se enseña antes de pagar).
 function policyLine(p){ const pol = CANCEL_POLICIES[p.cancelPolicy || 'flexible']; return `Cancelación ${pol.label.toLowerCase()}: ${pol.text}`; }
-function openCheckout(planId){
+function openCheckout(planId, ticketId){
   const p = getPlan(planId); if (!p) return;
-  state.checkout = state.checkout && state.checkout.planId === planId ? state.checkout
-    : { planId, method: (PAYMENT_METHODS.find(m => m.isDefault) || PAYMENT_METHODS[0] || { id:'nueva' }).id, save: true, err: '' };
+  state.checkout = state.checkout && state.checkout.planId === planId && state.checkout.ticketId === (ticketId || null) ? state.checkout
+    : { planId, ticketId: ticketId || null, method: (PAYMENT_METHODS.find(m => m.isDefault) || PAYMENT_METHODS[0] || { id:'nueva' }).id, save: true, err: '' };
   renderCheckout();
 }
+// Lo que se paga ahora: la plaza o la entrada especial (si ya tienes la general, la diferencia).
+function checkoutAmount(ck, p){ const t = ck.ticketId && getTicket(p, ck.ticketId); return t ? ticketCost(p, t) : p.price; }
 function renderCheckout(){
   const ck = state.checkout, p = getPlan(ck.planId); if (!p) return;
-  const place = getPlace(p.placeId), pend = myPayment(p.id);
+  const place = getPlace(p.placeId), pend = myPayment(p.id), t = ck.ticketId && getTicket(p, ck.ticketId), amount = checkoutAmount(ck, p);
+  const upgrade = t && pend && pend.status === 'retenido' && !pend.ticketId;
   const methods = PAYMENT_METHODS.map(m => `<button class="pay-opt ${ck.method === m.id ? 'on' : ''}" role="radio" aria-checked="${ck.method === m.id}" onclick="setCheckout('method','${m.id}')">
       <span class="rep-dot"></span>${ico('card')}<span>${escapeHtml(m.brand)} ···· ${escapeHtml(m.last4)}<span class="or-s">Caduca ${escapeHtml(m.exp)}</span></span></button>`).join('');
   showOverlay('ov-sheet', `<div class="sheet-bg" onclick="closeOverlay()"></div><div class="sheet" role="dialog" aria-label="Pagar la reserva">
-    <div class="sheet-h"><span>Reservar plaza</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
+    <div class="sheet-h"><span>${t ? 'Comprar entrada' : 'Reservar plaza'}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
     <div class="sheet-list form">
       <div class="ck-plan"><span class="mini-thumb ${p.gradient}">${coverImg(planCover(p), 120)}</span><span><b>${escapeHtml(p.title)}</b>
         <span class="or-s">${fmtWhen(new Date(p.when))} · ${escapeHtml(isOnline(p) ? 'Videollamada' : (p.secret ? 'Zona aproximada' : (place ? place.name : 'Madrid')))}</span></span></div>
-      <div class="ck-row"><span>1 plaza</span><b>${money2(p.price)}</b></div>
+      <div class="ck-row"><span>${t ? `Entrada ${escapeHtml(t.name)}${upgrade ? ` (ya pagaste ${money2(pend.amount)} de la general)` : ''}` : '1 plaza'}</span><b>${money2(amount)}</b></div>
+      ${t && (t.perks || []).length ? `<ul class="tk-perks">${t.perks.map(x => `<li>${ico('check')}<span>${escapeHtml(x)}</span></li>`).join('')}</ul>` : ''}
       ${pend && pend.status === 'pendiente' ? `<p class="hint">${ico('clock')} Te han aceptado: paga antes de ${fmtWhen(new Date(pend.dueAt))} para confirmar tu plaza.</p>` : ''}
       <div class="pay-note">${ico('shield')}<p><b>Pago protegido.</b> Lo retenemos hasta el plan; al anfitrión le llega después de celebrarse. Si no se celebra, te devolvemos el 100 %.</p></div>
       <p class="hint">${escapeHtml(policyLine(p))}</p>
@@ -4487,8 +4542,8 @@ function renderCheckout(){
         <div class="opt-row" onclick="setCheckout('save', ${!ck.save})"><span class="or-ic">${ico('lock')}</span><span class="or-l">Guardar para la próxima vez</span><span class="switch ${ck.save ? 'on' : ''}"><span class="knob"></span></span></div>
         <p class="hint">Demo: 4242 4242 4242 4242 paga; 4000 0027 6000 3184 pide confirmar en tu banco; 4000 0000 0000 0002 es rechazada.</p>` : ''}
       ${ck.err ? `<p class="pay-err" role="alert">${ico('alert')} ${escapeHtml(ck.err)}</p>` : ''}
-      <button class="btn-primary" onclick="payNow()">Pagar ${money2(p.price)}</button>
-      <p class="hint">Los datos de la tarjeta van directamente al procesador de pagos (Stripe); planes no los guarda.</p>
+      <button class="btn-primary" onclick="payNow()">Pagar ${money2(amount)}</button>
+      <p class="hint">Los datos de la tarjeta van directamente al procesador de pagos (Stripe); Plannet no los guarda.</p>
     </div></div>`);
 }
 function setCheckout(k, v){ captureCard(); state.checkout[k] = v; state.checkout.err = ''; renderCheckout(); }
@@ -4537,6 +4592,7 @@ function completePayment(method){
     PAYMENT_METHODS.push(method);
   }
   const label = method.last4 ? `${method.brand} ···· ${method.last4}` : method.brand;
+  if (ck.ticketId) return completeTicketPayment(p, getTicket(p, ck.ticketId), label);
   let x = myPayment(p.id);
   if (x && x.status === 'pendiente'){ x.status = 'retenido'; x.at = Date.now(); delete x.dueAt; }
   else x = newPayment(p, 'me', 'retenido');
@@ -4544,6 +4600,22 @@ function completePayment(method){
   state.checkout = null; closeOverlay();
   notify('pago', `Pago de ${money2(x.amount)} para ${p.title}. Lo retenemos hasta el plan. Recibo ${x.receiptNo}.`, { route:'pagos' });
   completeJoin(p.id, `Plaza reservada · ${money(x.amount)} retenidos hasta el plan`);
+}
+
+// Entrada especial: nueva, o pasar de la general pagando la diferencia.
+function completeTicketPayment(p, t, label){
+  if (!t) return;
+  const cost = ticketCost(p, t), wasJoined = state.joined.has(p.id);
+  let x = myPayment(p.id);
+  if (x && x.status === 'retenido' && !x.ticketId){ x.amount = round2(x.amount + cost); x.upgradedAt = Date.now(); }   // la general pasa a especial
+  else if (x && x.status === 'pendiente'){ x.status = 'retenido'; x.amount = t.price; x.at = Date.now(); delete x.dueAt; }
+  else x = newPayment(p, 'me', 'retenido', t);
+  x.ticketId = t.id; x.ticketName = t.name; x.method = label;
+  t.sold = (t.sold || 0) + 1;
+  state.checkout = null; closeOverlay();
+  notify('pago', `Pago de ${money2(cost)} por la entrada ${t.name} de ${p.title}. Lo retenemos hasta el plan. Recibo ${x.receiptNo}.`, { route:'pagos' });
+  if (wasJoined){ saveState(); toast(`Ya tienes la entrada ${t.name}`); renderDetail(p.id); }
+  else completeJoin(p.id, `Entrada ${t.name} · ${money(cost)} retenidos hasta el plan`);
 }
 
 /* ---------- cancelaciones y reembolsos ---------- */
@@ -4556,6 +4628,7 @@ function refundMyPayment(p, rf){
   x.refundReason = rf.pct >= 100 ? 'Cancelaste a tiempo: reembolso completo' : (rf.pct > 0 ? `Política ${rf.policy.label.toLowerCase()}: reembolso del ${rf.pct} %` : `Política ${rf.policy.label.toLowerCase()}: sin reembolso`);
   if (rf.pct > 0){ x.refundedAt = Date.now(); notify('pago', `Te devolvemos ${money2(x.refunded)} de ${p.title}. Llega a tu tarjeta en 5-10 días hábiles.`, { route:'pagos' }); }
   if (rf.pct === 0) x.cancelled = true;   // la plaza se pierde y el importe va al anfitrión tras el plan
+  const t = x.ticketId && getTicket(p, x.ticketId); if (t && t.sold) t.sold--;   // la entrada especial vuelve a la venta
   return x;
 }
 // El anfitrión cancela (o el plan no llega al mínimo): reembolso completo a todos.
@@ -4590,10 +4663,12 @@ function demoPayout(planId){
 }
 // Demo: llegan reservas a un plan de pago tuyo.
 function demoSales(planId, n){
-  const p = getPlan(planId); if (!p || !p.paid) return;
+  const p = getPlan(planId), t = ticketsOf(p)[0]; if (!p || !(p.paid || t)) return;
   const buyers = USERS.filter(u => u.id !== 'me' && !u.managedBy && u.type !== 'profesional').slice(0, n || 3);
-  buyers.forEach(u => { const x = newPayment(p, u.id, 'retenido'); x.method = 'Tarjeta'; p.joined = (p.joined || 0) + 1; });
-  saveState(); notify('pago', `${buyers.length} reservas nuevas en ${p.title}: ${money2(buyers.length * p.price)} retenidos hasta el plan.`, { route:'cobros' });
+  // En un plan gratis con entrada especial, lo que se vende es la especial; en uno de pago, la general.
+  buyers.forEach(u => { const x = newPayment(p, u.id, 'retenido', p.paid ? null : t); x.method = 'Tarjeta'; p.joined = (p.joined || 0) + 1; if (!p.paid) t.sold = (t.sold || 0) + 1; });
+  const total = buyers.length * (p.paid ? p.price : t.price);
+  saveState(); notify('pago', `${buyers.length} ${p.paid ? 'reservas' : 'entradas ' + t.name} nuevas en ${p.title}: ${money2(total)} retenidos hasta el plan.`, { route:'cobros' });
   if (location.hash.startsWith('#/cobros')) renderPayouts(); else renderDetail(planId);
 }
 
@@ -4664,13 +4739,13 @@ function removeMethod(id){
 }
 
 /* ---------- recibos y facturas ---------- */
-const PLATFORM = { name:'planes (razón social pendiente)', nif:'B00000000', address:'Madrid, España' };   // provisional
+const PLATFORM = { name:'Plannet (razón social pendiente)', nif:'B00000000', address:'Madrid, España' };   // provisional
 function receiptHtml(x){
   const host = USERS.find(u => u.name === x.hostName) || {};
   const biz = host.type === 'profesional';
-  const rows = [['Plan', x.planTitle], ['Organiza', x.hostName + (biz ? ' (empresa)' : '')], ['Fecha del pago', new Date(x.at).toLocaleDateString('es-ES')],
-    ['Forma de pago', x.method || ''], ['Importe', money2(x.amount)]].concat(x.refunded ? [['Reembolsado', '− ' + money2(x.refunded)], ['Total', money2(x.amount - x.refunded)]] : []);
-  return `<div class="rcpt"><div class="rcpt-h"><b>planes</b><span>Recibo ${escapeHtml(x.receiptNo)}</span></div>
+  const rows = [['Plan', x.planTitle]].concat(x.ticketName ? [['Entrada', x.ticketName]] : []).concat([['Organiza', x.hostName + (biz ? ' (empresa)' : '')], ['Fecha del pago', new Date(x.at).toLocaleDateString('es-ES')],
+    ['Forma de pago', x.method || ''], ['Importe', money2(x.amount)]]).concat(x.refunded ? [['Reembolsado', '− ' + money2(x.refunded)], ['Total', money2(x.amount - x.refunded)]] : []);
+  return `<div class="rcpt"><div class="rcpt-h"><b>Plannet</b><span>Recibo ${escapeHtml(x.receiptNo)}</span></div>
     <table>${rows.map(([k, v]) => `<tr><th>${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`).join('')}</table>
     <p>Cobrado por ${escapeHtml(PLATFORM.name)} (NIF ${PLATFORM.nif}) en nombre de ${escapeHtml(x.hostName)}, a través de Stripe. ${biz ? 'La factura de la entrada la emite el organizador; pídesela desde aquí.' : 'IVA incluido si corresponde.'}</p></div>`;
 }
@@ -4682,7 +4757,7 @@ function openReceipt(id){
       <button class="btn-primary" onclick="downloadDoc('${x.receiptNo}', 'receipt', '${x.id}')">${ico('download')} Descargar</button>
       <button class="btn-ghost" onclick="toast('En la app real te pediríamos el NIF y la dirección para emitir la factura completa')">Pedir factura con mis datos</button></div></div>`);
 }
-// Factura mensual de la comisión que planes emite al anfitrión.
+// Factura mensual de la comisión que Plannet emite al anfitrión.
 function commissionInvoice(month){
   const sales = PAYMENTS.filter(x => isHostOf(x) && ['liberado','pagado'].includes(x.status) && new Date(x.paidOutAt || x.releaseAt || x.at).toISOString().slice(0, 7) === month);
   const gross = sales.reduce((s, x) => s + (x.amount - x.refunded), 0), sp = splitFor(gross);
@@ -4690,7 +4765,7 @@ function commissionInvoice(month){
 }
 function invoiceHtml(inv){
   const p = ME.payouts || {};
-  return `<div class="rcpt"><div class="rcpt-h"><b>planes</b><span>Factura ${escapeHtml(inv.no)}</span></div>
+  return `<div class="rcpt"><div class="rcpt-h"><b>Plannet</b><span>Factura ${escapeHtml(inv.no)}</span></div>
     <p>Emisor: ${escapeHtml(PLATFORM.name)} · NIF ${PLATFORM.nif} · ${escapeHtml(PLATFORM.address)}<br>Cliente: ${escapeHtml(p.legalName || ME.name)} · ${escapeHtml(p.taxId || '')}</p>
     <table><tr><th>Concepto</th><td>Comisión por intermediación (15 %) · ${escapeHtml(inv.month)} · ${inv.sales.length} reservas</td></tr>
       <tr><th>Ventas del mes</th><td>${money2(inv.gross)}</td></tr><tr><th>Base imponible</th><td>${money2(inv.feeBase)}</td></tr>
@@ -4757,7 +4832,7 @@ function renderPayouts(){
         || '<p class="hint">Cada mes te enviamos la factura de la comisión de los planes celebrados.</p>'}</div>
     <div class="set-group"><div class="set-title">Cuenta de cobro</div>
       <div class="set-row static"><span class="sr-ic">${ico('card')}</span><span class="sr-l">${escapeHtml(maskIban(a.iban))}<span class="or-s">${escapeHtml(a.legalName)} · ${a.kind === 'empresa' ? 'Autónomo o empresa' : 'Particular'} · ${escapeHtml(a.taxId)}</span></span></div>
-      <p class="hint">Te pagamos el 85 % de cada reserva 48 h después del plan (la comisión del 15 % lleva el IVA incluido). Por ley (DAC7), cada año informamos a Hacienda de lo que cobras con planes.</p></div>
+      <p class="hint">Te pagamos el 85 % de cada reserva 48 h después del plan (la comisión del 15 % lleva el IVA incluido). Por ley (DAC7), cada año informamos a Hacienda de lo que cobras con Plannet.</p></div>
   </div>`;
 }
 // Alta de cobros: tipo, datos fiscales, cuenta bancaria y verificación (Stripe Connect Express).
@@ -4775,7 +4850,7 @@ function renderPayoutSetup(){
     <div class="field"><label for="f-iban">Cuenta bancaria (IBAN)</label><input id="f-iban" autocapitalize="characters" placeholder="ES00 0000 0000 0000 0000 0000" value="${escapeHtml(d.iban || '')}"></div>
     ${d.err ? `<p class="pay-err" role="alert">${ico('alert')} ${escapeHtml(d.err)}</p>` : ''}
     <button class="btn-primary" onclick="submitPayoutSetup()">Enviar a verificar</button>
-    <p class="hint">Stripe comprobará tu identidad (ya verificada en planes) y que la cuenta es tuya. Al seguir aceptas el Acuerdo de cuentas conectadas de Stripe.</p>
+    <p class="hint">Stripe comprobará tu identidad (ya verificada en Plannet) y que la cuenta es tuya. Al seguir aceptas el Acuerdo de cuentas conectadas de Stripe.</p>
   </div>`;
 }
 function capturePayout(){ const d = state.payoutForm; if (!d) return; d.legalName = val('f-legal'); d.taxId = val('f-taxid'); d.address = val('f-addr'); d.iban = val('f-iban'); }
@@ -5387,7 +5462,7 @@ function adminPlan(id, action){
   if (action === 'aprobar') p.held = false;
   if (action === 'retirar') p.removed = true;
   if (action === 'restaurar') p.removed = false;
-  if (action === 'cancelar'){ p.status = 'cancelado'; addPlanUpdate(p, 'cancelado', `El equipo de planes ha cancelado este plan.${p.paid ? ' Os devolvemos el 100 % de lo pagado.' : ''}`, { by:'equipo' }); if (p.paid) refundAllForPlan(p, 'Cancelado por planes: reembolso completo'); }
+  if (action === 'cancelar'){ p.status = 'cancelado'; addPlanUpdate(p, 'cancelado', `El equipo de Plannet ha cancelado este plan.${p.paid ? ' Os devolvemos el 100 % de lo pagado.' : ''}`, { by:'equipo' }); if (p.paid) refundAllForPlan(p, 'Cancelado por Plannet: reembolso completo'); }
   adminLog({ destacar: p.featured ? 'Destaca el plan' : 'Quita el plan de destacados', aprobar:'Aprueba el plan retenido', retirar:'Retira el plan de Descubrir', restaurar:'Restaura el plan', cancelar:'Cancela el plan' }[action], p.title);
   saveState(); closeOverlay(); toast('Hecho'); renderAdmin('planes');
 }
@@ -5681,12 +5756,12 @@ const icsDate = (d) => new Date(d).toISOString().replace(/[-:]/g, '').replace(/\
 function icsFold(line){ const out = []; while (line.length > 75){ out.push(line.slice(0, 75)); line = ' ' + line.slice(75); } out.push(line); return out.join('\r\n'); }
 function icsText(items){
   const ev = items.map(i => [
-    'BEGIN:VEVENT', `UID:${i.id}@planes.app`, `DTSTAMP:${icsDate(Date.now())}`, `DTSTART:${icsDate(i.start)}`, `DTEND:${icsDate(i.end)}`,
+    'BEGIN:VEVENT', `UID:${i.id}@plannet.app`, `DTSTAMP:${icsDate(Date.now())}`, `DTSTART:${icsDate(i.start)}`, `DTEND:${icsDate(i.end)}`,
     `SUMMARY:${icsEscape(i.title)}`, `LOCATION:${icsEscape(i.where)}`,
     `DESCRIPTION:${icsEscape(AG_KIND[i.kind][0] + '. Detalles y chat del plan en la app.')}`, `URL:${PUBLIC_BASE}/${i.route}`,
     `STATUS:${i.kind === 'cancelado' ? 'CANCELLED' : (AG_KIND[i.kind][1] === 'pend' ? 'TENTATIVE' : 'CONFIRMED')}`,
     'BEGIN:VALARM', 'ACTION:DISPLAY', 'TRIGGER:-PT2H', `DESCRIPTION:${icsEscape(i.title)}`, 'END:VALARM', 'END:VEVENT'].join('\n'));
-  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//planes//agenda//ES', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:Mis planes', ...ev.join('\n').split('\n')].concat('END:VCALENDAR').map(icsFold).join('\r\n') + '\r\n';
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Plannet//agenda//ES', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:Mis planes', ...ev.join('\n').split('\n')].concat('END:VCALENDAR').map(icsFold).join('\r\n') + '\r\n';
 }
 function downloadIcs(planId){
   const items = planId ? agendaItems().filter(i => i.planId === planId && i.id === 'pl-' + planId) : upcomingItems().filter(i => ['vas','organizas'].includes(i.kind));
@@ -6128,7 +6203,187 @@ function demoAdTraffic(cid){
 
 
 /* =========================================================================
-   Prototipo visual — App de planes. Modo oscuro tipo Instagram, sin emojis.
+   Entradas: además de su acceso (gratis o de pago), un plan puede tener entradas
+   especiales con su precio, sus plazas y lo que incluyen. Por ejemplo, un plan gratis
+   con una zona VIP de pago (freemium) o un plan de pago con general y VIP.
+   - Se compran desde la app con el pago protegido de siempre (pagos.js): el dinero
+     queda retenido hasta el plan, con la misma comisión y la misma política de cancelación.
+   - Quien ya va con la entrada general puede pasar a VIP pagando solo la diferencia.
+   - Cada entrada especial lleva un código personal para el acceso a su zona.
+   En la app real: docs/pagos.md (Tipos de entrada).
+   ========================================================================= */
+const TICKET_MAX_PERKS = 4;
+const ticketsOf = (p) => (p && p.tickets) || [];
+const getTicket = (p, id) => ticketsOf(p).find(t => t.id === id) || null;
+const ticketLeft = (t) => t.cap ? Math.max(0, t.cap - (t.sold || 0)) : Infinity;
+// Tu entrada especial en este plan (si la tienes y no la has cancelado).
+function myTicket(p){
+  const x = myPayment(p.id);
+  return x && x.ticketId && !x.cancelled && !['reembolsado'].includes(x.status) ? getTicket(p, x.ticketId) : null;
+}
+// Lo que pagas por una entrada: si ya pagaste la general, solo la diferencia.
+function ticketCost(p, t){
+  const x = myPayment(p.id), paid = x && x.status === 'retenido' && !x.ticketId ? x.amount : 0;
+  return round2(Math.max(0, t.price - paid));
+}
+// Código personal para entrar a la zona (en la app real, un QR firmado por el servidor).
+function ticketCode(p, t){
+  let h = 7; String(p.id + ':' + t.id + ':' + (ME.handle || 'me')).split('').forEach(c => { h = (h * 31 + c.charCodeAt(0)) % 9000; });
+  return `${t.id.toUpperCase()}-${1000 + h}`;
+}
+// "Gratis · Zona VIP 12 €" para la barra de abajo y las listas.
+function ticketsLine(p){ return ticketsOf(p).map(t => `${t.name} ${money(t.price)}`).join(' · '); }
+
+/* ---------- en la ficha del plan ---------- */
+function ticketsBlock(p){
+  const list = ticketsOf(p); if (!list.length) return '';
+  const joined = state.joined.has(p.id), mine = myTicket(p), off = isCancelled(p) || new Date(p.when) < Date.now();
+  const base = `<div class="tk"><div class="tk-h"><b>${p.paid ? 'Entrada general' : 'Acceso libre'}</b><span>${p.paid ? money(p.price) : 'Gratis'}</span></div>
+    <p class="tk-s">${p.paid ? 'El plan, sin extras.' : (p.joinType === 'libre' ? 'El plan, sin apuntarte ni pagar.' : 'El plan, sin pagar nada.')}${joined && !mine ? ' <em class="tk-mine">Tu entrada</em>' : ''}</p></div>`;
+  const rows = list.map(t => {
+    const left = ticketLeft(t), have = mine && mine.id === t.id, cost = ticketCost(p, t);
+    const act = have ? `<em class="tk-mine">Tu entrada · ${escapeHtml(ticketCode(p, t))}</em>`
+      : (off ? '' : (left <= 0 ? '<span class="tk-out">Agotada</span>'
+      : `<button class="ph-btn sm primary" onclick="buyTicket('${p.id}','${t.id}')">${joined ? `Pasar a ${escapeHtml(t.name)} · ${money(cost)}` : `Comprar · ${money(t.price)}`}</button>`));
+    return `<div class="tk vip"><div class="tk-h"><b>${ico('star')} ${escapeHtml(t.name)}</b><span>${money(t.price)}</span></div>
+      ${(t.perks || []).length ? `<ul class="tk-perks">${t.perks.map(x => `<li>${ico('check')}<span>${escapeHtml(x)}</span></li>`).join('')}</ul>` : ''}
+      <div class="tk-f"><span class="tk-s">${t.cap ? (left > 0 ? `Quedan ${left} de ${t.cap}` : `${t.cap} vendidas`) : 'Sin límite'}</span>${act}</div></div>`;
+  }).join('');
+  return `<div class="block" id="entradas"><h4>Entradas</h4>${base}${rows}
+    <p class="hint">Pago protegido: lo retenemos hasta el plan. ${p.paid ? 'Si ya tienes la general, pagas solo la diferencia.' : 'El plan sigue siendo gratis; la entrada especial es opcional.'}</p></div>`;
+}
+function buyTicket(planId, ticketId){
+  const p = getPlan(planId), t = getTicket(p, ticketId); if (!p || !t) return;
+  if (!requireVerified('Verifica tu identidad para comprar entradas', () => buyTicket(planId, ticketId))) return;
+  if (isCancelled(p)){ toast('El plan está cancelado'); return; }
+  if (!canBuyNow(p)){ toast('La venta aún no está abierta'); return; }
+  if (ticketLeft(t) <= 0){ toast(`${t.name}: agotada`); return; }
+  if (myTicket(p)){ toast('Ya tienes una entrada especial para este plan'); return; }
+  if (!state.joined.has(planId) && p.paid && isFull(p)){ toast('El plan está completo'); return; }
+  openCheckout(planId, ticketId);
+}
+// El anfitrión: ventas de cada entrada especial.
+function ticketsHostLine(p){
+  const list = ticketsOf(p); if (!list.length) return '';
+  return `<div class="pay-line">${ico('star')}<span>${list.map(t => `${escapeHtml(t.name)}: ${t.sold || 0}${t.cap ? ' de ' + t.cap : ''} vendidas · ${money((t.sold || 0) * t.price)}`).join(' · ')}</span></div>`;
+}
+
+/* ---------- al crear el plan ---------- */
+function ticketFormFields(d){
+  const on = !!d.vip;
+  return `<div id="d-tickets"><div class="opt-row" onclick="toggleVipDraft()"><span class="or-ic">${ico('star')}</span><span class="or-l">Entrada especial (zona VIP)<span class="or-s">${d.price === 'pago' ? 'Además de la general' : 'El plan sigue gratis; quien quiera, paga la zona VIP'}</span></span><span class="switch ${on ? 'on' : ''}"><span class="knob"></span></span></div></div>
+    <div id="vip-opts" ${on ? '' : 'hidden'}>
+      <div class="field"><label for="f-vipname">Nombre</label><input id="f-vipname" maxlength="30" value="${escapeHtml(d.vipName || 'Zona VIP')}"></div>
+      <div class="ck-two"><div class="field"><label for="f-vipprice">Precio (€)</label><input id="f-vipprice" type="number" min="1" max="500" step="0.5" value="${escapeHtml(String(d.vipPrice || ''))}" placeholder="25"></div>
+        <div class="field"><label for="f-vipcap">Plazas</label><input id="f-vipcap" type="number" min="1" max="500" value="${escapeHtml(String(d.vipCap || ''))}" placeholder="20"></div></div>
+      <div class="field"><label for="f-vipperks">Qué incluye (una cosa por línea, hasta ${TICKET_MAX_PERKS})</label><textarea id="f-vipperks" rows="3" maxlength="240" placeholder="Zona reservada junto al escenario&#10;Una consumición&#10;Entrada sin cola">${escapeHtml(d.vipPerks || '')}</textarea></div>
+    </div>`;
+}
+function captureVipDraft(){ const d = state.draft; if (!document.getElementById('f-vipname')) return; d.vipName = val('f-vipname'); d.vipPrice = val('f-vipprice'); d.vipCap = val('f-vipcap'); d.vipPerks = val('f-vipperks'); }
+function toggleVipDraft(){
+  captureVipDraft(); state.draft.vip = !state.draft.vip;
+  const o = document.getElementById('vip-opts'); if (o) o.hidden = !state.draft.vip;
+  const sw = document.querySelector && document.querySelector('#d-tickets .switch'); if (sw) sw.classList.toggle('on', !!state.draft.vip);
+}
+// Valida la entrada especial del borrador: devuelve el error o null.
+function vipDraftError(){
+  const d = state.draft; if (!d.vip) return null;
+  captureVipDraft();
+  const price = parseFloat(String(d.vipPrice).replace(',', '.')), cap = parseInt(d.vipCap, 10);
+  if (!(price >= 1 && price <= 500)) return 'Pon un precio para la entrada especial entre 1 y 500 €';
+  if (d.price === 'pago'){ const base = parseFloat(String(val('f-price') || d.priceValue).replace(',', '.')); if (base && price <= base) return 'La entrada especial tiene que costar más que la general'; }
+  if (!(cap >= 1 && cap <= 500)) return 'Indica cuántas plazas tiene la entrada especial';
+  return null;
+}
+function vipFromDraft(){
+  const d = state.draft; if (!d.vip) return null;
+  const perks = String(d.vipPerks || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, TICKET_MAX_PERKS).map(s => s.slice(0, 60));
+  return [{ id: 'vip', name: (String(d.vipName || '').trim() || 'Zona VIP').slice(0, 30), price: round2(parseFloat(String(d.vipPrice).replace(',', '.'))), cap: parseInt(d.vipCap, 10), sold: 0, perks }];
+}
+
+
+/* =========================================================================
+   Planes exclusivos de la app (lanzamiento y promoción): las entradas solo se venden
+   aquí, con cuenta verificada. El plan sirve de anuncio y cada entrada trae un registro.
+   - La venta abre a una hora anunciada; antes, "Avísame" apunta a la lista de aviso.
+   - Quien está en la lista y verificado tiene acceso anticipado (horas antes que el resto).
+   - Entradas a tu nombre e intransferibles (una por persona): en la puerta, QR y DNI.
+     Si no puedes ir, se devuelve y pasa a la lista de espera (sin reventa).
+   - Se mide: personas avisadas, registros que llegan por el enlace del plan y vendidas.
+   En la app real: docs/lanzamiento.md.
+   ========================================================================= */
+const isExclusive = (p) => !!(p && p.exclusive);
+const salesAt = (p) => new Date(p.exclusive.salesAt).getTime();
+const earlyAt = (p) => salesAt(p) - (p.exclusive.earlyHours || 0) * 3600000;
+const onNotifyList = (p) => !!(ME.salesAlerts || {})[p.id];
+// ¿Puedo comprar ya? Abierta para todos, o acceso anticipado si estoy en la lista y verificado.
+function canBuyNow(p){
+  if (!isExclusive(p)) return true;
+  const now = Date.now();
+  return now >= salesAt(p) || (now >= earlyAt(p) && onNotifyList(p) && isVerified());
+}
+function untilLabel(ms){ const m = Math.max(1, Math.round(ms / 60000)), d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60);
+  return d ? `${d} d ${h} h` : (h ? `${h} h ${m % 60} min` : `${m} min`); }
+const whenOpen = (t) => { const d = new Date(t); return `${DIAS_LARGOS[d.getDay()]} ${d.getDate()} a las ${hhmm(d)}`; };
+
+/* ---------- en la ficha ---------- */
+function exclusiveBlock(p){
+  if (!isExclusive(p) || isCancelled(p)) return '';
+  const x = p.exclusive, now = Date.now(), open = now >= salesAt(p), early = !open && canBuyNow(p);
+  const waiting = (x.waiting || 0) + (onNotifyList(p) ? 1 : 0);
+  return `<div class="block excl" id="exclusivo"><h4>${ico('lock')} Exclusivo de la app</h4>
+    ${open ? `<p class="excl-st"><b>Venta abierta</b> · ${x.sold || 0} vendidas${p.groupMax ? ` de ${p.groupMax}` : ''}</p>`
+      : (early ? `<p class="excl-st"><b>Tienes acceso anticipado</b> · para el resto abre el ${whenOpen(salesAt(p))}</p>`
+      : `<p class="excl-st"><b>La venta abre el ${whenOpen(salesAt(p))}</b> · quedan ${untilLabel(salesAt(p) - now)}</p>
+         <p class="hint">${waiting.toLocaleString('es-ES')} personas esperando.${x.earlyHours ? ` Quien se apunte al aviso y esté verificado compra ${x.earlyHours} h antes.` : ''}</p>`)}
+    <ul class="excl-list">
+      <li>${ico('phone')}<span>Las entradas solo se venden aquí: ni taquilla ni otras webs.</span></li>
+      <li>${ico('shield')}<span>Hace falta una cuenta verificada. La entrada va a tu nombre: en la puerta, tu QR y tu DNI.</span></li>
+      <li>${ico('user')}<span>Una por persona e intransferible. Si no puedes ir, devuélvela y pasa a la lista de espera.</span></li>
+    </ul>
+    ${!open && !early ? `<div class="pl-actions"><button class="link-btn dim" onclick="demoOpenSales('${p.id}')">Demo: abre la venta</button></div>` : ''}
+  </div>`;
+}
+// Botón principal mientras la venta no está abierta para ti (null: el flujo normal de apuntarse).
+function exclusiveCta(p){
+  if (!isExclusive(p) || isCancelled(p) || state.joined.has(p.id) || canBuyNow(p)) return null;
+  if (onNotifyList(p)) return `<button class="btn-join done" disabled>${ico('check')} Te avisaremos${isVerified() ? ' · acceso anticipado' : ''}</button>`;
+  return `<button class="btn-join" onclick="joinSalesAlert('${p.id}')">${ico('bell')} Avísame cuando abra</button>`;
+}
+function joinSalesAlert(id){
+  const p = getPlan(id); if (!p) return;
+  ME.salesAlerts = Object.assign({}, ME.salesAlerts, { [id]: Date.now() }); saveState();
+  toast(isVerified() ? `Te avisamos: podrás comprar ${p.exclusive.earlyHours || 0} h antes que el resto` : 'Te avisamos. Verifícate para tener acceso anticipado');
+  renderDetail(id);
+}
+// Avisos: acceso anticipado y apertura de la venta (una vez cada uno). Se comprueba al navegar.
+function checkSalesAlerts(){
+  if (typeof ME === 'undefined' || !ME.name) return;
+  const now = Date.now(), sent = ME.salesSent || (ME.salesSent = {});
+  PLANS.filter(p => isExclusive(p) && onNotifyList(p) && !isCancelled(p) && !state.joined.has(p.id)).forEach(p => {
+    const k = sent[p.id] || {};
+    if (now >= salesAt(p) && !k.open){ k.open = true; notify('recordatorio', `Ya está abierta la venta de ${p.title}. Solo en la app.`, { planId: p.id }); }
+    else if (now >= earlyAt(p) && now < salesAt(p) && isVerified() && !k.early){ k.early = true; notify('recordatorio', `Tu acceso anticipado a ${p.title} ya está abierto: compra antes que nadie.`, { planId: p.id }); }
+    sent[p.id] = k;
+  });
+}
+function demoOpenSales(id){
+  const p = getPlan(id); if (!p) return;
+  p.exclusive.salesAt = Date.now() - 60000; checkSalesAlerts(); saveState();
+  toast('Venta abierta'); renderDetail(id);
+}
+// Lo que ve el anfitrión: lista de aviso, registros que trajo el enlace y vendidas.
+function exclusiveHostLine(p){
+  if (!isExclusive(p)) return '';
+  const x = p.exclusive, mine = accounts().filter(a => a.origin === 'plan/' + p.id).length;
+  return `<div class="pay-line">${ico('users')}<span>${(x.waiting || 0).toLocaleString('es-ES')} esperando · ${((x.signups || 0) + mine).toLocaleString('es-ES')} registros desde el enlace · ${x.sold || 0} vendidas</span></div>`;
+}
+// Al comprar: una por persona, y se cuenta en las vendidas del lanzamiento.
+function exclusiveSold(p){ if (isExclusive(p)) p.exclusive.sold = (p.exclusive.sold || 0) + 1; }
+
+
+/* =========================================================================
+   Prototipo visual — Plannet (plan + net), la app de planes. Modo oscuro tipo Instagram, sin emojis.
    Vistas: feed, mapa, grupos, perfil, detalle + creación (plan/post/grupo),
    solicitudes, ajustes. Datos mock en data.js.
    ========================================================================= */
@@ -6326,7 +6581,7 @@ function saveState(){
       me: { profilePublic: ME.profilePublic, presencePublic: ME.presencePublic, attendedPlanIds: ME.attendedPlanIds,
             name: ME.name, handle: ME.handle, initials: ME.initials, bio: ME.bio, business: ME.business, ratings: ME.ratings, dmMode: ME.dmMode, blocked: ME.blocked, verified: ME.verified, profiles: ME.profiles,
             city: ME.city, languages: ME.languages, stats: ME.stats, notifPrefs: ME.notifPrefs, mentions: ME.mentions, mentionPolicy: ME.mentionPolicy, recentSearches: ME.recentSearches, interests: ME.interests, radiusKm: ME.radiusKm, locationAllowed: ME.locationAllowed, rejectedFrom: ME.rejectedFrom,
-            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged, calToken: ME.calToken, seenUpdates: ME.seenUpdates, remindersSent: ME.remindersSent, reminderPrefs: ME.reminderPrefs, adPrefs: ME.adPrefs },
+            trustedContacts: ME.trustedContacts, shareTrips: ME.shareTrips, safeCheck: ME.safeCheck, consents: ME.consents, consentLog: ME.consentLog, payouts: ME.payouts, planPresence: ME.planPresence, pinged: ME.pinged, calToken: ME.calToken, seenUpdates: ME.seenUpdates, remindersSent: ME.remindersSent, reminderPrefs: ME.reminderPrefs, adPrefs: ME.adPrefs, salesAlerts: ME.salesAlerts, salesSent: ME.salesSent },
       modActions: MOD_ACTIONS, adCampaigns: AD_CAMPAIGNS, userMod: USER_MOD, safety: SAFETY_EVENTS, payments: PAYMENTS, paymentMethods: PAYMENT_METHODS, ideas: IDEAS,
       extraProfiles: USERS.filter(u => u.managedBy === 'me'),
       sets: { joined: [...state.joined], attended: [...state.attended], requested: [...state.requested], reconfirmed: [...state.reconfirmed] },
@@ -6404,7 +6659,7 @@ function gridCell(p){
   <button class="cell ${p.gradient}" onclick="go('plan/${p.id}')" aria-label="${escapeHtml(p.title)}">
     ${coverImg(planCover(p),500)}
     <span class="cell-scrim"></span>
-    <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>${callLive(p) ? `<span class="cell-feat live">${ico('live')} En directo</span>` : (p.featured ? '<span class="cell-feat">Destacado</span>' : (isOnline(p) ? `<span class="cell-feat">${ico('video')} Online</span>` : ''))}
+    <span class="cell-corner" title="${p.paid?'De pago':'Gratis'}">${freeIcon(p)}</span>${callLive(p) ? `<span class="cell-feat live">${ico('live')} En directo</span>` : (p.featured ? '<span class="cell-feat">Destacado</span>' : (isExclusive(p) ? `<span class="cell-feat">${ico('lock')} Solo en la app</span>` : (isOnline(p) ? `<span class="cell-feat">${ico('video')} Online</span>` : '')))}
     <span class="cell-info">
       <span class="cell-title">${escapeHtml(p.title)}</span>
       <span class="cell-meta">${escapeHtml(loc)} · ${ico('geo')} ${attendanceView(p).n}</span>
@@ -7062,7 +7317,7 @@ function setDmMode(v){ ME.dmMode = v; saveState(); updateDmBadge(); renderSettin
    destacada de WordPress. og:image es una imagen 1200×630 generada a partir de la
    foto de la publicación (shareImage). Solo las publicaciones públicas se comparten
    fuera; dentro, se envían a personas que sigues o se añaden a tu story. */
-const PUBLIC_BASE = 'https://planes.app';   // dominio provisional, como la marca
+const PUBLIC_BASE = 'https://plannet.app';   // dominio provisional (falta comprobar que esté libre)
 // Lo que se comparte: una publicación (clave = su id), un plan ('plan:' + id) o un perfil ('u:' + id).
 function findShare(key){
   key = String(key);
@@ -7073,7 +7328,7 @@ function findShare(key){
 const isPlan = (x) => !!(x && x.when);
 const isProfile = (x) => !!(x && x.handle && !x.when && !x.authorId);
 function shareKey(x){ return isPlan(x) ? 'plan:' + x.id : (isProfile(x) ? 'u:' + x.id : x.id); }
-// Ruta en la app y en la web pública (la misma en las dos, como en https://planes.app/plan/p2).
+// Ruta en la app y en la web pública (la misma en las dos, como en https://plannet.app/plan/p2).
 function appRoute(x){ return isPlan(x) ? `plan/${x.id}` : (isProfile(x) ? `u/${x.id}` : `p/${x.id}`); }
 function webPath(x){ return isPlan(x) ? `plan/${x.id}` : (isProfile(x) ? `u/${String(x.handle).replace(/^@/, '')}` : `p/${x.id}`); }
 // Lo que tiene página en la web pública del prototipo (los datos de ejemplo; ver scripts/build-web.js).
@@ -7109,7 +7364,7 @@ function shareMeta(po){
     const priv = po.id !== 'me' && po.profilePublic === false;
     const n = postsByUser(po.id).length;
     const first = priv ? null : postsByUser(po.id).find(x => postIsPublic(x) && (x.imgs || []).length);
-    return { title: `${po.name} (${po.handle})`, description: priv ? 'Cuenta privada en planes' : (po.bio || `${n} publicaciones en planes`),
+    return { title: `${po.name} (${po.handle})`, description: priv ? 'Cuenta privada en Plannet' : (po.bio || `${n} publicaciones en Plannet`),
       image: first ? first.imgs[0] : '', url: postUrl(po), domain };
   }
   if (isPlan(po)){
@@ -7123,7 +7378,7 @@ function shareMeta(po){
   const plan = po.planId && getPlan(po.planId);
   const cap = (po.caption || '').replace(/\s+/g, ' ').trim();
   return {
-    title: `${u.name} en planes${plan ? ' · ' + plan.title : ''}`,
+    title: `${u.name} en Plannet${plan ? ' · ' + plan.title : ''}`,
     description: cap.length > 120 ? cap.slice(0, 117).trimEnd() + '…' : cap,
     image: (po.imgs || [])[0] || '', url: postUrl(po), domain,
   };
@@ -7153,7 +7408,7 @@ function renderShareSheet(){
     <div class="sheet sh" role="dialog" aria-label="Compartir">
       <div class="sheet-h"><span>${plan ? 'Compartir plan' : (prof ? 'Compartir perfil' : 'Compartir')}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
       <div class="sheet-list">
-        <div class="sh-sec">Enviar en planes</div>
+        <div class="sh-sec">Enviar en Plannet</div>
         <div class="sh-people">${people || '<p class="hint">Aún no sigues a nadie.</p>'}</div>
         ${sel.length ? `<div class="sheet-in sh-msg"><input id="sh-msg" maxlength="${LIMITS.comment}" placeholder="Escribe un mensaje…"><button class="btn-primary sm" onclick="sendShareInApp()">Enviar</button></div>` : ''}
         ${!prof && (pub || po.authorId === 'me') ? `<button class="sh-row" onclick="shareToStory('${key}')">${ico('live')}<span>Añadir a tu story</span>${ico('chevR')}</button>` : ''}
@@ -7251,7 +7506,7 @@ function shareImage(po){
       g.font = '500 28px system-ui, -apple-system, Segoe UI, sans-serif'; g.fillStyle = 'rgba(255,255,255,.8)';
       g.fillText(small, 60, 580);
       g.font = '800 34px system-ui, -apple-system, Segoe UI, sans-serif'; g.fillStyle = '#fff'; g.textAlign = 'right';
-      g.fillText('planes', 1140, 580);
+      g.fillText('Plannet', 1140, 580);
       c.toBlob(b => resolve(b), 'image/jpeg', 0.85);
     };
     if (!m.image) return finish(null);
@@ -7618,6 +7873,7 @@ function renderDetail(id){
   let cta;
   if (isCancelled(p)) cta = `<button class="btn-join done" disabled>${ico('close')} Plan cancelado</button>`;
   else if (callCta(p)) cta = callCta(p);   // videollamada: entrar o ver en directo (videollamadas.js)
+  else if (exclusiveCta(p)) cta = exclusiveCta(p);   // exclusivo de la app: aún no se puede comprar (lanzamiento.js)
   else if (isHost(p)) cta = `<button class="btn-join" onclick="openHostQr('${p.id}')">${ico('grid')} Mostrar QR de llegada</button>`;
   else if (!isVerified() && !attended && !joined) cta = `<button class="btn-join" onclick="requireVerified('Verifica tu identidad para ir a este plan', () => renderDetail('${p.id}'))">${ico('shield')} Verifícate para ir</button>`;
   else if (attended) cta = `<button class="btn-join done" disabled>${ico('check')} Asististe · verificado</button>`;
@@ -7641,6 +7897,7 @@ function renderDetail(id){
   const myBlock = (joined && !attended && !isCancelled(p)) ? `<div class="block"><h4>Tu asistencia</h4>
       <p class="hint">${state.reconfirmed.has(p.id) ? `${ico('check')} Apuntado y reconfirmado.` : 'Apuntado.'} ${p.paid ? escapeHtml(policyLine(p)) : 'Si no puedes ir, cancela con tiempo: deja la plaza a otra persona.'}</p>
       ${pay && pay.status !== 'pendiente' ? `<div class="pay-line">${ico('card')}<span>Pagado ${money2(pay.amount)} · ${PAY_STATUS[pay.status].toLowerCase()}</span><button class="link-btn" onclick="openReceipt('${pay.id}')">Recibo</button></div>` : ''}
+      ${myTicket(p) ? `<div class="pay-line">${ico('star')}<span>Entrada ${escapeHtml(myTicket(p).name)} · código <b>${escapeHtml(ticketCode(p, myTicket(p)))}</b> · enséñalo al entrar a la zona</span></div>` : ''}
       ${agendaActions(p)}
       <div class="pl-actions"><button class="link-btn" onclick="openCancel('${p.id}')">Cancelar asistencia</button><button class="link-btn dim" onclick="demoReminder('${p.id}')">Demo: recordatorio de 2 h antes</button><button class="link-btn dim" onclick="demoPlanEnded('${p.id}')">Demo: simular que el plan ha terminado</button></div></div>`
     : (toPay ? `<div class="block"><h4>Tu plaza</h4><p class="hint">${ico('clock')} Te guardamos la plaza hasta ${fmtWhen(new Date(pay.dueAt))}. Paga para confirmarla; si no, pasa a la siguiente persona.</p></div>`
@@ -7655,7 +7912,7 @@ function renderDetail(id){
         ${isHost(p) && p.paid ? `<button class="sh-row" onclick="go('cobros')">${ico('euro')}<span>Cobros · ${hostSales(p.id).filter(x => x.status !== 'reembolsado').length} reservas</span>${ico('chevR')}</button>` : ''}
         ${isHost(p) ? `<button class="sh-row" onclick="go('editar-plan/${p.id}')">${ico('doc')}<span>Editar fecha, hora o lugar</span>${ico('chevR')}</button>
         <button class="sh-row danger" onclick="openCancelPlan('${p.id}')">${ico('close')}<span>Cancelar el plan</span>${ico('chevR')}</button>` : ''}
-      ${promoBlock(p)}</div>${agendaActions(p)}</div>` : '';
+      ${promoBlock(p)}</div>${ticketsHostLine(p)}${exclusiveHostLine(p)}${agendaActions(p)}</div>` : '';
 
   const presence = isCancelled(p) ? '' : presenceBlock(p);   // quién te ve y si vas solo o en grupo (planes.js)
 
@@ -7697,6 +7954,7 @@ function renderDetail(id){
           <span class="tag tag-line">${freeIcon(p)} ${p.paid?'De pago':'Gratis'}</span>
           ${p.secret?`<span class="tag tag-line">${ico('lock')} Secreto</span>`:''}
           ${isOnline(p)?`<span class="tag tag-line">${ico('video')} Videollamada</span>`:''}
+          ${isExclusive(p)?`<span class="tag tag-line">${ico('lock')} Solo en la app</span>`:''}
         </div>
         <h2>${escapeHtml(p.title)}</h2>
         <div class="hero-loc">${isOnline(p) ? `${ico('video')} Videollamada · ${escapeHtml(onlineSummary(p))}` : `${ico('pin')} ${p.secret||hideExact?'Zona aprox. · Madrid':(place?place.name+' · '+place.city:escapeHtml(p.meetPoint||'Madrid'))}`}</div>
@@ -7713,6 +7971,8 @@ function renderDetail(id){
         ${p.meetPoint ? `<p class="hint">${ico('pin')} Punto de encuentro: <b>${escapeHtml(p.meetPoint)}</b></p>` : ''}
         <p class="hint">${isOnline(p)?(manual?'Por videollamada, con aprobación: pide tu plaza en la llamada y decide el anfitrión. ':'Por videollamada: apúntate para entrar con cámara y micro. ')+'Cuentas como asistente al pasar 10 minutos en la llamada.':manual?'Plan con aprobación: envía una solicitud; el creador o los admins la aceptan o rechazan.':(libre?'Plan libre: no hace falta apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.':'Plan apuntado: hay que apuntarse. Al llegar, registras tu asistencia con el QR del anfitrión.')}</p>
       </div>
+      ${exclusiveBlock(p)}
+      ${ticketsBlock(p)}
       ${callBlock(p)}
       ${updatesBlock(p)}
       ${p.held ? `<div class="pl-banner">${ico('clock')}<div><b>En revisión</b><p>El filtro automático ha retenido este plan: solo lo ves tú hasta que lo revise una persona del equipo. Puedes apelar en Ajustes ▸ Estado de tu cuenta.</p></div></div>` : ''}
@@ -7745,7 +8005,7 @@ function renderDetail(id){
         ${REVIEWS.map(r=>`<div class="review"><div class="top"><span>${r.author}</span><span class="st">${Array(r.stars).fill(ico('star')).join('')}</span></div><p>${r.text}</p></div>`).join('')}
       </div>
       <div class="action-bar">
-        <div class="pr"><div class="v">${p.paid?money(p.price):'Gratis'}</div><div class="k">${p.paid?'pago protegido hasta el plan':(libre?'plan libre':'sin coste')}</div></div>
+        <div class="pr"><div class="v">${p.paid?money(p.price):'Gratis'}</div><div class="k">${ticketsOf(p).length ? escapeHtml(ticketsLine(p)) : (p.paid?'pago protegido hasta el plan':(libre?'plan libre':'sin coste'))}</div></div>
         ${cta}
       </div>
     </div>`;
@@ -8337,7 +8597,8 @@ function renderCreatePlan(){
           <div class="iseg" id="d-policy">${Object.entries(CANCEL_POLICIES).map(([k, v]) => `<button data-v="${k}" class="${(d.policy || 'flexible') === k ? 'active' : ''}" onclick="setDraft('policy','${k}')"><span>${v.label}</span></button>`).join('')}</div>
           <p class="hint" id="policy-hint">${escapeHtml(policyHint(d.policy))}</p>
           ${payoutsReady() ? '' : `<button class="vg-inline" onclick="state.draft.priceValue=val('f-price');go('cobros')">${ico('euro')} Para cobrar, configura antes tus cobros (datos fiscales y cuenta bancaria).</button>`}
-        </div></div>
+        </div>
+        ${ticketFormFields(d)}</div>
       <div class="field" id="access-field" ${d.mode==='online'?'hidden':''}><label>Tipo de asistencia</label>
         <div class="iseg" id="d-access">
           <button data-v="libre" class="${d.access==='libre'?'active':''}" onclick="setDraft('access','libre')">${ico('globe')}<span>Libre</span></button>
@@ -8374,6 +8635,8 @@ function publishPlan(){
     if (!(n >= 1 && n <= 500)){ toast('Pon un precio por plaza entre 1 y 500 €'); return; }
     if (!payoutsReady()){ state.draft.priceValue = val('f-price'); toast('Para publicar un plan de pago, configura antes tus cobros'); go('cobros'); return; }
   }
+  const vipErr = vipDraftError(); if (vipErr){ toast(vipErr); return; }   // entrada especial (entradas.js)
+  if (state.draft.vip && !payoutsReady()){ state.draft.priceValue = val('f-price'); toast('Para vender entradas, configura antes tus cobros'); go('cobros'); return; }
   if (!userMod('me').canHost){ toast('Moderación te ha retirado la opción de organizar planes. Mira Ajustes ▸ Estado de tu cuenta'); return; }
   const pf = state.draft.prefill || {};   // si viene de una chispa y el campo llega vacío
   const title = clip(val('f-title') || pf.title, 'planTitle') || 'Plan sin título';
@@ -8402,10 +8665,11 @@ function commitPlan(title, desc, flag){
     groupId, held: !!flag || undefined,
   };
   if (d.mode === 'online') Object.assign(plan, onlinePlanFields(d));   // videollamada: sin lugar, con sus opciones (videollamadas.js)
+  const tickets = vipFromDraft(); if (tickets) plan.tickets = tickets;   // entrada especial opcional (entradas.js)
   PLANS.unshift(plan);
   if (d.fromIdea) linkIdeaToPlan(plan);   // venía de una chispa: entran los que se animaron (chispas.js)
   if (groupId){ const g=getGroup(groupId); if(g) g.planIds.unshift(plan.id); }
-  state.pendingGroup = null; d.photo = null; d.priceValue = "";
+  state.pendingGroup = null; d.photo = null; d.priceValue = ""; d.vip = false; d.vipPrice = ''; d.vipCap = ''; d.vipPerks = '';
   ensurePlanChat(plan.id);
   saveState();
   if (plan.approval === 'manual' && !flag) setTimeout(() => simulateIncomingRequest(plan.id), 5000);   // demo: llega una solicitud
@@ -8628,7 +8892,7 @@ function showView(name){
 }
 function scrollTop(v){ const el=document.getElementById('view-'+v); if(el) el.scrollTop=0; }
 function router(){
-  stopMusic(); checkReminders(); updateDmBadge(); updateNotifBadge(); setChromeHidden(false);
+  stopMusic(); checkReminders(); checkSalesAlerts(); updateDmBadge(); updateNotifBadge(); setChromeHidden(false);
   const hash = location.hash.replace(/^#\//,'') || 'feed';
   const [route,arg] = hash.split('/');
   if (route !== 'plan'){ state.updVisit = null; state.updAll = null; }
@@ -8679,7 +8943,7 @@ function router(){
 
 // Enlaces que ya no llevan a nada (borrado, privado o retirado).
 function renderGone(title){
-  document.getElementById('view-page').innerHTML = pageHead('planes') + `<div class="empty-tab"><span class="empty-ic">${ico('link')}</span><h3>${escapeHtml(title)}</h3><p>Puede que se haya borrado o que no tengas acceso.</p>
+  document.getElementById('view-page').innerHTML = pageHead('Plannet') + `<div class="empty-tab"><span class="empty-ic">${ico('link')}</span><h3>${escapeHtml(title)}</h3><p>Puede que se haya borrado o que no tengas acceso.</p>
     <button class="btn-primary" style="margin-top:14px" onclick="go('feed')">Ir a Descubrir</button></div>`;
   showView('page');
 }

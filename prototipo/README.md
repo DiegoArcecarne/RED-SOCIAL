@@ -1,4 +1,4 @@
-# Prototipo visual — App de planes
+# Prototipo visual — Plannet
 
 Prototipo navegable y estático (HTML, CSS y JavaScript sin frameworks) de la app
 definida en [`../PRODUCTO.md`](../PRODUCTO.md). Sirve para *ver la idea funcionando*
@@ -17,7 +17,7 @@ El diseño es para móvil: activa la vista móvil de las DevTools (`F12` ▸ ico
 **Primero, entrar.** El prototipo arranca en la bienvenida. Puedes:
 
 - Crear una cuenta: registro con email o teléfono, código, verificación en dos pasos opcional, 18+ y consentimientos, perfil, intereses, ubicación y a quién seguir. Las cuentas nuevas empiezan vacías.
-- Entrar con la cuenta de demostración (Marina, con todo el contenido de ejemplo): `marina@planes.app` · `planes123`, o el botón "Entrar con la cuenta de demostración".
+- Entrar con la cuenta de demostración (Marina, con todo el contenido de ejemplo): `marina@plannet.app` · `planes123`, o el botón "Entrar con la cuenta de demostración".
 
 Los códigos llegan como una notificación dentro de la pantalla: tócala para rellenarlo. Todo es simulado y se guarda en tu navegador; lo que hará el servidor de verdad está en [`../docs/cuentas-y-acceso.md`](../docs/cuentas-y-acceso.md).
 
@@ -196,16 +196,28 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
    *Promocionar este plan* (presupuesto, días, estimación, pago y resultados). Y la **lupa**
    de arriba abre el buscador de planes, personas y #temas desde cualquier pestaña. Ver
    [`docs/publicidad.md`](../docs/publicidad.md).
+25. **Entradas especiales (zona VIP)** — un plan gratis puede tener una zona VIP de pago
+   (freemium) y uno de pago, general y VIP. En la ficha, *Entradas*: qué incluye cada una,
+   plazas que quedan y *Comprar*; si ya tienes la general, *Pasar a VIP* por la diferencia.
+   Tu entrada lleva un código para entrar a la zona. Pruébalo en *El himno de la Victoria*
+   (gratis con Barra VIP) o *Rooftop Sunset Sessions* (18 € y Zona VIP 45 €). Al crear un
+   plan: *Precio ▸ Entrada especial (zona VIP)*. Ver [`docs/pagos.md`](../docs/pagos.md).
+26. **Planes exclusivos de la app (lanzamiento)** — *Fiesta de lanzamiento de planes*: las
+   entradas solo se venden en la app, con cuenta verificada, a tu nombre y una por persona.
+   Antes de la venta, cuenta atrás y *Avísame* (acceso anticipado si estás verificada);
+   *Demo: abre la venta* para comprar. La web pública del plan dice "Entradas solo en la app"
+   y el registro que llega por su enlace queda contado. Ver
+   [`docs/lanzamiento.md`](../docs/lanzamiento.md).
 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.
 
-Los datos son de ejemplo (`data.js`). La marca ("planes") es provisional y las
+Los datos son de ejemplo (`data.js`). La marca es Plannet (plan + net); el dominio está por comprobar y las
 condiciones de las cuentas profesionales están pendientes de decidir.
 
 ## Para desarrollar
 
-Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `pagos.js`, `chispas.js`, `admin.js`, `agenda.js`, `videollamadas.js`, `publicidad.js`, `app.js`).
+Edita **solo las fuentes** (`index.html`, `styles.css`, `data.js`, `cuentas.js`, `planes.js`, `social.js`, `confianza.js`, `pagos.js`, `chispas.js`, `admin.js`, `agenda.js`, `videollamadas.js`, `publicidad.js`, `entradas.js`, `lanzamiento.js`, `app.js`).
 `standalone.html` y `web/` se generan; no los edites a mano. Desde la raíz del repositorio:
 
 ```bash

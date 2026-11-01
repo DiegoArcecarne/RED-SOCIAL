@@ -1,6 +1,6 @@
 # Instrucciones para trabajar en este proyecto
 
-App de planes (red social para quedar con gente en planes reales). El producto está en
+Plannet (plan + net, con dos enes): red social para quedar con gente en planes reales. El producto está en
 `PRODUCTO.md`; el estado actual y lo pendiente, en [`docs/estado.md`](docs/estado.md). Léelo
 antes de empezar.
 
@@ -26,7 +26,7 @@ antes de empezar.
 SPA estática en JavaScript sin dependencias. Se edita **solo en las fuentes**: `index.html`,
 `styles.css` y los `.js` (`data.js` datos de ejemplo, `cuentas.js`, `planes.js`, `social.js`,
 `confianza.js`, `pagos.js`, `chispas.js`, `admin.js`, `agenda.js`, `videollamadas.js`,
-`publicidad.js` y `app.js`, que va el último). Funciones globales (los `onclick` en línea las
+`publicidad.js`, `entradas.js`, `lanzamiento.js` y `app.js`, que va el último). Funciones globales (los `onclick` en línea las
 llaman), router por `#/ruta` en `router()` de `app.js`, estado en `state` y persistencia en
 `localStorage` con `saveState()` / `loadState()`.
 

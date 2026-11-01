@@ -190,6 +190,19 @@ const PLANS = [
     summary: 'Comentamos la novela de Andrea Abreu. Grupo pequeño y privado: solo entra quien está apuntado.',
     secret: false,
   },
+  /* Exclusivo de la app (lanzamiento.js): la venta abre a una hora anunciada y solo aquí, con
+     cuenta verificada. waiting: lista de aviso; signups: registros llegados por su enlace. */
+  {
+    id: 'p16', title: 'Fiesta de lanzamiento de planes', placeId: 'azotea', category: 'fiesta',
+    level: 3, paid: true, price: 12, recurring: false, hostId: 'azotea',
+    host: { name: 'Azotea Círculo', business: true, verified: true, rating: 4.6, reliability: 98 },
+    when: hoursFromNow(24 * 9), durationMin: 300, groupMin: 40, groupMax: 150, joined: 0,
+    joinType: 'apuntado', approval: 'automatica',
+    exclusive: { salesAt: hoursFromNow(50).getTime(), earlyHours: 24, waiting: 1240, signups: 312, sold: 0 },
+    gradient: 'g-grape',
+    summary: 'La primera fiesta de la app: DJ al atardecer, la gente de los primeros planes y una sorpresa. Entradas solo en la app, a tu nombre.',
+    secret: false,
+  },
 ];
 
 
@@ -223,6 +236,7 @@ const PLAN_ATTENDANCE = {
   p10: { joinType: 'libre',    attended: 18, pub: ['MN','RU','SO','PB','LC'] },
   p11: { joinType: 'libre',    attended: 11, pub: ['CD','HV','OK'] },
   p12: { joinType: 'apuntado', attended: 27, pub: ['AZ','CI','NE','RO'] },
+  p16: { joinType: 'apuntado', attended: 0,  pub: [] },   // aún no se ha celebrado
 };
 PLANS.forEach((p) => {
   const a = PLAN_ATTENDANCE[p.id] || {};
@@ -270,8 +284,16 @@ const PLAN_PHOTO = {
   p13:'1588196749597-9ff075ee6b5b', // videollamada en un portátil
   p14:'1586165368502-1bad197a6461', // ajedrez
   p15:'1543002588-bfa74002ed7e',    // libro abierto
+  p16:'1514525253161-7a46d19cd819', // fiesta de lanzamiento
 };
 PLANS.forEach((p) => { p.photo = PLAN_PHOTO[p.id] || ''; });
+
+// Entradas especiales (entradas.js): un plan gratis con zona VIP de pago, y uno de pago con general y VIP.
+const PLAN_TICKETS = {
+  p1: [{ id:'vip', name:'Barra VIP', price:12, cap:12, sold:7, perks:['Sitio en la barra junto al coro','Vermut de la casa y una tapa','Sin esperar para pedir'] }],
+  p3: [{ id:'vip', name:'Zona VIP', price:45, cap:20, sold:14, perks:['Mesa reservada junto a la cabina','Dos consumiciones','Entrada sin cola'] }],
+};
+PLANS.forEach((p) => { if (PLAN_TICKETS[p.id]) p.tickets = PLAN_TICKETS[p.id].map((t) => ({ ...t, perks: t.perks.slice() })); });
 
 // Usuarios (perfiles). type: 'usuario' normal o 'profesional' (cuenta de negocio).
 const USERS = [

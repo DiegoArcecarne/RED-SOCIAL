@@ -456,7 +456,7 @@ function renderMentionsTab(){
 function setMentionPolicy(v){ ME.mentionPolicy = v; saveState(); renderSettings(); }
 
 /* ---------- recibir desde el menú de compartir del móvil ----------
-   Con la app instalada (Android), "planes" sale en el menú de compartir de la galería o
+   Con la app instalada (Android), "Plannet" sale en el menú de compartir de la galería o
    del navegador (share_target del manifest). El service worker (sw.js) guarda lo recibido
    y abre #/recibido: fotos o vídeo → nueva publicación; un enlace de planes → se abre. */
 const SHARE_INBOX = 'planes-compartido';
@@ -469,10 +469,10 @@ function receiveShared(){
       .then(blobs => c.keys().then(ks => Promise.all(ks.map(k => c.delete(k)))).then(() => applyShared(meta, blobs.filter(Boolean))));
   })).catch(fallback);
 }
-// Ruta de la app si lo recibido es un enlace de planes (dominio real o web del prototipo).
+// Ruta de la app si lo recibido es un enlace de Plannet (dominio real o web del prototipo).
 function sharedLink(text){
   const s = String(text || '');
-  const m = s.match(/abrir\.html#\/(plan|p|u|tema)\/([\w.%-]+)/) || s.match(/(?:planes\.app|\/web)\/(plan|p|u|tema)\/([\w.%-]+?)(?:\.html)?(?=$|[\s?#"'<>])/);
+  const m = s.match(/abrir\.html#\/(plan|p|u|tema)\/([\w.%-]+)/) || s.match(/(?:plannet\.app|\/web)\/(plan|p|u|tema)\/([\w.%-]+?)(?:\.html)?(?=$|[\s?#"'<>])/);
   if (!m) return null;
   if (m[1] === 'u' && !getUser(m[2])){ const u = USERS.find(x => String(x.handle).replace(/^@/, '') === m[2]); return u ? 'u/' + u.id : null; }
   return m[1] + '/' + m[2];

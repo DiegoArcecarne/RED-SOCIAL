@@ -59,6 +59,6 @@ const page = body.replace(uimgOld, () => 'const IMG_DATA = ' + JSON.stringify(ma
 const css = style.replace('--maxw:430px;', '--maxw:430px;\n  color-scheme:dark;');
 
 fs.mkdirSync(path.dirname(out), { recursive: true });
-fs.writeFileSync(out, '<title>Prototipo de Planes</title>\n' + css + '\n' + page.trim() + '\n');
+fs.writeFileSync(out, '<title>Prototipo de Plannet</title>\n' + css + '\n' + page.trim() + '\n');
 console.log(`${path.relative(root, out)} generado (${Math.round(fs.statSync(out).size / 1024)} KB, ${Object.keys(map).length} de ${slugs.size} fotos incrustadas${downloaded ? `, ${downloaded} descargadas` : ''})`);
 if (missing.length) console.log('Sin descargar (se cargarán de Unsplash): ' + missing.join(', '));

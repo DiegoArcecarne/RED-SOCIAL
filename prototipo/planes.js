@@ -82,6 +82,7 @@ function clearPlanPhoto(){ state.draft.photo = null; const pv = document.getElem
 function joinPlan(id){
   const p = getPlan(id); if (!p || isCancelled(p)) return;
   if (!requireVerified('Verifica tu identidad para apuntarte', () => joinPlan(id))) return;
+  if (!canBuyNow(p)){ toast('La venta aún no está abierta: pulsa "Avísame"'); return; }   // plan exclusivo de la app (lanzamiento.js)
   const pay = p.paid && myPayment(id);
   if (isFull(p) && !(pay && pay.status === 'pendiente')) return joinWaitlist(id);
   if (p.paid && !(pay && pay.status === 'retenido')) return openCheckout(id);   // de pago: primero se paga (pagos.js)
@@ -89,7 +90,7 @@ function joinPlan(id){
 }
 function completeJoin(id, msg){
   const p = getPlan(id); if (!p) return;
-  if (!state.joined.has(id)){ state.joined.add(id); p.joined = (p.joined || 0) + 1; }
+  if (!state.joined.has(id)){ state.joined.add(id); p.joined = (p.joined || 0) + 1; exclusiveSold(p); }
   ensurePlanChat(id);
   checkReminders();   // si es en las próximas 24 h, el recordatorio llega ya
   saveState();
@@ -414,7 +415,7 @@ function addPlanUpdate(p, type, text, opts){
   if (u.by !== 'me' && updateReachesMe(p, important)) notify('cambio', `${p.title} · ${label.toLowerCase()}: ${text}`, { planId: p.id, force: important });
   return u;
 }
-const updateBy = (p, u) => u.by === 'me' ? 'Tú' : (u.by === 'equipo' ? 'Equipo de planes' : ((p.host || {}).name || 'El anfitrión'));
+const updateBy = (p, u) => u.by === 'me' ? 'Tú' : (u.by === 'equipo' ? 'Equipo de Plannet' : ((p.host || {}).name || 'El anfitrión'));
 // Lo que no habías visto: se calcula al entrar en la ficha y se marca como visto.
 function visitUpdates(p){
   if (state.updVisit === p.id) return;
@@ -514,8 +515,8 @@ function systemNotify(body){
   try {
     if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
     const opts = { body, icon:'icon-192.png', badge:'icon-192.png' };
-    if (navigator.serviceWorker && navigator.serviceWorker.ready) navigator.serviceWorker.ready.then(r => r.showNotification('planes', opts), () => new Notification('planes', opts));
-    else new Notification('planes', opts);
+    if (navigator.serviceWorker && navigator.serviceWorker.ready) navigator.serviceWorker.ready.then(r => r.showNotification('Plannet', opts), () => new Notification('Plannet', opts));
+    else new Notification('Plannet', opts);
   } catch (e) {}
 }
 function askNotifPermission(){

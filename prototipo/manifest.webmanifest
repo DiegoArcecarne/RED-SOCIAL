@@ -1,6 +1,6 @@
 {
-  "name": "planes",
-  "short_name": "planes",
+  "name": "Plannet",
+  "short_name": "Plannet",
   "description": "Planes y gente con quien vivirlos (prototipo).",
   "lang": "es",
   "start_url": "./standalone.html#/feed",

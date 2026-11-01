@@ -56,7 +56,7 @@ planes que solo has visto o guardado no entran.
   confirmados (vas y organizas). Formato iCalendar (RFC 5545): `UID` estable por plan, fechas
   en UTC, `STATUS` (confirmado, provisional o cancelado), enlace al plan y un aviso 2 h antes.
 - **Suscripción** (se actualiza sola): dirección personal
-  `webcal://planes.app/agenda/<token>.ics`.
+  `webcal://plannet.app/agenda/<token>.ics`.
   - El servidor la genera al vuelo con lo que hay en tu agenda: los próximos 6 meses y los
     últimos 30 días. Cabeceras `Cache-Control: max-age=900` y `ETag`.
   - Si un plan cambia de hora o lugar, el evento cambia (mismo `UID`, `SEQUENCE` + 1). Si se

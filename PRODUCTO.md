@@ -1,6 +1,8 @@
-# Definición de producto — App de planes
+# Definición de producto — Plannet
 
 ## Qué es
+
+**Nombre: Plannet.** Juego de palabras entre *plan* y *net* (red): la red de planes. Se escribe con dos enes. El dominio (provisionalmente `plannet.app`) y el registro de la marca están por comprobar.
 
 Una red social donde descubres un plan y la gente para hacerlo, estés donde estés. Une dos modelos que ya funcionan globalmente por separado y que nadie ha combinado limpiamente: la capa social de conocer gente haciendo algo real (Timeleft) y el marketplace de experiencias curadas con comisión (Fever). El hueco que ocupa es la intersección: Fever te vende la entrada pero vas solo; Timeleft te da la gente pero solo en formato cena. Aquí tienes el plan, la gente y la reserva en una sola superficie.
 
@@ -86,7 +88,7 @@ Antes de un plan muchas veces hay solo una idea: "Estoy pensando ir a pescar el 
 - **Seguridad**: pasan por los mismos filtros automáticos, se pueden reportar y respetan bloqueos y suspensiones. No llevan dirección exacta ni pago.
 - **Caducidad**: en la fecha elegida o, sin fecha, a los 7 días.
 
-El nombre "chispa" es provisional, como la marca.
+El nombre "chispa" es provisional.
 
 ## Los tres niveles de plan
 
@@ -132,6 +134,8 @@ Política de cancelación y reembolso. Sobre el escrow se montan reglas claras, 
 - Cancelación o no-show del anfitrión, o evento no celebrado: reembolso íntegro a todos los asistentes desde el escrow, con independencia de la política del plan, porque el dinero no llega al organizador hasta después del evento. El anfitrión sufre penalización de reputación; la reiteración retira su capacidad de organizar y, si hubo fraude, el pago se retiene y entra en la vía de moderación.
 - Mínimo de grupo no alcanzado: si a la hora de corte el plan no llega a su tamaño mínimo, se cancela automáticamente y se reembolsa íntegro.
 - Desvelo en planes gratuitos saturados o especiales: si el evento no se celebra, el micropago se reembolsa; si el usuario no se presenta, no se reembolsa, que es justo su función de filtro de compromiso.
+
+Tipos de entrada y freemium. Un plan puede ser gratis, de pago o freemium: gratis para todos y con entradas especiales de pago (una zona VIP, primera fila, mesa reservada), con sus plazas y lo que incluyen, que se compran desde la app con el mismo pago protegido. En los de pago, la especial convive con la general y quien ya tiene la general pasa a la especial pagando la diferencia. Detalle en [`docs/pagos.md`](docs/pagos.md).
 
 Comisión sobre experiencias de pago. 15% propio, en el extremo bajo del rango de mercado 15-30% (Fever cobra en ese rango). Se elige el suelo del rango como palanca de captación de oferta: un 15% es más atractivo para organizadores y locales que la comisión de los marketplaces grandes, baja la barrera de entrada de la oferta de pago en el arranque y deja margen para subir más adelante si el producto lo justifica. Es la fuente principal de ingresos, concentrada en el Nivel 3.
 
@@ -308,9 +312,9 @@ El flujo de creación incluye las opciones habituales de una red social, adaptad
 
 Cualquier publicación, propia o ajena, cualquier plan y cualquier perfil se pueden compartir desde el botón de compartir (en el plan, arriba a la derecha de su ficha; en tu perfil, "Compartir perfil"; en el de otra persona, en ⋯). Todos usan la misma hoja y las mismas opciones. Cambia el contenido de la vista previa:
 
-- Publicación: autor, primera foto y pie. Enlace planes.app/p/….
-- Plan: título, fecha, lugar y precio ("vie · 20:30 · Azotea Círculo · 18 €"), resumen y portada del plan. Enlace planes.app/plan/…. Si la ubicación es secreta, el enlace dice "Zona aproximada" y nunca la desvela. Al añadirlo a tu story sale como "¿Te vienes? …", con el botón "Ver el plan".
-- Perfil: nombre, @usuario, descripción y primera foto pública. Enlace planes.app/u/…. De un perfil privado solo se enseña la cabecera. Dentro de la app llega como tarjeta del perfil.
+- Publicación: autor, primera foto y pie. Enlace plannet.app/p/….
+- Plan: título, fecha, lugar y precio ("vie · 20:30 · Azotea Círculo · 18 €"), resumen y portada del plan. Enlace plannet.app/plan/…. Si la ubicación es secreta, el enlace dice "Zona aproximada" y nunca la desvela. Al añadirlo a tu story sale como "¿Te vienes? …", con el botón "Ver el plan".
+- Perfil: nombre, @usuario, descripción y primera foto pública. Enlace plannet.app/u/…. De un perfil privado solo se enseña la cabecera. Dentro de la app llega como tarjeta del perfil.
 
 Compartir planes es la forma natural de traer a amigos a un plan, así que el enlace de un plan abre su ficha con el botón para apuntarse; si no tienes la app, primero te lleva a descargarla.
 
@@ -321,7 +325,7 @@ Dentro de la app:
 
 Fuera de la app (WhatsApp, Telegram, SMS, correo…):
 
-- Se comparte un enlace público a la publicación (planes.app/p/…, dominio provisional como la marca). Ese enlace lleva una vista previa con imagen, igual que la imagen destacada de WordPress. Para ello, la página pública incluye etiquetas Open Graph:
+- Se comparte un enlace público a la publicación (plannet.app/p/…, dominio provisional). Ese enlace lleva una vista previa con imagen, igual que la imagen destacada de WordPress. Para ello, la página pública incluye etiquetas Open Graph:
   - og:title: en una publicación, "Autor en planes · Plan" (si está ligada a un plan); en un plan, su título.
   - og:description: en una publicación, el pie recortado a unos 120 caracteres; en un plan, "fecha · lugar · precio" y el resumen.
   - og:image: una imagen de 1200×630 generada a partir de la primera foto (o de la portada del plan), con el pie o el título, el autor o los datos del plan y la marca encima. Recomendado: JPEG de menos de 300 KB, para que WhatsApp la muestre siempre.
@@ -329,7 +333,7 @@ Fuera de la app (WhatsApp, Telegram, SMS, correo…):
 - "Compartir en otras apps" abre el menú de compartir del móvil con el título, el texto y el enlace. Se comparte el enlace (no la imagen) para que WhatsApp y compañía generen la vista previa a partir de la web pública.
 - Botones directos para WhatsApp y Telegram, "Copiar enlace", "Imagen" (la imagen 1200×630 como archivo, para una story de Instagram; si el móvil no deja compartir archivos, se descarga) y "Código QR" (para enseñarlo en persona en un plan o imprimirlo en un local).
 - La página pública enseña el contenido y un botón para abrirlo en la app o descargarla. Con enlaces universales (iOS) y App Links (Android), si la app está instalada se abre directamente en esa pantalla. Si no hay sesión, la app recuerda el destino y lleva a él al entrar o al terminar el registro.
-- "planes" aparece también en el menú de compartir del móvil: fotos o un vídeo de la galería abren una publicación nueva con ellos; un enlace de planes abre esa pantalla.
+- "Plannet" aparece también en el menú de compartir del móvil: fotos o un vídeo de la galería abren una publicación nueva con ellos; un enlace de planes abre esa pantalla.
 
 El detalle de la web pública (etiquetas, imagen, indexación), los enlaces que abren la app y el menú nativo, y lo que deben hacer el servidor y la app, está en [docs/compartir.md](docs/compartir.md). El prototipo genera esa web para los datos de ejemplo en prototipo/web/.
 
@@ -638,6 +642,8 @@ El equipo opera la app desde un **panel de administración**: una web aparte, co
 
 Validación low-code primero. Antes de construir la app: landing, grupo por ciudad y pasarela de pago, con planes sembrados a mano. Es como arrancó el ganador de la categoría (Timeleft llegó a 1 M€/mes de ingresos con Typeform, WhatsApp y Stripe antes de tecnología pesada). El objetivo es validar el bucle completo —la gente se apunta, paga, sube el aftermovie, vuelve— a coste casi cero. El plan detallado del piloto (hipótesis, herramientas, calendario de seis semanas, métricas y criterios para continuar o parar) está en [`docs/plan-validacion-madrid.md`](docs/plan-validacion-madrid.md).
 
+Planes exclusivos de la app. Como medio de lanzamiento y de promoción, un plan atractivo (empezando por la fiesta de lanzamiento) cuyas entradas solo se venden dentro de la app, con cuenta verificada: venta con hora de apertura anunciada, lista de aviso con acceso anticipado para quien está verificado, entradas a tu nombre e intransferibles (QR y DNI en la puerta) y una por persona. El plan hace de anuncio y cada entrada trae una persona registrada y verificada. Detalle en [`docs/lanzamiento.md`](docs/lanzamiento.md).
+
 Ciudad de ignición: Madrid. Con contacto ya abierto con Fever y contactos locales con acceso a eventos importantes, Madrid resuelve la parte más difícil (oferta de pago de calidad y diferencial real) y aporta densidad de demanda desde el día uno. Se enciende una ciudad primero y se prueba el bucle entero ahí; no se reparten tres a la vez para no diluir la liquidez.
 
 Expansión: Burgos y Llanes después, con el playbook probado. Burgos como ciudad real de tamaño medio con raíces y relaciones locales, y con el flujo constante de viajeros del Camino de Santiago como usuarios sociales de paso. Llanes como prueba de la tesis de destino turístico estacional. Sirven para demostrar que el modelo funciona en tres arquetipos de densidad distintos.
@@ -738,7 +744,8 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Inscripción. Relación Usuario–Plan para la participación, solo en planes apuntados. plan_id, usuario_id, estado (solicitada, aprobada, rechazada, confirmada, en lista de espera con su posición, cancelada, cancelada tarde, asistió, no-show), reconfirmación del día (bool, con fecha), pago_id (nulo en planes gratuitos), importe reembolsado, fecha. Es la entidad donde viven la lista de espera con sobreasignación y la reconfirmación.
 - Solicitud de asistencia. Relación Usuario–Plan en los planes con aprobación manual. plan_id, usuario_id, estado (pendiente, aceptada, rechazada), mensaje de presentación, fecha. La aceptan el anfitrión o los admins del grupo organizador; una solicitud aceptada equivale a una inscripción aprobada.
 - Asistencia real. Relación Usuario–Plan que registra la asistencia verificada por geolocalización. plan_id, usuario_id, fecha y hora, método (QR del anfitrión en el piloto, marcada a mano por el anfitrión, o geolocalización más adelante), visibilidad (pública o privada). Es distinta de la Inscripción: un plan libre no tiene inscripciones pero sí asistencias reales; un plan apuntado tiene ambas. Alimenta el recuento de asistentes reales del plan y las Vividas del perfil; los registros con visibilidad privada no se listan por identidad y solo cuentan en el total a partir del umbral de anonimato.
-- Pago. id, inscripción_id, usuario_id, importe, comisión (15% en planes de pago, IVA incluido), tipo (reserva de evento, desvelo, boost de publicidad, suscripción, CPA), estado (pendiente de pago, retenido, liberado, pagado al anfitrión, reembolsado, reembolso parcial, en revisión por reclamación), importe reembolsado y motivo, método de pago, número de recibo, id del PaymentIntent de Stripe, fecha de liberación, de pago al anfitrión y de reembolso. Centraliza el modelo escrow y las reglas de cancelación.
+- Tipo de entrada. plan_id, nombre, precio, plazas, vendidas, qué incluye (hasta 4), orden. La general es el precio del plan; las especiales (zona VIP) son opcionales y en un plan gratis lo hacen freemium.
+- Pago. id, inscripción_id, usuario_id, tipo de entrada (nulo si es la general), importe, comisión (15% en planes de pago, IVA incluido), tipo (reserva de evento, desvelo, boost de publicidad, suscripción, CPA), estado (pendiente de pago, retenido, liberado, pagado al anfitrión, reembolsado, reembolso parcial, en revisión por reclamación), importe reembolsado y motivo, método de pago, número de recibo, id del PaymentIntent de Stripe, fecha de liberación, de pago al anfitrión y de reembolso. Centraliza el modelo escrow y las reglas de cancelación.
 - Método de pago. usuario_id, marca, últimos 4 dígitos, caducidad, principal (bool). Los datos de la tarjeta los guarda Stripe.
 - Cuenta de cobro. usuario_id (anfitrión), tipo (particular o autónomo/empresa), nombre legal, NIF, dirección fiscal, IBAN (cifrado), id de la cuenta conectada de Stripe, estado (en revisión, activa, faltan datos, desactivada).
 - Transferencia. cuenta de cobro, plan, importe neto, fecha, id de Stripe; con su reversión si hay reembolso posterior.
@@ -828,7 +835,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Valoraciones: confirmar las audiencias propuestas (públicas para todos, seguidores o amigos; privadas para seguidores, amigos o solo yo) y si una asistencia privada debe forzar la valoración privada.
 - Amigos = seguimiento mutuo: confirmar o añadir más adelante una lista de "amigos cercanos" elegida a mano (como en Instagram), además de los mutuos.
 - Longitud de los textos: confirmar los límites propuestos (nombre 30, usuario 3–30, descripción 150, título de plan 60…) y la frecuencia permitida para cambiar el nombre de usuario.
-- Compartir: confirmar el ajuste "permitir que compartan mis publicaciones" y el dominio de los enlaces públicos (va con la marca).
+- Compartir: confirmar el ajuste "permitir que compartan mis publicaciones" y el dominio de los enlaces públicos (`plannet.app` u otro, según esté libre) y el registro de la marca Plannet.
 - Varios perfiles: confirmar el máximo (propuesta: 5, uno personal) y si el perfil profesional muestra "detrás hay una persona verificada".
 - Verificación: confirmar la lista de acciones que la piden, en especial escribir a desconocidos y el umbral de "plan íntimo" (hasta 8 personas) para ocultar la ubicación exacta.
 - Objetivos numéricos de las métricas y criterios para continuar o parar tras el piloto (propuesta en el plan de validación).
