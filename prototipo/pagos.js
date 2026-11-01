@@ -8,7 +8,7 @@
    - Cobros del anfitrión: alta (datos fiscales, IBAN, verificación), saldo y facturas.
    - Recibos de cada pago y factura mensual de la comisión.
    ========================================================================= */
-const COMMISSION = 0.15;            // comisión de planes (IVA incluido)
+const COMMISSION = 0.15;            // comisión de Plannet (IVA incluido)
 const VAT = 0.21;                   // IVA de la comisión
 const RELEASE_HOURS = 48;           // se paga al anfitrión 48 h después del plan, si nadie reclama
 const PAY_WINDOW_HOURS = 24;        // aceptado en un plan de pago: 24 h para pagar
@@ -76,7 +76,7 @@ function renderCheckout(){
         <p class="hint">Demo: 4242 4242 4242 4242 paga; 4000 0027 6000 3184 pide confirmar en tu banco; 4000 0000 0000 0002 es rechazada.</p>` : ''}
       ${ck.err ? `<p class="pay-err" role="alert">${ico('alert')} ${escapeHtml(ck.err)}</p>` : ''}
       <button class="btn-primary" onclick="payNow()">Pagar ${money2(amount)}</button>
-      <p class="hint">Los datos de la tarjeta van directamente al procesador de pagos (Stripe); planes no los guarda.</p>
+      <p class="hint">Los datos de la tarjeta van directamente al procesador de pagos (Stripe); Plannet no los guarda.</p>
     </div></div>`);
 }
 function setCheckout(k, v){ captureCard(); state.checkout[k] = v; state.checkout.err = ''; renderCheckout(); }
@@ -272,13 +272,13 @@ function removeMethod(id){
 }
 
 /* ---------- recibos y facturas ---------- */
-const PLATFORM = { name:'planes (razón social pendiente)', nif:'B00000000', address:'Madrid, España' };   // provisional
+const PLATFORM = { name:'Plannet (razón social pendiente)', nif:'B00000000', address:'Madrid, España' };   // provisional
 function receiptHtml(x){
   const host = USERS.find(u => u.name === x.hostName) || {};
   const biz = host.type === 'profesional';
   const rows = [['Plan', x.planTitle]].concat(x.ticketName ? [['Entrada', x.ticketName]] : []).concat([['Organiza', x.hostName + (biz ? ' (empresa)' : '')], ['Fecha del pago', new Date(x.at).toLocaleDateString('es-ES')],
     ['Forma de pago', x.method || ''], ['Importe', money2(x.amount)]]).concat(x.refunded ? [['Reembolsado', '− ' + money2(x.refunded)], ['Total', money2(x.amount - x.refunded)]] : []);
-  return `<div class="rcpt"><div class="rcpt-h"><b>planes</b><span>Recibo ${escapeHtml(x.receiptNo)}</span></div>
+  return `<div class="rcpt"><div class="rcpt-h"><b>Plannet</b><span>Recibo ${escapeHtml(x.receiptNo)}</span></div>
     <table>${rows.map(([k, v]) => `<tr><th>${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`).join('')}</table>
     <p>Cobrado por ${escapeHtml(PLATFORM.name)} (NIF ${PLATFORM.nif}) en nombre de ${escapeHtml(x.hostName)}, a través de Stripe. ${biz ? 'La factura de la entrada la emite el organizador; pídesela desde aquí.' : 'IVA incluido si corresponde.'}</p></div>`;
 }
@@ -290,7 +290,7 @@ function openReceipt(id){
       <button class="btn-primary" onclick="downloadDoc('${x.receiptNo}', 'receipt', '${x.id}')">${ico('download')} Descargar</button>
       <button class="btn-ghost" onclick="toast('En la app real te pediríamos el NIF y la dirección para emitir la factura completa')">Pedir factura con mis datos</button></div></div>`);
 }
-// Factura mensual de la comisión que planes emite al anfitrión.
+// Factura mensual de la comisión que Plannet emite al anfitrión.
 function commissionInvoice(month){
   const sales = PAYMENTS.filter(x => isHostOf(x) && ['liberado','pagado'].includes(x.status) && new Date(x.paidOutAt || x.releaseAt || x.at).toISOString().slice(0, 7) === month);
   const gross = sales.reduce((s, x) => s + (x.amount - x.refunded), 0), sp = splitFor(gross);
@@ -298,7 +298,7 @@ function commissionInvoice(month){
 }
 function invoiceHtml(inv){
   const p = ME.payouts || {};
-  return `<div class="rcpt"><div class="rcpt-h"><b>planes</b><span>Factura ${escapeHtml(inv.no)}</span></div>
+  return `<div class="rcpt"><div class="rcpt-h"><b>Plannet</b><span>Factura ${escapeHtml(inv.no)}</span></div>
     <p>Emisor: ${escapeHtml(PLATFORM.name)} · NIF ${PLATFORM.nif} · ${escapeHtml(PLATFORM.address)}<br>Cliente: ${escapeHtml(p.legalName || ME.name)} · ${escapeHtml(p.taxId || '')}</p>
     <table><tr><th>Concepto</th><td>Comisión por intermediación (15 %) · ${escapeHtml(inv.month)} · ${inv.sales.length} reservas</td></tr>
       <tr><th>Ventas del mes</th><td>${money2(inv.gross)}</td></tr><tr><th>Base imponible</th><td>${money2(inv.feeBase)}</td></tr>
@@ -365,7 +365,7 @@ function renderPayouts(){
         || '<p class="hint">Cada mes te enviamos la factura de la comisión de los planes celebrados.</p>'}</div>
     <div class="set-group"><div class="set-title">Cuenta de cobro</div>
       <div class="set-row static"><span class="sr-ic">${ico('card')}</span><span class="sr-l">${escapeHtml(maskIban(a.iban))}<span class="or-s">${escapeHtml(a.legalName)} · ${a.kind === 'empresa' ? 'Autónomo o empresa' : 'Particular'} · ${escapeHtml(a.taxId)}</span></span></div>
-      <p class="hint">Te pagamos el 85 % de cada reserva 48 h después del plan (la comisión del 15 % lleva el IVA incluido). Por ley (DAC7), cada año informamos a Hacienda de lo que cobras con planes.</p></div>
+      <p class="hint">Te pagamos el 85 % de cada reserva 48 h después del plan (la comisión del 15 % lleva el IVA incluido). Por ley (DAC7), cada año informamos a Hacienda de lo que cobras con Plannet.</p></div>
   </div>`;
 }
 // Alta de cobros: tipo, datos fiscales, cuenta bancaria y verificación (Stripe Connect Express).
@@ -383,7 +383,7 @@ function renderPayoutSetup(){
     <div class="field"><label for="f-iban">Cuenta bancaria (IBAN)</label><input id="f-iban" autocapitalize="characters" placeholder="ES00 0000 0000 0000 0000 0000" value="${escapeHtml(d.iban || '')}"></div>
     ${d.err ? `<p class="pay-err" role="alert">${ico('alert')} ${escapeHtml(d.err)}</p>` : ''}
     <button class="btn-primary" onclick="submitPayoutSetup()">Enviar a verificar</button>
-    <p class="hint">Stripe comprobará tu identidad (ya verificada en planes) y que la cuenta es tuya. Al seguir aceptas el Acuerdo de cuentas conectadas de Stripe.</p>
+    <p class="hint">Stripe comprobará tu identidad (ya verificada en Plannet) y que la cuenta es tuya. Al seguir aceptas el Acuerdo de cuentas conectadas de Stripe.</p>
   </div>`;
 }
 function capturePayout(){ const d = state.payoutForm; if (!d) return; d.legalName = val('f-legal'); d.taxId = val('f-taxid'); d.address = val('f-addr'); d.iban = val('f-iban'); }

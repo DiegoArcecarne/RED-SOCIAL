@@ -415,7 +415,7 @@ function addPlanUpdate(p, type, text, opts){
   if (u.by !== 'me' && updateReachesMe(p, important)) notify('cambio', `${p.title} · ${label.toLowerCase()}: ${text}`, { planId: p.id, force: important });
   return u;
 }
-const updateBy = (p, u) => u.by === 'me' ? 'Tú' : (u.by === 'equipo' ? 'Equipo de planes' : ((p.host || {}).name || 'El anfitrión'));
+const updateBy = (p, u) => u.by === 'me' ? 'Tú' : (u.by === 'equipo' ? 'Equipo de Plannet' : ((p.host || {}).name || 'El anfitrión'));
 // Lo que no habías visto: se calcula al entrar en la ficha y se marca como visto.
 function visitUpdates(p){
   if (state.updVisit === p.id) return;
@@ -515,8 +515,8 @@ function systemNotify(body){
   try {
     if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
     const opts = { body, icon:'icon-192.png', badge:'icon-192.png' };
-    if (navigator.serviceWorker && navigator.serviceWorker.ready) navigator.serviceWorker.ready.then(r => r.showNotification('planes', opts), () => new Notification('planes', opts));
-    else new Notification('planes', opts);
+    if (navigator.serviceWorker && navigator.serviceWorker.ready) navigator.serviceWorker.ready.then(r => r.showNotification('Plannet', opts), () => new Notification('Plannet', opts));
+    else new Notification('Plannet', opts);
   } catch (e) {}
 }
 function askNotifPermission(){

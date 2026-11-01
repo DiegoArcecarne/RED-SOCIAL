@@ -10,7 +10,7 @@
    ========================================================================= */
 const ACCOUNTS_KEY = 'planes-cuentas-v1';
 const SESSION_KEY  = 'planes-sesion';
-const DEMO_LOGIN = { email:'marina@planes.app', pass:'planes123' };
+const DEMO_LOGIN = { email:'marina@plannet.app', pass:'planes123' };
 const OTP_TTL_MS = 10 * 60 * 1000, OTP_RESEND_MS = 30 * 1000, OTP_MAX_TRIES = 5;
 const LOGIN_MAX_FAILS = 5, LOCK_MS = 15 * 60 * 1000;
 const LEGAL_VERSION = '2026-10';
@@ -80,8 +80,8 @@ function maskTo(to){ return to.includes('@') ? to.replace(/^(.).*(@.*)$/, '$1•
 function deliverCode(to, purpose, via){
   const code = String(Math.floor(100000 + Math.random() * 900000));
   state.otp = { code, purpose, to, via: via || (to.includes('@') ? 'email' : 'sms'), exp: Date.now() + OTP_TTL_MS, tries: 0, resendAt: Date.now() + OTP_RESEND_MS };
-  const from = state.otp.via === 'app' ? 'Autenticador' : (state.otp.via === 'email' ? 'Correo · planes' : 'SMS · planes');
-  showSimNotice(from, state.otp.via === 'app' ? `Código actual: ${code}` : `Tu código de planes es ${code}. Caduca en 10 minutos. No lo compartas con nadie.`, code);
+  const from = state.otp.via === 'app' ? 'Autenticador' : (state.otp.via === 'email' ? 'Correo · Plannet' : 'SMS · planes');
+  showSimNotice(from, state.otp.via === 'app' ? `Código actual: ${code}` : `Tu código de Plannet es ${code}. Caduca en 10 minutos. No lo compartas con nadie.`, code);
   return code;
 }
 function showSimNotice(from, text, code){
@@ -139,7 +139,7 @@ function auWelcome(){
   const pics = PLANS.slice(0, 6).map(p => `<span class="au-pic ${p.gradient}">${coverImg(planCover(p), 300)}</span>`).join('');
   return `<div class="au-hero">${pics}<span class="au-shade"></span></div>
     <div class="au-body">
-      <span class="au-logo">planes</span>
+      <span class="au-logo">Plannet</span>
       <h2 class="au-h big">Planes y gente con quien vivirlos</h2>
       ${destinoLabel() ? `<p class="au-shared">${ico('send')}<span>Te han compartido ${escapeHtml(destinoLabel())}. Entra o crea tu cuenta y te llevamos ahí.</span></p>` : ''}
       <ul class="au-vals">
@@ -216,12 +216,12 @@ function startTwoFA(){
   const to = m === 'sms' ? (p.phone || '') : (m === 'email' ? (p.email || '') : 'app');
   if (m === 'sms' && !to) return authErr('Tu cuenta es con email: para recibir SMS añade un teléfono en Ajustes ▸ Seguridad.');
   if (m === 'email' && !to) return authErr('Tu cuenta es con teléfono: elige SMS o app autenticadora.');
-  if (m === 'app') showSimNotice('planes', 'Clave para tu app autenticadora: JBSW Y3DP EHPK 3PXP (simulada).');
+  if (m === 'app') showSimNotice('Plannet', 'Clave para tu app autenticadora: JBSW Y3DP EHPK 3PXP (simulada).');
   deliverCode(to, '2fa-alta', m === 'app' ? 'app' : m);
   showAuth('codigo');
 }
 function auAge(d){
-  return `${authHead('Antes de empezar', '', 'planes es solo para mayores de 18 años.')}
+  return `${authHead('Antes de empezar', '', 'Plannet es solo para mayores de 18 años.')}
     <div class="au-form">
       <div class="field"><label for="f-birth">Fecha de nacimiento</label><input id="f-birth" type="date" value="${escapeHtml(d.birth||'')}" max="${new Date().toISOString().slice(0,10)}" /></div>
       <label class="au-check"><input id="f-legal" type="checkbox" ${d.legal?'checked':''} />
@@ -242,7 +242,7 @@ function submitAge(){
 }
 function auMinor(){
   return `${authHead('Todavía no puedes usar planes', "showAuth('bienvenida', {})")}
-    <div class="au-form"><p class="au-sub">planes es solo para mayores de 18 años, porque se queda en persona con gente que no conoces. No hemos guardado tus datos.</p>
+    <div class="au-form"><p class="au-sub">Plannet es solo para mayores de 18 años, porque se queda en persona con gente que no conoces. No hemos guardado tus datos.</p>
     <button class="btn-ghost" onclick="showAuth('bienvenida', {})">Volver al inicio</button></div>`;
 }
 function openLegal(kind){
@@ -295,7 +295,7 @@ function freshWorld(){
 
 /* ---------- entrar, recuperar y salir ---------- */
 function auLogin(d){
-  return `${authHead('Entra en planes', "showAuth('bienvenida', {})")}
+  return `${authHead('Entra en Plannet', "showAuth('bienvenida', {})")}
     <div class="au-form">
       <div class="field"><label for="f-id">Email o teléfono</label><input id="f-id" autocomplete="username" value="${escapeHtml(d.identifier||'')}" /></div>
       <div class="field"><label for="f-pass">Contraseña</label><input id="f-pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitLogin()" /></div>

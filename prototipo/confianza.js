@@ -314,7 +314,7 @@ function renderAccountStatus(){
   </div>`;
 }
 
-/* ---------- panel interno de moderación (equipo de planes) ----------
+/* ---------- panel interno de moderación (equipo de Plannet) ----------
    En la app real es una web aparte, con acceso por roles y registro de quién hace qué. */
 function renderModeration(tab){
   state.modTab = tab || state.modTab || 'cola';
@@ -334,7 +334,7 @@ function renderModeration(tab){
         <div class="mod-meta">${escapeHtml(MOD_ACTION_TYPES[a.action][1])} · ${dayLabel(a.decidedAt || a.at)}</div><p class="hint">${escapeHtml(statementFor(a))}</p></div>`; }).join(''),
   }[t];
   view.innerHTML = pageHead('Moderación') + `<div class="page-body inbox">
-    <p class="hint mod-note">${ico('lock')} Herramienta interna del equipo de planes. En la app real es una web aparte con acceso por roles; aquí se simula para probar el circuito completo.</p>
+    <p class="hint mod-note">${ico('lock')} Herramienta interna del equipo de Plannet. En la app real es una web aparte con acceso por roles; aquí se simula para probar el circuito completo.</p>
     <div class="iseg origin-seg mod-tabs">${tabs.map(([v, l, n, c]) => `<button class="${t === v ? 'active' : ''}" onclick="renderModeration('${v}')">${ico(n)}<span>${l}</span>${c ? `<em>${c}</em>` : ''}</button>`).join('')}</div>
     ${body()}</div>`;
 }
@@ -393,7 +393,7 @@ function trustedContacts(){ return ME.trustedContacts || []; }
 function renderTrusted(){
   const view = document.getElementById('view-page'), list = trustedContacts();
   view.innerHTML = pageHead('Contactos de confianza') + `<div class="page-body form">
-    <p class="hint">Hasta ${MAX_TRUSTED} personas, aunque no usen planes. Les llega un SMS con el plan, el sitio y la hora cuando lo compartes, y tu ubicación si pulsas SOS.</p>
+    <p class="hint">Hasta ${MAX_TRUSTED} personas, aunque no usen Plannet. Les llega un SMS con el plan, el sitio y la hora cuando lo compartes, y tu ubicación si pulsas SOS.</p>
     ${list.map(c => `<div class="conv"><span class="avatar conv-av">${escapeHtml(initials(c.name))}</span>
       <span class="conv-main"><b>${escapeHtml(c.name)}</b><span>${escapeHtml(c.phone)} · ${c.status === 'aceptado' ? 'Ha aceptado' : 'Invitación enviada'}</span></span>
       <button class="ph-btn sm" onclick="removeTrusted('${c.id}')">Quitar</button></div>`).join('')}
@@ -454,7 +454,7 @@ function openSos(planId){
     <div class="sheet-list form">
       <a class="btn-primary danger-btn sos-call" href="tel:112">Llamar al 112</a>
       <button class="btn-ghost" onclick="sendSos('${planId}')">${ico('alert')} Enviar alerta con mi ubicación</button>
-      <p class="hint">Avisamos al equipo de seguridad de planes (atiende las 24 horas y puede llamarte)${list.length ? ' y a ' + escapeHtml(contactNames().join(' y ')) + ' por SMS' : ''}, con el plan y tu ubicación.${list.length ? '' : ' Añade contactos de confianza para avisarles también.'}</p>
+      <p class="hint">Avisamos al equipo de seguridad de Plannet (atiende las 24 horas y puede llamarte)${list.length ? ' y a ' + escapeHtml(contactNames().join(' y ')) + ' por SMS' : ''}, con el plan y tu ubicación.${list.length ? '' : ' Añade contactos de confianza para avisarles también.'}</p>
     </div></div>`);
 }
 function sendSos(planId){
@@ -510,7 +510,7 @@ function renderMyData(){
       <div class="set-row static"><span class="sr-ic">${ico('check')}</span><span class="sr-l">Mayor de 18 años<span class="or-s">Confirmado al registrarte</span></span></div></div>
     <div class="set-group"><div class="set-title">Tus derechos</div>
       <button class="set-row" onclick="go('editar-perfil')"><span class="sr-ic">${ico('user')}</span><span class="sr-l">Corregir tus datos</span><span class="pl-arrow">${ico('chevR')}</span></button>
-      <div class="set-row static"><span class="sr-ic">${ico('doc')}</span><span class="sr-l">Oposición, limitación y otras peticiones<span class="or-s">privacidad@planes.app · te respondemos en menos de un mes</span></span></div>
+      <div class="set-row static"><span class="sr-ic">${ico('doc')}</span><span class="sr-l">Oposición, limitación y otras peticiones<span class="or-s">privacidad@plannet.app · te respondemos en menos de un mes</span></span></div>
       <button class="set-row danger" onclick="openDeleteAccount()"><span class="sr-ic">${ico('alert')}</span><span class="sr-l">Eliminar cuenta</span></button></div>
   </div>`;
 }

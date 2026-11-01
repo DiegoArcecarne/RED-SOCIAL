@@ -1,4 +1,4 @@
-# Prototipo visual — App de planes
+# Prototipo visual — Plannet
 
 Prototipo navegable y estático (HTML, CSS y JavaScript sin frameworks) de la app
 definida en [`../PRODUCTO.md`](../PRODUCTO.md). Sirve para *ver la idea funcionando*
@@ -17,7 +17,7 @@ El diseño es para móvil: activa la vista móvil de las DevTools (`F12` ▸ ico
 **Primero, entrar.** El prototipo arranca en la bienvenida. Puedes:
 
 - Crear una cuenta: registro con email o teléfono, código, verificación en dos pasos opcional, 18+ y consentimientos, perfil, intereses, ubicación y a quién seguir. Las cuentas nuevas empiezan vacías.
-- Entrar con la cuenta de demostración (Marina, con todo el contenido de ejemplo): `marina@planes.app` · `planes123`, o el botón "Entrar con la cuenta de demostración".
+- Entrar con la cuenta de demostración (Marina, con todo el contenido de ejemplo): `marina@plannet.app` · `planes123`, o el botón "Entrar con la cuenta de demostración".
 
 Los códigos llegan como una notificación dentro de la pantalla: tócala para rellenarlo. Todo es simulado y se guarda en tu navegador; lo que hará el servidor de verdad está en [`../docs/cuentas-y-acceso.md`](../docs/cuentas-y-acceso.md).
 
@@ -212,7 +212,7 @@ Estética en modo oscuro tipo Instagram, minimalista, sin emojis (iconos SVG de 
 **Privacidad en planes pequeños:** por debajo de 10 asistentes solo se cuentan los
 visibles, para que nadie pueda deducir quién fue en privado.
 
-Los datos son de ejemplo (`data.js`). La marca ("planes") es provisional y las
+Los datos son de ejemplo (`data.js`). La marca es Plannet (plan + net); el dominio está por comprobar y las
 condiciones de las cuentas profesionales están pendientes de decidir.
 
 ## Para desarrollar

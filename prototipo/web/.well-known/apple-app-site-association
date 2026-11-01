@@ -3,7 +3,7 @@
     "details": [
       {
         "appIDs": [
-          "ABCDE12345.app.planes"
+          "ABCDE12345.app.plannet"
         ],
         "components": [
           {
@@ -32,7 +32,7 @@
   },
   "webcredentials": {
     "apps": [
-      "ABCDE12345.app.planes"
+      "ABCDE12345.app.plannet"
     ]
   }
 }

@@ -41,7 +41,7 @@ function build() {
   // Funciones de reemplazo: evitan que "$&", "$1"… del CSS/JS se interpreten como patrones.
   html = html.replace(link, () => '<style>\n' + css + '\n  </style>');
   html = html.replace(scripts, () => '  <script>\n' + data + '\n\n' + cuentas + '\n\n' + planes + '\n\n' + social + '\n\n' + confianza + '\n\n' + pagos + '\n\n' + chispas + '\n\n' + admin + '\n\n' + agenda + '\n\n' + videollamadas + '\n\n' + publicidad + '\n\n' + entradas + '\n\n' + lanzamiento + '\n\n' + app + '\n  </script>');
-  html = html.replace('<title>Prototipo · App de planes</title>', '<title>Prototipo (standalone) · App de planes</title>');
+  html = html.replace('<title>Prototipo · Plannet</title>', '<title>Prototipo (standalone) · Plannet</title>');
   return html;
 }
 

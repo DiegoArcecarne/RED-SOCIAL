@@ -36,12 +36,16 @@ bloque.
 | Traspaso: `CLAUDE.md`, este documento y la vista previa | #38 | `CLAUDE.md` |
 | Entradas especiales (zona VIP) y planes freemium | #39 | `docs/pagos.md` |
 | Planes exclusivos de la app (lanzamiento y promoción) | #40 | `docs/lanzamiento.md` |
+| Nombre: Plannet (plan + net) en la app, la web y los documentos | #41 | `PRODUCTO.md` |
 
 ## Pendiente
 
 - **Issue #28**: algoritmo de recomendación por intereses y anuncios por búsquedas sin
   píxeles. La parte de anuncios en la agenda ya está (`docs/publicidad.md`); falta el
   algoritmo del feed y la publicidad en Descubrir.
+- **Bonos de descuento de marcas** como estrategia de captación: solo apuntado en
+  `docs/lanzamiento.md` (§6).
+- **Marca Plannet**: comprobar dominio (`plannet.app` es provisional) y registro de la marca.
 - **Issue #33**: ponerla en los móviles (cuentas de Apple y Google, TestFlight y prueba
   interna, política de privacidad, pruebas en dispositivos y de accesibilidad) y la Fase 2.
 - Decisiones abiertas: al final de `PRODUCTO.md`.

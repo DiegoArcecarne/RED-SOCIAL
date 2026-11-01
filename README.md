@@ -1,4 +1,4 @@
-# RED-SOCIAL · app de planes
+# RED-SOCIAL · Plannet, la app de planes
 
 Una red social donde descubres un plan y la gente para hacerlo, estés donde estés.
 Une la capa social de conocer gente haciendo algo real con un marketplace de

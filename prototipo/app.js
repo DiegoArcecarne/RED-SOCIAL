@@ -1,5 +1,5 @@
 /* =========================================================================
-   Prototipo visual — App de planes. Modo oscuro tipo Instagram, sin emojis.
+   Prototipo visual — Plannet (plan + net), la app de planes. Modo oscuro tipo Instagram, sin emojis.
    Vistas: feed, mapa, grupos, perfil, detalle + creación (plan/post/grupo),
    solicitudes, ajustes. Datos mock en data.js.
    ========================================================================= */
@@ -933,7 +933,7 @@ function setDmMode(v){ ME.dmMode = v; saveState(); updateDmBadge(); renderSettin
    destacada de WordPress. og:image es una imagen 1200×630 generada a partir de la
    foto de la publicación (shareImage). Solo las publicaciones públicas se comparten
    fuera; dentro, se envían a personas que sigues o se añaden a tu story. */
-const PUBLIC_BASE = 'https://planes.app';   // dominio provisional, como la marca
+const PUBLIC_BASE = 'https://plannet.app';   // dominio provisional (falta comprobar que esté libre)
 // Lo que se comparte: una publicación (clave = su id), un plan ('plan:' + id) o un perfil ('u:' + id).
 function findShare(key){
   key = String(key);
@@ -944,7 +944,7 @@ function findShare(key){
 const isPlan = (x) => !!(x && x.when);
 const isProfile = (x) => !!(x && x.handle && !x.when && !x.authorId);
 function shareKey(x){ return isPlan(x) ? 'plan:' + x.id : (isProfile(x) ? 'u:' + x.id : x.id); }
-// Ruta en la app y en la web pública (la misma en las dos, como en https://planes.app/plan/p2).
+// Ruta en la app y en la web pública (la misma en las dos, como en https://plannet.app/plan/p2).
 function appRoute(x){ return isPlan(x) ? `plan/${x.id}` : (isProfile(x) ? `u/${x.id}` : `p/${x.id}`); }
 function webPath(x){ return isPlan(x) ? `plan/${x.id}` : (isProfile(x) ? `u/${String(x.handle).replace(/^@/, '')}` : `p/${x.id}`); }
 // Lo que tiene página en la web pública del prototipo (los datos de ejemplo; ver scripts/build-web.js).
@@ -980,7 +980,7 @@ function shareMeta(po){
     const priv = po.id !== 'me' && po.profilePublic === false;
     const n = postsByUser(po.id).length;
     const first = priv ? null : postsByUser(po.id).find(x => postIsPublic(x) && (x.imgs || []).length);
-    return { title: `${po.name} (${po.handle})`, description: priv ? 'Cuenta privada en planes' : (po.bio || `${n} publicaciones en planes`),
+    return { title: `${po.name} (${po.handle})`, description: priv ? 'Cuenta privada en Plannet' : (po.bio || `${n} publicaciones en Plannet`),
       image: first ? first.imgs[0] : '', url: postUrl(po), domain };
   }
   if (isPlan(po)){
@@ -994,7 +994,7 @@ function shareMeta(po){
   const plan = po.planId && getPlan(po.planId);
   const cap = (po.caption || '').replace(/\s+/g, ' ').trim();
   return {
-    title: `${u.name} en planes${plan ? ' · ' + plan.title : ''}`,
+    title: `${u.name} en Plannet${plan ? ' · ' + plan.title : ''}`,
     description: cap.length > 120 ? cap.slice(0, 117).trimEnd() + '…' : cap,
     image: (po.imgs || [])[0] || '', url: postUrl(po), domain,
   };
@@ -1024,7 +1024,7 @@ function renderShareSheet(){
     <div class="sheet sh" role="dialog" aria-label="Compartir">
       <div class="sheet-h"><span>${plan ? 'Compartir plan' : (prof ? 'Compartir perfil' : 'Compartir')}</span><button class="sv-x" onclick="closeOverlay()" aria-label="Cerrar">${ico('close')}</button></div>
       <div class="sheet-list">
-        <div class="sh-sec">Enviar en planes</div>
+        <div class="sh-sec">Enviar en Plannet</div>
         <div class="sh-people">${people || '<p class="hint">Aún no sigues a nadie.</p>'}</div>
         ${sel.length ? `<div class="sheet-in sh-msg"><input id="sh-msg" maxlength="${LIMITS.comment}" placeholder="Escribe un mensaje…"><button class="btn-primary sm" onclick="sendShareInApp()">Enviar</button></div>` : ''}
         ${!prof && (pub || po.authorId === 'me') ? `<button class="sh-row" onclick="shareToStory('${key}')">${ico('live')}<span>Añadir a tu story</span>${ico('chevR')}</button>` : ''}
@@ -1122,7 +1122,7 @@ function shareImage(po){
       g.font = '500 28px system-ui, -apple-system, Segoe UI, sans-serif'; g.fillStyle = 'rgba(255,255,255,.8)';
       g.fillText(small, 60, 580);
       g.font = '800 34px system-ui, -apple-system, Segoe UI, sans-serif'; g.fillStyle = '#fff'; g.textAlign = 'right';
-      g.fillText('planes', 1140, 580);
+      g.fillText('Plannet', 1140, 580);
       c.toBlob(b => resolve(b), 'image/jpeg', 0.85);
     };
     if (!m.image) return finish(null);
@@ -2559,7 +2559,7 @@ function router(){
 
 // Enlaces que ya no llevan a nada (borrado, privado o retirado).
 function renderGone(title){
-  document.getElementById('view-page').innerHTML = pageHead('planes') + `<div class="empty-tab"><span class="empty-ic">${ico('link')}</span><h3>${escapeHtml(title)}</h3><p>Puede que se haya borrado o que no tengas acceso.</p>
+  document.getElementById('view-page').innerHTML = pageHead('Plannet') + `<div class="empty-tab"><span class="empty-ic">${ico('link')}</span><h3>${escapeHtml(title)}</h3><p>Puede que se haya borrado o que no tengas acceso.</p>
     <button class="btn-primary" style="margin-top:14px" onclick="go('feed')">Ir a Descubrir</button></div>`;
   showView('page');
 }

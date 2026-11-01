@@ -55,7 +55,7 @@ Modelo: **cargos y transferencias separados** (*separate charges and transfers*)
 | Paga quien reserva | 22,00 € |
 | Comisión de planes (15 %, IVA incluido) | 3,30 € (base 2,73 € + IVA 0,57 €) |
 | Recibe el anfitrión | 18,70 € |
-| Coste de la tarjeta para planes (orientativo, tarjeta europea: 1,5 % + 0,25 €) | 0,58 € |
+| Coste de la tarjeta para Plannet (orientativo, tarjeta europea: 1,5 % + 0,25 €) | 0,58 € |
 
 - **Por qué este modelo**: la plataforma decide cuándo transfiere, así que puede retener hasta el plan y reembolsar sin pedirle nada al anfitrión. Es el escrow de PRODUCTO.md.
   - Con *destination charges* el dinero llegaría al anfitrión al momento.
@@ -64,7 +64,7 @@ Modelo: **cargos y transferencias separados** (*separate charges and transfers*)
 - **Quién asume los costes**:
   - Las comisiones de Stripe (tarjeta, cuentas conectadas, transferencias) las asume planes con su 15 %. El anfitrión ve siempre "te llega el 85 %".
   - Las disputas (*chargebacks*) en este modelo son de la plataforma, que puede recuperar el importe del anfitrión si la disputa es por su culpa.
-- **Que planes no custodie el dinero**: Stripe es la entidad de pago regulada que guarda los fondos, así que planes no necesita licencia de entidad de pago. Hay que confirmarlo con un abogado para el modelo concreto.
+- **Que planes no custodie el dinero**: Stripe es la entidad de pago regulada que guarda los fondos, así que Plannet no necesita licencia de entidad de pago. Hay que confirmarlo con un abogado para el modelo concreto.
 
 ## Reservar y pagar
 
@@ -150,7 +150,7 @@ Políticas (las de PRODUCTO.md; el anfitrión elige una al publicar):
 
 ## Alta y verificación de anfitriones
 
-Para publicar un plan de pago hace falta tener la **identidad verificada** en planes y los **cobros activos**.
+Para publicar un plan de pago hace falta tener la **identidad verificada** en Plannet y los **cobros activos**.
 
 - **Ajustes ▸ Cobros**: se elige cobrar como *particular* o como *autónomo o empresa*, y se dan:
   - el nombre legal;

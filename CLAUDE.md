@@ -1,6 +1,6 @@
 # Instrucciones para trabajar en este proyecto
 
-App de planes (red social para quedar con gente en planes reales). El producto está en
+Plannet (plan + net, con dos enes): red social para quedar con gente en planes reales. El producto está en
 `PRODUCTO.md`; el estado actual y lo pendiente, en [`docs/estado.md`](docs/estado.md). Léelo
 antes de empezar.
 

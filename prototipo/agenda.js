@@ -184,12 +184,12 @@ const icsDate = (d) => new Date(d).toISOString().replace(/[-:]/g, '').replace(/\
 function icsFold(line){ const out = []; while (line.length > 75){ out.push(line.slice(0, 75)); line = ' ' + line.slice(75); } out.push(line); return out.join('\r\n'); }
 function icsText(items){
   const ev = items.map(i => [
-    'BEGIN:VEVENT', `UID:${i.id}@planes.app`, `DTSTAMP:${icsDate(Date.now())}`, `DTSTART:${icsDate(i.start)}`, `DTEND:${icsDate(i.end)}`,
+    'BEGIN:VEVENT', `UID:${i.id}@plannet.app`, `DTSTAMP:${icsDate(Date.now())}`, `DTSTART:${icsDate(i.start)}`, `DTEND:${icsDate(i.end)}`,
     `SUMMARY:${icsEscape(i.title)}`, `LOCATION:${icsEscape(i.where)}`,
     `DESCRIPTION:${icsEscape(AG_KIND[i.kind][0] + '. Detalles y chat del plan en la app.')}`, `URL:${PUBLIC_BASE}/${i.route}`,
     `STATUS:${i.kind === 'cancelado' ? 'CANCELLED' : (AG_KIND[i.kind][1] === 'pend' ? 'TENTATIVE' : 'CONFIRMED')}`,
     'BEGIN:VALARM', 'ACTION:DISPLAY', 'TRIGGER:-PT2H', `DESCRIPTION:${icsEscape(i.title)}`, 'END:VALARM', 'END:VEVENT'].join('\n'));
-  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//planes//agenda//ES', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:Mis planes', ...ev.join('\n').split('\n')].concat('END:VCALENDAR').map(icsFold).join('\r\n') + '\r\n';
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Plannet//agenda//ES', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:Mis planes', ...ev.join('\n').split('\n')].concat('END:VCALENDAR').map(icsFold).join('\r\n') + '\r\n';
 }
 function downloadIcs(planId){
   const items = planId ? agendaItems().filter(i => i.planId === planId && i.id === 'pl-' + planId) : upcomingItems().filter(i => ['vas','organizas'].includes(i.kind));

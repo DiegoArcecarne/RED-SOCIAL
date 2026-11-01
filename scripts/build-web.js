@@ -31,9 +31,9 @@ const { PLANS, CATEGORIES, USERS, POSTS, FOLLOWS, getPlace, getCategory, getUser
 
 // Dominio de la app real. Las páginas del prototipo no llevan og:url ni canonical
 // para que los lectores de enlaces usen la dirección real desde donde se sirven.
-const DOMAIN = 'planes.app';
-const IOS_APP_ID = 'ABCDE12345.app.planes';          // Team ID + bundle id (provisional)
-const ANDROID_PACKAGE = 'app.planes';                // nombre del paquete (provisional)
+const DOMAIN = 'plannet.app';
+const IOS_APP_ID = 'ABCDE12345.app.plannet';          // Team ID + bundle id (provisional)
+const ANDROID_PACKAGE = 'app.plannet';                // nombre del paquete (provisional)
 const ANDROID_SHA256 = ['AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99'];
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -76,11 +76,11 @@ function page({ depth, title, description, image, imageAlt, type, appRoute, body
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>${esc(title)} · planes</title>
+<title>${esc(title)} · Plannet</title>
 <meta name="description" content="${esc(description)}">
 <!-- Prototipo con datos de ejemplo: no se indexa. En la app real: ${indexable ? 'index' : 'noindex'} (ver docs/compartir.md). -->
 <meta name="robots" content="noindex">
-<meta property="og:site_name" content="planes">
+<meta property="og:site_name" content="Plannet">
 <meta property="og:locale" content="es_ES">
 <meta property="og:type" content="${type}">
 <meta property="og:title" content="${esc(title)}">
@@ -104,13 +104,13 @@ ${redirect ? `<script>
 </script>
 ` : ''}</head>
 <body>
-<header class="w-bar"><a class="w-brand" href="${up}index.html">planes</a><a class="w-open" href="${esc(app)}">Abrir en la app</a></header>
+<header class="w-bar"><a class="w-brand" href="${up}index.html">Plannet</a><a class="w-open" href="${esc(app)}">Abrir en la app</a></header>
 <main class="w-main">
 ${body}
 <a class="w-cta" href="${esc(app)}">${esc(label || 'Ver en la app')}</a>
-<p class="w-fine">¿Aún no tienes planes? <a href="${up}../standalone.html">Ábrela e instálala</a> en tu móvil: es gratis. Para ir a un plan hay que verificar la identidad.</p>
+<p class="w-fine">¿Aún no tienes Plannet? <a href="${up}../standalone.html">Ábrela e instálala</a> en tu móvil: es gratis. Para ir a un plan hay que verificar la identidad.</p>
 </main>
-<footer class="w-foot">planes · prototipo con datos de ejemplo</footer>
+<footer class="w-foot">Plannet · prototipo con datos de ejemplo</footer>
 </body>
 </html>
 `;
@@ -154,7 +154,7 @@ POSTS.filter(postIsPublic).forEach((po) => {
   postPages.add(po.id);
   files[`p/${po.id}.html`] = page({
     depth: 1, type: 'article', appRoute: `p/${po.id}`, indexable: false, label: 'Ver la publicación en la app',
-    title: `${u.name} en planes${plan ? ' · ' + plan.title : ''}`, description: clip(cap, 160),
+    title: `${u.name} en Plannet${plan ? ' · ' + plan.title : ''}`, description: clip(cap, 160),
     image: photo(imgs[0], 1200, 630), imageAlt: po.altText || `Publicación de ${u.name}`,
     body: `<article class="w-card">
   <div class="w-who"><span class="w-av">${esc(u.initials || initials(u.name))}</span><span><b>${esc(u.name)}</b><span>${esc(u.handle)}</span></span></div>
@@ -195,9 +195,9 @@ USERS.filter((u) => !u.managedBy).forEach((u) => {
 // destino de la parte tras la # y ofrece abrirlo en la app.
 files['abrir.html'] = page({
   depth: 0, type: 'website', appRoute: 'feed', indexable: false, label: 'Abrir en la app', redirect: false,
-  title: 'Te han compartido algo en planes', description: 'Planes y gente con quien vivirlos. Ábrelo en la app.',
+  title: 'Te han compartido algo en Plannet', description: 'Planes y gente con quien vivirlos. Ábrelo en la app.',
   body: `<article class="w-card"><div class="w-body">
-  <h1>Te han compartido algo en planes</h1>
+  <h1>Te han compartido algo en Plannet</h1>
   <p>Ábrelo en la app para verlo.</p>
   <p class="w-dim">En la demo, lo que crea cada persona se guarda en su navegador: si lo abres en otro móvil puede que no aparezca.</p>
 </div></article>
@@ -226,7 +226,7 @@ files['index.html'] = page({
 });
 
 // Asociación de dominio para que los enlaces abran la app nativa. En la app real se
-// sirven en https://planes.app/.well-known/ (raíz del dominio, sin redirecciones).
+// sirven en https://plannet.app/.well-known/ (raíz del dominio, sin redirecciones).
 files['.well-known/apple-app-site-association'] = JSON.stringify({
   applinks: { details: [{ appIDs: [IOS_APP_ID], components: [
     { '/': '/plan/*', comment: 'Planes' }, { '/': '/p/*', comment: 'Publicaciones' },

@@ -67,7 +67,16 @@ Los avisos los envía una cola programada a la hora del acceso anticipado y a la
 La compra se hace con una reserva de plaza de pocos minutos para que la apertura no se
 sobrevenda (la plaza se libera si el pago no se completa).
 
-## 6. Qué simula el prototipo
+## 6. Otras estrategias (pendientes, sin hacer)
+
+- **Bonos de descuento de marcas**: acuerdos con marcas y locales para regalar descuentos a quien
+  se registra o va a un plan (por ejemplo, un 15 % en alquiler de bicis, la primera consumición
+  o una entrada a mitad de precio). La marca consigue clientes que ya han demostrado ir a planes;
+  la app, un motivo más para registrarse y repetir. Por definir: quién paga el descuento, cómo se
+  canjea (código en la app o QR en el local), límite por persona y cómo se mide el canje sin
+  rastreo fuera de la app.
+
+## 7. Qué simula el prototipo
 
 | En el prototipo | En la app real |
 |---|---|

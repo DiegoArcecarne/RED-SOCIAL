@@ -1,6 +1,8 @@
-# Definición de producto — App de planes
+# Definición de producto — Plannet
 
 ## Qué es
+
+**Nombre: Plannet.** Juego de palabras entre *plan* y *net* (red): la red de planes. Se escribe con dos enes. El dominio (provisionalmente `plannet.app`) y el registro de la marca están por comprobar.
 
 Una red social donde descubres un plan y la gente para hacerlo, estés donde estés. Une dos modelos que ya funcionan globalmente por separado y que nadie ha combinado limpiamente: la capa social de conocer gente haciendo algo real (Timeleft) y el marketplace de experiencias curadas con comisión (Fever). El hueco que ocupa es la intersección: Fever te vende la entrada pero vas solo; Timeleft te da la gente pero solo en formato cena. Aquí tienes el plan, la gente y la reserva en una sola superficie.
 
@@ -86,7 +88,7 @@ Antes de un plan muchas veces hay solo una idea: "Estoy pensando ir a pescar el 
 - **Seguridad**: pasan por los mismos filtros automáticos, se pueden reportar y respetan bloqueos y suspensiones. No llevan dirección exacta ni pago.
 - **Caducidad**: en la fecha elegida o, sin fecha, a los 7 días.
 
-El nombre "chispa" es provisional, como la marca.
+El nombre "chispa" es provisional.
 
 ## Los tres niveles de plan
 
@@ -310,9 +312,9 @@ El flujo de creación incluye las opciones habituales de una red social, adaptad
 
 Cualquier publicación, propia o ajena, cualquier plan y cualquier perfil se pueden compartir desde el botón de compartir (en el plan, arriba a la derecha de su ficha; en tu perfil, "Compartir perfil"; en el de otra persona, en ⋯). Todos usan la misma hoja y las mismas opciones. Cambia el contenido de la vista previa:
 
-- Publicación: autor, primera foto y pie. Enlace planes.app/p/….
-- Plan: título, fecha, lugar y precio ("vie · 20:30 · Azotea Círculo · 18 €"), resumen y portada del plan. Enlace planes.app/plan/…. Si la ubicación es secreta, el enlace dice "Zona aproximada" y nunca la desvela. Al añadirlo a tu story sale como "¿Te vienes? …", con el botón "Ver el plan".
-- Perfil: nombre, @usuario, descripción y primera foto pública. Enlace planes.app/u/…. De un perfil privado solo se enseña la cabecera. Dentro de la app llega como tarjeta del perfil.
+- Publicación: autor, primera foto y pie. Enlace plannet.app/p/….
+- Plan: título, fecha, lugar y precio ("vie · 20:30 · Azotea Círculo · 18 €"), resumen y portada del plan. Enlace plannet.app/plan/…. Si la ubicación es secreta, el enlace dice "Zona aproximada" y nunca la desvela. Al añadirlo a tu story sale como "¿Te vienes? …", con el botón "Ver el plan".
+- Perfil: nombre, @usuario, descripción y primera foto pública. Enlace plannet.app/u/…. De un perfil privado solo se enseña la cabecera. Dentro de la app llega como tarjeta del perfil.
 
 Compartir planes es la forma natural de traer a amigos a un plan, así que el enlace de un plan abre su ficha con el botón para apuntarse; si no tienes la app, primero te lleva a descargarla.
 
@@ -323,7 +325,7 @@ Dentro de la app:
 
 Fuera de la app (WhatsApp, Telegram, SMS, correo…):
 
-- Se comparte un enlace público a la publicación (planes.app/p/…, dominio provisional como la marca). Ese enlace lleva una vista previa con imagen, igual que la imagen destacada de WordPress. Para ello, la página pública incluye etiquetas Open Graph:
+- Se comparte un enlace público a la publicación (plannet.app/p/…, dominio provisional). Ese enlace lleva una vista previa con imagen, igual que la imagen destacada de WordPress. Para ello, la página pública incluye etiquetas Open Graph:
   - og:title: en una publicación, "Autor en planes · Plan" (si está ligada a un plan); en un plan, su título.
   - og:description: en una publicación, el pie recortado a unos 120 caracteres; en un plan, "fecha · lugar · precio" y el resumen.
   - og:image: una imagen de 1200×630 generada a partir de la primera foto (o de la portada del plan), con el pie o el título, el autor o los datos del plan y la marca encima. Recomendado: JPEG de menos de 300 KB, para que WhatsApp la muestre siempre.
@@ -331,7 +333,7 @@ Fuera de la app (WhatsApp, Telegram, SMS, correo…):
 - "Compartir en otras apps" abre el menú de compartir del móvil con el título, el texto y el enlace. Se comparte el enlace (no la imagen) para que WhatsApp y compañía generen la vista previa a partir de la web pública.
 - Botones directos para WhatsApp y Telegram, "Copiar enlace", "Imagen" (la imagen 1200×630 como archivo, para una story de Instagram; si el móvil no deja compartir archivos, se descarga) y "Código QR" (para enseñarlo en persona en un plan o imprimirlo en un local).
 - La página pública enseña el contenido y un botón para abrirlo en la app o descargarla. Con enlaces universales (iOS) y App Links (Android), si la app está instalada se abre directamente en esa pantalla. Si no hay sesión, la app recuerda el destino y lleva a él al entrar o al terminar el registro.
-- "planes" aparece también en el menú de compartir del móvil: fotos o un vídeo de la galería abren una publicación nueva con ellos; un enlace de planes abre esa pantalla.
+- "Plannet" aparece también en el menú de compartir del móvil: fotos o un vídeo de la galería abren una publicación nueva con ellos; un enlace de planes abre esa pantalla.
 
 El detalle de la web pública (etiquetas, imagen, indexación), los enlaces que abren la app y el menú nativo, y lo que deben hacer el servidor y la app, está en [docs/compartir.md](docs/compartir.md). El prototipo genera esa web para los datos de ejemplo en prototipo/web/.
 
@@ -833,7 +835,7 @@ Primer modelo conceptual, derivado de los flujos anteriores. No es el esquema fi
 - Valoraciones: confirmar las audiencias propuestas (públicas para todos, seguidores o amigos; privadas para seguidores, amigos o solo yo) y si una asistencia privada debe forzar la valoración privada.
 - Amigos = seguimiento mutuo: confirmar o añadir más adelante una lista de "amigos cercanos" elegida a mano (como en Instagram), además de los mutuos.
 - Longitud de los textos: confirmar los límites propuestos (nombre 30, usuario 3–30, descripción 150, título de plan 60…) y la frecuencia permitida para cambiar el nombre de usuario.
-- Compartir: confirmar el ajuste "permitir que compartan mis publicaciones" y el dominio de los enlaces públicos (va con la marca).
+- Compartir: confirmar el ajuste "permitir que compartan mis publicaciones" y el dominio de los enlaces públicos (`plannet.app` u otro, según esté libre) y el registro de la marca Plannet.
 - Varios perfiles: confirmar el máximo (propuesta: 5, uno personal) y si el perfil profesional muestra "detrás hay una persona verificada".
 - Verificación: confirmar la lista de acciones que la piden, en especial escribir a desconocidos y el umbral de "plan íntimo" (hasta 8 personas) para ocultar la ubicación exacta.
 - Objetivos numéricos de las métricas y criterios para continuar o parar tras el piloto (propuesta en el plan de validación).

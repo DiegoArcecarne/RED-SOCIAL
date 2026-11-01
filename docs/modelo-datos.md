@@ -1,6 +1,6 @@
 # Modelo de datos — diagrama de entidades
 
-Diagrama conceptual de entidades y relaciones de la app de planes, derivado de la
+Diagrama conceptual de entidades y relaciones de Plannet, derivado de la
 sección "Modelo de datos: entidades y relaciones" de [`PRODUCTO.md`](../PRODUCTO.md).
 No es el esquema final de base de datos: fija el vocabulario y las relaciones
 principales. Los atributos se muestran abreviados (clave y campos representativos).

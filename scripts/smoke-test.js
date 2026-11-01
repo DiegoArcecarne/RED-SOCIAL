@@ -239,10 +239,10 @@ a.run('setContentTab("vividas")'); h = a.html('feed-list');
 check('muro: el botón de compartir abre la hoja', h.includes("openShare('po8')"));
 a.run('openShare("po8")'); h = a.html('overlay'); rendered += h;
 check('compartir: personas que sigues, story y apps externas', count(h, /class="sh-person /g) === a.run('shareTargets().length') && h.includes('Añadir a tu story') && h.includes('wa.me') && h.includes('t.me/share') && h.includes('Copiar enlace'));
-check('compartir fuera: vista previa con la imagen de la publicación (og:image)', h.includes('og-card') && h.includes('og-img') && h.includes('1495567720989-cebdbdd97913') && h.includes('planes.app'));
+check('compartir fuera: vista previa con la imagen de la publicación (og:image)', h.includes('og-card') && h.includes('og-img') && h.includes('1495567720989-cebdbdd97913') && h.includes('plannet.app'));
 const meta = a.run('shareMeta(POSTS.find(p => p.id === "po8"))');
-check('Open Graph: título, descripción ≤ 120, imagen y URL pública', meta.title.startsWith('Lucía R. en planes') && meta.description.length <= 120 && meta.image === '1495567720989-cebdbdd97913' && meta.url === 'https://planes.app/p/po8');
-check('WhatsApp: texto con el enlace', decodeURIComponent(a.run('externalShareUrl(POSTS.find(p => p.id === "po8"), "whatsapp")')).includes('https://planes.app/p/po8'));
+check('Open Graph: título, descripción ≤ 120, imagen y URL pública', meta.title.startsWith('Lucía R. en Plannet') && meta.description.length <= 120 && meta.image === '1495567720989-cebdbdd97913' && meta.url === 'https://plannet.app/p/po8');
+check('WhatsApp: texto con el enlace', decodeURIComponent(a.run('externalShareUrl(POSTS.find(p => p.id === "po8"), "whatsapp")')).includes('https://plannet.app/p/po8'));
 a.run('toggleShareTo("lucia"); toggleShareTo("marco")'); h = a.html('overlay');
 check('enviar dentro: seleccionar personas muestra el mensaje y "Enviar"', count(h, /sh-person on/g) === 2 && h.includes('id="sh-msg"'));
 const sh0 = a.run('POSTS.find(p => p.id === "po8").shares || 0');
@@ -264,8 +264,8 @@ a.run('openShare("plan:p2")'); h = a.html('overlay'); rendered += h;
 check('compartir plan: misma hoja (personas, story, apps) con la portada del plan', h.includes('Compartir plan') && h.includes('sh-person') && h.includes('Añadir a tu story')
   && h.includes('wa.me') && h.includes('og-card') && h.includes(a.run('getPlan("p2").photo')) && h.includes('og-sum'));
 const pm = a.run('shareMeta(getPlan("p2"))');
-check('Open Graph del plan: título, fecha · lugar · precio y URL /plan/', pm.title === a.run('getPlan("p2").title') && pm.description.includes('Gratis') && pm.url === 'https://planes.app/plan/p2');
-check('WhatsApp del plan: enlace al plan', decodeURIComponent(a.run('externalShareUrl(getPlan("p2"), "whatsapp")')).includes('https://planes.app/plan/p2'));
+check('Open Graph del plan: título, fecha · lugar · precio y URL /plan/', pm.title === a.run('getPlan("p2").title') && pm.description.includes('Gratis') && pm.url === 'https://plannet.app/plan/p2');
+check('WhatsApp del plan: enlace al plan', decodeURIComponent(a.run('externalShareUrl(getPlan("p2"), "whatsapp")')).includes('https://plannet.app/plan/p2'));
 const secretDesc = a.run('shareMeta(getPlan("p4")).description');
 check('plan con ubicación secreta: el enlace no la desvela', secretDesc.includes('Zona aproximada') && !secretDesc.includes(a.run('(getPlace(getPlan("p4").placeId)||{name:"__"}).name')));
 a.run('toggleShareTo("lucia"); sendShareInApp()');
@@ -677,7 +677,7 @@ const regToAge = (env, email) => {
 e.run("showAuth('registro', {})"); rendered += e.html('auth');
 set(e, 'f-id', 'lucas@'); set(e, 'f-pass', 'planes2026'); e.run('submitRegister()');
 check('registro: email no válido', authErrTxt(e).includes('email válido'));
-set(e, 'f-id', 'marina@planes.app'); e.run('submitRegister()');
+set(e, 'f-id', 'marina@plannet.app'); e.run('submitRegister()');
 check('registro: email ya registrado', authErrTxt(e).includes('Ya hay una cuenta'));
 set(e, 'f-id', 'lucas@correo.es'); set(e, 'f-pass', 'corta1'); e.run('submitRegister()');
 check('registro: contraseña débil', authErrTxt(e).includes('Mínimo 8'));
@@ -727,7 +727,7 @@ e2.run('logout()');
 check('cerrar sesión', !('planes-sesion' in ast));
 let e3 = createEnv(ast, { sinSesion: true });
 e3.run("showAuth('entrar', {})"); rendered += e3.html('auth');
-for (let i = 0; i < 4; i++){ set(e3, 'f-id', 'marina@planes.app'); set(e3, 'f-pass', 'mal' + i); e3.run('submitLogin()'); }
+for (let i = 0; i < 4; i++){ set(e3, 'f-id', 'marina@plannet.app'); set(e3, 'f-pass', 'mal' + i); e3.run('submitLogin()'); }
 check('entrar: error genérico (no desvela si la cuenta existe)', authErrTxt(e3) === 'Email, teléfono o contraseña incorrectos.');
 set(e3, 'f-pass', 'otra'); e3.run('submitLogin()');
 check('entrar: 5 fallos bloquean 15 minutos', authErrTxt(e3).includes('bloqueado') && e3.run('getAccount("demo").lockedUntil') > 0);
@@ -904,7 +904,7 @@ t.nav('mis-datos'); h = t.html('view-page'); rendered += h;
 check('tus datos: descargar, consentimientos, derechos y eliminar', ['Descargar mis datos', 'Consentimientos', 'Novedades y planes destacados', 'Interés legítimo', 'Términos y privacidad', 'Corregir tus datos', 'Eliminar cuenta'].every((x) => h.includes(x)));
 const exp = t.run('JSON.parse(JSON.stringify(buildExport()))');
 check('exportación: todo lo tuyo y sin la contraseña', ['cuenta', 'perfil', 'publicaciones', 'comentarios', 'valoraciones', 'sigues', 'teSiguen', 'planes', 'mensajes', 'notificaciones', 'bloqueados', 'reportesEnviados', 'decisionesSobreTi', 'seguridad', 'consentimientos'].every((k) => k in exp)
-  && exp.cuenta.email === 'marina@planes.app' && !('hash' in exp.cuenta) && !('salt' in exp.cuenta) && exp.publicaciones.every((p) => p.authorId === 'me') && exp.seguridad.contactosDeConfianza.length === 2);
+  && exp.cuenta.email === 'marina@plannet.app' && !('hash' in exp.cuenta) && !('salt' in exp.cuenta) && exp.publicaciones.every((p) => p.authorId === 'me') && exp.seguridad.contactosDeConfianza.length === 2);
 check('exportación: los reportes no incluyen datos de terceros que reportan', exp.reportesEnviados.every((r) => !('reporterId' in r)));
 t.run('toggleConsent("analitica"); toggleConsent("marketing")');
 check('consentimientos: se cambian y queda registro con fecha', t.run('consentValue("analitica")') === true && t.run('currentAccount().consents.marketing') === true && t.run('ME.consentLog.length') === 2 && !!t.run('ME.consentLog[0].at'));
@@ -1256,7 +1256,7 @@ check('.ics: calendario válido (UTC, CRLF, escapado, líneas cortas, aviso 2 h 
 check('.ics: escapa comas y punto y coma', ag.run('icsEscape("a, b; c")') === 'a\\, b\\; c');
 ag.run('openAgendaExport()'); h = ag.html('overlay');
 const tok = ag.run('calToken()');
-check('suscripción: dirección webcal personal y revocable', h.includes('webcal://planes.app/agenda/' + tok + '.ics') && h.includes('Revocar la dirección'));
+check('suscripción: dirección webcal personal y revocable', h.includes('webcal://plannet.app/agenda/' + tok + '.ics') && h.includes('Revocar la dirección'));
 ag.run('revokeCalFeed()');
 check('revocar cambia la dirección', ag.run('calToken()') !== tok);
 const ag2 = createEnv(ags);
@@ -1543,7 +1543,7 @@ check('web: página genérica para lo creado en la demo y portada', wread('abrir
 let aasa = null, alinks = null; try { aasa = JSON.parse(wread('.well-known/apple-app-site-association')); alinks = JSON.parse(wread('.well-known/assetlinks.json')); } catch (err) {}
 check('web: asociación de dominio para universal links (iOS) y App Links (Android)', !!aasa && aasa.applinks.details[0].components.some((c) => c['/'] === '/plan/*') && !!alinks && alinks[0].target.package_name && alinks[0].relation[0].includes('handle_all_urls'));
 check('web: la web pública no tiene emojis', !/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/u.test(['plan/p2.html', 'u/lucia.html', 'abrir.html', 'index.html'].map(wread).join('')));
-check('enlace sin web publicada: dominio de la app', sh.run('postUrl(getPlan("p2"))') === 'https://planes.app/plan/p2' && sh.run('postUrl(getUser("lucia"))') === 'https://planes.app/u/lucia');
+check('enlace sin web publicada: dominio de la app', sh.run('postUrl(getPlan("p2"))') === 'https://plannet.app/plan/p2' && sh.run('postUrl(getUser("lucia"))') === 'https://plannet.app/u/lucia');
 sh.run('Object.assign(location, { protocol:"https:", hostname:"diego.github.io", origin:"https://diego.github.io", pathname:"/RED-SOCIAL/prototipo/standalone.html" })');
 const WB = 'https://diego.github.io/RED-SOCIAL/prototipo/web/';
 check('enlace con la web publicada: lleva a su página', sh.run('postUrl(getPlan("p2"))') === WB + 'plan/p2.html' && sh.run('postUrl(POSTS.find(p => p.id === "po8"))') === WB + 'p/po8.html' && sh.run('postUrl(ME)') === WB + 'u/marina.html');
@@ -1557,7 +1557,7 @@ sh.run('ME.handle = "@marina.nueva"'); check('perfil con otro usuario: enlace a 
 sh.nav('perfil'); check('perfil: "Compartir perfil" abre la hoja', sh.html('view-perfil').includes("openShare('u:me')"));
 sh.run('openShare("u:lucia")'); h = sh.html('overlay'); rendered += h;
 check('compartir perfil: vista previa, enlace, imagen y QR; sin story', h.includes('Compartir perfil') && h.includes('Lucía R. (@lucia)') && h.includes('Código QR') && !h.includes('Añadir a tu story') && !h.includes('Compartir en otras apps'));
-check('perfil privado: la vista previa no enseña sus fotos', sh.run('shareMeta(getUser("irene")).description') === 'Cuenta privada en planes' && sh.run('shareMeta(getUser("irene")).image') === '');
+check('perfil privado: la vista previa no enseña sus fotos', sh.run('shareMeta(getUser("irene")).description') === 'Cuenta privada en Plannet' && sh.run('shareMeta(getUser("irene")).image') === '');
 sh.run('state.share.to = ["lucia"]; sendShareInApp()');
 check('enviar un perfil por mensaje: tarjeta con el perfil', sh.run('dmWith("lucia").messages.slice(-1)[0].share') === 'u:lucia' && sh.run('msgShareCard("u:lucia")').includes('Lucía R.') && sh.run('msgPreview({ from:"me", share:"u:lucia" }, dmWith("lucia"))').includes('perfil'));
 sh.run('openUserMenu("marco")'); check('perfil ajeno (⋯): compartir el perfil', sh.html('overlay').includes("openShare('u:marco')"));
@@ -1577,9 +1577,9 @@ const nd = createEnv(dst, { sinSesion: true, hash: '#/plan/p2' }); rendered += n
 check('enlace sin sesión: se recuerda y se explica en la bienvenida', dst['planes-destino'] === '#/plan/p2' && nd.html('auth').includes('Te han compartido el plan «Atardecer en el Templo de Debod»'));
 nd.run('loginDemo()'); check('al entrar, lleva al enlace compartido', nd.run('location.hash') === '#/plan/p2' && !('planes-destino' in dst));
 // Recibir desde el menú de compartir del móvil
-check('recibir: reconoce enlaces de planes', sh.run('sharedLink("mira " + location.origin + "/RED-SOCIAL/prototipo/web/u/lucia.html")') === 'u/lucia' && sh.run('sharedLink("https://planes.app/plan/p4")') === 'plan/p4'
+check('recibir: reconoce enlaces de planes', sh.run('sharedLink("mira " + location.origin + "/RED-SOCIAL/prototipo/web/u/lucia.html")') === 'u/lucia' && sh.run('sharedLink("https://plannet.app/plan/p4")') === 'plan/p4'
   && sh.run('sharedLink("x/web/abrir.html#/p/npo1")') === 'p/npo1' && sh.run('sharedLink("hola")') === null);
-sh.run('applyShared({ title:"", text:"", url:"https://planes.app/plan/p4" }, [])'); check('recibir un enlace de planes: lo abre', sh.run('location.hash') === '#/plan/p4');
+sh.run('applyShared({ title:"", text:"", url:"https://plannet.app/plan/p4" }, [])'); check('recibir un enlace de planes: lo abre', sh.run('location.hash') === '#/plan/p4');
 sh.run('applyShared({ title:"", text:"Qué atardecer", url:"" }, [])');
 check('recibir texto: nueva publicación con el texto en el pie', sh.run('location.hash') === '#/crear-post' && sh.run('state.draftPost.caption') === 'Qué atardecer' && sh.html('view-page').includes('Qué atardecer'));
 let mf = null; try { mf = JSON.parse(fs.readFileSync(path.join(pdir0, 'manifest.webmanifest'), 'utf8')); } catch (err) {}
