@@ -1,0 +1,38 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "ABCDE12345.app.planes"
+        ],
+        "components": [
+          {
+            "/": "/plan/*",
+            "comment": "Planes"
+          },
+          {
+            "/": "/p/*",
+            "comment": "Publicaciones"
+          },
+          {
+            "/": "/u/*",
+            "comment": "Perfiles"
+          },
+          {
+            "/": "/tema/*",
+            "comment": "Temas"
+          },
+          {
+            "/": "/lugar/*",
+            "comment": "Lugares"
+          }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "ABCDE12345.app.planes"
+    ]
+  }
+}
